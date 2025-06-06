@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export interface UserProfile {
   id: string;
-  uniqueId: string; // Added for CU2025x / TR2025x
+  uniqueId: string;
   name: string;
   contact: string;
   location: string;
@@ -39,7 +39,6 @@ export const Locations = [
   "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", 
   "Amritsar", "Allahabad", "Ranchi", "Howrah", "Coimbatore", "Jabalpur", "Gwalior", 
   "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh"
-  // Add more Tier 3 cities if needed, but this list is already quite comprehensive for common use.
 ];
 export const SubscriptionPlans = ["Basic", "Premium", "Gold"];
 
@@ -58,17 +57,53 @@ export interface CourseModule {
   id: string;
   title: string;
   description: string;
-  duration: string; // e.g., "45 mins"
-  recordedLectureLink?: string; // URL or identifier
+  duration: string; 
+  recordedLectureLink?: string; 
 }
 
 export interface Course {
   id: string;
   title: string;
   description: string;
-  icon?: React.ElementType; // Optional Lucide icon for the course
+  icon?: React.ElementType; 
   totalEnrolled: number;
   totalCertified: number;
   modules: CourseModule[];
-  image?: string; // Optional image URL for the course card
+  image?: string; 
 }
+
+// Registration Form Types
+export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] as const;
+
+export const RegistrationFormSchema = z.object({
+  userRole: z.enum(['customer', 'trainer']),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }).max(15).optional().or(z.literal('')),
+  location: z.string().min(1, { message: "Please select a location." }),
+  subscriptionPlan: z.string().min(1, { message: "Please select a subscription plan." }),
+  // Customer specific
+  vehiclePreference: z.enum(VehiclePreferenceOptions).optional(),
+  // Trainer specific
+  yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative").max(50, "Years of experience seems too high").optional(),
+  specialization: z.string().max(100, "Specialization too long").optional().or(z.literal('')),
+}).refine(data => {
+  if (data.userRole === 'customer' && !data.vehiclePreference) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Vehicle preference is required for customers.",
+  path: ["vehiclePreference"], 
+}).refine(data => {
+    if (data.userRole === 'trainer' && (data.yearsOfExperience === undefined || data.yearsOfExperience === null)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Years of experience is required for trainers.",
+    path: ["yearsOfExperience"],
+});
+
+
+export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;

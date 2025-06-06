@@ -14,13 +14,14 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const [referralsOpen, setReferralsOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const AppLogo = () => (
     <div className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70">
@@ -36,6 +37,9 @@ export default function AppSidebar() {
   useEffect(() => {
     if (pathname.startsWith('/referrals')) {
       setReferralsOpen(true);
+    }
+    if (pathname.startsWith('/create')) {
+      setCreateOpen(true);
     }
   }, [pathname]);
 
@@ -57,6 +61,47 @@ export default function AppSidebar() {
                 <span>Dashboard</span>
               </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => setCreateOpen(!createOpen)}
+              isActive={pathname.startsWith('/create')}
+              tooltip={{ children: "Create", side: "right", align: "center" }}
+              className="justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <UserPlus />
+                <span>Create</span>
+              </div>
+              <ChevronDown className={cn("h-4 w-4 transition-transform", createOpen && "rotate-180")} />
+            </SidebarMenuButton>
+            {createOpen && (
+              <SidebarMenuSub>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    asChild
+                    isActive={pathname === '/create/customer'}
+                  >
+                    <Link href="/create/customer">
+                      <User className="mr-2 h-4 w-4" />
+                      New Customer
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+                <SidebarMenuSubItem>
+                  <SidebarMenuSubButton
+                    asChild
+                    isActive={pathname === '/create/trainer'}
+                  >
+                    <Link href="/create/trainer">
+                      <UserCog className="mr-2 h-4 w-4" />
+                      New Trainer
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              </SidebarMenuSub>
+            )}
           </SidebarMenuItem>
 
           <SidebarMenuItem>
