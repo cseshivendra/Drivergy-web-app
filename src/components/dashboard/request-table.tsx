@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonRequest, VehicleType } from '@/types';
-import { User, Bike, Car, CalendarDays, HelpCircle, AlertCircle } from 'lucide-react';
+import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle } from 'lucide-react'; // Renamed Car to FourWheelerIcon
 import { Button } from '@/components/ui/button';
 
 interface RequestTableProps {
@@ -17,7 +17,7 @@ interface RequestTableProps {
   isLoading: boolean;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 5;
 
 export default function RequestTable({ title, requests, vehicleType, isLoading }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,7 +40,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
   };
 
   const renderSkeletons = () => (
-    Array(2).fill(0).map((_, index) => (
+    Array(ITEMS_PER_PAGE).fill(0).map((_, index) => ( // Use ITEMS_PER_PAGE for skeleton rows
       <TableRow key={`skeleton-${index}`}>
         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -77,7 +77,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
                 <TableHead>
                   {vehicleType === 'Two-Wheeler' 
                     ? <Bike className="inline-block mr-2 h-4 w-4" /> 
-                    : <Car className="inline-block mr-2 h-4 w-4" />
+                    : <FourWheelerIcon className="inline-block mr-2 h-4 w-4" />
                   }
                   Vehicle Type
                 </TableHead>

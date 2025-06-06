@@ -16,7 +16,7 @@ interface UserTableProps {
   isLoading: boolean;
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 5;
 
 export default function UserTable({ title, users, isLoading }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,7 +39,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
   };
 
   const renderSkeletons = () => (
-    Array(3).fill(0).map((_, index) => (
+    Array(ITEMS_PER_PAGE).fill(0).map((_, index) => ( // Use ITEMS_PER_PAGE for skeleton rows
       <TableRow key={`skeleton-${index}`}>
         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
