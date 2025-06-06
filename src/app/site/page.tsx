@@ -81,9 +81,17 @@ export default function PortfolioSitePage() {
       {/* Main Content */}
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/5 via-background to-background">
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-             {/* Optional: subtle background pattern or image */}
+        <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/5 via-background to-background overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <Image
+              src="https://placehold.co/1920x1080.png"
+              alt="Animated driving school background"
+              layout="fill"
+              objectFit="cover"
+              className="animate-hero-bg"
+              data-ai-hint="driving learning road abstract"
+              priority
+            />
           </div>
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <Car className="h-24 w-24 text-primary mx-auto mb-6 animate-pulse" />
