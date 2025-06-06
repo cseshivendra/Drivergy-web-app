@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/context/auth-context';
-
+import { useState, useEffect } from 'react';
 
 const SiteLogo = () => (
   <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -92,8 +92,28 @@ const coursesData = [
   }
 ];
 
+const slideImages = [
+  { src: "https://placehold.co/1920x1080/E74C3C/FDFEFE.png?text=Drive+With+Confidence", hint: "learner car driving" },
+  { src: "https://placehold.co/1920x1080/3498DB/FDFEFE.png?text=Pass+Your+Test", hint: "driving test road" },
+  { src: "https://placehold.co/1920x1080/2ECC71/FDFEFE.png?text=Expert+Instructors", hint: "city driving school" },
+];
+
 export default function PortfolioSitePage() {
   const { user, signOut } = useAuth();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (slideImages.length === 0) return;
+
+    const timer = setTimeout(() => {
+      setCurrentImageIndex((prevIndex) =>
+        prevIndex === slideImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000); // Change image every 5 seconds
+
+    return () => clearTimeout(timer); // Cleanup timer on component unmount
+  }, [currentImageIndex]);
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -162,17 +182,25 @@ export default function PortfolioSitePage() {
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <Image
-              src="https://placehold.co/1920x1080.png" 
-              alt="Scenic road with a learner car"
-              layout="fill"
-              objectFit="cover"
-              data-ai-hint="learner car road journey"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/50"></div> {/* Dark overlay */}
+            {slideImages.map((image, index) => (
+              <Image
+                key={image.src}
+                src={image.src}
+                alt={`Background slide ${index + 1}`}
+                layout="fill"
+                objectFit="cover"
+                className={cn(
+                  "hero-bg-slide",
+                  index === currentImageIndex && "active"
+                )}
+                priority={index === 0}
+                data-ai-hint={image.hint}
+              />
+            ))}
           </div>
-          <div className="relative z-10 p-4 container mx-auto">
+          <div className="absolute inset-0 bg-black/50 z-[5] pointer-events-none"></div> {/* Dark overlay */}
+          
+          <div className="relative z-10 p-4 container mx-auto"> {/* Content */}
             <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-md">
               We've all been there-nervous, clueless, and ready to learn
             </h1>

@@ -11,16 +11,7 @@
   100% { transform: translateX(0px); opacity: 1; }
 }
 
-@keyframes hero-bg-animate {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.15; /* Base opacity for the image */
-  }
-  50% {
-    transform: scale(1.03); /* Slight zoom */
-    opacity: 0.25;       /* Slightly more visible */
-  }
-}
+/* Removed @keyframes hero-bg-animate */
 
 @tailwind base;
 @tailwind components;
@@ -44,8 +35,24 @@
     opacity: 0; /* Start hidden */
   }
 
-  .animate-hero-bg {
-    animation: hero-bg-animate 15s ease-in-out infinite;
+  /* Removed .animate-hero-bg */
+}
+
+@layer components {
+  .hero-bg-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    z-index: 1; /* Ensure slides are above default but below overlay */
+  }
+
+  .hero-bg-slide.active {
+    opacity: 1;
+    z-index: 2; /* Active slide on top */
   }
 }
 
@@ -157,3 +164,4 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
