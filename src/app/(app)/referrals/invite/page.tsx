@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, MessageSquare, Smartphone, Copy, Gift, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
-export default function ReferralsPage() {
+export default function InviteReferralsPage() { // Renamed component
   const { toast } = useToast();
   const { user } = useAuth();
   const [email, setEmail] = useState('');
@@ -24,6 +24,7 @@ export default function ReferralsPage() {
   }, [user?.uid]);
 
   const referralUrl = useMemo(() => {
+    // Ensure this URL matches your routing, e.g., a public sign-up page
     return `https://driveview.example.com/signup?ref=${referralCode}`;
   }, [referralCode]);
 
@@ -57,6 +58,7 @@ export default function ReferralsPage() {
       });
       return;
     }
+    // In a real app, you'd trigger a backend service or AI flow here
     console.log(`Simulating sending email to: ${email} with message: ${referralMessage}`);
     toast({
       title: 'Email Invite Sent (Simulated)',
@@ -71,13 +73,9 @@ export default function ReferralsPage() {
   };
 
   const handleSmsShare = () => {
-    // Note: SMS functionality is highly dependent on the device and OS.
-    // Desktop browsers typically cannot initiate SMS messages.
     const smsUrl = `sms:?body=${encodeURIComponent(referralMessage)}`;
-    // Attempt to open, may not work on all devices/browsers
     const newWindow = window.open(smsUrl, '_blank', 'noopener,noreferrer');
     if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-         // Fallback or notify user it might not have worked, or suggest copying the link
          toast({
             title: "SMS Sharing",
             description: "Attempted to open SMS app. If it didn't work, please copy the link manually.",
