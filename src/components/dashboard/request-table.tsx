@@ -131,7 +131,7 @@ export default function RequestTable({ title, requests, isLoading }: RequestTabl
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px]"><User className="inline-block mr-2 h-4 w-4" />Customer Name</TableHead>
+                <TableHead><User className="inline-block mr-2 h-4 w-4" />Customer Name</TableHead>
                 <TableHead><ListTree className="inline-block mr-2 h-4 w-4" />Vehicle Type</TableHead> {/* Generic Icon */}
                 <TableHead><HelpCircle className="inline-block mr-2 h-4 w-4" />Status</TableHead>
                 <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Requested At</TableHead>

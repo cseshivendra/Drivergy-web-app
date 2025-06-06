@@ -103,14 +103,14 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]"><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
-                <TableHead className="w-[180px]"><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
+                <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
+                <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
                 <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
                 <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
                 <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
                 <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
                 <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
-                <TableHead className="min-w-[200px] text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
+                <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -226,3 +226,4 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     </Card>
   );
 }
+
