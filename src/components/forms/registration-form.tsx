@@ -288,32 +288,33 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     </FormItem>
                 )}
                 />
-                <FormField
-                control={form.control}
-                name="dlStatus"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select DL status" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {DLStatusOptions.map(option => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
             </div>
             
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Driving License Details</h3>
             
+            <FormField
+              control={form.control}
+              name="dlStatus"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select DL status" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      {DLStatusOptions.map(option => (
+                          <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+            />
+
             {(dlStatus === 'Already Have DL' || (form.getValues() as CustomerRegistrationFormValues).dlStatus === 'Already Have DL') && (
               <>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
