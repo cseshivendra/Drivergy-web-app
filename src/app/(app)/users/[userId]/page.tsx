@@ -17,26 +17,34 @@ export default function UserDetailsPage() {
   const params = useParams();
   const userId = params.userId as string;
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const { toast } = useToast();
 
   useEffect(() => {
     if (userId) {
-      setIsLoading(true);
+      setIsLoading(true); // Explicitly set loading before fetch
       fetchUserById(userId)
         .then((data) => {
           setUser(data);
-          setIsLoading(false);
         })
         .catch(error => {
-          console.error("Failed to fetch user details:", error);
+          console.error("Failed to fetch user details for ID:", userId, error);
+          setUser(null); // Ensure user is null on error
           toast({
-            title: "Error",
-            description: "Could not load user details.",
+            title: "Error Loading User",
+            description: `Could not load details for user ${userId}. Please try again.`,
             variant: "destructive",
           });
-          setIsLoading(false);
+        })
+        .finally(() => {
+          setIsLoading(false); // Always set loading to false after attempt
         });
+    } else {
+      // If userId is null, undefined, or an empty string after params are resolved,
+      // it means there's no valid ID to fetch.
+      // This ensures the page doesn't stay in a loading state indefinitely.
+      setUser(null);
+      setIsLoading(false);
     }
   }, [userId, toast]);
 
@@ -138,7 +146,7 @@ export default function UserDetailsPage() {
             <CardTitle className="text-destructive">User Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>The user details could not be loaded or the user does not exist.</p>
+            <p>The user details could not be loaded or the user does not exist. If you created this user in another tab, please note that mock data is not shared between tabs.</p>
             <Button onClick={() => window.history.back()} className="mt-4">Go Back</Button>
           </CardContent>
         </Card>
@@ -262,4 +270,3 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
-
