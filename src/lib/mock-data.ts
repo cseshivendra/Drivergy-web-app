@@ -109,6 +109,7 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     location: data.location,
     subscriptionPlan: data.subscriptionPlan,
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+    vehicleInfo: data.vehiclePreference,
   };
   mockCustomers.push(newUser);
   console.log('[mock-data] Customer added. Current mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
@@ -128,6 +129,7 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     location: data.location,
     subscriptionPlan: "Trainer", 
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+    vehicleInfo: data.trainerVehicleType,
   };
   mockInstructors.push(newTrainer);
   console.log('[mock-data] Trainer added. Current mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
@@ -249,4 +251,3 @@ mockSummaryData.totalCertifiedTrainers = 0;
 console.log('[mock-data] Initial mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
 console.log('[mock-data] Initial mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
 console.log('[mock-data] Initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
-

@@ -10,6 +10,7 @@ export interface UserProfile {
   location: string;
   subscriptionPlan: string;
   registrationTimestamp: string;
+  vehicleInfo?: string; // Added field for vehicle preference/type
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -82,14 +83,14 @@ export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "H
 export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
-// Simplified file field definitions for environment-agnostic schema definition
-const fileField = z.any(); 
-const optionalFileField = z.any().optional(); 
+// Use z.any() for file fields in schema definition to avoid server-side issues
+const fileField = z.any(); // Represents a FileList-like object
+const optionalFileField = z.any().optional();
 
 const BaseRegistrationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().optional(), 
+  phone: z.string().optional(),
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
@@ -101,10 +102,8 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
-  // dlFileCopy: optionalFileField, // dlFileCopy field removed as per previous diagnostic steps
+  dlFileCopy: optionalFileField,
 });
-// The .refine blocks for conditional dlNumber and dlTypeHeld have been removed for diagnosis.
-
 
 const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
@@ -114,14 +113,14 @@ const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  // trainerCertificateFile: fileField, // trainerCertificateFile removed as per previous diagnostic steps
+  trainerCertificateFile: fileField,
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  // aadhaarCardFile: fileField, // aadhaarCardFile removed as per previous diagnostic steps
+  aadhaarCardFile: fileField,
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  // drivingLicenseFile: fileField, // drivingLicenseFile removed as per previous diagnostic steps
+  drivingLicenseFile: fileField,
 });
 
 
@@ -133,4 +132,3 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
-

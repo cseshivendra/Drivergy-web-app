@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car } from 'lucide-react'; // Added Car icon
 import { Button } from '@/components/ui/button';
 
 interface UserTableProps {
@@ -46,6 +46,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
         <TableCell><Skeleton className="h-5 w-40" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+        <TableCell><Skeleton className="h-5 w-28" /></TableCell> 
         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
       </TableRow>
     ))
@@ -66,6 +67,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
                 <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
                 <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
                 <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
+                <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
                 <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered At</TableHead>
               </TableRow>
             </TableHeader>
@@ -81,17 +83,19 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary-foreground' :
                         user.subscriptionPlan === 'Gold' ? 'bg-yellow-400/20 text-yellow-700' :
+                        user.subscriptionPlan === 'Trainer' ? 'bg-green-400/20 text-green-700' : // Specific style for Trainer
                         'bg-gray-400/20 text-gray-700'
                       } dark:text-foreground`}>
                         {user.subscriptionPlan}
                       </span>
                     </TableCell>
+                    <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
                     <TableCell>{user.registrationTimestamp}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center"> 
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                       <p className="text-lg">No users found.</p>
