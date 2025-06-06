@@ -46,11 +46,11 @@ export default function LoginPage() {
         alt="Scenic driving route"
         layout="fill"
         objectFit="cover"
-        className="z-0 opacity-50 dark:opacity-30"
+        className="z-0 opacity-50 dark:opacity-30 transition-opacity duration-500 ease-in-out"
         data-ai-hint="road learning earning"
         priority
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background z-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background z-10 transition-colors duration-500 ease-in-out"></div>
 
       <div className="absolute top-6 right-6 z-30">
         <Button
@@ -145,3 +145,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
