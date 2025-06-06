@@ -123,10 +123,10 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                     <TableCell>{user.location}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary-foreground dark:text-primary' :
-                        user.subscriptionPlan === 'Gold' ? 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300' :
-                        user.subscriptionPlan === 'Trainer' ? 'bg-green-400/20 text-green-700 dark:text-green-300' :
-                        'bg-gray-400/20 text-gray-700 dark:text-gray-300'
+                        user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' : // Use text-primary for dark theme readability
+                        user.subscriptionPlan === 'Gold' ? 'bg-gray-500/20 text-gray-300 dark:text-gray-400' :
+                        user.subscriptionPlan === 'Trainer' ? 'bg-gray-600/20 text-gray-200 dark:text-gray-300' :
+                        'bg-muted/50 text-muted-foreground' // Generic muted for basic/other
                       }`}>
                         {user.subscriptionPlan}
                       </span>
@@ -139,7 +139,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                           variant="outline"
                           size="sm" 
                           onClick={() => handleViewDetails(user)}
-                          className="px-2 py-1 hover:bg-blue-500/10 hover:border-blue-500 hover:text-blue-600"
+                          className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
                           aria-label={`View details for ${user.name}`}
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -149,7 +149,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                           variant="default" 
                           size="sm" 
                           onClick={() => handleUpdateStatus(user.id, user.name, 'Approved')}
-                          className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-700 dark:text-primary-foreground px-2 py-1"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground px-2 py-1"
                            aria-label={`Approve ${user.name}`}
                         >
                           <Check className="h-3.5 w-3.5" />

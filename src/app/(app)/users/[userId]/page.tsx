@@ -204,8 +204,8 @@ export default function UserDetailsPage() {
                 label="Approval Status" 
                 value={user.approvalStatus}
                 valueClassName={
-                    user.approvalStatus === 'Approved' ? 'text-green-600 font-bold' :
-                    user.approvalStatus === 'Rejected' ? 'text-red-600 font-bold' :
+                    user.approvalStatus === 'Approved' ? 'text-green-500 font-bold' : // Adjusted for better visibility on dark themes
+                    user.approvalStatus === 'Rejected' ? 'text-destructive font-bold' :
                     'text-yellow-500 font-bold'
                 }
               />
@@ -242,7 +242,7 @@ export default function UserDetailsPage() {
             <Button onClick={() => handleDownload('PDF')} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
               <FileType className="mr-2 h-4 w-4" /> Download PDF
             </Button>
-            <Button onClick={() => handleDownload('Excel')} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={() => handleDownload('Excel')} className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-accent-foreground">
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Download Excel
             </Button>
           </div>
