@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,8 +18,8 @@ body {
     --popover: 0 0% 100%; /* White */
     --popover-foreground: 215 14% 47%; /* Match body text */
 
-    --primary: 206 90% 67%; /* #64B5F6 Soft blue */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary: 48 96% 58%; /* Golden Yellow */
+    --primary-foreground: 0 0% 10%; /* Dark text for high contrast on yellow */
 
     --secondary: 0 0% 92%; /* Slightly darker gray for secondary elements */
     --secondary-foreground: 215 14% 30%; /* Darker text for secondary elements */
@@ -34,7 +35,7 @@ body {
 
     --border: 0 0% 89.8%; /* Subtle border */
     --input: 0 0% 89.8%; /* Subtle input border */
-    --ring: 206 90% 60%; /* Ring color based on primary */
+    --ring: 48 96% 53%; /* Ring color based on primary */
 
     --radius: 0.5rem;
 
@@ -65,7 +66,7 @@ body {
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 206 90% 67%; /* #64B5F6 Soft blue */
+    --primary: 48 96% 58%; /* Golden Yellow */
     --primary-foreground: 0 0% 10%; /* Dark text on primary for dark mode */
 
     --secondary: 240 3.7% 15.9%;
@@ -82,7 +83,7 @@ body {
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 206 90% 55%; /* Ring color based on primary for dark mode */
+    --ring: 48 80% 50%; /* Ring color based on primary for dark mode */
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
