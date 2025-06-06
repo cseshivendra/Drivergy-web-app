@@ -30,7 +30,7 @@ export default function Footer() {
             Startup India
           </span>
         </div>
-        <nav className="flex gap-4">
+        <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 sm:gap-4">
           <Link href="#" className="hover:text-primary transition-colors">
             Privacy Policy
           </Link>
@@ -42,3 +42,4 @@ export default function Footer() {
     </footer>
   );
 }
+
