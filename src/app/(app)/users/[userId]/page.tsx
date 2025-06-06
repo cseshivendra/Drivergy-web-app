@@ -204,7 +204,7 @@ export default function UserDetailsPage() {
                 label="Approval Status" 
                 value={user.approvalStatus}
                 valueClassName={
-                    user.approvalStatus === 'Approved' ? 'text-green-500 font-bold' : // Adjusted for better visibility on dark themes
+                    user.approvalStatus === 'Approved' ? 'text-green-500 font-bold' :
                     user.approvalStatus === 'Rejected' ? 'text-destructive font-bold' :
                     'text-yellow-500 font-bold'
                 }
@@ -261,7 +261,7 @@ interface InfoItemProps {
 
 function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
   return (
-    <div className="flex items-start space-x-3 p-2 rounded-md hover:bg-accent/50 transition-colors">
+    <div className="flex items-start space-x-3 p-2 rounded-md hover:bg-primary/10 transition-colors">
       <Icon className="h-5 w-5 text-primary mt-1 shrink-0" />
       <div>
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -270,3 +270,4 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
+
