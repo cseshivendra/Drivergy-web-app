@@ -10,6 +10,7 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import { fetchCustomers, fetchInstructors, fetchRequests, fetchSummaryData } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData } from '@/types';
+import { Users, UserCheck, Bike, Car as FourWheelerIcon } from 'lucide-react'; // Renamed Car to FourWheelerIcon to avoid conflict
 
 export default function DashboardPage() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -85,10 +86,28 @@ export default function DashboardPage() {
           currentFilters={filters}
         />
         
-        <UserTable title="Newly Registered Customers" users={customers} isLoading={loadingCustomers} />
-        <UserTable title="Newly Registered Instructors" users={instructors} isLoading={loadingInstructors} />
-        <RequestTable title="Two-Wheeler Lesson Requests" requests={twoWheelerRequests} vehicleType="Two-Wheeler" isLoading={loadingTwoWheeler} />
-        <RequestTable title="Four-Wheeler Lesson Requests" requests={fourWheelerRequests} vehicleType="Four-Wheeler" isLoading={loadingFourWheeler} />
+        <UserTable 
+          title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Newly Registered Customers</>} 
+          users={customers} 
+          isLoading={loadingCustomers} 
+        />
+        <UserTable 
+          title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />Newly Registered Instructors</>} 
+          users={instructors} 
+          isLoading={loadingInstructors} 
+        />
+        <RequestTable 
+          title={<><Bike className="inline-block mr-3 h-6 w-6 align-middle" />Two-Wheeler Lesson Requests</>} 
+          requests={twoWheelerRequests} 
+          vehicleType="Two-Wheeler" 
+          isLoading={loadingTwoWheeler} 
+        />
+        <RequestTable 
+          title={<><FourWheelerIcon className="inline-block mr-3 h-6 w-6 align-middle" />Four-Wheeler Lesson Requests</>} 
+          requests={fourWheelerRequests} 
+          vehicleType="Four-Wheeler" 
+          isLoading={loadingFourWheeler} 
+        />
       </main>
     </div>
   );

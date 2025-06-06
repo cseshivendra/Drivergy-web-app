@@ -1,4 +1,5 @@
 
+import type { ReactNode } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,7 +7,7 @@ import type { UserProfile } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle } from 'lucide-react';
 
 interface UserTableProps {
-  title: string;
+  title: ReactNode; // Changed from string to ReactNode
   users: UserProfile[];
   isLoading: boolean;
 }
@@ -27,6 +28,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader>
+        {/* CardTitle now renders ReactNode directly */}
         <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
       </CardHeader>
       <CardContent>

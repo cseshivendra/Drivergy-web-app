@@ -1,4 +1,5 @@
 
+import type { ReactNode } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,7 +7,7 @@ import type { LessonRequest, VehicleType } from '@/types';
 import { User, Bike, Car, CalendarDays, HelpCircle, AlertCircle } from 'lucide-react';
 
 interface RequestTableProps {
-  title: string;
+  title: ReactNode; // Changed from string to ReactNode
   requests: LessonRequest[];
   vehicleType: VehicleType;
   isLoading: boolean;
@@ -37,6 +38,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
   return (
     <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader>
+        {/* CardTitle now renders ReactNode directly */}
         <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
       </CardHeader>
       <CardContent>
