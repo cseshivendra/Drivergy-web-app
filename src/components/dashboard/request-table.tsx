@@ -36,7 +36,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
 
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
+    <Card className="shadow-lg border border-primary transition-shadow duration-300">
       <CardHeader>
         {/* CardTitle now renders ReactNode directly */}
         <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
