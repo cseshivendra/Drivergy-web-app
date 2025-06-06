@@ -19,7 +19,7 @@ export default function FilterControls({ onFilterChange, currentFilters }: Filte
   };
 
   return (
-    <Card className="p-6 shadow-md border-foreground/25">
+    <Card className="p-6 shadow-lg border border-primary">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
         <div>
           <Label htmlFor="location-filter" className="text-sm font-medium mb-2 block">Filter by Location</Label>
