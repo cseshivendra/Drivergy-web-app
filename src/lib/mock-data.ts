@@ -96,33 +96,64 @@ export const mockCourses: Course[] = [
 
 
 // Placeholder API functions
-const ARTIFICIAL_DELAY = 500;
+const ARTIFICIAL_DELAY = 300; // Reduced delay for quicker feedback
 
-export const fetchCustomers = async (location?: string, subscription?: string): Promise<UserProfile[]> => {
+export const fetchCustomers = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  console.log(`Fetching customers with location: ${location}, subscription: ${subscription}`);
-  return mockCustomers.filter(c => 
-    (!location || c.location === location) && 
-    (!subscription || c.subscriptionPlan === subscription)
-  );
+  // console.log(`Fetching customers with location: ${location}, subscription: ${subscription}, searchTerm: ${searchTerm}`);
+  
+  let results = mockCustomers;
+
+  if (location) {
+    // Location filter from FilterControls should be exact match for the selected city
+    results = results.filter(c => c.location.toLowerCase() === location.toLowerCase());
+  }
+  if (subscription) {
+    results = results.filter(c => c.subscriptionPlan === subscription);
+  }
+  
+  if (searchTerm && searchTerm.trim() !== '') {
+    const lowerSearchTerm = searchTerm.toLowerCase().trim();
+    results = results.filter(c =>
+      c.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
+      c.name.toLowerCase().includes(lowerSearchTerm) ||
+      c.contact.toLowerCase().includes(lowerSearchTerm) // contact is email
+    );
+  }
+  return results;
 };
 
-export const fetchInstructors = async (location?: string, subscription?: string): Promise<UserProfile[]> => {
+export const fetchInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  console.log(`Fetching instructors with location: ${location}, subscription: ${subscription}`);
-  return mockInstructors.filter(i => 
-    (!location || i.location === location) &&
-    (!subscription || i.subscriptionPlan === subscription)
-  );
+  // console.log(`Fetching instructors with location: ${location}, subscription: ${subscription}, searchTerm: ${searchTerm}`);
+  
+  let results = mockInstructors;
+
+  if (location) {
+    results = results.filter(i => i.location.toLowerCase() === location.toLowerCase());
+  }
+  if (subscription) {
+    results = results.filter(i => i.subscriptionPlan === subscription);
+  }
+
+  if (searchTerm && searchTerm.trim() !== '') {
+    const lowerSearchTerm = searchTerm.toLowerCase().trim();
+    results = results.filter(i =>
+      i.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
+      i.name.toLowerCase().includes(lowerSearchTerm) ||
+      i.contact.toLowerCase().includes(lowerSearchTerm)
+    );
+  }
+  return results;
 };
 
 export const fetchRequests = async (vehicleType: VehicleType): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  console.log(`Fetching requests for vehicle type: ${vehicleType}`);
-  // Find the original customer from mockCustomers to get the simple name
+  // console.log(`Fetching requests for vehicle type: ${vehicleType}`);
+  
   const findCustomerName = (nameInRequest: string): string => {
-    const customer = mockCustomers.find(c => c.name === nameInRequest || c.uniqueId === nameInRequest || `${c.uniqueId} ${c.name}` === nameInRequest);
-    return customer ? customer.name : nameInRequest; // Fallback to original name if not found
+    const customer = mockCustomers.find(c => c.name === nameInRequest); // Match by simple name
+    return customer ? customer.name : nameInRequest; 
   };
 
   if (vehicleType === 'Two-Wheeler') {
@@ -149,4 +180,3 @@ export const fetchCourses = async (): Promise<Course[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   return mockCourses;
 };
-
