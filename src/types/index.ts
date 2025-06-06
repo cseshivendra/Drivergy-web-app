@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export interface UserProfile {
   id: string;
+  uniqueId: string; // Added for CU2025x / TR2025x
   name: string;
   contact: string;
   location: string;
@@ -61,3 +62,4 @@ export interface Course {
   modules: CourseModule[];
   image?: string; // Optional image URL for the course card
 }
+
