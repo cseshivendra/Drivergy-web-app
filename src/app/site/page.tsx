@@ -202,9 +202,6 @@ export default function PortfolioSitePage() {
           
           <div className="relative z-10 p-4 container mx-auto"> {/* Content */}
             {/* Headline removed as per request */}
-            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl drop-shadow-sm">
-              Start your driving journey with a school that makes it easy
-            </p>
             <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button 
                 size="lg" 
@@ -222,6 +219,9 @@ export default function PortfolioSitePage() {
                 <Link href="/site/register/trainer">Register as Trainer</Link>
               </Button>
             </div>
+             <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl drop-shadow-sm">
+              Start your driving journey with a school that makes it easy
+            </p>
           </div>
         </section>
 
