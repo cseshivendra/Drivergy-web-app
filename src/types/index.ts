@@ -23,6 +23,8 @@ export interface SummaryData {
   totalInstructors: number;
   activeSubscriptions: number; 
   pendingRequests: number;
+  totalEarnings: number; // Added
+  totalCertifiedTrainers: number; // Added
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
@@ -39,3 +41,4 @@ export const ComplaintFormSchema = z.object({
 });
 
 export type ComplaintFormValues = z.infer<typeof ComplaintFormSchema>;
+

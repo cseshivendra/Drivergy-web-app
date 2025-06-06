@@ -1,3 +1,4 @@
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType } from '@/types';
 import { addDays, format } from 'date-fns';
 
@@ -35,6 +36,8 @@ export const mockSummaryData: SummaryData = {
   totalInstructors: 12,
   activeSubscriptions: 65,
   pendingRequests: 15,
+  totalEarnings: 12500, // Added mock data
+  totalCertifiedTrainers: 9, // Added mock data
 };
 
 // Placeholder API functions
@@ -70,3 +73,4 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   return mockSummaryData;
 };
+
