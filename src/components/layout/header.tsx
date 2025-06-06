@@ -22,7 +22,7 @@ export default function Header() {
   const { user, signOut, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isMobile = useIsMobile();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, state: sidebarState } = useSidebar(); // Get sidebar state
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -37,16 +37,20 @@ export default function Header() {
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          {isMobile && <SidebarTrigger />}
-          {!isMobile && (
+          {isMobile ? (
+            <SidebarTrigger />
+          ) : (
             <Button variant="ghost" size="icon" onClick={() => toggleSidebar()} className="hidden md:flex">
                <PanelLeft className="h-5 w-5" />
             </Button>
           )}
-           <Link href="/" className="flex items-center space-x-2 md:hidden">
-            <Car className="h-7 w-7 text-primary" />
-            <span className="font-headline text-2xl font-bold text-primary">DriveView</span>
-          </Link>
+          {/* Show logo on mobile OR on desktop if sidebar is collapsed */}
+          {(isMobile || (!isMobile && sidebarState === 'collapsed')) && (
+            <Link href="/" className="flex items-center space-x-2">
+              <Car className="h-7 w-7 text-primary" />
+              <span className="font-headline text-2xl font-bold text-primary">DriveView</span>
+            </Link>
+          )}
         </div>
         <nav className="flex items-center space-x-4">
           <Button
@@ -101,4 +105,3 @@ export default function Header() {
     </header>
   );
 }
-
