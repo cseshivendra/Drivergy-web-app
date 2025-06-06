@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -8,7 +9,7 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import { fetchCustomers, fetchInstructors, fetchRequests, fetchSummaryData } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData } from '@/types';
-import { Locations, SubscriptionPlans } from '@/types';
+import AuthGuard from '@/components/auth/auth-guard';
 
 export default function DashboardPage() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -71,23 +72,25 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header />
-      <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-        <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
-        
-        <SummaryMetrics data={summaryData} isLoading={loadingSummary} />
-        
-        <FilterControls 
-          onFilterChange={handleFilterChange} 
-          currentFilters={filters}
-        />
-        
-        <UserTable title="Newly Registered Customers" users={customers} isLoading={loadingCustomers} />
-        <UserTable title="Newly Registered Instructors" users={instructors} isLoading={loadingInstructors} />
-        <RequestTable title="Two-Wheeler Lesson Requests" requests={twoWheelerRequests} vehicleType="Two-Wheeler" isLoading={loadingTwoWheeler} />
-        <RequestTable title="Four-Wheeler Lesson Requests" requests={fourWheelerRequests} vehicleType="Four-Wheeler" isLoading={loadingFourWheeler} />
-      </main>
-    </div>
+    <AuthGuard>
+      <div className="min-h-screen bg-background text-foreground">
+        <Header />
+        <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+          <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
+          
+          <SummaryMetrics data={summaryData} isLoading={loadingSummary} />
+          
+          <FilterControls 
+            onFilterChange={handleFilterChange} 
+            currentFilters={filters}
+          />
+          
+          <UserTable title="Newly Registered Customers" users={customers} isLoading={loadingCustomers} />
+          <UserTable title="Newly Registered Instructors" users={instructors} isLoading={loadingInstructors} />
+          <RequestTable title="Two-Wheeler Lesson Requests" requests={twoWheelerRequests} vehicleType="Two-Wheeler" isLoading={loadingTwoWheeler} />
+          <RequestTable title="Four-Wheeler Lesson Requests" requests={fourWheelerRequests} vehicleType="Four-Wheeler" isLoading={loadingFourWheeler} />
+        </main>
+      </div>
+    </AuthGuard>
   );
 }
