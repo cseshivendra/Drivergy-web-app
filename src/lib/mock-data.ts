@@ -62,7 +62,6 @@ const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): str
 };
 
 // --- Initial Data Seeding (if localStorage is empty) ---
-// No longer seeding initial sample lesson requests here. They will only be created when new customers are added.
 if (typeof window !== 'undefined') {
   let needsSave = false;
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS) && mockCustomers.length === 0) {
@@ -72,21 +71,13 @@ if (typeof window !== 'undefined') {
       // No initial instructors needed
   }
 
-  // Check if request arrays in localStorage are empty and also the in-memory arrays are empty
   const twoWheelerRequestsEmpty = !window.localStorage.getItem(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS) && mockTwoWheelerRequests.length === 0;
   const fourWheelerRequestsEmpty = !window.localStorage.getItem(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS) && mockFourWheelerRequests.length === 0;
 
   if (twoWheelerRequestsEmpty && fourWheelerRequestsEmpty) {
     console.log('[mock-data] Lesson request arrays are empty in localStorage and memory. No initial samples will be seeded.');
-    // If you wanted to ensure localStorage reflects this "truly empty" state:
-    // setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []); // Redundant if already empty
-    // setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []); // Redundant if already empty
-    // needsSave = true; // Only if you forcefully cleared them above.
   }
-  if (needsSave) { // This 'needsSave' would only be true if other items were seeded.
-    setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
-    setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
-  }
+  // No needsSave trigger here if only requests are empty
 }
 
 
@@ -107,14 +98,74 @@ mockSummaryData.totalInstructors = mockInstructors.length;
 mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
 
 
+const carDrivingModules: CourseModule[] = [
+  { id: 'cdm1', title: 'Introduction to Car Controls', description: 'Understanding the steering wheel, pedals, and gears.', duration: '45 mins', recordedLectureLink: '#' },
+  { id: 'cdm2', title: 'Basic Maneuvers: Starting and Stopping', description: 'Smoothly starting, stopping, and basic parking.', duration: '60 mins', recordedLectureLink: '#' },
+];
+
+const twoWheelerModules: CourseModule[] = [
+  { id: 'twm1', title: 'Understanding Your Two-Wheeler', description: 'Controls, balance, and safety gear.', duration: '40 mins', recordedLectureLink: '#' },
+];
+
+const rtoExamModules: CourseModule[] = [
+  { id: 'rtom1', title: 'Understanding RTO Rules & Regulations', description: 'Key traffic laws and penalties.', duration: '60 mins', recordedLectureLink: '#' },
+];
+
+// Default course data if localStorage is empty
+const defaultCourses: Course[] = [
+  { 
+    id: 'course1', 
+    title: 'Car Driving Mastery', 
+    description: 'Comprehensive car driving lessons from basic controls to advanced road skills and safety.', 
+    icon: Car, 
+    totalEnrolled: 0, totalCertified: 0, modules: carDrivingModules, image: 'https://placehold.co/600x400.png',
+  },
+  { 
+    id: 'course2', 
+    title: 'Two-Wheeler Pro Rider', 
+    description: 'Learn to ride two-wheelers confidently, covering balance, traffic navigation, and safety.',
+    icon: Bike,
+    totalEnrolled: 0, totalCertified: 0, modules: twoWheelerModules, image: 'https://placehold.co/600x400.png',
+  },
+  { 
+    id: 'course3', 
+    title: 'RTO Exam Success Guide', 
+    description: 'Ace your RTO driving test with our detailed course on rules, signs, and mock tests.',
+    icon: FileText,
+    totalEnrolled: 0, totalCertified: 0, modules: rtoExamModules, image: 'https://placehold.co/600x400.png',
+  },
+];
+
+let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, defaultCourses);
+
+const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
+  return coursesToHydrate.map(course => {
+    // Re-assign icon if it's missing or not a function (e.g., after JSON.parse)
+    const needsReassignment = !course.icon || typeof course.icon !== 'function';
+    let newIcon = course.icon;
+
+    if (course.id === 'course1' && needsReassignment) newIcon = Car;
+    else if (course.id === 'course2' && needsReassignment) newIcon = Bike;
+    else if (course.id === 'course3' && needsReassignment) newIcon = FileText;
+    
+    return { ...course, icon: newIcon };
+  });
+};
+
+// Always re-hydrate icons after loading from localStorage or using defaults
+mockCourses = reAssignCourseIcons(mockCourses);
+
+
 const saveDataToLocalStorage = () => {
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.CUSTOMERS, mockCustomers);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.INSTRUCTORS, mockInstructors);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.SUMMARY_DATA, mockSummaryData);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.COURSES, mockCourses); // Save courses too
-  console.log('[mock-data] All data saved to localStorage.');
+  // When saving courses, ensure icons are not directly saved as they are functions
+  const coursesToSave = mockCourses.map(c => ({ ...c, icon: undefined }));
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.COURSES, coursesToSave); 
+  console.log('[mock-data] All data saved to localStorage. Icons are stripped before saving courses.');
 };
 
 
@@ -334,74 +385,33 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
   return mockSummaryData;
 };
 
-const carDrivingModules: CourseModule[] = [
-  { id: 'cdm1', title: 'Introduction to Car Controls', description: 'Understanding the steering wheel, pedals, and gears.', duration: '45 mins', recordedLectureLink: '#' },
-  { id: 'cdm2', title: 'Basic Maneuvers: Starting and Stopping', description: 'Smoothly starting, stopping, and basic parking.', duration: '60 mins', recordedLectureLink: '#' },
-];
-
-const twoWheelerModules: CourseModule[] = [
-  { id: 'twm1', title: 'Understanding Your Two-Wheeler', description: 'Controls, balance, and safety gear.', duration: '40 mins', recordedLectureLink: '#' },
-];
-
-const rtoExamModules: CourseModule[] = [
-  { id: 'rtom1', title: 'Understanding RTO Rules & Regulations', description: 'Key traffic laws and penalties.', duration: '60 mins', recordedLectureLink: '#' },
-];
-
-let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, [
-  { 
-    id: 'course1', 
-    title: 'Car Driving Mastery', 
-    description: 'Comprehensive car driving lessons from basic controls to advanced road skills and safety.', 
-    icon: Car, 
-    totalEnrolled: 0, totalCertified: 0, modules: carDrivingModules, image: 'https://placehold.co/600x400.png',
-  },
-  { 
-    id: 'course2', 
-    title: 'Two-Wheeler Pro Rider', 
-    description: 'Learn to ride two-wheelers confidently, covering balance, traffic navigation, and safety.',
-    icon: Bike,
-    totalEnrolled: 0, totalCertified: 0, modules: twoWheelerModules, image: 'https://placehold.co/600x400.png',
-  },
-  { 
-    id: 'course3', 
-    title: 'RTO Exam Success Guide', 
-    description: 'Ace your RTO driving test with our detailed course on rules, signs, and mock tests.',
-    icon: FileText,
-    totalEnrolled: 0, totalCertified: 0, modules: rtoExamModules, image: 'https://placehold.co/600x400.png',
-  },
-]);
-
-// If courses were loaded from localStorage, their 'icon' property will be lost because functions/React components cannot be serialized.
-// We need to re-assign them here.
-const reAssignCourseIcons = (courses: Course[]): Course[] => {
-  return courses.map(course => {
-    if (course.id === 'course1' && !course.icon) course.icon = Car;
-    if (course.id === 'course2' && !course.icon) course.icon = Bike;
-    if (course.id === 'course3' && !course.icon) course.icon = FileText;
-    return course;
-  });
-};
-mockCourses = reAssignCourseIcons(mockCourses);
-
 
 export const fetchCourses = async (): Promise<Course[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  
+  // Ensure mockCourses icons are correctly hydrated if they were loaded from localStorage
+  const hydratedCourses = reAssignCourseIcons(mockCourses);
+  
   const approvedCustomers = mockCustomers.filter(c => c.approvalStatus === 'Approved').length;
   
-  mockCourses = mockCourses.map(course => {
+  const updatedCourses = hydratedCourses.map(course => {
+    let newTotalEnrolled = course.totalEnrolled;
+    let newTotalCertified = course.totalCertified;
+
     if (course.id === 'course1') {
-      course.totalEnrolled = Math.floor(approvedCustomers * 0.6); 
-      course.totalCertified = Math.floor(course.totalEnrolled * 0.8); 
+      newTotalEnrolled = Math.floor(approvedCustomers * 0.6); 
+      newTotalCertified = Math.floor(newTotalEnrolled * 0.8); 
     } else if (course.id === 'course2') {
-      course.totalEnrolled = Math.floor(approvedCustomers * 0.4); 
-      course.totalCertified = Math.floor(course.totalEnrolled * 0.7);
+      newTotalEnrolled = Math.floor(approvedCustomers * 0.4); 
+      newTotalCertified = Math.floor(newTotalEnrolled * 0.7);
     } else if (course.id === 'course3') {
-      course.totalEnrolled = approvedCustomers; 
-      course.totalCertified = Math.floor(course.totalEnrolled * 0.9);
+      newTotalEnrolled = approvedCustomers; 
+      newTotalCertified = Math.floor(newTotalEnrolled * 0.9);
     }
-    return course;
+    return { ...course, totalEnrolled: newTotalEnrolled, totalCertified: newTotalCertified };
   });
   
+  mockCourses = updatedCourses; // Update the global mockCourses array
   saveDataToLocalStorage(); // Save updated course enrollments
   return [...mockCourses]; // Return a copy
 };
@@ -413,6 +423,11 @@ console.log('[mock-data] Final initial mockInstructors:', JSON.parse(JSON.string
 console.log('[mock-data] Final initial mockTwoWheelerRequests:', JSON.parse(JSON.stringify(mockTwoWheelerRequests)));
 console.log('[mock-data] Final initial mockFourWheelerRequests:', JSON.parse(JSON.stringify(mockFourWheelerRequests)));
 console.log('[mock-data] Final initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
-console.log('[mock-data] Final initial mockCourses:', JSON.parse(JSON.stringify(mockCourses.map(c => ({...c, icon: c.icon ? c.icon.displayName || c.icon.name : undefined}))))); // Log course names for icons
-saveDataToLocalStorage(); // Ensure initial state is saved if anything was seeded or calculated.
+// For logging, create a version of mockCourses where icon is its name or undefined
+const loggableCourses = mockCourses.map(c => {
+    const iconName = c.icon ? (c.icon as any).displayName || (c.icon as any).name || 'UnknownIcon' : undefined;
+    return {...c, icon: iconName};
+});
+console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
+saveDataToLocalStorage(); // Ensure initial state is saved if anything was seeded or calculated.
