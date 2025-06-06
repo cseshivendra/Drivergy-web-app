@@ -28,12 +28,12 @@ import {
   GenderOptions,
   DLStatusOptions,
   PhotoIdTypeOptions,
-  TrainerPreferenceOptions, // Added TrainerPreferenceOptions
+  TrainerPreferenceOptions, 
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
 } from '@/types';
-import { addCustomer, addTrainer } from '@/lib/mock-data'; // Import add functions
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck } from 'lucide-react'; 
+import { addCustomer, addTrainer } from '@/lib/mock-data'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon } from 'lucide-react'; 
 import { useMemo } from 'react';
 
 interface RegistrationFormProps {
@@ -57,7 +57,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         ...base,
         vehiclePreference: undefined,
         subscriptionPlan: '', 
-        trainerPreference: '', // Added trainerPreference
+        trainerPreference: '', 
         dlStatus: '',
         dlNumber: '',
         dlTypeHeld: '',
@@ -214,101 +214,106 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         {userRole === 'customer' && (
           <>
-            <FormField
-              control={form.control}
-              name="vehiclePreference"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select vehicle type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {VehiclePreferenceOptions.map(option => (
-                        <SelectItem key={option} value={option}>
-                          {option === 'Two-Wheeler' && <Bike className="inline-block mr-2 h-4 w-4" />}
-                          {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="subscriptionPlan"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select plan" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SubscriptionPlans.map(plan => (
-                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="trainerPreference"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><UserCheck className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select trainer preference" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {TrainerPreferenceOptions.map(option => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="vehiclePreference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select vehicle type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {VehiclePreferenceOptions.map(option => (
+                          <SelectItem key={option} value={option}>
+                            {option === 'Two-Wheeler' && <Bike className="inline-block mr-2 h-4 w-4" />}
+                            {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
+                            {option}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="subscriptionPlan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select plan" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {SubscriptionPlans.map(plan => (
+                          <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                <FormField
+                control={form.control}
+                name="trainerPreference"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select trainer preference" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {TrainerPreferenceOptions.map(option => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="dlStatus"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select DL status" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {DLStatusOptions.map(option => (
+                            <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
             
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Driving License Details</h3>
-            <FormField
-              control={form.control}
-              name="dlStatus"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select DL status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {DLStatusOptions.map(option => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            
             {(dlStatus === 'Already Have DL' || (form.getValues() as CustomerRegistrationFormValues).dlStatus === 'Already Have DL') && (
               <>
                 <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
