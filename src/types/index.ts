@@ -81,14 +81,14 @@ export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "H
 export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
-// Simplified file field definitions
+// Simplified file field definitions for environment-agnostic schema definition
 const fileField = z.any(); 
-const optionalFileField = z.any().optional();
+const optionalFileField = z.any().optional(); 
 
 const BaseRegistrationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }).max(15).optional().or(z.literal('')),
+  phone: z.string().optional(), 
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
@@ -100,45 +100,28 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
-  dlFileCopy: optionalFileField, 
-}).refine(data => {
-  if (data.dlStatus === "Already Have DL") {
-    return !!data.dlNumber && data.dlNumber.trim() !== "";
-  }
-  return true;
-}, {
-  message: "DL Number is required if you have a DL.",
-  path: ["dlNumber"],
-}).refine(data => {
-  if (data.dlStatus === "Already Have DL") {
-    return !!data.dlTypeHeld && data.dlTypeHeld.trim() !== "";
-  }
-  return true;
-}, {
-  message: "Type of DL Held is required if you have a DL.",
-  path: ["dlTypeHeld"],
+  // dlFileCopy field was already removed in a previous diagnostic step.
+  // If it were here, it would be: dlFileCopy: optionalFileField,
 });
-// Removed the .refine for dlFileCopy presence to avoid server-side issues.
-// This validation (ensuring a file is uploaded if "Already Have DL")
-// would need to be handled client-side in the form component if still required.
+// The .refine blocks for conditional dlNumber and dlTypeHeld have been removed for diagnosis.
 
 
 const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
-  yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative.").max(50, "Years of experience seems too high."),
+  yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative.").max(50, "Years of experience seems too high.").optional(),
   specialization: z.enum(SpecializationOptions, { required_error: "Please select a specialization." }),
   trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Please select vehicle type." }),
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  trainerCertificateFile: fileField, 
+  // trainerCertificateFile: fileField, // This field was already removed for diagnosis.
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  aadhaarCardFile: fileField, 
+  // aadhaarCardFile: fileField, // This field was already removed for diagnosis.
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  drivingLicenseFile: fileField, 
+  // drivingLicenseFile: fileField, // This field was already removed for diagnosis.
 });
 
 
@@ -150,4 +133,3 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
-
