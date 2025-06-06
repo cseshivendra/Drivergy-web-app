@@ -9,19 +9,23 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar, // Correctly import useSidebar
+  useSidebar, 
 } from '@/components/ui/sidebar';
 import { LayoutDashboard, MessageSquareText, Info, Car } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const { state: sidebarState } = useSidebar(); // Get sidebar state for potential dynamic rendering
+  const { state: sidebarState } = useSidebar(); 
 
   const AppLogo = () => (
-    <div className="flex items-center gap-2 px-2 h-12 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-3">
-      <Car className="h-7 w-7 text-primary shrink-0" />
-      <span className="font-headline text-xl font-bold text-primary group-data-[state=collapsed]:hidden">
+    <div className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70">
+      {/* Icon with a subtle background */}
+      <div className="p-1.5 bg-primary/10 rounded-lg group-data-[state=collapsed]:rounded-full transition-all duration-300">
+        <Car className="h-7 w-7 text-primary shrink-0" />
+      </div>
+      {/* Text with slightly adjusted styling */}
+      <span className="font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter">
         DriveView
       </span>
     </div>
@@ -29,7 +33,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
-      <SidebarHeader className="p-0"> {/* Remove default padding if AppLogo handles its own */}
+      <SidebarHeader className="p-0"> 
         <AppLogo />
       </SidebarHeader>
       <SidebarContent className="p-2">
@@ -53,7 +57,7 @@ export default function AppSidebar() {
               tooltip={{ children: "Contact Us", side: "right", align: "center" }}
             >
               <Link href="/contact">
-                <MessageSquareText /> {/* Changed icon for variety */}
+                <MessageSquareText /> 
                 <span>Contact Us</span>
               </Link>
             </SidebarMenuButton>
