@@ -75,6 +75,10 @@ export interface Course {
 // Registration Form Types
 export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] as const;
 export const SpecializationOptions = ["Two-Wheeler", "Car", "Three-Wheeler", "Defensive Driving"] as const;
+export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)", "Car (Automatic)", "Three-Wheeler"] as const;
+
+
+const fileValidation = z.instanceof(FileList).refine(files => files.length > 0, "File is required.");
 
 const BaseRegistrationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
@@ -91,8 +95,19 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
 
 const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
-  yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative").max(50, "Years of experience seems too high"),
+  yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative.").max(50, "Years of experience seems too high."),
   specialization: z.enum(SpecializationOptions, { required_error: "Please select a specialization." }),
+  trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Please select vehicle type." }),
+  vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
+  trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
+  trainerCertificateFile: fileValidation,
+  aadhaarCardNumber: z.string()
+    .min(12, { message: "Aadhaar number must be 12 digits." })
+    .max(12, { message: "Aadhaar number must be 12 digits." })
+    .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
+  aadhaarCardFile: fileValidation,
+  drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
+  drivingLicenseFile: fileValidation,
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
