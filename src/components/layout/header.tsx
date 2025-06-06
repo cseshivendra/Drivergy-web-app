@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -46,8 +47,11 @@ export default function Header() {
           )}
           {(isMobile || (!isMobile && sidebarState === 'collapsed')) && (
             <Link href="/" className="flex items-center space-x-2">
-              <Car className="h-7 w-7 text-primary" />
-              <span className="font-headline text-2xl font-bold text-primary">Driverzy</span>
+              <Car className="h-7 w-7 text-primary animate-car-slide-logo" />
+              <span className={cn(
+                "font-headline text-2xl font-bold text-primary",
+                "animate-typing-driverzy" // Apply typing animation class
+              )}>Driverzy</span>
             </Link>
           )}
         </div>

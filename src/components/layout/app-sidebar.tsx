@@ -26,9 +26,12 @@ export default function AppSidebar() {
   const AppLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
       <div className="p-1.5 bg-primary/10 rounded-lg group-data-[state=collapsed]:rounded-full transition-all duration-300">
-        <Car className="h-7 w-7 text-primary shrink-0" />
+        <Car className="h-7 w-7 text-primary shrink-0 animate-car-slide-logo" />
       </div>
-      <span className="font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter">
+      <span className={cn(
+        "font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter",
+        "animate-typing-driverzy" // Apply typing animation class
+      )}>
         Driverzy
       </span>
     </Link>

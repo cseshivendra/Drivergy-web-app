@@ -1,7 +1,41 @@
 
+@keyframes typing-driverzy {
+  from { width: 0; }
+  to { width: 100%; } /* Expands to the natural width of the content */
+}
+
+@keyframes blink-caret-driverzy {
+  from, to { border-right-color: transparent; }
+  50% { border-right-color: hsl(var(--primary)); }
+}
+
+@keyframes car-slide-in-logo {
+  0% { transform: translateX(-15px); opacity: 0; }
+  100% { transform: translateX(0px); opacity: 1; }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .animate-typing-driverzy {
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
+    vertical-align: bottom; /* Aligns better with an adjacent icon */
+    border-right: .12em solid transparent; /* Caret, animated by blink-caret */
+    animation:
+      typing-driverzy 1.2s steps(8, end) 0.5s forwards, /* 8 characters for "Driverzy" */
+      blink-caret-driverzy 0.75s step-end infinite 0.5s;
+    width: 0; /* Start with no width */
+  }
+
+  .animate-car-slide-logo {
+    animation: car-slide-in-logo 0.7s ease-out 0.2s forwards;
+    opacity: 0; /* Start hidden */
+  }
+}
 
 body {
   font-family: 'Inter', sans-serif;
@@ -57,48 +91,48 @@ body {
   }
 
   .dark {
-    --background: 0 0% 18%; /* Lighter dark gray */
+    --background: 0 0% 12%; /* Darker Gray for background */
     --foreground: 0 0% 95%; /* Near white for text */
 
-    --card: 0 0% 22%; /* Lighter dark gray for cards */
-    --card-foreground: 0 0% 95%; /* Same as main text */
+    --card: 0 0% 16%; /* Slightly lighter dark gray for cards */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 22%; /* Lighter dark gray for popovers */
-    --popover-foreground: 0 0% 95%; /* Same as main text */
+    --popover: 0 0% 16%; /* Slightly lighter dark gray for popovers */
+    --popover-foreground: 0 0% 95%;
 
     --primary: 0 75% 55%; /* Strong, clear red */
-    --primary-foreground: 0 0% 100%; /* White for high contrast on red buttons */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 28%; /* Another lighter dark gray, for secondary elements */
-    --secondary-foreground: 0 0% 85%; /* Slightly less bright white for secondary text */
+    --secondary: 0 0% 22%; /* Another dark gray for secondary elements */
+    --secondary-foreground: 0 0% 85%;
 
-    --muted: 0 0% 33%; /* Lighter dark gray for muted elements */
-    --muted-foreground: 0 0% 65%; /* Medium gray for muted text */
+    --muted: 0 0% 25%; /* Dark gray for muted elements */
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 0 60% 45%; /* Darker, complementary red for accents */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --accent: 0 60% 45%; /* Darker red for accents */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 70% 50%; /* Slightly adjusted destructive for dark if needed */
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 38%; /* Lighter subtle dark gray border */
-    --input: 0 0% 38%; /* Lighter input border, same as general border */
-    --ring: 0 75% 60%; /* Ring color based on the new primary red */
+    --border: 0 0% 30%; /* Subtle dark gray border */
+    --input: 0 0% 30%;
+    --ring: 0 75% 60%;
 
-    --chart-1: 0 75% 55%; /* Primary Red */
-    --chart-2: 0 0% 70%;   /* Light Gray for dark mode charts */
-    --chart-3: 0 60% 45%; /* Darker Red (Accent) */
-    --chart-4: 0 0% 50%;   /* Medium Gray for dark mode charts */
-    --chart-5: 0 80% 65%; /* Brighter Red */
-    --chart-6: 0 0% 90%;   /* Near White for text/lines on dark bg */
+    --chart-1: 0 75% 55%;
+    --chart-2: 0 0% 70%;
+    --chart-3: 0 60% 45%;
+    --chart-4: 0 0% 50%;
+    --chart-5: 0 80% 65%;
+    --chart-6: 0 0% 90%;
 
-    --sidebar-background: 0 0% 20%; /* Lighter dark for sidebar */
+    --sidebar-background: 0 0% 14%; /* Darker gray for sidebar */
     --sidebar-foreground: 0 0% 85%;
     --sidebar-primary: 0 75% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 28%; /* Lighter dark for sidebar accent */
+    --sidebar-accent: 0 0% 22%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 33%; /* Lighter dark for sidebar border */
+    --sidebar-border: 0 0% 25%;
     --sidebar-ring: 0 75% 60%;
   }
 }
