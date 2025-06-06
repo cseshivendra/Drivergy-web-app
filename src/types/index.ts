@@ -81,11 +81,28 @@ export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
 
-// File input validation (reverted to use z.instanceof(FileList), which can cause issues in SSR)
-const fileValidation = z.instanceof(FileList)
-  .refine((files) => files && files.length > 0, { message: "File is required." });
+// File input validation that is environment-agnostic
+const fileValidation = z.any()
+  .refine((value) => value && typeof value.length === 'number' && value.length > 0, {
+    message: "File is required.",
+  })
+  .refine((value) => value && value[0] && value[0].size <= 5 * 1024 * 1024, { // Example: 5MB size limit
+    message: "File size should be less than 5MB.",
+  })
+  .refine((value) => value && value[0] && ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(value[0].type), {
+    message: "Invalid file type. Only PDF, JPG, PNG are allowed.",
+  });
 
-const optionalFileValidation = z.instanceof(FileList).optional();
+const optionalFileValidation = z.any()
+  .optional()
+  .refine((value) => {
+    if (!value || value.length === 0) return true; // Optional, so valid if no file
+    return value[0] && value[0].size <= 5 * 1024 * 1024; // 5MB size limit
+  }, { message: "File size should be less than 5MB." })
+  .refine((value) => {
+    if (!value || value.length === 0) return true; // Optional, so valid if no file
+    return value[0] && ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(value[0].type);
+  }, { message: "Invalid file type. Only PDF, JPG, PNG are allowed." });
 
 
 const BaseRegistrationSchema = z.object({
@@ -122,7 +139,7 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   path: ["dlTypeHeld"],
 }).refine(data => {
   if (data.dlStatus === "Already Have DL") {
-    // Check if dlFileCopy (which can be a FileList) exists and has items
+    // Check if dlFileCopy (which can be a FileList-like object) exists and has items
     return data.dlFileCopy && typeof data.dlFileCopy.length === 'number' && data.dlFileCopy.length > 0;
   }
   return true;
@@ -157,4 +174,3 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
-
