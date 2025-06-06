@@ -57,22 +57,22 @@ body {
   }
 
   .dark {
-    --background: 0 0% 10%; /* Very dark gray / off-black */
+    --background: 0 0% 15%; /* Very dark gray / off-black - Made Lighter */
     --foreground: 0 0% 95%; /* Near white for text */
 
-    --card: 0 0% 15%; /* Slightly lighter dark gray for cards */
+    --card: 0 0% 20%; /* Slightly lighter dark gray for cards - Made Lighter */
     --card-foreground: 0 0% 95%; /* Same as main text */
 
-    --popover: 0 0% 15%; /* Slightly lighter dark gray for popovers */
+    --popover: 0 0% 20%; /* Slightly lighter dark gray for popovers - Made Lighter */
     --popover-foreground: 0 0% 95%; /* Same as main text */
 
     --primary: 0 75% 55%; /* Strong, clear red */
     --primary-foreground: 0 0% 100%; /* White for high contrast on red buttons */
 
-    --secondary: 0 0% 20%; /* Another dark gray, for secondary elements */
+    --secondary: 0 0% 25%; /* Another dark gray, for secondary elements - Made Lighter */
     --secondary-foreground: 0 0% 85%; /* Slightly less bright white for secondary text */
 
-    --muted: 0 0% 25%; /* Dark gray for muted elements */
+    --muted: 0 0% 30%; /* Dark gray for muted elements - Made Lighter */
     --muted-foreground: 0 0% 65%; /* Medium gray for muted text */
 
     --accent: 0 60% 45%; /* Darker, complementary red for accents */
@@ -81,24 +81,24 @@ body {
     --destructive: 0 70% 50%; /* Slightly adjusted destructive for dark if needed */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 30%; /* Subtle dark gray border */
-    --input: 0 0% 30%; /* Input border, same as general border */
+    --border: 0 0% 35%; /* Subtle dark gray border - Made Lighter */
+    --input: 0 0% 35%; /* Input border, same as general border - Made Lighter */
     --ring: 0 75% 60%; /* Ring color based on the new primary red */
 
-    --chart-1: 0 75% 55%;
-    --chart-2: 0 0% 70%;
-    --chart-3: 0 60% 45%;
-    --chart-4: 0 0% 50%;
-    --chart-5: 0 80% 65%;
-    --chart-6: 0 0% 90%;
+    --chart-1: 0 75% 55%; /* Primary Red */
+    --chart-2: 0 0% 70%;   /* Light Gray for dark mode charts */
+    --chart-3: 0 60% 45%; /* Darker Red (Accent) */
+    --chart-4: 0 0% 50%;   /* Medium Gray for dark mode charts */
+    --chart-5: 0 80% 65%; /* Brighter Red */
+    --chart-6: 0 0% 90%;   /* Near White for text/lines on dark bg */
 
-    --sidebar-background: 0 0% 12%;
+    --sidebar-background: 0 0% 18%; /* Made Lighter */
     --sidebar-foreground: 0 0% 85%;
     --sidebar-primary: 0 75% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent: 0 0% 25%; /* Made Lighter */
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 25%;
+    --sidebar-border: 0 0% 30%; /* Made Lighter */
     --sidebar-ring: 0 75% 60%;
   }
 }
