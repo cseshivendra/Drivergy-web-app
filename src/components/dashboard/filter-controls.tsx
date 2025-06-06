@@ -1,10 +1,8 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input'; // Added Input
-import { SubscriptionPlans } from '@/types'; // Locations import removed as it's not directly used for dropdown
+import { SubscriptionPlans, Locations } from '@/types'; // Added Locations import
 import { Card } from '@/components/ui/card';
-import { useState, useEffect } from 'react'; // Added useState and useEffect
 
 interface FilterControlsProps {
   onFilterChange: (filters: { location?: string; subscriptionPlan?: string }) => void;
@@ -12,19 +10,11 @@ interface FilterControlsProps {
 }
 
 export default function FilterControls({ onFilterChange, currentFilters }: FilterControlsProps) {
-  const [locationSearch, setLocationSearch] = useState(currentFilters.location || '');
 
-  // Effect to update local search state if the parent filter changes
-  useEffect(() => {
-    setLocationSearch(currentFilters.location || '');
-  }, [currentFilters.location]);
-
-  const handleLocationInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newLocation = event.target.value;
-    setLocationSearch(newLocation);
+  const handleLocationChange = (value: string) => {
     onFilterChange({ 
       ...currentFilters, 
-      location: newLocation.trim() === '' ? undefined : newLocation.trim() 
+      location: value === 'all' ? undefined : value 
     });
   };
 
@@ -37,14 +27,17 @@ export default function FilterControls({ onFilterChange, currentFilters }: Filte
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
         <div>
           <Label htmlFor="location-filter" className="text-sm font-medium mb-2 block">Filter by Location</Label>
-          <Input
-            id="location-filter"
-            type="text"
-            placeholder="Enter location to filter"
-            value={locationSearch}
-            onChange={handleLocationInputChange}
-            className="w-full"
-          />
+          <Select onValueChange={handleLocationChange} value={currentFilters.location || 'all'}>
+            <SelectTrigger id="location-filter" className="w-full">
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {Locations.map(location => (
+                <SelectItem key={location} value={location}>{location}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <Label htmlFor="subscription-filter" className="text-sm font-medium mb-2 block">Filter by Subscription</Label>
