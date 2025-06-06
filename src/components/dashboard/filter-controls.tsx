@@ -1,6 +1,8 @@
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Locations, SubscriptionPlans } from '@/types';
+import { Card } from '@/components/ui/card';
 
 interface FilterControlsProps {
   onFilterChange: (filters: { location?: string; subscriptionPlan?: string }) => void;
@@ -17,7 +19,7 @@ export default function FilterControls({ onFilterChange, currentFilters }: Filte
   };
 
   return (
-    <Card className="p-6 shadow-sm">
+    <Card className="p-6 shadow-md border-foreground/25">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
         <div>
           <Label htmlFor="location-filter" className="text-sm font-medium mb-2 block">Filter by Location</Label>
@@ -51,6 +53,3 @@ export default function FilterControls({ onFilterChange, currentFilters }: Filte
     </Card>
   );
 }
-
-// Need to add Card to imports if not already present
-import { Card } from '@/components/ui/card';
