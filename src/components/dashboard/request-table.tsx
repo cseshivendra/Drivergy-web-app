@@ -9,33 +9,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonRequest, VehicleType } from '@/types';
-import { LessonRequestStatusOptions } from '@/types'; // Import status options
-import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle, Filter } from 'lucide-react';
+import { LessonRequestStatusOptions, VehiclePreferenceOptions } from '@/types'; // Import status and vehicle options
+import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle, Filter, ListFilter, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RequestTableProps {
   title: ReactNode;
   requests: LessonRequest[];
-  vehicleType: VehicleType;
   isLoading: boolean;
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function RequestTable({ title, requests, vehicleType, isLoading }: RequestTableProps) {
+export default function RequestTable({ title, requests, isLoading }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<LessonRequest['status'] | 'all'>('all');
+  const [vehicleFilter, setVehicleFilter] = useState<VehicleType | 'all'>('all');
 
   const filteredRequests = useMemo(() => {
-    if (statusFilter === 'all') {
-      return requests;
+    let tempRequests = requests;
+    if (vehicleFilter !== 'all') {
+      tempRequests = tempRequests.filter(request => request.vehicleType === vehicleFilter);
     }
-    return requests.filter(request => request.status === statusFilter);
-  }, [requests, statusFilter]);
+    if (statusFilter !== 'all') {
+      tempRequests = tempRequests.filter(request => request.status === statusFilter);
+    }
+    return tempRequests;
+  }, [requests, statusFilter, vehicleFilter]);
 
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when requests data or filter changes
-  }, [requests, statusFilter]);
+    setCurrentPage(1); 
+  }, [requests, statusFilter, vehicleFilter]);
 
   const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -76,26 +80,50 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
 
   return (
     <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
-      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-        <CardTitle className="font-headline text-2xl font-semibold mb-4 sm:mb-0">{title}</CardTitle>
-        <div className="w-full sm:w-auto sm:max-w-xs">
-          <Label htmlFor={`status-filter-${vehicleType.replace(/\s+/g, '-')}`} className="sr-only">Filter by Status</Label>
-          <Select 
-            value={statusFilter} 
-            onValueChange={(value) => setStatusFilter(value as LessonRequest['status'] | 'all')}
-            disabled={isLoading}
-          >
-            <SelectTrigger id={`status-filter-${vehicleType.replace(/\s+/g, '-')}`} className="w-full">
-              <Filter className="inline-block mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Filter by Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {LessonRequestStatusOptions.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
+            <CardTitle className="font-headline text-2xl font-semibold mb-4 sm:mb-0 flex-grow">{title}</CardTitle>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full sm:w-auto sm:max-w-md">
+                <div>
+                    <Label htmlFor="vehicle-type-filter-main" className="sr-only">Filter by Vehicle Type</Label>
+                    <Select 
+                        value={vehicleFilter} 
+                        onValueChange={(value) => setVehicleFilter(value as VehicleType | 'all')}
+                        disabled={isLoading}
+                    >
+                        <SelectTrigger id="vehicle-type-filter-main" className="w-full">
+                        <ListFilter className="inline-block mr-2 h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="Filter by Vehicle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="all">All Vehicle Types</SelectItem>
+                        {/* Filter out "Both" if it exists in VehiclePreferenceOptions for this context */}
+                        {VehiclePreferenceOptions.filter(opt => opt !== "Both").map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="status-filter-main" className="sr-only">Filter by Status</Label>
+                    <Select 
+                        value={statusFilter} 
+                        onValueChange={(value) => setStatusFilter(value as LessonRequest['status'] | 'all')}
+                        disabled={isLoading}
+                    >
+                        <SelectTrigger id="status-filter-main" className="w-full">
+                        <Filter className="inline-block mr-2 h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="Filter by Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        {LessonRequestStatusOptions.map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -104,13 +132,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]"><User className="inline-block mr-2 h-4 w-4" />Customer Name</TableHead>
-                <TableHead>
-                  {vehicleType === 'Two-Wheeler' 
-                    ? <Bike className="inline-block mr-2 h-4 w-4" /> 
-                    : <FourWheelerIcon className="inline-block mr-2 h-4 w-4" />
-                  }
-                  Vehicle Type
-                </TableHead>
+                <TableHead><ListTree className="inline-block mr-2 h-4 w-4" />Vehicle Type</TableHead> {/* Generic Icon */}
                 <TableHead><HelpCircle className="inline-block mr-2 h-4 w-4" />Status</TableHead>
                 <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Requested At</TableHead>
               </TableRow>
@@ -120,7 +142,11 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
                 paginatedRequests.map((request) => (
                   <TableRow key={request.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{request.customerName}</TableCell>
-                    <TableCell>{request.vehicleType}</TableCell>
+                    <TableCell>
+                      {request.vehicleType === 'Two-Wheeler' && <Bike className="inline-block mr-1.5 h-4 w-4 text-muted-foreground" />}
+                      {request.vehicleType === 'Four-Wheeler' && <FourWheelerIcon className="inline-block mr-1.5 h-4 w-4 text-muted-foreground" />}
+                      {request.vehicleType}
+                    </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
                         {request.status}
@@ -135,7 +161,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
                      <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                        <p className="text-lg">
-                         {requests.length === 0 ? `No ${vehicleType.toLowerCase()} requests found.` : `No ${vehicleType.toLowerCase()} requests match the current filter.`}
+                         {requests.length === 0 ? `No lesson requests found.` : `No lesson requests match the current filters.`}
                        </p>
                        <p className="text-sm">
                          {requests.length === 0 ? "Check back later for new lesson requests." : "Try adjusting your filter criteria."}
@@ -190,3 +216,4 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
     </Card>
   );
 }
+

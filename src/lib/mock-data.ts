@@ -31,6 +31,19 @@ export const mockTwoWheelerRequests: LessonRequest[] = [];
 export const mockFourWheelerRequests: LessonRequest[] = []; 
 
 
+// Populate with some initial requests for demonstration
+mockTwoWheelerRequests.push(
+  { id: 'r_tw_1', customerName: 'Rohan Mehra', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(1, 5) },
+  { id: 'r_tw_2', customerName: 'Priya Kulkarni', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(6, 10) }
+);
+
+mockFourWheelerRequests.push(
+  { id: 'r_fw_1', customerName: 'Aarav Sharma', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(2, 6) },
+  { id: 'r_fw_2', customerName: 'Saanvi Pillai', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(10, 15) },
+  { id: 'r_fw_3', customerName: 'Vivaan Singh', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) }
+);
+
+
 export const mockSummaryData: SummaryData = {
   totalCustomers: 0, 
   totalInstructors: 0,
@@ -39,6 +52,11 @@ export const mockSummaryData: SummaryData = {
   totalEarnings: 0, 
   totalCertifiedTrainers: 0, 
 };
+
+// Update summary data based on these initial requests and empty user lists
+mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
+                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+
 
 const carDrivingModules: CourseModule[] = [
   { id: 'cdm1', title: 'Introduction to Car Controls', description: 'Understanding the steering wheel, pedals, and gears.', duration: '45 mins', recordedLectureLink: '#' },
@@ -191,6 +209,22 @@ export const fetchInstructors = async (location?: string, subscription?: string,
   return results;
 };
 
+export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests];
+  
+  if (searchTerm && searchTerm.trim() !== '') {
+    const lowerSearchTerm = searchTerm.toLowerCase().trim();
+    allRequests = allRequests.filter(request =>
+      request.customerName.toLowerCase().includes(lowerSearchTerm)
+    );
+  }
+  console.log(`[mock-data] fetchAllLessonRequests with searchTerm: '${searchTerm}':`, JSON.parse(JSON.stringify(allRequests)));
+  return allRequests;
+};
+
+
+// Kept for potential direct use if needed, but fetchAllLessonRequests is primary now for the combined table.
 export const fetchRequests = async (vehicleType: VehicleType, searchTerm?: string): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   console.log(`[mock-data] fetchRequests called for ${vehicleType} with searchTerm: '${searchTerm}'`);
@@ -214,6 +248,7 @@ export const fetchRequests = async (vehicleType: VehicleType, searchTerm?: strin
   console.log(`[mock-data] fetchRequests for ${vehicleType} (no search term):`, JSON.parse(JSON.stringify(baseRequests)));
   return baseRequests;
 };
+
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
@@ -244,10 +279,12 @@ export const fetchCourses = async (): Promise<Course[]> => {
 
 mockSummaryData.totalCustomers = mockCustomers.length;
 mockSummaryData.totalInstructors = mockInstructors.length;
-mockSummaryData.activeSubscriptions = 0;
-mockSummaryData.pendingRequests = 0;
-mockSummaryData.totalCertifiedTrainers = 0;
+// mockSummaryData.activeSubscriptions is calculated in fetchSummaryData
+// mockSummaryData.pendingRequests is calculated above and in fetchSummaryData
+mockSummaryData.totalCertifiedTrainers = 0; // Initialize or calculate if logic exists
 
 console.log('[mock-data] Initial mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
 console.log('[mock-data] Initial mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
+console.log('[mock-data] Initial mockTwoWheelerRequests:', JSON.parse(JSON.stringify(mockTwoWheelerRequests)));
+console.log('[mock-data] Initial mockFourWheelerRequests:', JSON.parse(JSON.stringify(mockFourWheelerRequests)));
 console.log('[mock-data] Initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));

@@ -6,9 +6,9 @@ import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
-import { fetchCustomers, fetchInstructors, fetchRequests, fetchSummaryData } from '@/lib/mock-data';
+import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData } from '@/types';
-import { Users, UserCheck, Bike, Car as FourWheelerIcon, Search } from 'lucide-react';
+import { Users, UserCheck, Search, ListChecks } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -16,39 +16,31 @@ export default function DashboardPage() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [customers, setCustomers] = useState<UserProfile[]>([]);
   const [instructors, setInstructors] = useState<UserProfile[]>([]);
-  const [twoWheelerRequests, setTwoWheelerRequests] = useState<LessonRequest[]>([]);
-  const [fourWheelerRequests, setFourWheelerRequests] = useState<LessonRequest[]>([]);
+  const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [loadingInstructors, setLoadingInstructors] = useState(true);
-  const [loadingTwoWheeler, setLoadingTwoWheeler] = useState(true);
-  const [loadingFourWheeler, setLoadingFourWheeler] = useState(true);
+  const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState(''); 
 
-  const loadInitialAndRequestData = useCallback(async (currentSearchTerm: string) => {
-    console.log('[DashboardPage] loadInitialAndRequestData called with searchTerm:', currentSearchTerm);
+  const loadInitialDataAndRequests = useCallback(async (currentSearchTerm: string) => {
+    console.log('[DashboardPage] loadInitialDataAndRequests called with searchTerm:', currentSearchTerm);
     setLoadingSummary(true);
     fetchSummaryData().then(data => {
       setSummaryData(data);
       setLoadingSummary(false);
     });
 
-    setLoadingTwoWheeler(true);
-    fetchRequests('Two-Wheeler', currentSearchTerm).then(data => {
-      setTwoWheelerRequests(data);
-      setLoadingTwoWheeler(false);
+    setLoadingAllLessonRequests(true);
+    fetchAllLessonRequests(currentSearchTerm).then(data => {
+      setAllLessonRequests(data);
+      setLoadingAllLessonRequests(false);
     });
-
-    setLoadingFourWheeler(true);
-    fetchRequests('Four-Wheeler', currentSearchTerm).then(data => {
-      setFourWheelerRequests(data);
-      setLoadingFourWheeler(false);
-    });
-  }, []); // Empty dependency array, as it takes searchTerm as a parameter
+  }, []);
 
   const loadFilteredUserData = useCallback(async (
     currentFilters: { location?: string; subscriptionPlan?: string },
@@ -66,14 +58,14 @@ export default function DashboardPage() {
       setInstructors(data);
       setLoadingInstructors(false);
     });
-  }, []); // Empty dependency array, as it takes parameters
+  }, []);
 
 
   useEffect(() => {
     console.log('[DashboardPage] Main useEffect triggered. Filters:', filters, 'SearchTerm:', searchTerm);
-    loadInitialAndRequestData(searchTerm);
+    loadInitialDataAndRequests(searchTerm);
     loadFilteredUserData(filters, searchTerm);
-  }, [loadInitialAndRequestData, loadFilteredUserData, filters, searchTerm]);
+  }, [loadInitialDataAndRequests, loadFilteredUserData, filters, searchTerm]);
 
 
   const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
@@ -125,19 +117,11 @@ export default function DashboardPage() {
           isLoading={loadingInstructors} 
         />
         <RequestTable 
-          title={<><Bike className="inline-block mr-3 h-6 w-6 align-middle" />Bike Requests</>} 
-          requests={twoWheelerRequests} 
-          vehicleType="Two-Wheeler" 
-          isLoading={loadingTwoWheeler} 
-        />
-        <RequestTable 
-          title={<><FourWheelerIcon className="inline-block mr-3 h-6 w-6 align-middle" />Car Requests</>} 
-          requests={fourWheelerRequests} 
-          vehicleType="Four-Wheeler" 
-          isLoading={loadingFourWheeler} 
+          title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Requests</>} 
+          requests={allLessonRequests} 
+          isLoading={loadingAllLessonRequests} 
         />
       </main>
     </div>
   );
 }
-
