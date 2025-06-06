@@ -1,3 +1,93 @@
-export default function Home() {
-  return <></>;
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Header from '@/components/layout/header';
+import SummaryMetrics from '@/components/dashboard/summary-metrics';
+import FilterControls from '@/components/dashboard/filter-controls';
+import UserTable from '@/components/dashboard/user-table';
+import RequestTable from '@/components/dashboard/request-table';
+import { fetchCustomers, fetchInstructors, fetchRequests, fetchSummaryData } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData } from '@/types';
+import { Locations, SubscriptionPlans } from '@/types';
+
+export default function DashboardPage() {
+  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
+  const [customers, setCustomers] = useState<UserProfile[]>([]);
+  const [instructors, setInstructors] = useState<UserProfile[]>([]);
+  const [twoWheelerRequests, setTwoWheelerRequests] = useState<LessonRequest[]>([]);
+  const [fourWheelerRequests, setFourWheelerRequests] = useState<LessonRequest[]>([]);
+
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  const [loadingInstructors, setLoadingInstructors] = useState(true);
+  const [loadingTwoWheeler, setLoadingTwoWheeler] = useState(true);
+  const [loadingFourWheeler, setLoadingFourWheeler] = useState(true);
+
+  const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
+
+  const loadInitialData = useCallback(async () => {
+    setLoadingSummary(true);
+    fetchSummaryData().then(data => {
+      setSummaryData(data);
+      setLoadingSummary(false);
+    });
+
+    setLoadingTwoWheeler(true);
+    fetchRequests('Two-Wheeler').then(data => {
+      setTwoWheelerRequests(data);
+      setLoadingTwoWheeler(false);
+    });
+
+    setLoadingFourWheeler(true);
+    fetchRequests('Four-Wheeler').then(data => {
+      setFourWheelerRequests(data);
+      setLoadingFourWheeler(false);
+    });
+  }, []);
+
+  const loadFilteredData = useCallback(async (currentFilters: { location?: string; subscriptionPlan?: string }) => {
+    setLoadingCustomers(true);
+    fetchCustomers(currentFilters.location, currentFilters.subscriptionPlan).then(data => {
+      setCustomers(data);
+      setLoadingCustomers(false);
+    });
+
+    setLoadingInstructors(true);
+    fetchInstructors(currentFilters.location, currentFilters.subscriptionPlan).then(data => {
+      setInstructors(data);
+      setLoadingInstructors(false);
+    });
+  }, []);
+
+
+  useEffect(() => {
+    loadInitialData();
+    loadFilteredData(filters);
+  }, [loadInitialData, loadFilteredData, filters]);
+
+
+  const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
+    setFilters(newFilters);
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Header />
+      <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+        <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
+        
+        <SummaryMetrics data={summaryData} isLoading={loadingSummary} />
+        
+        <FilterControls 
+          onFilterChange={handleFilterChange} 
+          currentFilters={filters}
+        />
+        
+        <UserTable title="Newly Registered Customers" users={customers} isLoading={loadingCustomers} />
+        <UserTable title="Newly Registered Instructors" users={instructors} isLoading={loadingInstructors} />
+        <RequestTable title="Two-Wheeler Lesson Requests" requests={twoWheelerRequests} vehicleType="Two-Wheeler" isLoading={loadingTwoWheeler} />
+        <RequestTable title="Four-Wheeler Lesson Requests" requests={fourWheelerRequests} vehicleType="Four-Wheeler" isLoading={loadingFourWheeler} />
+      </main>
+    </div>
+  );
 }
