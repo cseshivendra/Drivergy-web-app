@@ -63,21 +63,22 @@ const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): str
 
 // --- Initial Data Seeding (if localStorage is empty) ---
 if (typeof window !== 'undefined') {
-  let needsSave = false;
+  // Check if customers and instructors are empty in localStorage and memory
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS) && mockCustomers.length === 0) {
-      // No initial customers needed
+      // Logic for customers if needed (currently no default customers are seeded)
   }
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.INSTRUCTORS) && mockInstructors.length === 0) {
-      // No initial instructors needed
+      // Logic for instructors if needed (currently no default instructors are seeded)
   }
 
-  const twoWheelerRequestsEmpty = !window.localStorage.getItem(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS) && mockTwoWheelerRequests.length === 0;
-  const fourWheelerRequestsEmpty = !window.localStorage.getItem(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS) && mockFourWheelerRequests.length === 0;
-
-  if (twoWheelerRequestsEmpty && fourWheelerRequestsEmpty) {
-    console.log('[mock-data] Lesson request arrays are empty in localStorage and memory. No initial samples will be seeded.');
+  // For lesson requests, they are initialized as empty or from localStorage.
+  // No automatic seeding of sample lesson requests is performed by this script.
+  // The following log confirms this if both are initially empty (no localStorage data and no defaults).
+  if (mockTwoWheelerRequests.length === 0 && mockFourWheelerRequests.length === 0 && 
+      !window.localStorage.getItem(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS) &&
+      !window.localStorage.getItem(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS)) {
+    console.log('[mock-data] Lesson request arrays are initially empty (no data in localStorage and no default samples seeded by the script).');
   }
-  // No needsSave trigger here if only requests are empty
 }
 
 
@@ -140,8 +141,8 @@ let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   return coursesToHydrate.map(course => {
-    // Re-assign icon if it's missing or not a function (e.g., after JSON.parse)
-    const needsReassignment = !course.icon || typeof course.icon !== 'function';
+    // Re-assign icon if it's missing, not a function, or an empty object (after JSON.parse)
+    const needsReassignment = !course.icon || typeof course.icon !== 'function' || (typeof course.icon === 'object' && Object.keys(course.icon).length === 0) ;
     let newIcon = course.icon;
 
     if (course.id === 'course1' && needsReassignment) newIcon = Car;
@@ -246,7 +247,7 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
   return newTrainer;
 };
 
-export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
+export const updateUserApprovalStatus = async (userId: string, userName: string, newStatus: ApprovalStatusType): Promise<boolean> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2)); 
   let userFound = false;
   
@@ -431,3 +432,4 @@ const loggableCourses = mockCourses.map(c => {
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
 saveDataToLocalStorage(); // Ensure initial state is saved if anything was seeded or calculated.
+
