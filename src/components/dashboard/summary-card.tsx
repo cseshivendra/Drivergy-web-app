@@ -1,12 +1,13 @@
 
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react'; // Keep for type documentation if needed, or remove if React.ElementType is sufficient
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import type React from 'react';
 
 interface SummaryCardProps {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: React.ElementType; // Changed from LucideIcon to React.ElementType
   description?: string;
   className?: string;
 }

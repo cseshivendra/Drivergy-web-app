@@ -1,9 +1,34 @@
 
-import { Users, UserCheck, ListChecks, CreditCard, DollarSign, Award } from 'lucide-react'; // Added DollarSign, Award
+import { Users, UserCheck, ListChecks, CreditCard, Award } from 'lucide-react'; // DollarSign removed
 import SummaryCard from './summary-card';
 import type { SummaryData } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import type React from 'react';
 
+// Custom Rupee Icon SVG component
+const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="none"
+    {...props}
+  >
+    <text
+      x="50%"
+      y="50%"
+      dominantBaseline="middle"
+      textAnchor="middle"
+      fontSize="18" // Adjusted for visual prominence within 24x24 viewbox
+      fontFamily="system-ui, sans-serif"
+      fill="currentColor"
+    >
+      ₹
+    </text>
+  </svg>
+);
 
 interface SummaryMetricsProps {
   data: SummaryData | null;
@@ -33,7 +58,7 @@ export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps)
       <SummaryCard 
         title="Total Earning" 
         value={`₹${data.totalEarnings.toLocaleString('en-IN')}`} 
-        icon={DollarSign} 
+        icon={RupeeIconSvg} // Used RupeeIconSvg here
         description="Gross revenue generated" 
       />
       <SummaryCard 
@@ -45,4 +70,3 @@ export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps)
     </div>
   );
 }
-
