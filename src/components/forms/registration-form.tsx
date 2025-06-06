@@ -213,28 +213,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           <>
             <FormField
               control={form.control}
-              name="subscriptionPlan"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select plan" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SubscriptionPlans.map(plan => (
-                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="vehiclePreference"
               render={({ field }) => (
                 <FormItem>
@@ -252,6 +230,28 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                           {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
                           {option}
                         </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subscriptionPlan"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select plan" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SubscriptionPlans.map(plan => (
+                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
