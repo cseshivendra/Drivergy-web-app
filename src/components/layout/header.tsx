@@ -22,7 +22,7 @@ export default function Header() {
   const { user, signOut, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isMobile = useIsMobile();
-  const { toggleSidebar, state: sidebarState } = useSidebar(); // Get sidebar state
+  const { toggleSidebar, state: sidebarState } = useSidebar(); 
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -44,11 +44,10 @@ export default function Header() {
                <PanelLeft className="h-5 w-5" />
             </Button>
           )}
-          {/* Show logo on mobile OR on desktop if sidebar is collapsed */}
           {(isMobile || (!isMobile && sidebarState === 'collapsed')) && (
             <Link href="/" className="flex items-center space-x-2">
               <Car className="h-7 w-7 text-primary" />
-              <span className="font-headline text-2xl font-bold text-primary">DriveView</span>
+              <span className="font-headline text-2xl font-bold text-primary">Driverzy</span>
             </Link>
           )}
         </div>

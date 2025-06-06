@@ -14,7 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen } from 'lucide-react'; // Added BookOpen
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +28,7 @@ export default function AppSidebar() {
         <Car className="h-7 w-7 text-primary shrink-0" />
       </div>
       <span className="font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter">
-        DriveView
+        Driverzy
       </span>
     </div>
   );
@@ -62,7 +62,7 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={pathname === '/courses'} // Updated for courses
+              isActive={pathname === '/courses'}
               tooltip={{ children: "Courses", side: "right", align: "center" }}
             >
               <Link href="/courses">

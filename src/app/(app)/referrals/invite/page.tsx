@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, MessageSquare, Smartphone, Copy, Gift, Share2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
-export default function InviteReferralsPage() { // Renamed component
+export default function InviteReferralsPage() { 
   const { toast } = useToast();
   const { user } = useAuth();
   const [email, setEmail] = useState('');
@@ -20,15 +20,14 @@ export default function InviteReferralsPage() { // Renamed component
     if (user?.uid) {
       return `REF-${user.uid.substring(0, 6).toUpperCase()}`;
     }
-    return 'REF-GUEST123'; // Fallback for guest or loading
+    return 'REF-GUEST123'; 
   }, [user?.uid]);
 
   const referralUrl = useMemo(() => {
-    // Ensure this URL matches your routing, e.g., a public sign-up page
-    return `https://driveview.example.com/signup?ref=${referralCode}`;
+    return `https://driverzy.example.com/signup?ref=${referralCode}`;
   }, [referralCode]);
 
-  const referralMessage = `Hey! I'm inviting you to join DriveView, a great platform for driving instructors and students. Sign up using my referral link: ${referralUrl}`;
+  const referralMessage = `Hey! I'm inviting you to join Driverzy, a great platform for driving instructors and students. Sign up using my referral link: ${referralUrl}`;
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(referralUrl)
@@ -58,7 +57,6 @@ export default function InviteReferralsPage() { // Renamed component
       });
       return;
     }
-    // In a real app, you'd trigger a backend service or AI flow here
     console.log(`Simulating sending email to: ${email} with message: ${referralMessage}`);
     toast({
       title: 'Email Invite Sent (Simulated)',
@@ -93,7 +91,7 @@ export default function InviteReferralsPage() { // Renamed component
           </div>
           <CardTitle className="font-headline text-3xl font-bold text-primary">Invite Friends & Earn Rewards</CardTitle>
           <CardDescription className="text-lg">
-            Share DriveView with your friends and colleagues. Let them know about the best platform for driving education!
+            Share Driverzy with your friends and colleagues. Let them know about the best platform for driving education!
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

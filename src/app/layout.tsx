@@ -6,7 +6,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/context/theme-context';
 
 export const metadata: Metadata = {
-  title: 'DriveView',
+  title: 'Driverzy',
   description: 'Admin Dashboard for Driving School',
 };
 

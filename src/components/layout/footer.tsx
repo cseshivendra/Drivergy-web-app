@@ -10,12 +10,12 @@ export default function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background py-6 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 text-center text-sm text-muted-foreground md:flex-row">
-        <p>&copy; {currentYear} DriveView. All rights reserved.</p>
+        <p>&copy; {currentYear} Driverzy. All rights reserved.</p>
         <div className="flex items-center gap-x-4 gap-y-2 flex-wrap justify-center">
           <span className="font-semibold flex items-center gap-1.5">
             <svg
-              className="h-4 w-6" // Adjusted size for flag aspect ratio
-              viewBox="0 0 24 16" // ViewBox for the flag proportions
+              className="h-4 w-6"
+              viewBox="0 0 24 16"
               xmlns="http://www.w3.org/2000/svg"
             >
               <rect width="24" height="5.33" className="fill-saffron" />
@@ -26,7 +26,7 @@ export default function Footer() {
             Made in India
           </span>
           <span className="font-semibold flex items-center gap-1.5">
-            <Rocket className="h-4 w-4" /> {/* Default color */}
+            <Rocket className="h-4 w-4" />
             Startup India
           </span>
         </div>
