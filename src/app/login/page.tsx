@@ -1,23 +1,25 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon } from 'lucide-react'; // Added UserCircle, Sun, Moon
+import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, GraduationCap, DollarSign } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
-import Image from 'next/image';
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInAsGuest, loading } = useAuth(); // Added signInAsGuest
+  const { user, signInWithGoogle, signInAsGuest, loading } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (user && !loading) {
       router.push('/');
     }
@@ -29,7 +31,7 @@ export default function LoginPage() {
     </svg>
   );
 
-  if (loading || user) {
+  if (loading || (user && isMounted)) { // Ensure redirect only after mount and user check
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Car className="h-16 w-16 animate-pulse text-primary" />
@@ -38,87 +40,108 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
-      <div className="absolute top-4 right-4 z-20">
+    <div className="relative min-h-screen w-full">
+      <Image
+        src="https://placehold.co/1920x1080.png"
+        alt="Scenic driving route"
+        layout="fill"
+        objectFit="cover"
+        className="z-0 opacity-50 dark:opacity-30"
+        data-ai-hint="road learning earning"
+        priority
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background z-10"></div>
+
+      <div className="absolute top-6 right-6 z-30">
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           onClick={toggleTheme}
           aria-label="Toggle theme"
+          className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
         >
           {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
       </div>
-       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
-       <Card className="w-full max-w-md shadow-2xl z-10 rounded-xl border-border/50">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex items-center justify-center">
-            <Car className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="font-headline text-3xl font-bold text-primary">Welcome to DriveView</CardTitle>
-          <CardDescription className="text-muted-foreground pt-1">Sign in to access your dashboard</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4"> {/* Adjusted space-y */}
-          <Button 
-            variant="outline" 
-            className="w-full h-12 text-base border-border hover:bg-accent/50"
-            onClick={signInWithGoogle}
-            disabled={loading}
-          >
-            <GoogleIcon /> Sign in with Google
-          </Button>
 
-          <Button 
-            variant="outline" 
-            className="w-full h-12 text-base border-border hover:bg-accent/50"
-            onClick={signInAsGuest}
-            disabled={loading}
-          >
-            <UserCircle className="mr-2 h-5 w-5" /> Sign in as Guest
-          </Button>
-          
-          <div className="relative my-4"> {/* Adjusted margin */}
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+      <div className="relative z-20 flex min-h-screen flex-col items-center justify-center p-4">
+        <Card className={`
+          w-full max-w-md bg-card/90 backdrop-blur-md shadow-2xl rounded-xl border-border/50
+          transition-all duration-700 ease-out
+          ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}
+        `}>
+          <CardHeader className="text-center p-6 space-y-2">
+            <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
+              <Car className="h-16 w-16 text-primary animate-pulse" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
+            <CardTitle className="font-headline text-3xl font-bold text-primary">Steer Your Success</CardTitle>
+            <p className="text-foreground/90 font-semibold text-lg">Learn to Drive & Earn Your Way</p>
+            <CardDescription className="text-muted-foreground pt-1 px-2">
+              Sign in to access your dashboard and unlock new opportunities.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-2">
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base border-border hover:bg-accent/50"
+              onClick={signInWithGoogle}
+              disabled={loading}
+            >
+              <GoogleIcon /> Sign in with Google
+            </Button>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="phone" className="text-muted-foreground">Phone Number (OTP)</Label>
-              <div className="relative mt-1">
-                 <Input 
-                  id="phone" 
-                  type="tel" 
-                  placeholder="Enter your phone number" 
-                  className="h-12 text-base pl-10"
-                  disabled 
-                />
-                <Smartphone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base border-border hover:bg-accent/50"
+              onClick={signInAsGuest}
+              disabled={loading}
+            >
+              <UserCircle className="mr-2 h-5 w-5" /> Sign in as Guest
+            </Button>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
               </div>
             </div>
-            <Button 
-              variant="default" 
-              className="w-full h-12 text-base bg-primary hover:bg-primary/90"
-              disabled // OTP not implemented
-            >
-              Send OTP
-            </Button>
-          </div>
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm flex items-start">
-            <ShieldAlert className="h-5 w-5 mr-2 shrink-0"/>
-            <span>OTP login is currently under development. Please use Google Sign-In or Guest Sign-In.</span>
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-center">
+
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="phone" className="text-muted-foreground text-sm">Phone Number (OTP)</Label>
+                <div className="relative mt-1">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    className="h-12 text-base pl-10"
+                    disabled
+                  />
+                  <Smartphone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                </div>
+              </div>
+              <Button
+                variant="default"
+                className="w-full h-12 text-base bg-primary hover:bg-primary/90"
+                disabled // OTP not implemented
+              >
+                Send OTP
+              </Button>
+            </div>
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm flex items-start">
+              <ShieldAlert className="h-5 w-5 mr-2 shrink-0" />
+              <span>OTP login is currently under development. Please use Google Sign-In or Guest Sign-In.</span>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-center pt-4 pb-6">
             <p className="text-xs text-muted-foreground">
-                By signing in, you agree to our Terms of Service.
+              By signing in, you agree to our Terms of Service.
             </p>
-        </CardFooter>
-      </Card>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
