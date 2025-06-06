@@ -1,3 +1,4 @@
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -24,5 +25,6 @@ export interface SummaryData {
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
 
-export const Locations = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"];
+export const Locations = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Surat"];
 export const SubscriptionPlans = ["Basic", "Premium", "Gold"];
+
