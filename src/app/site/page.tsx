@@ -143,32 +143,40 @@ export default function PortfolioSitePage() {
       {/* Main Content */}
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/5 via-background to-background overflow-hidden">
+        <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
             <Image
-              src="https://placehold.co/1920x1080.png"
-              alt="Animated driving school background"
+              src="https://placehold.co/1920x1080.png" 
+              alt="Scenic road with a learner car"
               layout="fill"
               objectFit="cover"
-              className="animate-hero-bg"
-              data-ai-hint="driving learning road abstract"
+              data-ai-hint="learner car road journey"
               priority
             />
+            <div className="absolute inset-0 bg-black/50"></div> {/* Dark overlay */}
           </div>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <Car className="h-24 w-24 text-primary mx-auto mb-6 animate-pulse" />
-            <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-primary">
-              Welcome to Driverzy
+          <div className="relative z-10 p-4 container mx-auto">
+            <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-md">
+              We've all been there-nervous, clueless, and ready to learn
             </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-muted-foreground">
-              Master the road with our expert-led driving courses and personalized training programs.
+            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl drop-shadow-sm">
+              Start your driving journey with a school that makes it easy
             </p>
             <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
-                <Link href="#courses">Explore Our Courses</Link>
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
+                asChild
+              >
+                <Link href="#courses">Explore Our Courses &rarr;</Link>
               </Button>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto" asChild>
-                <Link href="#contact">Contact Us</Link>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3 text-base" 
+                asChild
+              >
+                <Link href="/site/register/trainer">Register as Trainer</Link>
               </Button>
             </div>
           </div>
