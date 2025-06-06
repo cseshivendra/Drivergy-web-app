@@ -14,7 +14,7 @@ export default function Footer() {
         <div className="flex items-center gap-x-4 gap-y-2 flex-wrap justify-center">
           <span className="font-semibold flex items-center gap-1.5">
             <svg
-              className="h-4 w-4 text-blue-600"
+              className="h-4 w-4 text-saffron" // Changed from text-blue-600
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
