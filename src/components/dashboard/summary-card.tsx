@@ -22,7 +22,7 @@ export default function SummaryCard({ title, value, icon: Icon, description, cla
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div>
           <CardTitle className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{title}</CardTitle>
-          <div className="text-4xl font-extrabold text-foreground mt-1">{value}</div>
+          <div className="text-4xl font-semibold text-foreground mt-1">{value}</div>
         </div>
         <div className="p-3 bg-primary/10 rounded-lg">
           <Icon className="h-7 w-7 text-primary" />
@@ -36,3 +36,4 @@ export default function SummaryCard({ title, value, icon: Icon, description, cla
     </Card>
   );
 }
+
