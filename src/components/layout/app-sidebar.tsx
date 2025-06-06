@@ -9,22 +9,18 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  useSidebar, 
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const { state: sidebarState } = useSidebar(); 
 
   const AppLogo = () => (
     <div className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70">
-      {/* Icon with a subtle background */}
       <div className="p-1.5 bg-primary/10 rounded-lg group-data-[state=collapsed]:rounded-full transition-all duration-300">
         <Car className="h-7 w-7 text-primary shrink-0" />
       </div>
-      {/* Text with slightly adjusted styling */}
       <span className="font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter">
         DriveView
       </span>
@@ -47,6 +43,18 @@ export default function AppSidebar() {
               <Link href="/">
                 <LayoutDashboard />
                 <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/referrals'}
+              tooltip={{ children: "Referrals", side: "right", align: "center" }}
+            >
+              <Link href="/referrals">
+                <Gift />
+                <span>Referrals</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -76,19 +84,6 @@ export default function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
-      {/* Example Footer if needed later
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Settings", side: "right", align: "center" }}>
-              <Settings />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      */}
     </Sidebar>
   );
 }
-
