@@ -37,10 +37,10 @@ export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps)
         description="Gross revenue generated" 
       />
       <SummaryCard 
-        title="Certified Trainers" 
+        title="Certified Customer" 
         value={data.totalCertifiedTrainers} 
         icon={Award} 
-        description="Verified & certified instructors" 
+        description="Verified & certified customers" 
       />
     </div>
   );
