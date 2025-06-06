@@ -63,7 +63,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     console.log('[DashboardPage] Main useEffect triggered. Filters:', filters, 'SearchTerm:', searchTerm);
+    // Load summary and lesson requests (which might depend on search term if customerName is searched)
     loadInitialDataAndRequests(searchTerm);
+    // Load user data based on both filters and search term
     loadFilteredUserData(filters, searchTerm);
   }, [loadInitialDataAndRequests, loadFilteredUserData, filters, searchTerm]);
 
@@ -77,6 +79,17 @@ export default function DashboardPage() {
     console.log('[DashboardPage] handleSearch called. TempSearchTerm:', tempSearchTerm);
     setSearchTerm(tempSearchTerm.trim());
   };
+
+  const handleUserActioned = () => {
+    console.log('[DashboardPage] handleUserActioned called. Re-fetching data.');
+    // Re-fetch summary data as counts might change (e.g., active subscriptions if that's tied to approval)
+    fetchSummaryData().then(data => setSummaryData(data));
+    // Re-fetch user data as pending lists will change
+    loadFilteredUserData(filters, searchTerm);
+     // Re-fetch lesson requests if needed (e.g. if summaryData.pendingRequests is directly shown from there)
+    fetchAllLessonRequests(searchTerm).then(data => setAllLessonRequests(data));
+  };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -110,11 +123,13 @@ export default function DashboardPage() {
           title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
           users={customers} 
           isLoading={loadingCustomers} 
+          onUserActioned={handleUserActioned}
         />
         <UserTable 
           title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
           users={instructors} 
           isLoading={loadingInstructors} 
+          onUserActioned={handleUserActioned}
         />
         <RequestTable 
           title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Requests</>} 

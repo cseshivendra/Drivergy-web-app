@@ -2,6 +2,9 @@
 import { z } from 'zod';
 import type React from 'react';
 
+export const ApprovalStatusOptions = ["Pending", "Approved", "Rejected"] as const;
+export type ApprovalStatusType = typeof ApprovalStatusOptions[number];
+
 export interface UserProfile {
   id: string;
   uniqueId: string;
@@ -10,7 +13,8 @@ export interface UserProfile {
   location: string;
   subscriptionPlan: string;
   registrationTimestamp: string;
-  vehicleInfo?: string; // Added field for vehicle preference/type
+  vehicleInfo?: string;
+  approvalStatus: ApprovalStatusType; // Added field
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -28,7 +32,7 @@ export interface SummaryData {
   activeSubscriptions: number;
   pendingRequests: number;
   totalEarnings: number;
-  totalCertifiedTrainers: number;
+  totalCertifiedTrainers: number; // This might relate to 'Approved' trainers/customers
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
@@ -43,7 +47,7 @@ export const Locations = [
   "Amritsar", "Allahabad", "Ranchi", "Howrah", "Coimbatore", "Jabalpur", "Gwalior",
   "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh"
 ];
-export const SubscriptionPlans = ["Basic", "Premium", "Gold"];
+export const SubscriptionPlans = ["Basic", "Premium", "Gold"]; // "Trainer" is a role, not typically a plan customers choose.
 
 // Schema for Contact Us / Complaint Form
 export const ComplaintFormSchema = z.object({
@@ -83,8 +87,8 @@ export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "H
 export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
-// Use z.any() for file fields in schema definition to avoid server-side issues
-const fileField = z.any(); // Represents a FileList-like object
+// Use z.any() for file fields to avoid server-side issues during initial schema parsing
+const fileField = z.any(); 
 const optionalFileField = z.any().optional();
 
 const BaseRegistrationSchema = z.object({
@@ -97,7 +101,7 @@ const BaseRegistrationSchema = z.object({
 
 const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   userRole: z.literal('customer'),
-  subscriptionPlan: z.string().min(1, { message: "Please select a subscription plan." }),
+  subscriptionPlan: z.enum(SubscriptionPlans, { required_error: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
@@ -113,14 +117,14 @@ const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  trainerCertificateFile: fileField,
+  trainerCertificateFile: fileField.refine(val => val && val.length > 0, "Trainer certificate is required."),
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  aadhaarCardFile: fileField,
+  aadhaarCardFile: fileField.refine(val => val && val.length > 0, "Aadhaar card copy is required."),
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  drivingLicenseFile: fileField,
+  drivingLicenseFile: fileField.refine(val => val && val.length > 0, "Driving license copy is required."),
 });
 
 
