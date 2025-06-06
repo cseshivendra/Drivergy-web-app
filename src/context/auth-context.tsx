@@ -2,69 +2,118 @@
 'use client';
 
 import type { User } from 'firebase/auth';
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth, googleProvider } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
-import Loading from '@/app/loading';
+
+// Define a GuestUser type
+export interface GuestUser {
+  uid: string;
+  displayName: string;
+  email: string | null;
+  photoURL: string | null;
+  isGuest: true;
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: User | GuestUser | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInAsGuest: () => void;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | GuestUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Ref to hold the current user state for access within onAuthStateChanged
+  const userStateRef = useRef(user);
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    userStateRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const currentAppUser = userStateRef.current;
+      const isCurrentAppUserGuest = 
+        currentAppUser && 
+        typeof currentAppUser === 'object' && 
+        'isGuest' in currentAppUser && 
+        currentAppUser.isGuest;
+
+      if (firebaseUser) {
+        setUser(firebaseUser); // Firebase user takes precedence
+      } else {
+        // No Firebase user. If current user is NOT a guest, then they are logged out.
+        // If current user IS a guest, onAuthStateChanged(null) should not log them out.
+        if (!isCurrentAppUserGuest) {
+          setUser(null);
+        }
+      }
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, []); // Empty dependency array is correct for onAuthStateChanged listener setup.
 
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
       // User state will be updated by onAuthStateChanged
-      // router.push('/'); // Redirect is handled by AuthGuard or login page useEffect
     } catch (error) {
       console.error("Error signing in with Google:", error);
-      // Handle error (e.g., show a toast notification)
-    } finally {
-      // setLoading(false); // Auth state change will set loading to false
-      // Let onAuthStateChanged handle final loading state to ensure user is set
+      setLoading(false); // Ensure loading is false on error
     }
+    // setLoading(false) is handled by onAuthStateChanged
+  };
+
+  const signInAsGuest = () => {
+    setLoading(true);
+    const guestUser: GuestUser = {
+      uid: `guest-${new Date().getTime()}`,
+      displayName: 'Guest User',
+      email: null,
+      photoURL: null, 
+      isGuest: true,
+    };
+    setUser(guestUser);
+    setLoading(false);
+    // LoginPage useEffect will handle redirect to '/'
   };
 
   const signOut = async () => {
     setLoading(true);
     try {
-      await firebaseSignOut(auth);
-      // setUser(null); // Handled by onAuthStateChanged
-      router.push('/login'); // Redirect to login page after sign out
+      const isGuestUser = user && typeof user === 'object' && 'isGuest' in user && user.isGuest;
+
+      if (isGuestUser) {
+        setUser(null); // Clear guest user
+        setLoading(false); // Manually set loading for guest
+      } else if (user) { // If it's a Firebase user
+        await firebaseSignOut(auth);
+        // onAuthStateChanged will handle setUser(null) and setLoading(false)
+      } else {
+        // No user to sign out, perhaps already null
+        setLoading(false);
+      }
+      router.push('/login');
     } catch (error) {
       console.error("Error signing out:", error);
-      // Handle error
-    } finally {
-      // setLoading(false); // Handled by onAuthStateChanged
+      // Ensure loading is false on error, especially if Firebase signout fails
+      const isGuestUser = user && typeof user === 'object' && 'isGuest' in user && user.isGuest;
+      if (!isGuestUser) {
+          setLoading(false);
+      }
     }
   };
 
-  // The problematic conditional rendering that caused hydration mismatch is removed.
-  // AuthGuard is responsible for showing Loading for protected routes during auth check.
-  // LoginPage has its own loading/redirect logic.
-
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut }}>
       {children}
     </AuthContext.Provider>
   );
