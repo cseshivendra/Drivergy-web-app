@@ -15,10 +15,20 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea'; // Keep for other uses if any, not for specialization anymore
 import { useToast } from "@/hooks/use-toast";
-import { RegistrationFormSchema, type RegistrationFormValues, Locations, SubscriptionPlans, VehiclePreferenceOptions } from '@/types';
+import {
+  RegistrationFormSchema,
+  type RegistrationFormValues,
+  Locations,
+  SubscriptionPlans,
+  VehiclePreferenceOptions,
+  SpecializationOptions,
+  type CustomerRegistrationFormValues,
+  type TrainerRegistrationFormValues,
+} from '@/types';
 import { User, UserCog, Car, Bike } from 'lucide-react';
+import { useMemo } from 'react';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -27,16 +37,28 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
 
-  const defaultValues: Partial<RegistrationFormValues> = {
-    userRole: userRole,
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    subscriptionPlan: '',
-    ...(userRole === 'customer' ? { vehiclePreference: undefined } : {}),
-    ...(userRole === 'trainer' ? { yearsOfExperience: undefined, specialization: '' } : {}),
-  };
+  const defaultValues = useMemo((): RegistrationFormValues => {
+    const base = {
+      userRole: userRole,
+      name: '',
+      email: '',
+      phone: '',
+      location: '',
+    };
+    if (userRole === 'customer') {
+      return {
+        ...base,
+        subscriptionPlan: '',
+        vehiclePreference: undefined, // React Hook Form will use the first option if not set, or Zod will require it
+      } as CustomerRegistrationFormValues;
+    } else { // trainer
+      return {
+        ...base,
+        yearsOfExperience: undefined,
+        specialization: undefined, // React Hook Form will use the first option if not set, or Zod will require it
+      } as TrainerRegistrationFormValues;
+    }
+  }, [userRole]);
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -49,7 +71,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
       description: `${data.name} has been successfully registered (simulated).`,
     });
-    form.reset(defaultValues); 
+    form.reset(defaultValues);
   }
 
   return (
@@ -103,7 +125,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Location</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select location" />
@@ -119,28 +141,30 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="subscriptionPlan"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Subscription Plan</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select plan" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SubscriptionPlans.map(plan => (
-                      <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {userRole === 'customer' && (
+            <FormField
+              control={form.control}
+              name="subscriptionPlan"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subscription Plan</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select plan" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SubscriptionPlans.map(plan => (
+                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         {userRole === 'customer' && (
@@ -150,7 +174,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Vehicle Preference</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select vehicle type" />
@@ -192,10 +216,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               name="specialization"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Specialization (e.g., Car, Bike, Defensive Driving)</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Enter trainer's specialization" {...field} />
-                  </FormControl>
+                  <FormLabel>Specialization</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select specialization" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SpecializationOptions.map(spec => (
+                        <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -205,7 +238,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         <div className="flex justify-end pt-2">
           <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Submitting...' : 
+            {form.formState.isSubmitting ? 'Submitting...' :
               userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
           </Button>
         </div>
