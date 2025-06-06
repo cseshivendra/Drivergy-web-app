@@ -62,30 +62,28 @@ const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): str
 };
 
 // --- Initial Data Seeding (if localStorage is empty) ---
+// No longer seeding initial sample lesson requests here. They will only be created when new customers are added.
 if (typeof window !== 'undefined') {
   let needsSave = false;
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS) && mockCustomers.length === 0) {
-      // No initial customers needed as per previous steps, they are added via form
+      // No initial customers needed
   }
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.INSTRUCTORS) && mockInstructors.length === 0) {
       // No initial instructors needed
   }
 
-  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS) && mockTwoWheelerRequests.length === 0 &&
-      !window.localStorage.getItem(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS) && mockFourWheelerRequests.length === 0) {
-    
-    mockTwoWheelerRequests.push(
-      { id: 'r_init_sample_tw1', customerName: 'Rohan Mehra (Sample)', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(1, 3) },
-      { id: 'r_init_sample_tw2', customerName: 'Priya Kulkarni (Sample)', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(4, 7) }
-    );
-    mockFourWheelerRequests.push(
-      { id: 'r_init_sample_fw1', customerName: 'Amit Singh (Sample)', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(8,10) },
-      { id: 'r_init_sample_fw2', customerName: 'Sneha Patel (Sample)', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) }
-    );
-    console.log('[mock-data] Seeded initial sample lesson requests because localStorage was empty.');
-    needsSave = true;
+  // Check if request arrays in localStorage are empty and also the in-memory arrays are empty
+  const twoWheelerRequestsEmpty = !window.localStorage.getItem(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS) && mockTwoWheelerRequests.length === 0;
+  const fourWheelerRequestsEmpty = !window.localStorage.getItem(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS) && mockFourWheelerRequests.length === 0;
+
+  if (twoWheelerRequestsEmpty && fourWheelerRequestsEmpty) {
+    console.log('[mock-data] Lesson request arrays are empty in localStorage and memory. No initial samples will be seeded.');
+    // If you wanted to ensure localStorage reflects this "truly empty" state:
+    // setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []); // Redundant if already empty
+    // setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []); // Redundant if already empty
+    // needsSave = true; // Only if you forcefully cleared them above.
   }
-  if (needsSave) {
+  if (needsSave) { // This 'needsSave' would only be true if other items were seeded.
     setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
     setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
   }
@@ -354,9 +352,7 @@ let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS
     id: 'course1', 
     title: 'Car Driving Mastery', 
     description: 'Comprehensive car driving lessons from basic controls to advanced road skills and safety.', 
-    icon: Car, // Note: Icons won't serialize directly to JSON, this will be an issue if not handled.
-    // For mock data, we can re-assign icons after loading if needed, or omit them from localStorage.
-    // Let's assume for now icons are statically assigned in component or re-added.
+    icon: Car, 
     totalEnrolled: 0, totalCertified: 0, modules: carDrivingModules, image: 'https://placehold.co/600x400.png',
   },
   { 
@@ -419,3 +415,4 @@ console.log('[mock-data] Final initial mockFourWheelerRequests:', JSON.parse(JSO
 console.log('[mock-data] Final initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
 console.log('[mock-data] Final initial mockCourses:', JSON.parse(JSON.stringify(mockCourses.map(c => ({...c, icon: c.icon ? c.icon.displayName || c.icon.name : undefined}))))); // Log course names for icons
 saveDataToLocalStorage(); // Ensure initial state is saved if anything was seeded or calculated.
+
