@@ -55,6 +55,12 @@ export let mockInstructors: UserProfile[] = getItemFromLocalStorage<UserProfile[
 export let mockTwoWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []);
 export let mockFourWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
 
+// Filter out "Sneha Patel (Sample)" data after loading from localStorage or initializing
+mockCustomers = mockCustomers.filter(customer => customer.name !== "Sneha Patel (Sample)");
+mockInstructors = mockInstructors.filter(instructor => instructor.name !== "Sneha Patel (Sample)");
+mockTwoWheelerRequests = mockTwoWheelerRequests.filter(request => request.customerName !== "Sneha Patel (Sample)");
+mockFourWheelerRequests = mockFourWheelerRequests.filter(request => request.customerName !== "Sneha Patel (Sample)");
+
 
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
   const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
@@ -432,4 +438,5 @@ const loggableCourses = mockCourses.map(c => {
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
 saveDataToLocalStorage(); // Ensure initial state is saved if anything was seeded or calculated.
+
 
