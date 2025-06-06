@@ -27,12 +27,13 @@ import {
   FuelTypeOptions,
   GenderOptions,
   DLStatusOptions,
-  PhotoIdTypeOptions, // Added PhotoIdTypeOptions
+  PhotoIdTypeOptions,
+  TrainerPreferenceOptions, // Added TrainerPreferenceOptions
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; // Import add functions
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck } from 'lucide-react'; 
 import { useMemo } from 'react';
 
 interface RegistrationFormProps {
@@ -54,13 +55,14 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     if (userRole === 'customer') {
       return {
         ...base,
-        subscriptionPlan: '', 
         vehiclePreference: undefined,
+        subscriptionPlan: '', 
+        trainerPreference: '', // Added trainerPreference
         dlStatus: '',
         dlNumber: '',
         dlTypeHeld: '',
         dlFileCopy: undefined,
-        photoIdType: '', // Default for select
+        photoIdType: '', 
         photoIdNumber: '',
         photoIdFile: undefined,
       } as CustomerRegistrationFormValues;
@@ -85,10 +87,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues,
-    mode: 'onChange', // To enable watching fields and re-validating
+    mode: 'onChange', 
   });
 
-  const dlStatus = form.watch('dlStatus'); // Watch for changes in dlStatus for customers
+  const dlStatus = form.watch('dlStatus'); 
 
   function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
@@ -103,6 +105,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       console.log('Customer Photo ID Type:', customerData.photoIdType);
       console.log('Customer Photo ID Number:', customerData.photoIdNumber);
       console.log('Customer Photo ID File:', customerData.photoIdFile?.[0]?.name);
+      console.log('Customer Trainer Preference:', customerData.trainerPreference);
     } else if (data.userRole === 'trainer') {
       const newTrainer = addTrainer(data as TrainerRegistrationFormValues);
       registrationMessage = `${newTrainer.name} (ID: ${newTrainer.uniqueId}) has been successfully registered as a trainer.`;
@@ -115,7 +118,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
       description: registrationMessage,
     });
-    form.reset(defaultValues); // Reset form after submission with memoized default values
+    form.reset(defaultValues); 
   }
 
   return (
@@ -252,6 +255,28 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     <SelectContent>
                       {SubscriptionPlans.map(plan => (
                         <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="trainerPreference"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><UserCheck className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select trainer preference" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {TrainerPreferenceOptions.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

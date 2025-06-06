@@ -5,6 +5,8 @@ import type React from 'react';
 export const ApprovalStatusOptions = ["Pending", "Approved", "Rejected"] as const;
 export type ApprovalStatusType = typeof ApprovalStatusOptions[number];
 
+export const TrainerPreferenceOptions = ["Male", "Female", "Any"] as const;
+
 export interface UserProfile {
   id: string;
   uniqueId: string;
@@ -20,6 +22,7 @@ export interface UserProfile {
   dlNumber?: string;
   photoIdType?: string;
   photoIdNumber?: string;
+  trainerPreference?: typeof TrainerPreferenceOptions[number];
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -109,6 +112,7 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   userRole: z.literal('customer'),
   subscriptionPlan: z.enum(SubscriptionPlans, { required_error: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
+  trainerPreference: z.enum(TrainerPreferenceOptions, { required_error: "Please select your trainer preference."}),
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
