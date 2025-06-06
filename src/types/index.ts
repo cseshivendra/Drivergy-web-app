@@ -91,6 +91,7 @@ export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)
 export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "Hybrid"] as const;
 export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
+export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Passport", "Driving License"] as const;
 
 // Use z.any() for file fields to avoid server-side issues during initial schema parsing
 const fileField = z.any(); 
@@ -112,7 +113,7 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
   dlFileCopy: optionalFileField,
-  photoIdType: z.string().min(1, { message: "Photo ID type is required (e.g., Aadhaar, PAN)." }),
+  photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
   photoIdFile: fileField.refine(val => val && val.length > 0, "Photo ID document is required."),
 });
@@ -144,3 +145,4 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
+

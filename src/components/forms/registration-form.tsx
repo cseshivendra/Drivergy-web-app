@@ -27,6 +27,7 @@ import {
   FuelTypeOptions,
   GenderOptions,
   DLStatusOptions,
+  PhotoIdTypeOptions, // Added PhotoIdTypeOptions
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
 } from '@/types';
@@ -59,7 +60,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         dlNumber: '',
         dlTypeHeld: '',
         dlFileCopy: undefined,
-        photoIdType: '',
+        photoIdType: '', // Default for select
         photoIdNumber: '',
         photoIdFile: undefined,
       } as CustomerRegistrationFormValues;
@@ -343,9 +344,18 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel className="flex items-center"><CreditCard className="mr-2 h-4 w-4 text-primary" />Photo ID Type</FormLabel>
-                        <FormControl>
-                        <Input placeholder="e.g., Aadhaar, PAN Card" {...field} />
-                        </FormControl>
+                         <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select ID type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {PhotoIdTypeOptions.map(type => (
+                              <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                     </FormItem>
                     )}
@@ -604,3 +614,4 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
+
