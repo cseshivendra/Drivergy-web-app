@@ -1,4 +1,6 @@
 
+import { z } from 'zod';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -19,12 +21,21 @@ export interface LessonRequest {
 export interface SummaryData {
   totalCustomers: number;
   totalInstructors: number;
-  activeSubscriptions: number; // Simplified: total active, not by location initially
+  activeSubscriptions: number; 
   pendingRequests: number;
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
 
-export const Locations = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Surat"];
+export const Locations = ["Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Surat", "Lucknow", "Kanpur", "Nagpur", "Indore", "Thane", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ghaziabad", "Ludhiana", "Agra", "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Aurangabad", "Dhanbad", "Amritsar", "Allahabad", "Ranchi", "Howrah", "Coimbatore", "Jabalpur", "Gwalior", "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh"];
 export const SubscriptionPlans = ["Basic", "Premium", "Gold"];
 
+// Schema for Contact Us / Complaint Form
+export const ComplaintFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  subject: z.string().min(5, { message: "Subject must be at least 5 characters." }).max(150),
+  message: z.string().min(10, { message: "Message must be at least 10 characters." }).max(2000),
+});
+
+export type ComplaintFormValues = z.infer<typeof ComplaintFormSchema>;
