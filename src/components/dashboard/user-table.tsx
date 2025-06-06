@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car } from 'lucide-react'; // Added Car icon
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X } from 'lucide-react'; // Added Car, Settings2, Check, X icons
 import { Button } from '@/components/ui/button';
 
 interface UserTableProps {
@@ -38,6 +38,19 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
+  const handleApprove = (userId: string, userName: string) => {
+    console.log(`Approved user: ${userName} (ID: ${userId})`);
+    // Here you would typically update the user's status in your backend/state
+    // For now, we'll just log it.
+    // Potentially, you might want to remove the user from this "new" list or re-fetch.
+  };
+
+  const handleReject = (userId: string, userName: string) => {
+    console.log(`Rejected user: ${userName} (ID: ${userId})`);
+    // Similar to approve, handle backend/state update here.
+    // Potentially, remove from list or mark as rejected.
+  };
+
   const renderSkeletons = () => (
     Array(ITEMS_PER_PAGE).fill(0).map((_, index) => ( // Use ITEMS_PER_PAGE for skeleton rows
       <TableRow key={`skeleton-${index}`}>
@@ -48,6 +61,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-28" /></TableCell> 
         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+        <TableCell><Skeleton className="h-9 w-28" /></TableCell>
       </TableRow>
     ))
   );
@@ -69,6 +83,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
                 <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
                 <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
                 <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered At</TableHead>
+                <TableHead className="w-[150px]"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,11 +106,33 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
                     </TableCell>
                     <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
                     <TableCell>{user.registrationTimestamp}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          onClick={() => handleApprove(user.id, user.name)}
+                          className="bg-green-500 hover:bg-green-600 text-white dark:bg-green-600 dark:hover:bg-green-700 dark:text-primary-foreground px-2 py-1"
+                        >
+                          <Check className="h-4 w-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Approve</span>
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleReject(user.id, user.name)}
+                          className="px-2 py-1"
+                        >
+                          <X className="h-4 w-4 mr-1 sm:mr-2" />
+                           <span className="hidden sm:inline">Reject</span>
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center"> 
+                  <TableCell colSpan={8} className="h-24 text-center"> 
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                       <p className="text-lg">No users found.</p>
