@@ -1,24 +1,35 @@
+
 import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface SummaryCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
   description?: string;
+  className?: string;
 }
 
-export default function SummaryCard({ title, value, icon: Icon, description }: SummaryCardProps) {
+export default function SummaryCard({ title, value, icon: Icon, description, className }: SummaryCardProps) {
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow duration-300">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="h-5 w-5 text-muted-foreground" />
+    <Card className={cn(
+      "shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1",
+      "border-l-4 border-primary", 
+      className
+    )}>
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{title}</CardTitle>
+          <div className="text-4xl font-extrabold text-foreground mt-1">{value}</div>
+        </div>
+        <div className="p-3 bg-primary/10 rounded-lg">
+          <Icon className="h-7 w-7 text-primary" />
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold text-primary">{value}</div>
+      <CardContent className="pt-0">
         {description && (
-          <p className="text-xs text-muted-foreground pt-1">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         )}
       </CardContent>
     </Card>
