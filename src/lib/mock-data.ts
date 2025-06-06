@@ -9,36 +9,41 @@ const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): str
 };
 
 export const mockCustomers: UserProfile[] = [
-  { id: 'c1', uniqueId: 'CU20251', name: 'Alice Wonderland', contact: 'alice@example.com', location: 'New York', subscriptionPlan: 'Premium', registrationTimestamp: generateRandomDate(1, 30) },
-  { id: 'c2', uniqueId: 'CU20252', name: 'Bob The Builder', contact: 'bob@example.com', location: 'Los Angeles', subscriptionPlan: 'Basic', registrationTimestamp: generateRandomDate(5, 40) },
-  { id: 'c3', uniqueId: 'CU20253', name: 'Charlie Brown', contact: 'charlie@example.com', location: 'New York', subscriptionPlan: 'Gold', registrationTimestamp: generateRandomDate(10, 50) },
-  { id: 'c4', uniqueId: 'CU20254', name: 'Diana Prince', contact: 'diana@example.com', location: 'Chicago', subscriptionPlan: 'Premium', registrationTimestamp: generateRandomDate(2, 25) },
+  { id: 'c1', uniqueId: 'CU20251', name: 'Priya Sharma', contact: 'priya.sharma@example.com', location: 'Mumbai', subscriptionPlan: 'Premium', registrationTimestamp: generateRandomDate(1, 30) },
+  { id: 'c2', uniqueId: 'CU20252', name: 'Rohan Patel', contact: 'rohan.patel@example.com', location: 'Delhi', subscriptionPlan: 'Basic', registrationTimestamp: generateRandomDate(5, 40) },
+  { id: 'c3', uniqueId: 'CU20253', name: 'Aisha Khan', contact: 'aisha.khan@example.com', location: 'Bangalore', subscriptionPlan: 'Gold', registrationTimestamp: generateRandomDate(10, 50) },
+  { id: 'c4', uniqueId: 'CU20254', name: 'Vikram Singh', contact: 'vikram.singh@example.com', location: 'Hyderabad', subscriptionPlan: 'Premium', registrationTimestamp: generateRandomDate(2, 25) },
+  { id: 'c5', uniqueId: 'CU20255', name: 'Anjali Mehta', contact: 'anjali.mehta@example.com', location: 'Chennai', subscriptionPlan: 'Basic', registrationTimestamp: generateRandomDate(3, 20) },
+  { id: 'c6', uniqueId: 'CU20256', name: 'Suresh Gupta', contact: 'suresh.gupta@example.com', location: 'Kolkata', subscriptionPlan: 'Gold', registrationTimestamp: generateRandomDate(8, 45) },
 ];
 
 export const mockInstructors: UserProfile[] = [
-  { id: 'i1', uniqueId: 'TR20251', name: 'Indiana Jones', contact: 'indy@example.com', location: 'Chicago', subscriptionPlan: 'Gold', registrationTimestamp: generateRandomDate(3, 35) },
-  { id: 'i2', uniqueId: 'TR20252', name: 'James Bond', contact: '007@example.com', location: 'Los Angeles', subscriptionPlan: 'Premium', registrationTimestamp: generateRandomDate(7, 45) },
-  { id: 'i3', uniqueId: 'TR20253', name: 'Kara Danvers', contact: 'kara@example.com', location: 'New York', subscriptionPlan: 'Basic', registrationTimestamp: generateRandomDate(12, 55) },
+  { id: 'i1', uniqueId: 'TR20251', name: 'Rajesh Kumar', contact: 'rajesh.kumar@example.com', location: 'Mumbai', subscriptionPlan: 'Gold', registrationTimestamp: generateRandomDate(3, 35) },
+  { id: 'i2', uniqueId: 'TR20252', name: 'Sunita Reddy', contact: 'sunita.reddy@example.com', location: 'Delhi', subscriptionPlan: 'Premium', registrationTimestamp: generateRandomDate(7, 45) },
+  { id: 'i3', uniqueId: 'TR20253', name: 'Amit Joshi', contact: 'amit.joshi@example.com', location: 'Bangalore', subscriptionPlan: 'Basic', registrationTimestamp: generateRandomDate(12, 55) },
+  { id: 'i4', uniqueId: 'TR20254', name: 'Deepika Nair', contact: 'deepika.nair@example.com', location: 'Hyderabad', subscriptionPlan: 'Gold', registrationTimestamp: generateRandomDate(6, 30) },
 ];
 
 export const mockTwoWheelerRequests: LessonRequest[] = [
-  { id: 'r1', customerName: 'Alice Wonderland', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 5) },
-  { id: 'r2', customerName: 'Bob The Builder', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 7) },
+  { id: 'r1', customerName: 'Priya Sharma', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 5) },
+  { id: 'r2', customerName: 'Rohan Patel', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 7) },
+  { id: 'r6', customerName: 'Anjali Mehta', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) },
 ];
 
 export const mockFourWheelerRequests: LessonRequest[] = [
-  { id: 'r3', customerName: 'Charlie Brown', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 3) },
-  { id: 'r4', customerName: 'Diana Prince', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(2, 10) },
-  { id: 'r5', customerName: 'Alice Wonderland', vehicleType: 'Four-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 4) },
+  { id: 'r3', customerName: 'Aisha Khan', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 3) },
+  { id: 'r4', customerName: 'Vikram Singh', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(2, 10) },
+  { id: 'r5', customerName: 'Priya Sharma', vehicleType: 'Four-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 4) },
+  { id: 'r7', customerName: 'Suresh Gupta', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(3, 12) },
 ];
 
 export const mockSummaryData: SummaryData = {
-  totalCustomers: 78,
-  totalInstructors: 12,
-  activeSubscriptions: 65,
-  pendingRequests: 15,
-  totalEarnings: 12500,
-  totalCertifiedTrainers: 9,
+  totalCustomers: 95, // Updated to reflect more customers
+  totalInstructors: 18, // Updated to reflect more instructors
+  activeSubscriptions: 78,
+  pendingRequests: 18,
+  totalEarnings: 15500,
+  totalCertifiedTrainers: 12, // Assuming this is about customers getting certified in a course
 };
 
 // Mock Course Data
@@ -100,13 +105,11 @@ const ARTIFICIAL_DELAY = 300; // Reduced delay for quicker feedback
 
 export const fetchCustomers = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  // console.log(`Fetching customers with location: ${location}, subscription: ${subscription}, searchTerm: ${searchTerm}`);
   
   let results = mockCustomers;
 
-  if (location) {
-    // Location filter from FilterControls should be exact match for the selected city
-    results = results.filter(c => c.location.toLowerCase() === location.toLowerCase());
+  if (location && location.trim() !== '') {
+    results = results.filter(c => c.location.toLowerCase().includes(location.toLowerCase().trim()));
   }
   if (subscription) {
     results = results.filter(c => c.subscriptionPlan === subscription);
@@ -125,12 +128,11 @@ export const fetchCustomers = async (location?: string, subscription?: string, s
 
 export const fetchInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  // console.log(`Fetching instructors with location: ${location}, subscription: ${subscription}, searchTerm: ${searchTerm}`);
   
   let results = mockInstructors;
 
-  if (location) {
-    results = results.filter(i => i.location.toLowerCase() === location.toLowerCase());
+  if (location && location.trim() !== '') {
+    results = results.filter(i => i.location.toLowerCase().includes(location.toLowerCase().trim()));
   }
   if (subscription) {
     results = results.filter(i => i.subscriptionPlan === subscription);
@@ -149,23 +151,25 @@ export const fetchInstructors = async (location?: string, subscription?: string,
 
 export const fetchRequests = async (vehicleType: VehicleType): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  // console.log(`Fetching requests for vehicle type: ${vehicleType}`);
   
+  // This function's purpose to find and return the customer's actual name is less critical
+  // now that we've directly assigned Indian names in mockRequests.
+  // However, keeping it in case of future changes or if names were to be dynamically pulled.
   const findCustomerName = (nameInRequest: string): string => {
-    const customer = mockCustomers.find(c => c.name === nameInRequest); // Match by simple name
+    const customer = mockCustomers.find(c => c.name === nameInRequest);
     return customer ? customer.name : nameInRequest; 
   };
 
   if (vehicleType === 'Two-Wheeler') {
     return mockTwoWheelerRequests.map(req => ({
       ...req,
-      customerName: findCustomerName(req.customerName)
+      customerName: findCustomerName(req.customerName) // Ensures consistency if names change
     }));
   }
   if (vehicleType === 'Four-Wheeler') {
      return mockFourWheelerRequests.map(req => ({
       ...req,
-      customerName: findCustomerName(req.customerName)
+      customerName: findCustomerName(req.customerName) // Ensures consistency
     }));
   }
   return [];
@@ -173,10 +177,21 @@ export const fetchRequests = async (vehicleType: VehicleType): Promise<LessonReq
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  return mockSummaryData;
+  // Update summary data to be more consistent with increased mock users
+  const updatedSummaryData: SummaryData = {
+    totalCustomers: mockCustomers.length,
+    totalInstructors: mockInstructors.length,
+    activeSubscriptions: Math.floor((mockCustomers.length + mockInstructors.length) * 0.8), // approx 80% active
+    pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
+                     mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
+    totalEarnings: mockSummaryData.totalEarnings, // Keep original or recalculate based on subscriptions
+    totalCertifiedTrainers: mockSummaryData.totalCertifiedTrainers, // This refers to customers certified in courses
+  };
+  return updatedSummaryData;
 };
 
 export const fetchCourses = async (): Promise<Course[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   return mockCourses;
 };
+
