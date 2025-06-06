@@ -80,45 +80,14 @@ export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "H
 export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
+// Simplified base types for file inputs, environment-agnostic at definition time
+const fileField = z.any(); // For fields that are mandatory files (actual check in superRefine)
+const optionalFileField = z.any().optional(); // For fields that are optional files (actual check in superRefine)
 
-// File input validation that is environment-agnostic
-const fileValidation = z.any()
-  .refine((files) => { // Check 1: presence and basic structure
-    return files && typeof files.length === 'number' && files.length > 0 && files[0];
-  }, {
-    message: "File is required and must not be empty.",
-  })
-  .refine((files) => { // Check 2: size (only if files[0] exists)
-    if (!(files && typeof files.length === 'number' && files.length > 0 && files[0])) return true; 
-    const file = files[0];
-    return file.size <= 5 * 1024 * 1024; // 5MB
-  }, {
-    message: "File size should be less than 5MB.",
-  })
-  .refine((files) => { // Check 3: type (only if files[0] exists)
-    if (!(files && typeof files.length === 'number' && files.length > 0 && files[0])) return true; 
-    const file = files[0];
-    return ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
-  }, {
-    message: "Invalid file type. Only PDF, JPG, PNG are allowed.",
-  });
-
-const optionalFileValidation = z.any()
-  .optional()
-  .refine((files) => { // Check 1: size (if file exists)
-    if (!files || typeof files.length !== 'number' || files.length === 0 || !files[0]) return true; 
-    const file = files[0];
-    return file.size <= 5 * 1024 * 1024; // 5MB
-  }, {
-    message: "File size should be less than 5MB.",
-  })
-  .refine((files) => { // Check 2: type (if file exists)
-    if (!files || typeof files.length !== 'number' || files.length === 0 || !files[0]) return true; 
-    const file = files[0];
-    return ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
-  }, {
-    message: "Invalid file type. Only PDF, JPG, PNG are allowed.",
-  });
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ACCEPTED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+const ACCEPTED_FILE_TYPES_STRING = "PDF, JPG, PNG";
 
 
 const BaseRegistrationSchema = z.object({
@@ -136,7 +105,7 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
-  dlFileCopy: optionalFileValidation,
+  dlFileCopy: optionalFileField,
 }).refine(data => {
   if (data.dlStatus === "Already Have DL") {
     return !!data.dlNumber && data.dlNumber.trim() !== "";
@@ -153,15 +122,32 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
 }, {
   message: "Type of DL Held is required if you have a DL.",
   path: ["dlTypeHeld"],
-}).refine(data => {
+}).refine(data => { // Conditional requirement for dlFileCopy
   if (data.dlStatus === "Already Have DL") {
-    // Check if dlFileCopy (which can be a FileList-like object) exists and has items
     return data.dlFileCopy && typeof data.dlFileCopy.length === 'number' && data.dlFileCopy.length > 0 && data.dlFileCopy[0];
   }
   return true;
 }, {
   message: "DL File Copy is required if you have a DL.",
   path: ["dlFileCopy"],
+}).superRefine((data, ctx) => { // Detailed validation for dlFileCopy if present
+  if (data.dlStatus === "Already Have DL" && data.dlFileCopy && typeof data.dlFileCopy.length === 'number' && data.dlFileCopy.length > 0 && data.dlFileCopy[0]) {
+    const file = data.dlFileCopy[0];
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `DL File size should be less than ${MAX_FILE_SIZE_MB}MB.`,
+        path: ["dlFileCopy"],
+      });
+    }
+    if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid DL File type. Only ${ACCEPTED_FILE_TYPES_STRING} are allowed.`,
+        path: ["dlFileCopy"],
+      });
+    }
+  }
 });
 
 const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
@@ -172,15 +158,46 @@ const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  trainerCertificateFile: fileValidation,
+  trainerCertificateFile: fileField,
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  aadhaarCardFile: fileValidation,
+  aadhaarCardFile: fileField,
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  drivingLicenseFile: fileValidation,
+  drivingLicenseFile: fileField,
+}).superRefine((data, ctx) => {
+  const validateFileField = (fileData: any, fieldName: string, fieldLabel: string) => {
+    if (!(fileData && typeof fileData.length === 'number' && fileData.length > 0 && fileData[0])) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${fieldLabel} is required.`,
+        path: [fieldName],
+      });
+      return; // Stop further validation for this file if not present
+    }
+    const file = fileData[0];
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${fieldLabel} size should be less than ${MAX_FILE_SIZE_MB}MB.`,
+        path: [fieldName],
+      });
+    }
+    if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid ${fieldLabel} type. Only ${ACCEPTED_FILE_TYPES_STRING} are allowed.`,
+        path: [fieldName],
+      });
+    }
+  };
+
+  validateFileField(data.trainerCertificateFile, "trainerCertificateFile", "Trainer Certificate");
+  validateFileField(data.aadhaarCardFile, "aadhaarCardFile", "Aadhaar Card");
+  validateFileField(data.drivingLicenseFile, "drivingLicenseFile", "Driving License");
 });
+
 
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
   CustomerRegistrationSchema,
@@ -190,3 +207,4 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
+
