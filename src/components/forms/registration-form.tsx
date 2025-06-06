@@ -23,11 +23,12 @@ import {
   SubscriptionPlans,
   VehiclePreferenceOptions,
   SpecializationOptions,
-  TrainerVehicleTypeOptions, // Added
+  TrainerVehicleTypeOptions,
+  FuelTypeOptions, // Added
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
 } from '@/types';
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2 } from 'lucide-react'; // Added new icons
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel } from 'lucide-react'; // Added Fuel icon
 import { useMemo } from 'react';
 
 interface RegistrationFormProps {
@@ -57,13 +58,14 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         yearsOfExperience: undefined,
         specialization: undefined,
         trainerVehicleType: undefined,
+        fuelType: undefined, // Added
         vehicleNumber: '',
         trainerCertificateNumber: '',
-        trainerCertificateFile: undefined, // For FileList
+        trainerCertificateFile: undefined, 
         aadhaarCardNumber: '',
-        aadhaarCardFile: undefined, // For FileList
+        aadhaarCardFile: undefined, 
         drivingLicenseNumber: '',
-        drivingLicenseFile: undefined, // For FileList
+        drivingLicenseFile: undefined, 
       } as TrainerRegistrationFormValues;
     }
   }, [userRole]);
@@ -75,9 +77,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
-    // For file inputs, data will contain FileList objects.
-    // In a real app, you'd handle uploading these files.
-    // For example:
     if (data.userRole === 'trainer') {
         console.log('Trainer Certificate File:', data.trainerCertificateFile?.[0]?.name);
         console.log('Aadhaar Card File:', data.aadhaarCardFile?.[0]?.name);
@@ -289,6 +288,28 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     )}
                 />
             </div>
+             <FormField
+                control={form.control}
+                name="fuelType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select fuel type" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {FuelTypeOptions.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
 
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
 
