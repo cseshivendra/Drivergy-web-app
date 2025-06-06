@@ -12,7 +12,7 @@ export interface UserProfile {
 }
 
 export interface LessonRequest {
-  id: string;
+  id:string;
   customerName: string;
   vehicleType: 'Two-Wheeler' | 'Four-Wheeler';
   status: 'Pending' | 'Active' | 'Completed';
@@ -83,26 +83,42 @@ export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
 // File input validation that is environment-agnostic
 const fileValidation = z.any()
-  .refine((value) => value && typeof value.length === 'number' && value.length > 0, {
-    message: "File is required.",
+  .refine((files) => { // Check 1: presence and basic structure
+    return files && typeof files.length === 'number' && files.length > 0 && files[0];
+  }, {
+    message: "File is required and must not be empty.",
   })
-  .refine((value) => value && value[0] && value[0].size <= 5 * 1024 * 1024, { // Example: 5MB size limit
+  .refine((files) => { // Check 2: size (only if files[0] exists)
+    if (!(files && typeof files.length === 'number' && files.length > 0 && files[0])) return true; 
+    const file = files[0];
+    return file.size <= 5 * 1024 * 1024; // 5MB
+  }, {
     message: "File size should be less than 5MB.",
   })
-  .refine((value) => value && value[0] && ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(value[0].type), {
+  .refine((files) => { // Check 3: type (only if files[0] exists)
+    if (!(files && typeof files.length === 'number' && files.length > 0 && files[0])) return true; 
+    const file = files[0];
+    return ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
+  }, {
     message: "Invalid file type. Only PDF, JPG, PNG are allowed.",
   });
 
 const optionalFileValidation = z.any()
   .optional()
-  .refine((value) => {
-    if (!value || value.length === 0) return true; // Optional, so valid if no file
-    return value[0] && value[0].size <= 5 * 1024 * 1024; // 5MB size limit
-  }, { message: "File size should be less than 5MB." })
-  .refine((value) => {
-    if (!value || value.length === 0) return true; // Optional, so valid if no file
-    return value[0] && ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(value[0].type);
-  }, { message: "Invalid file type. Only PDF, JPG, PNG are allowed." });
+  .refine((files) => { // Check 1: size (if file exists)
+    if (!files || typeof files.length !== 'number' || files.length === 0 || !files[0]) return true; 
+    const file = files[0];
+    return file.size <= 5 * 1024 * 1024; // 5MB
+  }, {
+    message: "File size should be less than 5MB.",
+  })
+  .refine((files) => { // Check 2: type (if file exists)
+    if (!files || typeof files.length !== 'number' || files.length === 0 || !files[0]) return true; 
+    const file = files[0];
+    return ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'].includes(file.type);
+  }, {
+    message: "Invalid file type. Only PDF, JPG, PNG are allowed.",
+  });
 
 
 const BaseRegistrationSchema = z.object({
@@ -140,7 +156,7 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
 }).refine(data => {
   if (data.dlStatus === "Already Have DL") {
     // Check if dlFileCopy (which can be a FileList-like object) exists and has items
-    return data.dlFileCopy && typeof data.dlFileCopy.length === 'number' && data.dlFileCopy.length > 0;
+    return data.dlFileCopy && typeof data.dlFileCopy.length === 'number' && data.dlFileCopy.length > 0 && data.dlFileCopy[0];
   }
   return true;
 }, {
