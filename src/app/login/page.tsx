@@ -74,8 +74,8 @@ export default function LoginPage() {
             <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
               <Car className="h-16 w-16 text-primary animate-pulse" />
             </div>
-            <CardTitle className="font-headline text-3xl font-bold text-primary">Steer Your Success</CardTitle>
-            <p className="text-foreground/90 font-semibold text-lg">Teach & Earn Your Way</p>
+            <CardTitle className="font-headline text-4xl font-extrabold text-primary tracking-tight">Driverzy</CardTitle>
+            <p className="text-xl font-semibold text-foreground/90 mt-1">Steer Your Success</p>
             <CardDescription className="text-muted-foreground pt-1 px-2">
               Sign in to access your dashboard and unlock new opportunities.
             </CardDescription>
