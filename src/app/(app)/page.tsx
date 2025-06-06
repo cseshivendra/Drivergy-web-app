@@ -8,6 +8,7 @@ import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
+import OverviewStatsChart from '@/components/dashboard/overview-stats-chart'; // Import the new chart
 import { fetchCustomers, fetchInstructors, fetchRequests, fetchSummaryData } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData } from '@/types';
 import { Users, UserCheck, Bike, Car as FourWheelerIcon } from 'lucide-react'; // Renamed Car to FourWheelerIcon to avoid conflict
@@ -80,6 +81,8 @@ export default function DashboardPage() {
         <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
         
         <SummaryMetrics data={summaryData} isLoading={loadingSummary} />
+
+        <OverviewStatsChart data={summaryData} isLoading={loadingSummary} />
         
         <FilterControls 
           onFilterChange={handleFilterChange} 
