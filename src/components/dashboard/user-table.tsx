@@ -1,23 +1,48 @@
 
+'use client';
+
 import type { ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface UserTableProps {
-  title: ReactNode; // Changed from string to ReactNode
+  title: ReactNode;
   users: UserProfile[];
   isLoading: boolean;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function UserTable({ title, users, isLoading }: UserTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when users data changes due to filters or search
+  }, [users]);
+
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedUsers = users.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
   const renderSkeletons = () => (
     Array(3).fill(0).map((_, index) => (
       <TableRow key={`skeleton-${index}`}>
-        <TableCell><Skeleton className="h-5 w-20" /></TableCell> {/* ID column */}
-        <TableCell><Skeleton className="h-5 w-32" /></TableCell> {/* Name column */}
+        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
         <TableCell><Skeleton className="h-5 w-40" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -27,12 +52,11 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
   );
 
   return (
-    <Card className="shadow-lg border border-primary transition-shadow duration-300">
+    <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
       <CardHeader>
-        {/* CardTitle now renders ReactNode directly */}
         <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -46,8 +70,8 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? renderSkeletons() : users.length > 0 ? (
-                users.map((user) => (
+              {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
+                paginatedUsers.map((user) => (
                   <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{user.uniqueId}</TableCell>
                     <TableCell>{user.name}</TableCell>
@@ -67,7 +91,7 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center"> {/* Updated colSpan to 6 */}
+                  <TableCell colSpan={6} className="h-24 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                       <p className="text-lg">No users found.</p>
@@ -80,7 +104,45 @@ export default function UserTable({ title, users, isLoading }: UserTableProps) {
           </Table>
         </div>
       </CardContent>
+      {users.length > 0 && !isLoading && (
+        <CardFooter className="flex items-center justify-between pt-4 border-t">
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </CardFooter>
+      )}
+      {(users.length === 0 && !isLoading) && (
+         <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
+          <span className="text-sm text-muted-foreground">No data to paginate</span>
+        </CardFooter>
+      )}
+       {isLoading && (
+         <CardFooter className="flex items-center justify-between pt-4 border-t min-h-[68px]">
+          <Skeleton className="h-5 w-20" />
+          <div className="flex space-x-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-20" />
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
-

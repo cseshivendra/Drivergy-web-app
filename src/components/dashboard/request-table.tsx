@@ -1,19 +1,44 @@
 
+'use client';
+
 import type { ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonRequest, VehicleType } from '@/types';
 import { User, Bike, Car, CalendarDays, HelpCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface RequestTableProps {
-  title: ReactNode; // Changed from string to ReactNode
+  title: ReactNode;
   requests: LessonRequest[];
   vehicleType: VehicleType;
   isLoading: boolean;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function RequestTable({ title, requests, vehicleType, isLoading }: RequestTableProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when requests data changes
+  }, [requests]);
+
+  const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedRequests = requests.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
   const renderSkeletons = () => (
     Array(2).fill(0).map((_, index) => (
       <TableRow key={`skeleton-${index}`}>
@@ -38,14 +63,12 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
     }
   };
 
-
   return (
-    <Card className="shadow-lg border border-primary transition-shadow duration-300">
+    <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
       <CardHeader>
-        {/* CardTitle now renders ReactNode directly */}
         <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -63,8 +86,8 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
               </TableRow>
             </TableHeader>
             <TableBody>
-            {isLoading ? renderSkeletons() : requests.length > 0 ? (
-                requests.map((request) => (
+            {isLoading ? renderSkeletons() : paginatedRequests.length > 0 ? (
+                paginatedRequests.map((request) => (
                   <TableRow key={request.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{request.customerName}</TableCell>
                     <TableCell>{request.vehicleType}</TableCell>
@@ -91,7 +114,45 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
           </Table>
         </div>
       </CardContent>
+      {requests.length > 0 && !isLoading && (
+         <CardFooter className="flex items-center justify-between pt-4 border-t">
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </CardFooter>
+      )}
+      {(requests.length === 0 && !isLoading) && (
+         <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
+          <span className="text-sm text-muted-foreground">No data to paginate</span>
+        </CardFooter>
+      )}
+       {isLoading && (
+         <CardFooter className="flex items-center justify-between pt-4 border-t min-h-[68px]">
+          <Skeleton className="h-5 w-20" />
+          <div className="flex space-x-2">
+            <Skeleton className="h-9 w-20" />
+            <Skeleton className="h-9 w-20" />
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
-
