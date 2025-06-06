@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, GraduationCap, DollarSign } from 'lucide-react';
+import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 
@@ -75,7 +75,7 @@ export default function LoginPage() {
               <Car className="h-16 w-16 text-primary animate-pulse" />
             </div>
             <CardTitle className="font-headline text-3xl font-bold text-primary">Steer Your Success</CardTitle>
-            <p className="text-foreground/90 font-semibold text-lg">Learn to Drive & Earn Your Way</p>
+            <p className="text-foreground/90 font-semibold text-lg">Teach & Earn Your Way</p>
             <CardDescription className="text-muted-foreground pt-1 px-2">
               Sign in to access your dashboard and unlock new opportunities.
             </CardDescription>
