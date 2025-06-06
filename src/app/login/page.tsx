@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, Smartphone, ShieldAlert, UserCircle } from 'lucide-react'; // Added UserCircle
+import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon } from 'lucide-react'; // Added UserCircle, Sun, Moon
 import { useAuth } from '@/context/auth-context';
+import { useTheme } from '@/context/theme-context';
 import Image from 'next/image';
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInAsGuest, loading } = useAuth(); // Added signInAsGuest
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (user && !loading) {
@@ -36,7 +38,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background to-muted/50 p-4">
+      <div className="absolute top-4 right-4 z-20">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+        >
+          {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+        </Button>
+      </div>
        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
        <Card className="w-full max-w-md shadow-2xl z-10 rounded-xl border-border/50">
         <CardHeader className="text-center">
