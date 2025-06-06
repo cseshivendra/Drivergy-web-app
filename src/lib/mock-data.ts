@@ -1,5 +1,5 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues } from '@/types';
 import { addDays, format } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations } from '@/types'; // Import Locations for consistent use
@@ -15,55 +15,56 @@ const indianNames = [
   "Diya Verma", "Saanvi Pillai", "Aadhya Menon", "Myra Desai", "Pari Joshi",
   "Riya Agarwal", "Siya Das", "Advika Nair", "Ishita Iyer", "Prisha Srinivasan",
   "Rohan Mehra", "Aryan Shah", "Kabir Jain", "Dhruv Bhatnagar", "Shaurya Chauhan",
-  "Deepak Kumar", "Prakash Singh", "Sachin Patel", "Kavita Sharma", "Neha Gupta"
+  "Deepak Kumar", "Prakash Singh", "Sachin Patel", "Kavita Sharma", "Neha Gupta",
+  "Amit Trivedi", "Priya Kulkarni", "Rajesh Khanna", "Sunita Rao", "Vikram Rathore"
 ];
 
 const getRandomLocation = () => Locations[Math.floor(Math.random() * Locations.length)];
 
 export const mockCustomers: UserProfile[] = indianNames.slice(0, 15).map((name, index) => ({
   id: `c${index + 1}`,
-  uniqueId: `CU2025${index + 1}`,
-  name: name.split(' ')[0], // First name
-  contact: `${name.split(' ')[0].toLowerCase()}.${name.split(' ')[1].toLowerCase()}@example.com`,
+  uniqueId: `CU2025${100 + index + 1}`,
+  name: name,
+  contact: `${name.split(' ')[0].toLowerCase()}.${name.split(' ').pop()?.toLowerCase()}@example.com`,
   location: getRandomLocation(),
   subscriptionPlan: ['Premium', 'Basic', 'Gold'][index % 3],
   registrationTimestamp: generateRandomDate(1, 50)
 }));
 
-export const mockInstructors: UserProfile[] = indianNames.slice(15).map((name, index) => ({
+export const mockInstructors: UserProfile[] = indianNames.slice(15, 30).map((name, index) => ({
   id: `i${index + 1}`,
-  uniqueId: `TR2025${index + 1}`,
-  name: name.split(' ')[0], // First name
-  contact: `${name.split(' ')[0].toLowerCase()}.${name.split(' ')[1].toLowerCase()}@example.com`,
+  uniqueId: `TR2025${100 + index + 1}`,
+  name: name,
+  contact: `${name.split(' ')[0].toLowerCase()}.${name.split(' ').pop()?.toLowerCase()}@example.com`,
   location: getRandomLocation(),
-  subscriptionPlan: ['Gold', 'Premium', 'Basic'][index % 3],
+  subscriptionPlan: ['Gold', 'Premium', 'Basic'][index % 3], // This will be overridden for new trainers to "Trainer"
   registrationTimestamp: generateRandomDate(3, 60)
 }));
 
 
 export const mockTwoWheelerRequests: LessonRequest[] = [
-  { id: 'r1', customerName: mockCustomers[0].name, vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 5) },
-  { id: 'r2', customerName: mockCustomers[1].name, vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 7) },
-  { id: 'r6', customerName: mockCustomers[4].name, vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) },
-  { id: 'r8', customerName: mockCustomers[6].name, vehicleType: 'Two-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(3, 15) },
+  { id: 'r1', customerName: mockCustomers[0]?.name || "Customer 1", vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 5) },
+  { id: 'r2', customerName: mockCustomers[1]?.name || "Customer 2", vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 7) },
+  { id: 'r6', customerName: mockCustomers[4]?.name || "Customer 5", vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) },
+  { id: 'r8', customerName: mockCustomers[6]?.name || "Customer 7", vehicleType: 'Two-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(3, 15) },
 ];
 
 export const mockFourWheelerRequests: LessonRequest[] = [
-  { id: 'r3', customerName: mockCustomers[2].name, vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 3) },
-  { id: 'r4', customerName: mockCustomers[3].name, vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(2, 10) },
-  { id: 'r5', customerName: mockCustomers[0].name, vehicleType: 'Four-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 4) },
-  { id: 'r7', customerName: mockCustomers[5].name, vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(3, 12) },
-  { id: 'r9', customerName: mockCustomers[7].name, vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 1) },
+  { id: 'r3', customerName: mockCustomers[2]?.name || "Customer 3", vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 3) },
+  { id: 'r4', customerName: mockCustomers[3]?.name || "Customer 4", vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(2, 10) },
+  { id: 'r5', customerName: mockCustomers[0]?.name || "Customer 1", vehicleType: 'Four-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(1, 4) },
+  { id: 'r7', customerName: mockCustomers[5]?.name || "Customer 6", vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(3, 12) },
+  { id: 'r9', customerName: mockCustomers[7]?.name || "Customer 8", vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 1) },
 ];
 
 
 export const mockSummaryData: SummaryData = {
   totalCustomers: mockCustomers.length, 
   totalInstructors: mockInstructors.length,
-  activeSubscriptions: Math.floor((mockCustomers.length + mockInstructors.length) * 0.75), // Approx 75% active
+  activeSubscriptions: Math.floor((mockCustomers.length + mockInstructors.length) * 0.75), 
   pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
-  totalEarnings: 155000, // Increased earnings
-  totalCertifiedTrainers: Math.floor(mockCustomers.length * 0.3), // 30% of customers are certified
+  totalEarnings: 155000, 
+  totalCertifiedTrainers: Math.floor(mockCustomers.length * 0.3), 
 };
 
 const carDrivingModules: CourseModule[] = [
@@ -95,6 +96,7 @@ export const mockCourses: Course[] = [
     totalCertified: 88, 
     modules: carDrivingModules,
     image: 'https://placehold.co/600x400.png',
+    
   },
   { 
     id: 'course2', 
@@ -105,6 +107,7 @@ export const mockCourses: Course[] = [
     totalCertified: 65, 
     modules: twoWheelerModules,
     image: 'https://placehold.co/600x400.png',
+    
   },
   { 
     id: 'course3', 
@@ -115,12 +118,48 @@ export const mockCourses: Course[] = [
     totalCertified: 195, 
     modules: rtoExamModules,
     image: 'https://placehold.co/600x400.png',
+    
   },
 ];
 
 
-// Placeholder API functions
 const ARTIFICIAL_DELAY = 300; 
+
+export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
+  const newIdSuffix = mockCustomers.length + 1;
+  const newUser: UserProfile = {
+    id: `c${newIdSuffix}`,
+    uniqueId: `CU${202500 + newIdSuffix}`,
+    name: data.name,
+    contact: data.email, // Assuming email is the primary contact for UserProfile
+    location: data.location,
+    subscriptionPlan: data.subscriptionPlan,
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+  };
+  mockCustomers.push(newUser);
+  mockSummaryData.totalCustomers += 1;
+  // Potentially update activeSubscriptions if new customer implies an active one
+  // For simplicity, we might re-calculate activeSubscriptions in fetchSummaryData or increment it here
+  mockSummaryData.activeSubscriptions +=1; 
+  return newUser;
+};
+
+export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => {
+  const newIdSuffix = mockInstructors.length + 1;
+  const newTrainer: UserProfile = {
+    id: `i${newIdSuffix}`,
+    uniqueId: `TR${202500 + newIdSuffix}`,
+    name: data.name,
+    contact: data.email, // Assuming email is the primary contact
+    location: data.location,
+    subscriptionPlan: "Trainer", // Trainers don't have customer subscription plans
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+  };
+  mockInstructors.push(newTrainer);
+  mockSummaryData.totalInstructors += 1;
+  return newTrainer;
+};
+
 
 export const fetchCustomers = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
@@ -182,14 +221,18 @@ export const fetchRequests = async (vehicleType: VehicleType): Promise<LessonReq
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  // Ensure summary data reflects current state of mock arrays
+  const currentPendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
+                                 mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+  const currentActiveSubscriptions = mockCustomers.filter(c => c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length * 0.85 + mockInstructors.length * 0.1;
+
+
   const updatedSummaryData: SummaryData = {
+    ...mockSummaryData, // Preserve existing values like totalEarnings
     totalCustomers: mockCustomers.length,
     totalInstructors: mockInstructors.length,
-    activeSubscriptions: Math.floor((mockCustomers.length + mockInstructors.length) * 0.75), 
-    pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
-                     mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
-    totalEarnings: mockSummaryData.totalEarnings, 
-    totalCertifiedTrainers: mockSummaryData.totalCertifiedTrainers,
+    activeSubscriptions: Math.floor(currentActiveSubscriptions), // Recalculate or use the stored value
+    pendingRequests: currentPendingRequests,
   };
   return updatedSummaryData;
 };

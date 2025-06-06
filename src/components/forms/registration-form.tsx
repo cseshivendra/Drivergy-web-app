@@ -24,11 +24,12 @@ import {
   VehiclePreferenceOptions,
   SpecializationOptions,
   TrainerVehicleTypeOptions,
-  FuelTypeOptions, // Added
+  FuelTypeOptions,
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
 } from '@/types';
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel } from 'lucide-react'; // Added Fuel icon
+import { addCustomer, addTrainer } from '@/lib/mock-data'; // Import add functions
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel } from 'lucide-react'; 
 import { useMemo } from 'react';
 
 interface RegistrationFormProps {
@@ -49,16 +50,16 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     if (userRole === 'customer') {
       return {
         ...base,
-        subscriptionPlan: '',
-        vehiclePreference: undefined,
+        subscriptionPlan: '', // Default to empty, user must select
+        vehiclePreference: undefined, // Default to undefined, user must select
       } as CustomerRegistrationFormValues;
     } else { // trainer
       return {
         ...base,
-        yearsOfExperience: undefined,
-        specialization: undefined,
-        trainerVehicleType: undefined,
-        fuelType: undefined, // Added
+        yearsOfExperience: undefined, 
+        specialization: undefined, 
+        trainerVehicleType: undefined, 
+        fuelType: undefined,
         vehicleNumber: '',
         trainerCertificateNumber: '',
         trainerCertificateFile: undefined, 
@@ -77,15 +78,24 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
-    if (data.userRole === 'trainer') {
-        console.log('Trainer Certificate File:', data.trainerCertificateFile?.[0]?.name);
-        console.log('Aadhaar Card File:', data.aadhaarCardFile?.[0]?.name);
-        console.log('Driving License File:', data.drivingLicenseFile?.[0]?.name);
+
+    let registrationMessage = "";
+
+    if (data.userRole === 'customer') {
+      const newCustomer = addCustomer(data as CustomerRegistrationFormValues);
+      registrationMessage = `${newCustomer.name} (ID: ${newCustomer.uniqueId}) has been successfully registered as a customer.`;
+      console.log('Customer Certificate File (if any):', (data as any).customerDocumentFile?.[0]?.name); // Example if customer had files
+    } else if (data.userRole === 'trainer') {
+      const newTrainer = addTrainer(data as TrainerRegistrationFormValues);
+      registrationMessage = `${newTrainer.name} (ID: ${newTrainer.uniqueId}) has been successfully registered as a trainer.`;
+      console.log('Trainer Certificate File:', (data as TrainerRegistrationFormValues).trainerCertificateFile?.[0]?.name);
+      console.log('Aadhaar Card File:', (data as TrainerRegistrationFormValues).aadhaarCardFile?.[0]?.name);
+      console.log('Driving License File:', (data as TrainerRegistrationFormValues).drivingLicenseFile?.[0]?.name);
     }
 
     toast({
       title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
-      description: `${data.name} has been successfully registered (simulated).`,
+      description: registrationMessage,
     });
     form.reset(defaultValues);
   }
