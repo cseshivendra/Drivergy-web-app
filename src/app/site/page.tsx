@@ -93,9 +93,9 @@ const coursesData = [
 ];
 
 const slideImages = [
-  { src: "https://placehold.co/1920x1080/E74C3C/FDFEFE.png?text=Drive+With+Confidence", hint: "learner car driving" },
-  { src: "https://placehold.co/1920x1080/3498DB/FDFEFE.png?text=Pass+Your+Test", hint: "driving test road" },
-  { src: "https://placehold.co/1920x1080/2ECC71/FDFEFE.png?text=Expert+Instructors", hint: "city driving school" },
+  { src: "https://placehold.co/1920x1080.png?text=Drive+With+Confidence", hint: "learner car driving" },
+  { src: "https://placehold.co/1920x1080.png?text=Pass+Your+Test", hint: "driving test road" },
+  { src: "https://placehold.co/1920x1080.png?text=Expert+Instructors", hint: "city driving school" },
 ];
 
 export default function PortfolioSitePage() {
@@ -201,9 +201,7 @@ export default function PortfolioSitePage() {
           <div className="absolute inset-0 bg-black/50 z-[5] pointer-events-none"></div> {/* Dark overlay */}
           
           <div className="relative z-10 p-4 container mx-auto"> {/* Content */}
-            <h1 className="font-headline text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight drop-shadow-md">
-              We've all been there-nervous, clueless, and ready to learn
-            </h1>
+            {/* Headline removed as per request */}
             <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl drop-shadow-sm">
               Start your driving journey with a school that makes it easy
             </p>
