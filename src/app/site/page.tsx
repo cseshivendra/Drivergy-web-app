@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from '@/context/auth-context';
 
 
 const SiteLogo = () => (
@@ -92,6 +93,8 @@ const coursesData = [
 ];
 
 export default function PortfolioSitePage() {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header/Navbar */}
@@ -130,9 +133,23 @@ export default function PortfolioSitePage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {user ? (
+              <Button variant="outline" onClick={signOut}>
+                <LogOut className="mr-0 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            ) : (
+              <Button variant="outline" asChild>
+                <Link href="/login">
+                  <LogIn className="mr-0 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Login</span>
+                </Link>
+              </Button>
+            )}
+
             <Button variant="outline" asChild>
               <Link href="/">
-                <LogIn className="mr-0 sm:mr-2 h-4 w-4" />
+                <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
                 <span className="hidden sm:inline">Admin Portal</span>
               </Link>
             </Button>
