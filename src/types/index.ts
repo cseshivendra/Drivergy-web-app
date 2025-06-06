@@ -81,15 +81,11 @@ export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
 
-// File input validation (simplified for server-side compatibility)
-// The browser's input type="file" will provide a FileList object.
-// Zod will primarily check for presence and length if required.
-const fileValidation = z.any().refine(
-    (value) => value && typeof value.length === 'number' && value.length > 0,
-    { message: "File is required." }
-);
+// File input validation (reverted to use z.instanceof(FileList), which can cause issues in SSR)
+const fileValidation = z.instanceof(FileList)
+  .refine((files) => files && files.length > 0, { message: "File is required." });
 
-const optionalFileValidation = z.any().optional();
+const optionalFileValidation = z.instanceof(FileList).optional();
 
 
 const BaseRegistrationSchema = z.object({
@@ -161,3 +157,4 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
+
