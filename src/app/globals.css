@@ -57,22 +57,22 @@ body {
   }
 
   .dark {
-    --background: 0 0% 15%; /* Very dark gray / off-black - Made Lighter */
+    --background: 0 0% 18%; /* Lighter dark gray */
     --foreground: 0 0% 95%; /* Near white for text */
 
-    --card: 0 0% 20%; /* Slightly lighter dark gray for cards - Made Lighter */
+    --card: 0 0% 22%; /* Lighter dark gray for cards */
     --card-foreground: 0 0% 95%; /* Same as main text */
 
-    --popover: 0 0% 20%; /* Slightly lighter dark gray for popovers - Made Lighter */
+    --popover: 0 0% 22%; /* Lighter dark gray for popovers */
     --popover-foreground: 0 0% 95%; /* Same as main text */
 
     --primary: 0 75% 55%; /* Strong, clear red */
     --primary-foreground: 0 0% 100%; /* White for high contrast on red buttons */
 
-    --secondary: 0 0% 25%; /* Another dark gray, for secondary elements - Made Lighter */
+    --secondary: 0 0% 28%; /* Another lighter dark gray, for secondary elements */
     --secondary-foreground: 0 0% 85%; /* Slightly less bright white for secondary text */
 
-    --muted: 0 0% 30%; /* Dark gray for muted elements - Made Lighter */
+    --muted: 0 0% 33%; /* Lighter dark gray for muted elements */
     --muted-foreground: 0 0% 65%; /* Medium gray for muted text */
 
     --accent: 0 60% 45%; /* Darker, complementary red for accents */
@@ -81,8 +81,8 @@ body {
     --destructive: 0 70% 50%; /* Slightly adjusted destructive for dark if needed */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 35%; /* Subtle dark gray border - Made Lighter */
-    --input: 0 0% 35%; /* Input border, same as general border - Made Lighter */
+    --border: 0 0% 38%; /* Lighter subtle dark gray border */
+    --input: 0 0% 38%; /* Lighter input border, same as general border */
     --ring: 0 75% 60%; /* Ring color based on the new primary red */
 
     --chart-1: 0 75% 55%; /* Primary Red */
@@ -92,13 +92,13 @@ body {
     --chart-5: 0 80% 65%; /* Brighter Red */
     --chart-6: 0 0% 90%;   /* Near White for text/lines on dark bg */
 
-    --sidebar-background: 0 0% 18%; /* Made Lighter */
+    --sidebar-background: 0 0% 20%; /* Lighter dark for sidebar */
     --sidebar-foreground: 0 0% 85%;
     --sidebar-primary: 0 75% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 25%; /* Made Lighter */
+    --sidebar-accent: 0 0% 28%; /* Lighter dark for sidebar accent */
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 30%; /* Made Lighter */
+    --sidebar-border: 0 0% 33%; /* Lighter dark for sidebar border */
     --sidebar-ring: 0 75% 60%;
   }
 }
