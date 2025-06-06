@@ -23,8 +23,8 @@ export interface SummaryData {
   totalInstructors: number;
   activeSubscriptions: number; 
   pendingRequests: number;
-  totalEarnings: number; // Added
-  totalCertifiedTrainers: number; // Added
+  totalEarnings: number;
+  totalCertifiedTrainers: number; 
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
@@ -42,3 +42,22 @@ export const ComplaintFormSchema = z.object({
 
 export type ComplaintFormValues = z.infer<typeof ComplaintFormSchema>;
 
+// Course Management Types
+export interface CourseModule {
+  id: string;
+  title: string;
+  description: string;
+  duration: string; // e.g., "45 mins"
+  recordedLectureLink?: string; // URL or identifier
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  icon?: React.ElementType; // Optional Lucide icon for the course
+  totalEnrolled: number;
+  totalCertified: number;
+  modules: CourseModule[];
+  image?: string; // Optional image URL for the course card
+}

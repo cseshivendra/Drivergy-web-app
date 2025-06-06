@@ -1,6 +1,7 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule } from '@/types';
 import { addDays, format } from 'date-fns';
+import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
   const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
@@ -36,9 +37,63 @@ export const mockSummaryData: SummaryData = {
   totalInstructors: 12,
   activeSubscriptions: 65,
   pendingRequests: 15,
-  totalEarnings: 12500, // Added mock data
-  totalCertifiedTrainers: 9, // Added mock data
+  totalEarnings: 12500,
+  totalCertifiedTrainers: 9,
 };
+
+// Mock Course Data
+const carDrivingModules: CourseModule[] = [
+  { id: 'cdm1', title: 'Introduction to Car Controls', description: 'Understanding the steering wheel, pedals, and gears.', duration: '45 mins', recordedLectureLink: '#' },
+  { id: 'cdm2', title: 'Basic Maneuvers: Starting and Stopping', description: 'Smoothly starting, stopping, and basic parking.', duration: '60 mins', recordedLectureLink: '#' },
+  { id: 'cdm3', title: 'Navigating Traffic & Road Signs', description: 'Understanding road signs and safe navigation in light traffic.', duration: '75 mins', recordedLectureLink: '#' },
+  { id: 'cdm4', title: 'Advanced Parking Techniques', description: 'Parallel parking, reverse parking, and bay parking.', duration: '60 mins', recordedLectureLink: '#' },
+];
+
+const twoWheelerModules: CourseModule[] = [
+  { id: 'twm1', title: 'Understanding Your Two-Wheeler', description: 'Controls, balance, and safety gear.', duration: '40 mins', recordedLectureLink: '#' },
+  { id: 'twm2', title: 'Basic Riding Skills', description: 'Starting, stopping, and slow-speed maneuvering.', duration: '50 mins', recordedLectureLink: '#' },
+  { id: 'twm3', title: 'Road Awareness for Riders', description: 'Defensive riding and anticipating hazards.', duration: '60 mins', recordedLectureLink: '#' },
+];
+
+const rtoExamModules: CourseModule[] = [
+  { id: 'rtom1', title: 'Understanding RTO Rules & Regulations', description: 'Key traffic laws and penalties.', duration: '60 mins', recordedLectureLink: '#' },
+  { id: 'rtom2', title: 'Road Signs and Markings Mastery', description: 'Comprehensive guide to all road signs.', duration: '70 mins', recordedLectureLink: '#' },
+  { id: 'rtom3', title: 'Mock RTO Test Practice', description: 'Simulated test environment with Q&A.', duration: '90 mins', recordedLectureLink: '#' },
+];
+
+export const mockCourses: Course[] = [
+  { 
+    id: 'course1', 
+    title: 'Car Driving Mastery', 
+    description: 'Comprehensive car driving lessons from basic controls to advanced road skills and safety.', 
+    icon: Car,
+    totalEnrolled: 125, 
+    totalCertified: 88, 
+    modules: carDrivingModules,
+    image: 'https://placehold.co/600x400.png',
+  },
+  { 
+    id: 'course2', 
+    title: 'Two-Wheeler Pro Rider', 
+    description: 'Learn to ride two-wheelers confidently, covering balance, traffic navigation, and safety.',
+    icon: Bike,
+    totalEnrolled: 92, 
+    totalCertified: 65, 
+    modules: twoWheelerModules,
+    image: 'https://placehold.co/600x400.png',
+  },
+  { 
+    id: 'course3', 
+    title: 'RTO Exam Success Guide', 
+    description: 'Ace your RTO driving test with our detailed course on rules, signs, and mock tests.',
+    icon: FileText,
+    totalEnrolled: 210, 
+    totalCertified: 195, 
+    modules: rtoExamModules,
+    image: 'https://placehold.co/600x400.png',
+  },
+];
+
 
 // Placeholder API functions
 const ARTIFICIAL_DELAY = 500;
@@ -74,3 +129,7 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
   return mockSummaryData;
 };
 
+export const fetchCourses = async (): Promise<Course[]> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  return mockCourses;
+};

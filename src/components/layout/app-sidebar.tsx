@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState, useEffect } from 'react';
 import {
   Sidebar,
   SidebarHeader,
@@ -14,13 +14,12 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen } from 'lucide-react'; // Added BookOpen
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  // Initialize referralsOpen to false, useEffect will manage it based on pathname
   const [referralsOpen, setReferralsOpen] = useState(false);
 
   const AppLogo = () => (
@@ -34,16 +33,11 @@ export default function AppSidebar() {
     </div>
   );
 
-  // Effect to open referrals submenu if a child route is active
   useEffect(() => {
     if (pathname.startsWith('/referrals')) {
       setReferralsOpen(true);
     }
-    // If you want the menu to close when navigating away from /referrals, add an else block:
-    // else {
-    //  setReferralsOpen(false);
-    // }
-  }, [pathname]); // Rerun when pathname changes
+  }, [pathname]);
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
@@ -61,6 +55,19 @@ export default function AppSidebar() {
               <Link href="/">
                 <LayoutDashboard />
                 <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/courses'} // Updated for courses
+              tooltip={{ children: "Courses", side: "right", align: "center" }}
+            >
+              <Link href="/courses">
+                <BookOpen />
+                <span>Courses</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
