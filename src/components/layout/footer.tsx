@@ -14,20 +14,14 @@ export default function Footer() {
         <div className="flex items-center gap-x-4 gap-y-2 flex-wrap justify-center">
           <span className="font-semibold flex items-center gap-1.5">
             <svg
-              className="h-4 w-4 text-saffron" // Changed from text-blue-600
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              className="h-4 w-6" // Adjusted size for flag aspect ratio
+              viewBox="0 0 24 16" // ViewBox for the flag proportions
               xmlns="http://www.w3.org/2000/svg"
             >
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="2" x2="12" y2="22" />
-              <line x1="2" y1="12" x2="22" y2="12" />
-              <line x1="5.64" y1="5.64" x2="18.36" y2="18.36" />
-              <line x1="5.64" y1="18.36" x2="18.36" y2="5.64" />
+              <rect width="24" height="5.33" className="fill-saffron" />
+              <rect y="5.33" width="24" height="5.34" className="fill-white" />
+              <rect y="10.67" width="24" height="5.33" className="fill-india-green" />
+              <circle cx="12" cy="8" r="1.5" className="fill-india-blue" />
             </svg>
             Made in India
           </span>

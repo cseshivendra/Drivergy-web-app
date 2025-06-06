@@ -65,7 +65,9 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
-        saffron: '#FF9933', // Indian Saffron for specific icon
+        saffron: '#FF9933', // Indian Saffron
+        'india-green': '#138808', // Indian Green
+        'india-blue': '#000080', // Navy Blue for Chakra
       },
       borderRadius: {
         lg: 'var(--radius)',
