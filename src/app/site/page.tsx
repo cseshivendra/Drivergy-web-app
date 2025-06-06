@@ -5,8 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, Home } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 const SiteLogo = () => (
   <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -29,13 +36,38 @@ export default function PortfolioSitePage() {
       <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <SiteLogo />
-          <nav className="flex items-center space-x-2 sm:space-x-4">
+          <nav className="flex items-center space-x-1 sm:space-x-2">
             <Button variant="ghost" asChild>
               <Link href="#services">Services</Link>
             </Button>
             <Button variant="ghost" asChild>
               <Link href="#courses">Courses</Link>
             </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost">
+                  <UserPlus className="mr-0 sm:mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Register</span>
+                  <ChevronDown className="ml-1 h-4 w-4 hidden sm:inline" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/site/register/customer">
+                    <User className="mr-2 h-4 w-4" />
+                    Register as Customer
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/site/register/trainer">
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Register as Trainer
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <Button variant="outline" asChild>
               <Link href="/">
                 <LogIn className="mr-0 sm:mr-2 h-4 w-4" />
@@ -249,5 +281,3 @@ function ServiceCard({ icon: Icon, title, description, imageSrc, imageHint }: Se
     </Card>
   );
 }
-
-    
