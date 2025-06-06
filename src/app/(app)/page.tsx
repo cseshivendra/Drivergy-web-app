@@ -87,23 +87,23 @@ export default function DashboardPage() {
         />
         
         <UserTable 
-          title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Newly Registered Customers</>} 
+          title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
           users={customers} 
           isLoading={loadingCustomers} 
         />
         <UserTable 
-          title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />Newly Registered Instructors</>} 
+          title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
           users={instructors} 
           isLoading={loadingInstructors} 
         />
         <RequestTable 
-          title={<><Bike className="inline-block mr-3 h-6 w-6 align-middle" />Two-Wheeler Lesson Requests</>} 
+          title={<><Bike className="inline-block mr-3 h-6 w-6 align-middle" />Bike Requests</>} 
           requests={twoWheelerRequests} 
           vehicleType="Two-Wheeler" 
           isLoading={loadingTwoWheeler} 
         />
         <RequestTable 
-          title={<><FourWheelerIcon className="inline-block mr-3 h-6 w-6 align-middle" />Four-Wheeler Lesson Requests</>} 
+          title={<><FourWheelerIcon className="inline-block mr-3 h-6 w-6 align-middle" />Car Requests</>} 
           requests={fourWheelerRequests} 
           vehicleType="Four-Wheeler" 
           isLoading={loadingFourWheeler} 
