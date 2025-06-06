@@ -1,96 +1,35 @@
+// This file is intentionally blank. 
+// The main dashboard content has been moved to /src/app/(app)/page.tsx
+// and is part of the (app) route group which handles authenticated layout.
+// This root page.tsx can be used for a public landing page if needed in the future,
+// or you can set up a redirect to /login or / (which will be handled by (app) group).
 
-'use client';
+// For now, to ensure users are directed correctly, we can add a redirect
+// or simply let the (app) group's default page handle the root.
+// If this file exists and is empty, Next.js might try to render it.
+// It's often better to ensure routing directs to an intended page.
 
-import { useEffect, useState, useCallback } from 'react';
-import Header from '@/components/layout/header';
-import SummaryMetrics from '@/components/dashboard/summary-metrics';
-import FilterControls from '@/components/dashboard/filter-controls';
-import UserTable from '@/components/dashboard/user-table';
-import RequestTable from '@/components/dashboard/request-table';
-import { fetchCustomers, fetchInstructors, fetchRequests, fetchSummaryData } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData } from '@/types';
-import AuthGuard from '@/components/auth/auth-guard';
+// If you want to redirect from '/' to '/login' if not authenticated,
+// or to the dashboard if authenticated, that logic is effectively handled
+// by the combination of AuthGuard and the (app) layout.
+// An explicit redirect here might be redundant or could conflict.
 
-export default function DashboardPage() {
-  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-  const [customers, setCustomers] = useState<UserProfile[]>([]);
-  const [instructors, setInstructors] = useState<UserProfile[]>([]);
-  const [twoWheelerRequests, setTwoWheelerRequests] = useState<LessonRequest[]>([]);
-  const [fourWheelerRequests, setFourWheelerRequests] = useState<LessonRequest[]>([]);
+// For a truly clean setup where '/' is the dashboard after login,
+// this file could be removed, and Next.js would use (app)/page.tsx for the '/' path.
+// However, to be safe and explicit for now, we can make it a simple redirector
+// to the (app) group's root, or just a component that immediately triggers
+// the auth flow.
 
-  const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingCustomers, setLoadingCustomers] = useState(true);
-  const [loadingInstructors, setLoadingInstructors] = useState(true);
-  const [loadingTwoWheeler, setLoadingTwoWheeler] = useState(true);
-  const [loadingFourWheeler, setLoadingFourWheeler] = useState(true);
+// The simplest approach is to let the (app) group handle the root.
+// So, this file can be removed or be a simple component.
+// Given the current setup, if a user hits '/', (app)/page.tsx will be matched.
 
-  const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
-
-  const loadInitialData = useCallback(async () => {
-    setLoadingSummary(true);
-    fetchSummaryData().then(data => {
-      setSummaryData(data);
-      setLoadingSummary(false);
-    });
-
-    setLoadingTwoWheeler(true);
-    fetchRequests('Two-Wheeler').then(data => {
-      setTwoWheelerRequests(data);
-      setLoadingTwoWheeler(false);
-    });
-
-    setLoadingFourWheeler(true);
-    fetchRequests('Four-Wheeler').then(data => {
-      setFourWheelerRequests(data);
-      setLoadingFourWheeler(false);
-    });
-  }, []);
-
-  const loadFilteredData = useCallback(async (currentFilters: { location?: string; subscriptionPlan?: string }) => {
-    setLoadingCustomers(true);
-    fetchCustomers(currentFilters.location, currentFilters.subscriptionPlan).then(data => {
-      setCustomers(data);
-      setLoadingCustomers(false);
-    });
-
-    setLoadingInstructors(true);
-    fetchInstructors(currentFilters.location, currentFilters.subscriptionPlan).then(data => {
-      setInstructors(data);
-      setLoadingInstructors(false);
-    });
-  }, []);
-
-
-  useEffect(() => {
-    loadInitialData();
-    loadFilteredData(filters);
-  }, [loadInitialData, loadFilteredData, filters]);
-
-
-  const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
-    setFilters(newFilters);
-  };
-
-  return (
-    <AuthGuard>
-      <div className="min-h-screen bg-background text-foreground">
-        <Header />
-        <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-          <h1 className="font-headline text-4xl font-bold">Admin Dashboard</h1>
-          
-          <SummaryMetrics data={summaryData} isLoading={loadingSummary} />
-          
-          <FilterControls 
-            onFilterChange={handleFilterChange} 
-            currentFilters={filters}
-          />
-          
-          <UserTable title="Newly Registered Customers" users={customers} isLoading={loadingCustomers} />
-          <UserTable title="Newly Registered Instructors" users={instructors} isLoading={loadingInstructors} />
-          <RequestTable title="Two-Wheeler Lesson Requests" requests={twoWheelerRequests} vehicleType="Two-Wheeler" isLoading={loadingTwoWheeler} />
-          <RequestTable title="Four-Wheeler Lesson Requests" requests={fourWheelerRequests} vehicleType="Four-Wheeler" isLoading={loadingFourWheeler} />
-        </main>
-      </div>
-    </AuthGuard>
-  );
+// Let's make this a component that effectively does nothing,
+// relying on the route group to take over for '/'.
+export default function HomePage() {
+  // The actual content for the homepage (dashboard) is in src/app/(app)/page.tsx
+  // This component will likely not be rendered directly if the (app) group
+  // correctly captures the '/' route.
+  // If it were, AuthGuard in (app)/layout.tsx would redirect to /login if not authenticated.
+  return null; 
 }

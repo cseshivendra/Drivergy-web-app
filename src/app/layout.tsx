@@ -3,10 +3,6 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/auth-context';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/layout/app-sidebar';
-import { SidebarInset } from '@/components/ui/sidebar';
-import Header from '@/components/layout/header'; // Keep Header for main content area
 
 export const metadata: Metadata = {
   title: 'DriveView',
@@ -27,18 +23,8 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          <SidebarProvider>
-            <div className="flex min-h-screen bg-background">
-              <AppSidebar />
-              <SidebarInset className="flex flex-col flex-1">
-                <Header />
-                <main className="flex-1 overflow-y-auto">
-                 {children}
-                </main>
-                <Toaster />
-              </SidebarInset>
-            </div>
-          </SidebarProvider>
+          {children}
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

@@ -18,7 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ComplaintFormSchema, type ComplaintFormValues } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { Paperclip } from 'lucide-react'; // Example icon
+import { Paperclip, MessageSquareText } from 'lucide-react'; 
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -48,7 +48,7 @@ export default function ContactPage() {
       <Card className="shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
-            <MessageSquareText className="h-8 w-8 text-primary" /> {/* Ensure MessageSquareText is imported if used here, or use Paperclip etc. */}
+            <MessageSquareText className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="font-headline text-3xl font-bold">Contact Us</CardTitle>
           <CardDescription>
@@ -128,7 +128,3 @@ export default function ContactPage() {
     </div>
   );
 }
-
-// Make sure MessageSquareText is imported if used, or use an alternative.
-// If it was defined in app-sidebar.tsx, it should be imported from lucide-react
-import { MessageSquareText } from 'lucide-react';
