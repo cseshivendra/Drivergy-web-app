@@ -6,30 +6,124 @@ import { Locations } from '@/types'; // Import Locations for consistent use
 
 const ARTIFICIAL_DELAY = 300; 
 
-// Initialize empty arrays for dynamic data
-export let mockCustomers: UserProfile[] = []; 
-export let mockInstructors: UserProfile[] = []; 
-export let mockTwoWheelerRequests: LessonRequest[] = []; 
-export let mockFourWheelerRequests: LessonRequest[] = []; 
+// --- LocalStorage Persistence ---
 
-export const mockSummaryData: SummaryData = {
-  totalCustomers: 0, 
-  totalInstructors: 0,
-  activeSubscriptions: 0, 
-  pendingRequests: 0,
-  totalEarnings: 0, 
-  totalCertifiedTrainers: 0, 
+const getItemFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  if (typeof window !== 'undefined') {
+    try {
+      const item = window.localStorage.getItem(key);
+      if (item) {
+        const parsedItem = JSON.parse(item);
+        // Ensure arrays are always returned as arrays, even if localStorage had `null` or malformed data.
+        if (Array.isArray(defaultValue) && !Array.isArray(parsedItem)) {
+          console.warn(`localStorage item for key "${key}" was not an array, returning default.`);
+          return defaultValue;
+        }
+        return parsedItem;
+      }
+      return defaultValue;
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}":`, error);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
 };
+
+const setItemInLocalStorage = <T>(key: string, value: T): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error setting localStorage key "${key}":`, error);
+    }
+  }
+};
+
+const LOCAL_STORAGE_KEYS = {
+  CUSTOMERS: 'driverzyMockCustomers_v1', // Added versioning in case schema changes
+  INSTRUCTORS: 'driverzyMockInstructors_v1',
+  TWO_WHEELER_REQUESTS: 'driverzyMockTwoWheelerRequests_v1',
+  FOUR_WHEELER_REQUESTS: 'driverzyMockFourWheelerRequests_v1',
+  SUMMARY_DATA: 'driverzyMockSummaryData_v1',
+  COURSES: 'driverzyMockCourses_v1', // Added for courses
+};
+
+// Initialize from localStorage or with defaults
+export let mockCustomers: UserProfile[] = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.CUSTOMERS, []);
+export let mockInstructors: UserProfile[] = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.INSTRUCTORS, []);
+export let mockTwoWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []);
+export let mockFourWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
+
 
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
   const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
   return format(addDays(new Date(), -days), 'MMM dd, yyyy HH:mm');
 };
 
+// --- Initial Data Seeding (if localStorage is empty) ---
+if (typeof window !== 'undefined') {
+  let needsSave = false;
+  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS) && mockCustomers.length === 0) {
+      // No initial customers needed as per previous steps, they are added via form
+  }
+  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.INSTRUCTORS) && mockInstructors.length === 0) {
+      // No initial instructors needed
+  }
+
+  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS) && mockTwoWheelerRequests.length === 0 &&
+      !window.localStorage.getItem(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS) && mockFourWheelerRequests.length === 0) {
+    
+    mockTwoWheelerRequests.push(
+      { id: 'r_init_sample_tw1', customerName: 'Rohan Mehra (Sample)', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(1, 3) },
+      { id: 'r_init_sample_tw2', customerName: 'Priya Kulkarni (Sample)', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(4, 7) }
+    );
+    mockFourWheelerRequests.push(
+      { id: 'r_init_sample_fw1', customerName: 'Amit Singh (Sample)', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(8,10) },
+      { id: 'r_init_sample_fw2', customerName: 'Sneha Patel (Sample)', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) }
+    );
+    console.log('[mock-data] Seeded initial sample lesson requests because localStorage was empty.');
+    needsSave = true;
+  }
+  if (needsSave) {
+    setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
+    setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
+  }
+}
+
+
+// For summary data, always recalculate on load based on the arrays, then try to load a persisted version if available (for things like earnings that aren't fully derived from counts)
+const calculatedInitialSummary: SummaryData = {
+  totalCustomers: mockCustomers.length,
+  totalInstructors: mockInstructors.length,
+  activeSubscriptions: mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length,
+  pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
+  totalEarnings: (mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length) * 500, // Basic earning simulation
+  totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
+};
+
+export let mockSummaryData: SummaryData = getItemFromLocalStorage<SummaryData>(LOCAL_STORAGE_KEYS.SUMMARY_DATA, calculatedInitialSummary);
+// Ensure counts are up-to-date with loaded arrays
+mockSummaryData.totalCustomers = mockCustomers.length;
+mockSummaryData.totalInstructors = mockInstructors.length;
+mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+
+
+const saveDataToLocalStorage = () => {
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.CUSTOMERS, mockCustomers);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.INSTRUCTORS, mockInstructors);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.SUMMARY_DATA, mockSummaryData);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.COURSES, mockCourses); // Save courses too
+  console.log('[mock-data] All data saved to localStorage.');
+};
+
+
 // --- User Management ---
 export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
   console.log('[mock-data] addCustomer called with:', JSON.parse(JSON.stringify(data)));
-  const newIdSuffix = mockCustomers.length + mockInstructors.length + 1; // Ensure unique ID across types for simplicity
+  const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now(); // Ensure more unique ID
   const newUser: UserProfile = {
     id: `u${newIdSuffix}`,
     uniqueId: `CU${202500 + newIdSuffix}`,
@@ -39,23 +133,21 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     subscriptionPlan: data.subscriptionPlan,
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
     vehicleInfo: data.vehiclePreference,
-    approvalStatus: 'Pending', // Default approval status
+    approvalStatus: 'Pending', 
   };
   mockCustomers.push(newUser);
   console.log('[mock-data] Customer added. Current mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
   
   mockSummaryData.totalCustomers = mockCustomers.length; 
-  mockSummaryData.activeSubscriptions = Math.floor(mockCustomers.filter(c => c.subscriptionPlan !== 'N/A' && c.approvalStatus === 'Approved').length * 0.85 + mockInstructors.filter(i => i.approvalStatus === 'Approved').length * 0.1);
-
-  // Automatically create a lesson request for the new customer
+  
   const vehicleTypeForRequest = data.vehiclePreference === 'Both' 
     ? (Math.random() < 0.5 ? 'Two-Wheeler' : 'Four-Wheeler') 
     : data.vehiclePreference;
   
-  const newRequestIdSuffix = mockTwoWheelerRequests.length + mockFourWheelerRequests.length + 1;
+  const newRequestIdSuffix = mockTwoWheelerRequests.length + mockFourWheelerRequests.length + 1 + Date.now();
   const newRequest: LessonRequest = {
     id: `r_auto_${newRequestIdSuffix}`,
-    customerName: newUser.name, // Link request to the new customer
+    customerName: newUser.name,
     vehicleType: vehicleTypeForRequest as 'Two-Wheeler' | 'Four-Wheeler',
     status: 'Pending',
     requestTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
@@ -69,15 +161,16 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
   mockTwoWheelerRequests.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
   mockFourWheelerRequests.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
 
-  mockSummaryData.pendingRequests = (mockSummaryData.pendingRequests || 0) + 1;
+  mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   console.log(`[mock-data] Automatically added lesson request for ${newUser.name}:`, JSON.parse(JSON.stringify(newRequest)));
 
+  saveDataToLocalStorage();
   return newUser;
 };
 
 export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => {
   console.log('[mock-data] addTrainer called with:', JSON.parse(JSON.stringify(data)));
-  const newIdSuffix = mockCustomers.length + mockInstructors.length + 1;
+  const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now();
   const newTrainer: UserProfile = {
     id: `u${newIdSuffix}`,
     uniqueId: `TR${202500 + newIdSuffix}`,
@@ -87,39 +180,39 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     subscriptionPlan: "Trainer", 
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
     vehicleInfo: data.trainerVehicleType,
-    approvalStatus: 'Pending', // Default approval status
+    approvalStatus: 'Pending', 
   };
   mockInstructors.push(newTrainer);
   console.log('[mock-data] Trainer added. Current mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
   mockSummaryData.totalInstructors = mockInstructors.length; 
+  saveDataToLocalStorage();
   return newTrainer;
 };
 
 export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2)); // Shorter delay for quick actions
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2)); 
   let userFound = false;
   
   const customerIndex = mockCustomers.findIndex(c => c.id === userId);
   if (customerIndex !== -1) {
     mockCustomers[customerIndex].approvalStatus = newStatus;
     userFound = true;
-    if (newStatus === 'Approved') {
-        mockSummaryData.activeSubscriptions = Math.floor(mockCustomers.filter(c => c.subscriptionPlan !== 'N/A' && c.approvalStatus === 'Approved').length * 0.85 + mockInstructors.filter(i => i.approvalStatus === 'Approved').length * 0.1);
-    }
     console.log(`[mock-data] Updated customer ${userId} to status ${newStatus}. mockCustomers:`, JSON.parse(JSON.stringify(mockCustomers)));
   } else {
     const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
     if (instructorIndex !== -1) {
       mockInstructors[instructorIndex].approvalStatus = newStatus;
       userFound = true;
-       if (newStatus === 'Approved') {
-        mockSummaryData.totalCertifiedTrainers = (mockSummaryData.totalCertifiedTrainers || 0) + 1; 
-      }
       console.log(`[mock-data] Updated instructor ${userId} to status ${newStatus}. mockInstructors:`, JSON.parse(JSON.stringify(mockInstructors)));
     }
   }
   
-  if (!userFound) {
+  if (userFound) {
+    // Recalculate relevant summary data parts
+    mockSummaryData.activeSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
+    mockSummaryData.totalCertifiedTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length;
+    saveDataToLocalStorage();
+  } else {
     console.error(`[mock-data] User with ID ${userId} not found for status update.`);
   }
   return userFound;
@@ -184,26 +277,15 @@ export const fetchInstructors = async (location?: string, subscription?: string,
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 3));
-  const user = mockCustomers.find(c => c.id === userId) || mockInstructors.find(i => i.id === userId);
+  // Make sure to check loaded data
+  const allUsers = [...mockCustomers, ...mockInstructors];
+  const user = allUsers.find(u => u.id === userId);
   console.log(`[mock-data] fetchUserById for ID '${userId}':`, JSON.parse(JSON.stringify(user)));
   return user || null;
 };
 
 
 // --- Lesson Request Management ---
-// Adding some initial sample requests for demonstration
-mockTwoWheelerRequests.push(
-  { id: 'r_init_tw1', customerName: 'Rohan Mehra', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(1, 3) },
-  { id: 'r_init_tw2', customerName: 'Priya Kulkarni', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(4, 7) }
-);
-mockFourWheelerRequests.push(
-  { id: 'r_init_fw1', customerName: 'Amit Singh', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(8,10) },
-  { id: 'r_init_fw2', customerName: 'Sneha Patel', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) }
-);
-mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
-                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
-
-
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests].sort((a, b) => {
@@ -224,26 +306,26 @@ export const fetchAllLessonRequests = async (searchTerm?: string): Promise<Lesso
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
+  // Recalculate all parts of summary data from the source arrays
   const currentPendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   
-  const currentActiveSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length;
-  const activeTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
-
+  const currentActiveCustomerSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length;
+  const activeApprovedTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
 
   const updatedSummaryData: SummaryData = {
-    ...mockSummaryData, 
     totalCustomers: mockCustomers.length, 
     totalInstructors: mockInstructors.length, 
-    activeSubscriptions: currentActiveSubscriptions + activeTrainers, 
+    activeSubscriptions: currentActiveCustomerSubscriptions + activeApprovedTrainers, 
     pendingRequests: currentPendingRequests,
     totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
-    totalEarnings: (currentActiveSubscriptions + activeTrainers) * 500, // Basic earning simulation
+    totalEarnings: (currentActiveCustomerSubscriptions + activeApprovedTrainers) * 500, // Basic earning simulation
   };
   
-  Object.assign(mockSummaryData, updatedSummaryData);
-  console.log('[mock-data] fetchSummaryData returning:', JSON.parse(JSON.stringify(updatedSummaryData)));
-  return updatedSummaryData;
+  Object.assign(mockSummaryData, updatedSummaryData); // Update the global mockSummaryData object
+  saveDataToLocalStorage(); // Persist the newly calculated summary
+  console.log('[mock-data] fetchSummaryData returning:', JSON.parse(JSON.stringify(mockSummaryData)));
+  return mockSummaryData;
 };
 
 const carDrivingModules: CourseModule[] = [
@@ -258,12 +340,15 @@ const twoWheelerModules: CourseModule[] = [
 const rtoExamModules: CourseModule[] = [
   { id: 'rtom1', title: 'Understanding RTO Rules & Regulations', description: 'Key traffic laws and penalties.', duration: '60 mins', recordedLectureLink: '#' },
 ];
-export const mockCourses: Course[] = [
+
+let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, [
   { 
     id: 'course1', 
     title: 'Car Driving Mastery', 
     description: 'Comprehensive car driving lessons from basic controls to advanced road skills and safety.', 
-    icon: Car,
+    icon: Car, // Note: Icons won't serialize directly to JSON, this will be an issue if not handled.
+    // For mock data, we can re-assign icons after loading if needed, or omit them from localStorage.
+    // Let's assume for now icons are statically assigned in component or re-added.
     totalEnrolled: 0, totalCertified: 0, modules: carDrivingModules, image: 'https://placehold.co/600x400.png',
   },
   { 
@@ -280,36 +365,49 @@ export const mockCourses: Course[] = [
     icon: FileText,
     totalEnrolled: 0, totalCertified: 0, modules: rtoExamModules, image: 'https://placehold.co/600x400.png',
   },
-];
+]);
+
+// If courses were loaded from localStorage, their 'icon' property will be lost because functions/React components cannot be serialized.
+// We need to re-assign them here.
+const reAssignCourseIcons = (courses: Course[]): Course[] => {
+  return courses.map(course => {
+    if (course.id === 'course1' && !course.icon) course.icon = Car;
+    if (course.id === 'course2' && !course.icon) course.icon = Bike;
+    if (course.id === 'course3' && !course.icon) course.icon = FileText;
+    return course;
+  });
+};
+mockCourses = reAssignCourseIcons(mockCourses);
+
 
 export const fetchCourses = async (): Promise<Course[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   const approvedCustomers = mockCustomers.filter(c => c.approvalStatus === 'Approved').length;
-  mockCourses[0].totalEnrolled = Math.floor(approvedCustomers * 0.6); 
-  mockCourses[0].totalCertified = Math.floor(mockCourses[0].totalEnrolled * 0.8); 
   
-  mockCourses[1].totalEnrolled = Math.floor(approvedCustomers * 0.4); 
-  mockCourses[1].totalCertified = Math.floor(mockCourses[1].totalEnrolled * 0.7);
-
-  mockCourses[2].totalEnrolled = approvedCustomers; 
-  mockCourses[2].totalCertified = Math.floor(mockCourses[2].totalEnrolled * 0.9);
-  return mockCourses;
+  mockCourses = mockCourses.map(course => {
+    if (course.id === 'course1') {
+      course.totalEnrolled = Math.floor(approvedCustomers * 0.6); 
+      course.totalCertified = Math.floor(course.totalEnrolled * 0.8); 
+    } else if (course.id === 'course2') {
+      course.totalEnrolled = Math.floor(approvedCustomers * 0.4); 
+      course.totalCertified = Math.floor(course.totalEnrolled * 0.7);
+    } else if (course.id === 'course3') {
+      course.totalEnrolled = approvedCustomers; 
+      course.totalCertified = Math.floor(course.totalEnrolled * 0.9);
+    }
+    return course;
+  });
+  
+  saveDataToLocalStorage(); // Save updated course enrollments
+  return [...mockCourses]; // Return a copy
 };
 
-// Initialize summary data based on empty arrays initially, then add any predefined requests.
-mockSummaryData.totalCustomers = mockCustomers.length;
-mockSummaryData.totalInstructors = mockInstructors.length;
-mockSummaryData.activeSubscriptions = 0;
-mockSummaryData.totalEarnings = 0; 
-mockSummaryData.totalCertifiedTrainers = 0;
-// Recalculate pending requests after initial samples are added.
-mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
-                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
 
-
-console.log('[mock-data] Initial mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
-console.log('[mock-data] Initial mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
-console.log('[mock-data] Initial mockTwoWheelerRequests:', JSON.parse(JSON.stringify(mockTwoWheelerRequests)));
-console.log('[mock-data] Initial mockFourWheelerRequests:', JSON.parse(JSON.stringify(mockFourWheelerRequests)));
-console.log('[mock-data] Initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
-
+// Final console logs after all initializations and potential seeding
+console.log('[mock-data] Final initial mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
+console.log('[mock-data] Final initial mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
+console.log('[mock-data] Final initial mockTwoWheelerRequests:', JSON.parse(JSON.stringify(mockTwoWheelerRequests)));
+console.log('[mock-data] Final initial mockFourWheelerRequests:', JSON.parse(JSON.stringify(mockFourWheelerRequests)));
+console.log('[mock-data] Final initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
+console.log('[mock-data] Final initial mockCourses:', JSON.parse(JSON.stringify(mockCourses.map(c => ({...c, icon: c.icon ? c.icon.displayName || c.icon.name : undefined}))))); // Log course names for icons
+saveDataToLocalStorage(); // Ensure initial state is saved if anything was seeded or calculated.
