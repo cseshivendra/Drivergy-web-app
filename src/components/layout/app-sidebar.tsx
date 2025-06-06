@@ -32,7 +32,7 @@ export default function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
+    <Sidebar collapsible="offcanvas" side="left" variant="sidebar" className="border-r border-border/60">
       <SidebarHeader className="p-0"> 
         <AppLogo />
       </SidebarHeader>
@@ -91,3 +91,4 @@ export default function AppSidebar() {
     </Sidebar>
   );
 }
+

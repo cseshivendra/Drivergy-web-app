@@ -37,7 +37,7 @@ export default function Header() {
     <header className="sticky top-0 z-30 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          {isMobile && <SidebarTrigger onClick={() => toggleSidebar()} />}
+          {isMobile && <SidebarTrigger />}
           {!isMobile && (
             <Button variant="ghost" size="icon" onClick={() => toggleSidebar()} className="hidden md:flex">
                <PanelLeft className="h-5 w-5" />
@@ -101,3 +101,4 @@ export default function Header() {
     </header>
   );
 }
+
