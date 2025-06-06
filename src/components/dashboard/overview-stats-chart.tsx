@@ -21,7 +21,6 @@ const chartConfig = {
   value: {
     label: 'Value',
   },
-  // Define colors for each metric directly in chartData's fill property
   customers: { color: 'hsl(var(--chart-1))' },
   instructors: { color: 'hsl(var(--chart-2))' },
   subscriptions: { color: 'hsl(var(--chart-3))' },
@@ -46,18 +45,20 @@ export default function OverviewStatsChart({ data, isLoading }: OverviewStatsCha
   }
 
   const chartData = [
-    { name: 'Customers', value: data.totalCustomers, fill: chartConfig.customers.color },
-    { name: 'Instructors', value: data.totalInstructors, fill: chartConfig.instructors.color },
-    { name: 'Subscriptions', value: data.activeSubscriptions, fill: chartConfig.subscriptions.color },
-    { name: 'Requests', value: data.pendingRequests, fill: chartConfig.requests.color },
-    { name: 'Earnings ($)', value: data.totalEarnings, fill: chartConfig.earnings.color }, // Added ($) for clarity
-    { name: 'Certified Cust.', value: data.totalCertifiedTrainers, fill: chartConfig.certified.color }, // Shortened label
+    { name: 'Cust.', value: data.totalCustomers, fill: chartConfig.customers.color },
+    { name: 'Instr.', value: data.totalInstructors, fill: chartConfig.instructors.color },
+    { name: 'Subs.', value: data.activeSubscriptions, fill: chartConfig.subscriptions.color },
+    { name: 'Reqs.', value: data.pendingRequests, fill: chartConfig.requests.color },
+    { name: 'Earnings', value: data.totalEarnings, fill: chartConfig.earnings.color },
+    { name: 'Certified', value: data.totalCertifiedTrainers, fill: chartConfig.certified.color },
   ];
 
-  // Custom tick formatter for Y-axis to handle large numbers
   const formatYAxisTick = (tick: number) => {
+    if (tick >= 1000000) {
+      return `${(tick / 1000000).toFixed(1)}M`;
+    }
     if (tick >= 1000) {
-      return `${(tick / 1000).toFixed(1)}k`;
+      return `${(tick / 1000).toFixed(0)}k`; // Use toFixed(0) for thousands to avoid "12.0k"
     }
     return tick.toString();
   };
@@ -77,7 +78,7 @@ export default function OverviewStatsChart({ data, isLoading }: OverviewStatsCha
             margin={{
               top: 20,
               right: 20,
-              left: 0,
+              left: 10, // Added some left margin for Y-axis labels
               bottom: 5,
             }}
           >
@@ -87,13 +88,19 @@ export default function OverviewStatsChart({ data, isLoading }: OverviewStatsCha
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              angle={-15}
-              textAnchor="end"
-              height={50}
+              // angle={0} // Default is 0, so explicitly setting or removing is fine
+              textAnchor="middle" // Better for horizontal labels
+              // height={30} // Adjust height if needed, or let Recharts decide
               interval={0} 
               style={{ fontSize: '0.75rem' }}
             />
-            <YAxis tickFormatter={formatYAxisTick} tickLine={false} axisLine={false} tickMargin={5} />
+            <YAxis 
+              tickFormatter={formatYAxisTick} 
+              tickLine={false} 
+              axisLine={false} 
+              tickMargin={5}
+              width={data.totalEarnings > 99999 ? 40 : 30} // Dynamically adjust Y-axis width for larger numbers
+            />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dot" />}
