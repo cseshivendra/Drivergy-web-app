@@ -35,11 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await signInWithPopup(auth, googleProvider);
       // User state will be updated by onAuthStateChanged
-      router.push('/'); // Redirect to dashboard after successful login
+      // router.push('/'); // Redirect is handled by AuthGuard or login page useEffect
     } catch (error) {
       console.error("Error signing in with Google:", error);
       // Handle error (e.g., show a toast notification)
-      setLoading(false);
+    } finally {
+      // setLoading(false); // Auth state change will set loading to false
+      // Let onAuthStateChanged handle final loading state to ensure user is set
     }
   };
 
@@ -47,20 +49,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await firebaseSignOut(auth);
-      setUser(null);
+      // setUser(null); // Handled by onAuthStateChanged
       router.push('/login'); // Redirect to login page after sign out
     } catch (error) {
       console.error("Error signing out:", error);
       // Handle error
     } finally {
-      setLoading(false);
+      // setLoading(false); // Handled by onAuthStateChanged
     }
   };
 
-  if (loading && typeof window !== 'undefined' && window.location.pathname !== '/login') {
-    return <Loading />;
-  }
-
+  // The problematic conditional rendering that caused hydration mismatch is removed.
+  // AuthGuard is responsible for showing Loading for protected routes during auth check.
+  // LoginPage has its own loading/redirect logic.
 
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
