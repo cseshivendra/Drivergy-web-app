@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
 import {
   Sidebar,
   SidebarHeader,
@@ -20,7 +20,8 @@ import { cn } from '@/lib/utils';
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const [referralsOpen, setReferralsOpen] = useState(pathname.startsWith('/referrals'));
+  // Initialize referralsOpen to false, useEffect will manage it based on pathname
+  const [referralsOpen, setReferralsOpen] = useState(false);
 
   const AppLogo = () => (
     <div className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70">
@@ -33,13 +34,16 @@ export default function AppSidebar() {
     </div>
   );
 
-  // Effect to open referrals submenu if a child route is active on initial load or route change
-  useState(() => {
+  // Effect to open referrals submenu if a child route is active
+  useEffect(() => {
     if (pathname.startsWith('/referrals')) {
       setReferralsOpen(true);
     }
-  });
-
+    // If you want the menu to close when navigating away from /referrals, add an else block:
+    // else {
+    //  setReferralsOpen(false);
+    // }
+  }, [pathname]); // Rerun when pathname changes
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
