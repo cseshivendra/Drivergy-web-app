@@ -46,8 +46,8 @@ export default function Header() {
           )}
           {(isMobile || (!isMobile && sidebarState === 'collapsed')) && (
             <Link href="/" className="flex items-center space-x-2">
-              <Car className="h-7 w-7 text-purple-600" />
-              <span className="font-headline text-2xl font-bold text-purple-600">Driverzy</span>
+              <Car className="h-7 w-7 text-red-600" />
+              <span className="font-headline text-2xl font-bold text-red-600">Driverzy</span>
             </Link>
           )}
         </div>

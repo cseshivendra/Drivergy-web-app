@@ -25,10 +25,10 @@ export default function AppSidebar() {
 
   const AppLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
-      <div className="p-1.5 bg-purple-600/10 rounded-lg group-data-[state=collapsed]:rounded-full transition-all duration-300">
-        <Car className="h-7 w-7 text-purple-600 shrink-0" />
+      <div className="p-1.5 bg-red-600/10 rounded-lg group-data-[state=collapsed]:rounded-full transition-all duration-300">
+        <Car className="h-7 w-7 text-red-600 shrink-0" />
       </div>
-      <span className="font-headline text-2xl font-extrabold text-purple-600 group-data-[state=collapsed]:hidden tracking-tighter">
+      <span className="font-headline text-2xl font-extrabold text-red-600 group-data-[state=collapsed]:hidden tracking-tighter">
         Driverzy
       </span>
     </Link>
