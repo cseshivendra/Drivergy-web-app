@@ -27,9 +27,10 @@ export default function DashboardPage() {
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [tempSearchTerm, setTempSearchTerm] = useState(''); // For the input field
+  const [tempSearchTerm, setTempSearchTerm] = useState(''); 
 
-  const loadInitialData = useCallback(async () => {
+  const loadInitialAndRequestData = useCallback(async (currentSearchTerm: string) => {
+    console.log('[DashboardPage] loadInitialAndRequestData called with searchTerm:', currentSearchTerm);
     setLoadingSummary(true);
     fetchSummaryData().then(data => {
       setSummaryData(data);
@@ -37,22 +38,23 @@ export default function DashboardPage() {
     });
 
     setLoadingTwoWheeler(true);
-    fetchRequests('Two-Wheeler').then(data => {
+    fetchRequests('Two-Wheeler', currentSearchTerm).then(data => {
       setTwoWheelerRequests(data);
       setLoadingTwoWheeler(false);
     });
 
     setLoadingFourWheeler(true);
-    fetchRequests('Four-Wheeler').then(data => {
+    fetchRequests('Four-Wheeler', currentSearchTerm).then(data => {
       setFourWheelerRequests(data);
       setLoadingFourWheeler(false);
     });
-  }, []);
+  }, []); // Empty dependency array, as it takes searchTerm as a parameter
 
-  const loadFilteredData = useCallback(async (
+  const loadFilteredUserData = useCallback(async (
     currentFilters: { location?: string; subscriptionPlan?: string },
     currentSearchTerm: string
   ) => {
+    console.log('[DashboardPage] loadFilteredUserData called with filters:', currentFilters, 'searchTerm:', currentSearchTerm);
     setLoadingCustomers(true);
     fetchCustomers(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
       setCustomers(data);
@@ -64,23 +66,24 @@ export default function DashboardPage() {
       setInstructors(data);
       setLoadingInstructors(false);
     });
-  }, []);
+  }, []); // Empty dependency array, as it takes parameters
 
 
   useEffect(() => {
-    loadInitialData();
-    loadFilteredData(filters, searchTerm);
-  }, [loadInitialData, loadFilteredData, filters, searchTerm]);
+    console.log('[DashboardPage] Main useEffect triggered. Filters:', filters, 'SearchTerm:', searchTerm);
+    loadInitialAndRequestData(searchTerm);
+    loadFilteredUserData(filters, searchTerm);
+  }, [loadInitialAndRequestData, loadFilteredUserData, filters, searchTerm]);
 
 
   const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
+    console.log('[DashboardPage] handleFilterChange called with newFilters:', newFilters);
     setFilters(newFilters);
-    // useEffect will handle re-fetching with the new filters and existing searchTerm
   };
 
   const handleSearch = () => {
+    console.log('[DashboardPage] handleSearch called. TempSearchTerm:', tempSearchTerm);
     setSearchTerm(tempSearchTerm.trim());
-    // useEffect will handle re-fetching with the new searchTerm and existing filters
   };
 
   return (
@@ -137,3 +140,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

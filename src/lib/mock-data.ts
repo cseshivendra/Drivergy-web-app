@@ -21,14 +21,14 @@ const indianNames = [
 
 const getRandomLocation = () => Locations[Math.floor(Math.random() * Locations.length)];
 
-export const mockCustomers: UserProfile[] = []; // Emptied
+export const mockCustomers: UserProfile[] = []; 
 
-export const mockInstructors: UserProfile[] = []; // Emptied
+export const mockInstructors: UserProfile[] = []; 
 
 
-export const mockTwoWheelerRequests: LessonRequest[] = []; // Emptied
+export const mockTwoWheelerRequests: LessonRequest[] = []; 
 
-export const mockFourWheelerRequests: LessonRequest[] = []; // Emptied
+export const mockFourWheelerRequests: LessonRequest[] = []; 
 
 
 export const mockSummaryData: SummaryData = {
@@ -36,7 +36,7 @@ export const mockSummaryData: SummaryData = {
   totalInstructors: 0,
   activeSubscriptions: 0, 
   pendingRequests: 0,
-  totalEarnings: 0, // Reset earnings as well, or keep as a running total if preferred
+  totalEarnings: 0, 
   totalCertifiedTrainers: 0, 
 };
 
@@ -105,14 +105,14 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     id: `c${newIdSuffix}`,
     uniqueId: `CU${202500 + newIdSuffix}`,
     name: data.name,
-    contact: data.email, // Assuming email is the primary contact for UserProfile
+    contact: data.email, 
     location: data.location,
     subscriptionPlan: data.subscriptionPlan,
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
   };
   mockCustomers.push(newUser);
   console.log('[mock-data] Customer added. Current mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
-  mockSummaryData.totalCustomers = mockCustomers.length; // Update summary
+  mockSummaryData.totalCustomers = mockCustomers.length; 
   mockSummaryData.activeSubscriptions = Math.floor(mockCustomers.filter(c => c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length * 0.85 + mockInstructors.length * 0.1);
   return newUser;
 };
@@ -124,14 +124,14 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     id: `i${newIdSuffix}`,
     uniqueId: `TR${202500 + newIdSuffix}`,
     name: data.name,
-    contact: data.email, // Assuming email is the primary contact
+    contact: data.email, 
     location: data.location,
-    subscriptionPlan: "Trainer", // Trainers don't have customer subscription plans
+    subscriptionPlan: "Trainer", 
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
   };
   mockInstructors.push(newTrainer);
   console.log('[mock-data] Trainer added. Current mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
-  mockSummaryData.totalInstructors = mockInstructors.length; // Update summary
+  mockSummaryData.totalInstructors = mockInstructors.length; 
   return newTrainer;
 };
 
@@ -173,7 +173,7 @@ export const fetchInstructors = async (location?: string, subscription?: string,
   if (location && location.trim() !== '' && location !== 'all') {
     results = results.filter(i => i.location.toLowerCase() === location.toLowerCase().trim());
   }
-  if (subscription && subscription !== 'all') { // Trainers have a fixed "Trainer" subscription plan, so this filter might not be very useful unless "Trainer" is passed
+  if (subscription && subscription !== 'all') { 
     results = results.filter(i => i.subscriptionPlan === subscription);
   }
 
@@ -189,34 +189,46 @@ export const fetchInstructors = async (location?: string, subscription?: string,
   return results;
 };
 
-export const fetchRequests = async (vehicleType: VehicleType): Promise<LessonRequest[]> => {
+export const fetchRequests = async (vehicleType: VehicleType, searchTerm?: string): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  console.log(`[mock-data] fetchRequests called for ${vehicleType} with searchTerm: '${searchTerm}'`);
   
+  let baseRequests: LessonRequest[] = [];
   if (vehicleType === 'Two-Wheeler') {
-    return mockTwoWheelerRequests;
+    baseRequests = mockTwoWheelerRequests;
+  } else if (vehicleType === 'Four-Wheeler') {
+     baseRequests = mockFourWheelerRequests;
   }
-  if (vehicleType === 'Four-Wheeler') {
-     return mockFourWheelerRequests;
+
+  if (searchTerm && searchTerm.trim() !== '') {
+    const lowerSearchTerm = searchTerm.toLowerCase().trim();
+    const filteredResults = baseRequests.filter(request =>
+      request.customerName.toLowerCase().includes(lowerSearchTerm)
+    );
+    console.log(`[mock-data] fetchRequests for ${vehicleType} filtered by '${searchTerm}':`, JSON.parse(JSON.stringify(filteredResults)));
+    return filteredResults;
   }
-  return [];
+  
+  console.log(`[mock-data] fetchRequests for ${vehicleType} (no search term):`, JSON.parse(JSON.stringify(baseRequests)));
+  return baseRequests;
 };
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  // Ensure summary data reflects current state of mock arrays
+  
   const currentPendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   const currentActiveSubscriptions = mockCustomers.filter(c => c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length * 0.85 + mockInstructors.length * 0.1;
 
 
   const updatedSummaryData: SummaryData = {
-    ...mockSummaryData, // Preserve existing values like totalEarnings
+    ...mockSummaryData, 
     totalCustomers: mockCustomers.length,
     totalInstructors: mockInstructors.length,
     activeSubscriptions: Math.floor(currentActiveSubscriptions), 
     pendingRequests: currentPendingRequests,
   };
-  // Update the global mockSummaryData object as well
+  
   Object.assign(mockSummaryData, updatedSummaryData);
   console.log('[mock-data] fetchSummaryData returning:', JSON.parse(JSON.stringify(updatedSummaryData)));
   return updatedSummaryData;
@@ -227,7 +239,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
   return mockCourses;
 };
 
-// Initialize summary data based on current (empty) arrays
+
 mockSummaryData.totalCustomers = mockCustomers.length;
 mockSummaryData.totalInstructors = mockInstructors.length;
 mockSummaryData.activeSubscriptions = 0;
@@ -237,3 +249,4 @@ mockSummaryData.totalCertifiedTrainers = 0;
 console.log('[mock-data] Initial mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
 console.log('[mock-data] Initial mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
 console.log('[mock-data] Initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
+
