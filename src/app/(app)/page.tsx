@@ -95,7 +95,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background text-foreground">
       <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 className="font-headline text-4xl font-bold text-center sm:text-left">Admin Dashboard</h1>
+          <h1 className="font-headline text-4xl font-bold text-center sm:text-left text-muted-foreground">Admin Dashboard</h1>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <Input
               type="text"
