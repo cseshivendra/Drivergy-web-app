@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Cog, Rocket } from 'lucide-react'; // Import icons
+import { Rocket } from 'lucide-react'; // Cog import removed
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -13,7 +13,22 @@ export default function Footer() {
         <p>&copy; {currentYear} DriveView. All rights reserved.</p>
         <div className="flex items-center gap-x-4 gap-y-2 flex-wrap justify-center">
           <span className="font-semibold flex items-center gap-1.5">
-            <Cog className="h-4 w-4 text-saffron" /> {/* Apply saffron color */}
+            <svg
+              className="h-4 w-4 text-blue-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="2" x2="12" y2="22" />
+              <line x1="2" y1="12" x2="22" y2="12" />
+              <line x1="5.64" y1="5.64" x2="18.36" y2="18.36" />
+              <line x1="5.64" y1="18.36" x2="18.36" y2="5.64" />
+            </svg>
             Make in India
           </span>
           <span className="font-semibold flex items-center gap-1.5">
