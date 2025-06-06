@@ -66,6 +66,9 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
   } else {
     mockFourWheelerRequests.push(newRequest);
   }
+  mockTwoWheelerRequests.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+  mockFourWheelerRequests.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+
   mockSummaryData.pendingRequests = (mockSummaryData.pendingRequests || 0) + 1;
   console.log(`[mock-data] Automatically added lesson request for ${newUser.name}:`, JSON.parse(JSON.stringify(newRequest)));
 
@@ -110,7 +113,7 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
       mockInstructors[instructorIndex].approvalStatus = newStatus;
       userFound = true;
        if (newStatus === 'Approved') {
-        mockSummaryData.totalCertifiedTrainers = (mockSummaryData.totalCertifiedTrainers || 0) + 1; // Assuming 'certified' means approved
+        mockSummaryData.totalCertifiedTrainers = (mockSummaryData.totalCertifiedTrainers || 0) + 1; 
       }
       console.log(`[mock-data] Updated instructor ${userId} to status ${newStatus}. mockInstructors:`, JSON.parse(JSON.stringify(mockInstructors)));
     }
@@ -127,7 +130,6 @@ export const fetchCustomers = async (location?: string, subscription?: string, s
   console.log(`[mock-data] fetchCustomers called with: location='${location}', subscription='${subscription}', searchTerm='${searchTerm}'`);
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
-  // For "New Customers" table, primarily show 'Pending'
   let results = mockCustomers.filter(c => c.approvalStatus === 'Pending');
   console.log('[mock-data] current PENDING mockCustomers before further filters:', JSON.parse(JSON.stringify(results)));
 
@@ -146,6 +148,7 @@ export const fetchCustomers = async (location?: string, subscription?: string, s
       c.contact.toLowerCase().includes(lowerSearchTerm) 
     );
   }
+  results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
   console.log('[mock-data] fetchCustomers (pending) results:', JSON.parse(JSON.stringify(results)));
   return results;
 };
@@ -154,21 +157,17 @@ export const fetchInstructors = async (location?: string, subscription?: string,
   console.log(`[mock-data] fetchInstructors called with: location='${location}', subscription='${subscription}', searchTerm='${searchTerm}'`);
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
-  // For "New Instructors" table, primarily show 'Pending'
   let results = mockInstructors.filter(i => i.approvalStatus === 'Pending');
   console.log('[mock-data] current PENDING mockInstructors before further filters:', JSON.parse(JSON.stringify(results)));
 
   if (location && location.trim() !== '' && location !== 'all') {
     results = results.filter(i => i.location.toLowerCase() === location.toLowerCase().trim());
   }
-   // Trainers have a fixed "Trainer" subscription plan, so filtering by other plans might not be relevant here
-   // unless we intend to filter them out if 'Trainer' isn't selected.
   if (subscription && subscription !== 'all' && subscription !== 'Trainer') { 
-    results = []; // If filtering by a plan that's not 'Trainer', show no instructors.
+    results = []; 
   } else if (subscription === 'Trainer' || !subscription || subscription === 'all' ) {
-    // If 'Trainer' is selected, or no subscription filter, or 'all plans', proceed.
+    // No change
   }
-
 
   if (searchTerm && searchTerm.trim() !== '') {
     const lowerSearchTerm = searchTerm.toLowerCase().trim();
@@ -178,12 +177,33 @@ export const fetchInstructors = async (location?: string, subscription?: string,
       i.contact.toLowerCase().includes(lowerSearchTerm)
     );
   }
+  results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
   console.log('[mock-data] fetchInstructors (pending) results:', JSON.parse(JSON.stringify(results)));
   return results;
 };
 
+export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 3));
+  const user = mockCustomers.find(c => c.id === userId) || mockInstructors.find(i => i.id === userId);
+  console.log(`[mock-data] fetchUserById for ID '${userId}':`, JSON.parse(JSON.stringify(user)));
+  return user || null;
+};
+
 
 // --- Lesson Request Management ---
+// Adding some initial sample requests for demonstration
+mockTwoWheelerRequests.push(
+  { id: 'r_init_tw1', customerName: 'Rohan Mehra', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(1, 3) },
+  { id: 'r_init_tw2', customerName: 'Priya Kulkarni', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(4, 7) }
+);
+mockFourWheelerRequests.push(
+  { id: 'r_init_fw1', customerName: 'Amit Singh', vehicleType: 'Four-Wheeler', status: 'Completed', requestTimestamp: generateRandomDate(8,10) },
+  { id: 'r_init_fw2', customerName: 'Sneha Patel', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(0, 2) }
+);
+mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
+                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+
+
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests].sort((a, b) => {
@@ -200,32 +220,6 @@ export const fetchAllLessonRequests = async (searchTerm?: string): Promise<Lesso
   return allRequests;
 };
 
-// Legacy fetchRequests, might be deprecated if fetchAllLessonRequests is primary
-export const fetchRequests = async (vehicleType: VehicleType, searchTerm?: string): Promise<LessonRequest[]> => {
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  console.log(`[mock-data] fetchRequests called for ${vehicleType} with searchTerm: '${searchTerm}'`);
-  
-  let baseRequests: LessonRequest[] = [];
-  if (vehicleType === 'Two-Wheeler') {
-    baseRequests = mockTwoWheelerRequests;
-  } else if (vehicleType === 'Four-Wheeler') {
-     baseRequests = mockFourWheelerRequests;
-  }
-
-  if (searchTerm && searchTerm.trim() !== '') {
-    const lowerSearchTerm = searchTerm.toLowerCase().trim();
-    const filteredResults = baseRequests.filter(request =>
-      request.customerName.toLowerCase().includes(lowerSearchTerm)
-    );
-    console.log(`[mock-data] fetchRequests for ${vehicleType} filtered by '${searchTerm}':`, JSON.parse(JSON.stringify(filteredResults)));
-    return filteredResults;
-  }
-  
-  console.log(`[mock-data] fetchRequests for ${vehicleType} (no search term):`, JSON.parse(JSON.stringify(baseRequests)));
-  return baseRequests;
-};
-
-
 // --- Summary & Courses ---
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
@@ -234,17 +228,17 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   
   const currentActiveSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length;
-  // Assuming trainers also contribute to a form of "active subscription" count or active user base
   const activeTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
 
 
   const updatedSummaryData: SummaryData = {
     ...mockSummaryData, 
-    totalCustomers: mockCustomers.length, // Total registered, not just approved
-    totalInstructors: mockInstructors.length, // Total registered, not just approved
+    totalCustomers: mockCustomers.length, 
+    totalInstructors: mockInstructors.length, 
     activeSubscriptions: currentActiveSubscriptions + activeTrainers, 
     pendingRequests: currentPendingRequests,
-    totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length, // Example: count approved users as "certified" for this metric
+    totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
+    totalEarnings: (currentActiveSubscriptions + activeTrainers) * 500, // Basic earning simulation
   };
   
   Object.assign(mockSummaryData, updatedSummaryData);
@@ -290,29 +284,32 @@ export const mockCourses: Course[] = [
 
 export const fetchCourses = async (): Promise<Course[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  // Update course stats based on current (approved) user data for a more dynamic feel
   const approvedCustomers = mockCustomers.filter(c => c.approvalStatus === 'Approved').length;
-  mockCourses[0].totalEnrolled = Math.floor(approvedCustomers * 0.6); // 60% of approved customers enroll in car mastery
-  mockCourses[0].totalCertified = Math.floor(mockCourses[0].totalEnrolled * 0.8); // 80% of enrolled get certified
+  mockCourses[0].totalEnrolled = Math.floor(approvedCustomers * 0.6); 
+  mockCourses[0].totalCertified = Math.floor(mockCourses[0].totalEnrolled * 0.8); 
   
-  mockCourses[1].totalEnrolled = Math.floor(approvedCustomers * 0.4); // 40% for two-wheeler
+  mockCourses[1].totalEnrolled = Math.floor(approvedCustomers * 0.4); 
   mockCourses[1].totalCertified = Math.floor(mockCourses[1].totalEnrolled * 0.7);
 
-  mockCourses[2].totalEnrolled = approvedCustomers; // All approved customers might check RTO guide
+  mockCourses[2].totalEnrolled = approvedCustomers; 
   mockCourses[2].totalCertified = Math.floor(mockCourses[2].totalEnrolled * 0.9);
   return mockCourses;
 };
 
-// Initialize summary data based on empty arrays
+// Initialize summary data based on empty arrays initially, then add any predefined requests.
 mockSummaryData.totalCustomers = mockCustomers.length;
 mockSummaryData.totalInstructors = mockInstructors.length;
 mockSummaryData.activeSubscriptions = 0;
-mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
-mockSummaryData.totalEarnings = 0; // Assuming earnings come from approved/active subscriptions
+mockSummaryData.totalEarnings = 0; 
 mockSummaryData.totalCertifiedTrainers = 0;
+// Recalculate pending requests after initial samples are added.
+mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
+                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+
 
 console.log('[mock-data] Initial mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
 console.log('[mock-data] Initial mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
 console.log('[mock-data] Initial mockTwoWheelerRequests:', JSON.parse(JSON.stringify(mockTwoWheelerRequests)));
 console.log('[mock-data] Initial mockFourWheelerRequests:', JSON.parse(JSON.stringify(mockFourWheelerRequests)));
 console.log('[mock-data] Initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
+

@@ -70,12 +70,11 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   };
 
   const handleViewDetails = (user: UserProfile) => {
-    console.log("View Details for User:", user);
-    toast({
-      title: "View Details",
-      description: `Details for ${user.name} logged to console. ID: ${user.uniqueId}`,
+    window.open(`/users/${user.id}`, '_blank'); // Opens in a new tab
+    toast({ 
+      title: "Opening Details",
+      description: `Opening details for ${user.name} in a new tab.`,
     });
-    // Future: Implement modal or navigation to a details page
   };
 
 
