@@ -13,11 +13,11 @@ export default function Footer() {
         <p>&copy; {currentYear} DriveView. All rights reserved.</p>
         <div className="flex items-center gap-x-4 gap-y-2 flex-wrap justify-center">
           <span className="font-semibold flex items-center gap-1.5">
-            <Cog className="h-4 w-4 text-primary" />
+            <Cog className="h-4 w-4" /> {/* Removed text-primary */}
             Make in India
           </span>
           <span className="font-semibold flex items-center gap-1.5">
-            <Rocket className="h-4 w-4 text-primary" />
+            <Rocket className="h-4 w-4" /> {/* Removed text-primary */}
             Startup India
           </span>
         </div>
