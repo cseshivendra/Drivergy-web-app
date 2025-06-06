@@ -25,11 +25,13 @@ import {
   SpecializationOptions,
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
+  GenderOptions,
+  DLStatusOptions,
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; // Import add functions
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent } from 'lucide-react'; 
 import { useMemo } from 'react';
 
 interface RegistrationFormProps {
@@ -46,12 +48,17 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       email: '',
       phone: '',
       location: '',
+      gender: '', 
     };
     if (userRole === 'customer') {
       return {
         ...base,
-        subscriptionPlan: '', // Default to empty, user must select
-        vehiclePreference: undefined, // Default to undefined, user must select
+        subscriptionPlan: '', 
+        vehiclePreference: undefined,
+        dlStatus: '',
+        dlNumber: '',
+        dlTypeHeld: '',
+        dlFileCopy: undefined,
       } as CustomerRegistrationFormValues;
     } else { // trainer
       return {
@@ -74,7 +81,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues,
+    mode: 'onChange', // To enable watching fields and re-validating
   });
+
+  const dlStatus = form.watch('dlStatus'); // Watch for changes in dlStatus for customers
 
   function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
@@ -84,7 +94,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     if (data.userRole === 'customer') {
       const newCustomer = addCustomer(data as CustomerRegistrationFormValues);
       registrationMessage = `${newCustomer.name} (ID: ${newCustomer.uniqueId}) has been successfully registered as a customer.`;
-      console.log('Customer Certificate File (if any):', (data as any).customerDocumentFile?.[0]?.name); // Example if customer had files
+      console.log('Customer DL File (if any):', (data as CustomerRegistrationFormValues).dlFileCopy?.[0]?.name);
     } else if (data.userRole === 'trainer') {
       const newTrainer = addTrainer(data as TrainerRegistrationFormValues);
       registrationMessage = `${newTrainer.name} (ID: ${newTrainer.uniqueId}) has been successfully registered as a trainer.`;
@@ -97,7 +107,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
       description: registrationMessage,
     });
-    form.reset(defaultValues);
+    form.reset(defaultValues); // Reset form after submission with memoized default values
   }
 
   return (
@@ -108,7 +118,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name</FormLabel>
               <FormControl>
                 <Input placeholder="Enter full name" {...field} />
               </FormControl>
@@ -122,7 +132,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Email Address</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="you@example.com" {...field} />
                 </FormControl>
@@ -135,7 +145,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number</FormLabel>
                 <FormControl>
                   <Input type="tel" placeholder="Enter phone number" {...field} />
                 </FormControl>
@@ -150,7 +160,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Location</FormLabel>
+                <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Location</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>
@@ -167,13 +177,38 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               </FormItem>
             )}
           />
-          {userRole === 'customer' && (
+          <FormField
+            control={form.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {GenderOptions.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {userRole === 'customer' && (
+          <>
             <FormField
               control={form.control}
               name="subscriptionPlan"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subscription Plan</FormLabel>
+                  <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
                       <SelectTrigger>
@@ -190,36 +225,109 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </FormItem>
               )}
             />
-          )}
-        </div>
+            <FormField
+              control={form.control}
+              name="vehiclePreference"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select vehicle type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {VehiclePreferenceOptions.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option === 'Two-Wheeler' && <Bike className="inline-block mr-2 h-4 w-4" />}
+                          {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Driving License Details</h3>
+            <FormField
+              control={form.control}
+              name="dlStatus"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select DL status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {DLStatusOptions.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {userRole === 'customer' && (
-          <FormField
-            control={form.control}
-            name="vehiclePreference"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Vehicle Preference</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select vehicle type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {VehiclePreferenceOptions.map(option => (
-                      <SelectItem key={option} value={option}>
-                        {option === 'Two-Wheeler' && <Bike className="inline-block mr-2 h-4 w-4" />}
-                        {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+            {(dlStatus === 'Already Have DL' || (form.getValues() as CustomerRegistrationFormValues).dlStatus === 'Already Have DL') && (
+              <>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="dlNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />DL Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter DL number" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dlTypeHeld"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of DL Held</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., LMV, MCWG" {...field} value={field.value || ''}/>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                    control={form.control}
+                    name="dlFileCopy"
+                    render={({ field: { value, onChange, ...fieldProps } }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload DL Copy</FormLabel>
+                        <FormControl>
+                            <Input 
+                              type="file" 
+                              {...fieldProps} 
+                              onChange={(event) => onChange(event.target.files)}
+                              accept=".pdf,.jpg,.jpeg,.png"
+                            />
+                        </FormControl>
+                        <FormDescription>PDF, JPG, PNG accepted.</FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+              </>
             )}
-          />
+          </>
         )}
 
         {userRole === 'trainer' && (
@@ -230,7 +338,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="yearsOfExperience"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Years of Experience</FormLabel>
+                    <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience</FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                     </FormControl>
@@ -243,7 +351,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="specialization"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Specialization</FormLabel>
+                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                         <SelectTrigger>
@@ -267,7 +375,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="trainerVehicleType"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Type of Vehicle Used for Training</FormLabel>
+                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                             <SelectTrigger>
@@ -289,7 +397,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="vehicleNumber"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Vehicle Registration Number</FormLabel>
+                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number</FormLabel>
                         <FormControl>
                             <Input placeholder="e.g., MH01AB1234" {...field} />
                         </FormControl>

@@ -77,21 +77,53 @@ export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] 
 export const SpecializationOptions = ["Two-Wheeler", "Car", "Three-Wheeler", "Defensive Driving"] as const;
 export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)", "Car (Automatic)", "Three-Wheeler"] as const;
 export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "Hybrid"] as const;
+export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
+export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 
 
 const fileValidation = z.instanceof(FileList).refine(files => files.length > 0, "File is required.");
+const optionalFileValidation = z.instanceof(FileList).optional();
 
 const BaseRegistrationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }).max(15).optional().or(z.literal('')),
   location: z.string().min(1, { message: "Please select a location." }),
+  gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
 
 const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   userRole: z.literal('customer'),
   subscriptionPlan: z.string().min(1, { message: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
+  dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
+  dlNumber: z.string().optional(),
+  dlTypeHeld: z.string().optional(),
+  dlFileCopy: optionalFileValidation,
+}).refine(data => {
+  if (data.dlStatus === "Already Have DL") {
+    return !!data.dlNumber && data.dlNumber.trim() !== "";
+  }
+  return true;
+}, {
+  message: "DL Number is required if you have a DL.",
+  path: ["dlNumber"],
+}).refine(data => {
+  if (data.dlStatus === "Already Have DL") {
+    return !!data.dlTypeHeld && data.dlTypeHeld.trim() !== "";
+  }
+  return true;
+}, {
+  message: "Type of DL Held is required if you have a DL.",
+  path: ["dlTypeHeld"],
+}).refine(data => {
+  if (data.dlStatus === "Already Have DL") {
+    return data.dlFileCopy && data.dlFileCopy.length > 0;
+  }
+  return true;
+}, {
+  message: "DL File Copy is required if you have a DL.",
+  path: ["dlFileCopy"],
 });
 
 const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
