@@ -31,7 +31,7 @@ export const mockTwoWheelerRequests: LessonRequest[] = [];
 export const mockFourWheelerRequests: LessonRequest[] = []; 
 
 
-// Populate with some initial requests for demonstration
+// Populate with some initial requests for demonstration (These won't match new users initially)
 mockTwoWheelerRequests.push(
   { id: 'r_tw_1', customerName: 'Rohan Mehra', vehicleType: 'Two-Wheeler', status: 'Pending', requestTimestamp: generateRandomDate(1, 5) },
   { id: 'r_tw_2', customerName: 'Priya Kulkarni', vehicleType: 'Two-Wheeler', status: 'Active', requestTimestamp: generateRandomDate(6, 10) }
@@ -133,6 +133,29 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
   console.log('[mock-data] Customer added. Current mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
   mockSummaryData.totalCustomers = mockCustomers.length; 
   mockSummaryData.activeSubscriptions = Math.floor(mockCustomers.filter(c => c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length * 0.85 + mockInstructors.length * 0.1);
+
+  // Automatically create a lesson request for the new customer
+  const vehicleTypeForRequest = data.vehiclePreference === 'Both' 
+    ? (Math.random() < 0.5 ? 'Two-Wheeler' : 'Four-Wheeler') 
+    : data.vehiclePreference;
+  
+  const newRequestIdSuffix = mockTwoWheelerRequests.length + mockFourWheelerRequests.length + 1;
+  const newRequest: LessonRequest = {
+    id: `r_auto_${newRequestIdSuffix}`,
+    customerName: newUser.name,
+    vehicleType: vehicleTypeForRequest as 'Two-Wheeler' | 'Four-Wheeler', // Ensure it's not 'Both'
+    status: 'Pending',
+    requestTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+  };
+
+  if (newRequest.vehicleType === 'Two-Wheeler') {
+    mockTwoWheelerRequests.push(newRequest);
+  } else {
+    mockFourWheelerRequests.push(newRequest);
+  }
+  mockSummaryData.pendingRequests += 1;
+  console.log(`[mock-data] Automatically added lesson request for ${newUser.name}:`, JSON.parse(JSON.stringify(newRequest)));
+
   return newUser;
 };
 
@@ -211,7 +234,10 @@ export const fetchInstructors = async (location?: string, subscription?: string,
 
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests];
+  let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests].sort((a, b) => {
+    // Sort by newest first
+    return new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime();
+  });
   
   if (searchTerm && searchTerm.trim() !== '') {
     const lowerSearchTerm = searchTerm.toLowerCase().trim();
@@ -288,3 +314,4 @@ console.log('[mock-data] Initial mockInstructors:', JSON.parse(JSON.stringify(mo
 console.log('[mock-data] Initial mockTwoWheelerRequests:', JSON.parse(JSON.stringify(mockTwoWheelerRequests)));
 console.log('[mock-data] Initial mockFourWheelerRequests:', JSON.parse(JSON.stringify(mockFourWheelerRequests)));
 console.log('[mock-data] Initial mockSummaryData:', JSON.parse(JSON.stringify(mockSummaryData)));
+
