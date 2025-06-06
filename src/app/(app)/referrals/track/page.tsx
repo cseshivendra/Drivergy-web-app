@@ -13,16 +13,18 @@ interface ReferralStatCardProps {
 
 function ReferralStatCard({ title, value, icon: Icon, description }: ReferralStatCardProps) {
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <Icon className="h-5 w-5 text-primary" />
+    <Card className="shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 border-l-4 border-primary">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{title}</CardTitle>
+          <div className="text-3xl font-extrabold text-foreground mt-1">{value}</div>
+        </div>
+        <div className="p-2.5 bg-primary/10 rounded-lg">
+          <Icon className="h-6 w-6 text-primary" />
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground pt-1">{description}</p>
+      <CardContent className="pt-0">
+        <p className="text-xs text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );
@@ -37,17 +39,17 @@ export default function TrackReferralsPage() {
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
-      <Card className="shadow-xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
+      <Card className="shadow-xl overflow-hidden">
+        <CardHeader className="text-center bg-card pattern-dots pattern-primary/10 pattern-bg-transparent pattern-opacity-20 pattern-size-6">
+          <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit border-2 border-primary/20 shadow-md">
             <BarChart3 className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="font-headline text-3xl font-bold text-primary">Track Your Referrals</CardTitle>
-          <CardDescription className="text-lg">
+          <CardDescription className="text-lg text-foreground/90">
             See how your referral efforts are paying off and the rewards you've earned!
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8 pt-6">
+        <CardContent className="space-y-8 pt-8 p-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <ReferralStatCard
               title="Total Referrals Sent"
@@ -64,7 +66,7 @@ export default function TrackReferralsPage() {
             <ReferralStatCard
               title="Pending Referrals"
               value={pendingReferrals}
-              icon={Users}
+              icon={Users} 
               description="Invites sent but not yet signed up."
             />
             <ReferralStatCard
@@ -76,7 +78,6 @@ export default function TrackReferralsPage() {
           </div>
           
           <div className="text-center pt-4">
-            {/* This could later link to a detailed referral history table or more info */}
             <p className="text-muted-foreground">
               Keep sharing to earn more rewards! Check back often for updates.
             </p>

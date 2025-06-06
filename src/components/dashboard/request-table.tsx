@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,9 +73,10 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="h-24 text-center">
-                     <div className="flex flex-col items-center justify-center">
-                      <AlertCircle className="w-10 h-10 text-muted-foreground mb-2" />
-                       No requests found.
+                     <div className="flex flex-col items-center justify-center text-muted-foreground">
+                      <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                       <p className="text-lg">No {vehicleType.toLowerCase()} requests found.</p>
+                       <p className="text-sm">Check back later for new lesson requests.</p>
                     </div>
                   </TableCell>
                 </TableRow>
