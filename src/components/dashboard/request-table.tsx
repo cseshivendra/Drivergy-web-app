@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonRequest, VehicleType } from '@/types';
 import { LessonRequestStatusOptions, VehiclePreferenceOptions } from '@/types'; // Import status and vehicle options
-import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle, Filter, ListFilter, ListChecks } from 'lucide-react';
+import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle, Filter, ListFilter, ListChecks, ListTree } from 'lucide-react'; // Added ListTree
 import { Button } from '@/components/ui/button';
 
 interface RequestTableProps {
