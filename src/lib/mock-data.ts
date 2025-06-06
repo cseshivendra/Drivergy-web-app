@@ -134,6 +134,11 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
     vehicleInfo: data.vehiclePreference,
     approvalStatus: 'Pending', 
+    // Store new customer-specific fields for potential display on user details page
+    dlStatus: data.dlStatus,
+    dlNumber: data.dlNumber,
+    photoIdType: data.photoIdType,
+    photoIdNumber: data.photoIdNumber,
   };
   mockCustomers.push(newUser);
   console.log('[mock-data] Customer added. Current mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
@@ -163,6 +168,9 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
 
   mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   console.log(`[mock-data] Automatically added lesson request for ${newUser.name}:`, JSON.parse(JSON.stringify(newRequest)));
+  console.log(`[mock-data] Customer Photo ID Type: ${data.photoIdType}, Number: ${data.photoIdNumber}, File: ${data.photoIdFile?.[0]?.name || 'No file'}`);
+  console.log(`[mock-data] Customer DL File: ${data.dlFileCopy?.[0]?.name || 'No file'}`);
+
 
   saveDataToLocalStorage();
   return newUser;

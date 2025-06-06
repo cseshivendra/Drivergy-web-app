@@ -15,6 +15,11 @@ export interface UserProfile {
   registrationTimestamp: string;
   vehicleInfo?: string;
   approvalStatus: ApprovalStatusType; // Added field
+  // Customer specific details that might be useful on profile:
+  dlStatus?: string;
+  dlNumber?: string;
+  photoIdType?: string;
+  photoIdNumber?: string;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -107,6 +112,9 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
   dlFileCopy: optionalFileField,
+  photoIdType: z.string().min(1, { message: "Photo ID type is required (e.g., Aadhaar, PAN)." }),
+  photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
+  photoIdFile: fileField.refine(val => val && val.length > 0, "Photo ID document is required."),
 });
 
 const TrainerRegistrationSchema = BaseRegistrationSchema.extend({

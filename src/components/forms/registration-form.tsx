@@ -31,7 +31,7 @@ import {
   type TrainerRegistrationFormValues,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; // Import add functions
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard } from 'lucide-react'; 
 import { useMemo } from 'react';
 
 interface RegistrationFormProps {
@@ -59,6 +59,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         dlNumber: '',
         dlTypeHeld: '',
         dlFileCopy: undefined,
+        photoIdType: '',
+        photoIdNumber: '',
+        photoIdFile: undefined,
       } as CustomerRegistrationFormValues;
     } else { // trainer
       return {
@@ -92,9 +95,13 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     let registrationMessage = "";
 
     if (data.userRole === 'customer') {
-      const newCustomer = addCustomer(data as CustomerRegistrationFormValues);
+      const customerData = data as CustomerRegistrationFormValues;
+      const newCustomer = addCustomer(customerData);
       registrationMessage = `${newCustomer.name} (ID: ${newCustomer.uniqueId}) has been successfully registered as a customer.`;
-      console.log('Customer DL File (if any):', (data as CustomerRegistrationFormValues).dlFileCopy?.[0]?.name);
+      console.log('Customer DL File (if any):', customerData.dlFileCopy?.[0]?.name);
+      console.log('Customer Photo ID Type:', customerData.photoIdType);
+      console.log('Customer Photo ID Number:', customerData.photoIdNumber);
+      console.log('Customer Photo ID File:', customerData.photoIdFile?.[0]?.name);
     } else if (data.userRole === 'trainer') {
       const newTrainer = addTrainer(data as TrainerRegistrationFormValues);
       registrationMessage = `${newTrainer.name} (ID: ${newTrainer.uniqueId}) has been successfully registered as a trainer.`;
@@ -327,6 +334,55 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 />
               </>
             )}
+
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Photo ID Verification</h3>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                <FormField
+                    control={form.control}
+                    name="photoIdType"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center"><CreditCard className="mr-2 h-4 w-4 text-primary" />Photo ID Type</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g., Aadhaar, PAN Card" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="photoIdNumber"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Photo ID Number</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Enter ID Number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
+            <FormField
+                control={form.control}
+                name="photoIdFile"
+                render={({ field: { value, onChange, ...fieldProps } }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Photo ID Document</FormLabel>
+                    <FormControl>
+                        <Input 
+                            type="file" 
+                            {...fieldProps} 
+                            onChange={(event) => onChange(event.target.files)}
+                            accept=".pdf,.jpg,.jpeg,.png"
+                        />
+                    </FormControl>
+                    <FormDescription>PDF, JPG, PNG accepted. This is required.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
           </>
         )}
 
