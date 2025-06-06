@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Rocket } from 'lucide-react'; // Cog import removed
+import { Rocket } from 'lucide-react'; 
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -29,7 +29,7 @@ export default function Footer() {
               <line x1="5.64" y1="5.64" x2="18.36" y2="18.36" />
               <line x1="5.64" y1="18.36" x2="18.36" y2="5.64" />
             </svg>
-            Make in India
+            Made in India
           </span>
           <span className="font-semibold flex items-center gap-1.5">
             <Rocket className="h-4 w-4" /> {/* Default color */}
