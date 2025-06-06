@@ -27,10 +27,14 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
 
   const getStatusColor = (status: LessonRequest['status']) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-400/20 text-yellow-700';
-      case 'Active': return 'bg-blue-400/20 text-blue-700';
-      case 'Completed': return 'bg-green-400/20 text-green-700';
-      default: return 'bg-gray-400/20 text-gray-700';
+      case 'Pending': 
+        return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
+      case 'Active': 
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
+      case 'Completed': 
+        return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
+      default: 
+        return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
     }
   };
 
@@ -65,7 +69,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
                     <TableCell className="font-medium">{request.customerName}</TableCell>
                     <TableCell>{request.vehicleType}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(request.status)} dark:text-foreground`}>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(request.status)}`}>
                         {request.status}
                       </span>
                     </TableCell>
@@ -90,3 +94,4 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
     </Card>
   );
 }
+
