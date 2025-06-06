@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/layout/app-sidebar';
 import { SidebarInset } from '@/components/ui/sidebar';
 import Header from '@/components/layout/header';
+import Footer from '@/components/layout/footer'; // Import Footer
 import type { ReactNode } from 'react';
 
 export default function AuthenticatedAppLayout({
@@ -23,6 +24,7 @@ export default function AuthenticatedAppLayout({
             <main className="flex-1 overflow-y-auto">
              {children}
             </main>
+            <Footer /> {/* Add Footer here */}
             {/* Toaster is in RootLayout */}
           </SidebarInset>
         </div>
