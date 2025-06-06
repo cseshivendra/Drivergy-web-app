@@ -4,8 +4,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -28,6 +28,68 @@ const SiteLogo = () => (
     </span>
   </Link>
 );
+
+interface ServiceCardProps {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  imageSrc: string;
+  imageHint: string;
+}
+
+function ServiceCard({ icon: Icon, title, description, imageSrc, imageHint }: ServiceCardProps) {
+  return (
+    <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
+      <div className="relative h-48 w-full">
+        <Image 
+          src={imageSrc} 
+          alt={title} 
+          layout="fill" 
+          objectFit="cover" 
+          data-ai-hint={imageHint}
+        />
+      </div>
+      <CardHeader className="pb-3">
+        <div className="flex items-center mb-2">
+          <div className="p-2 bg-primary/10 rounded-md mr-3">
+            <Icon className="h-6 w-6 text-primary" />
+          </div>
+          <CardTitle className="font-headline text-xl font-semibold text-primary">{title}</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+const coursesData = [
+  {
+    id: "car-program",
+    icon: Car,
+    title: "Comprehensive Car Program",
+    description: "Learn to drive a car from scratch with our certified instructors. Covers all essentials from basic controls to on-road practice.",
+    imageSrc: "https://placehold.co/600x400.png",
+    imageHint: "car driving lesson"
+  },
+  {
+    id: "motorcycle-course",
+    icon: Bike,
+    title: "Motorcycle Rider Course",
+    description: "Master two-wheeler driving with our specialized motorcycle training. Safety gear and techniques included.",
+    imageSrc: "https://placehold.co/600x400.png",
+    imageHint: "motorcycle training bike"
+  },
+  {
+    id: "rto-assistance",
+    icon: ClipboardCheck,
+    title: "RTO License Assistance",
+    description: "Navigate the RTO test with ease. Our course includes theory, mock tests, and guidance for your driving license.",
+    imageSrc: "https://placehold.co/600x400.png",
+    imageHint: "license test exam"
+  }
+];
 
 export default function PortfolioSitePage() {
   return (
@@ -99,7 +161,7 @@ export default function PortfolioSitePage() {
               Welcome to Driverzy
             </h1>
             <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-muted-foreground">
-              Your trusted partner for comprehensive driving education. Learn to drive with confidence and skill.
+              Master the road with our expert-led driving courses and personalized training programs.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
@@ -147,23 +209,46 @@ export default function PortfolioSitePage() {
           </div>
         </section>
 
-        {/* Courses Section Placeholder */}
+        {/* Courses Section */}
         <section id="courses" className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Our Courses</h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Detailed information about our driving courses will be available here soon.
-              We offer programs for all skill levels!
-            </p>
-            <Image 
-              src="https://placehold.co/1200x300.png" 
-              alt="Courses placeholder" 
-              width={1200} 
-              height={300} 
-              className="rounded-lg shadow-lg mx-auto"
-              data-ai-hint="online course education"
-            />
-            {/* Future: Link to /courses page from admin dashboard if content is similar, or create new portfolio course page */}
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
+              <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+                Enroll in our top-rated driving courses designed for all skill levels. Get certified and drive with confidence.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {coursesData.map((course) => (
+                <Card key={course.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
+                  <div className="relative h-48 w-full">
+                    <Image 
+                      src={course.imageSrc} 
+                      alt={course.title} 
+                      layout="fill" 
+                      objectFit="cover" 
+                      data-ai-hint={course.imageHint}
+                    />
+                  </div>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center mb-2">
+                      <div className="p-2 bg-primary/10 rounded-md mr-3">
+                        <course.icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                    <p className="text-muted-foreground text-sm">{course.description}</p>
+                  </CardContent>
+                  <CardFooter className="mt-auto pt-4 border-t border-border/50">
+                    <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+                      View Details
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -255,37 +340,3 @@ export default function PortfolioSitePage() {
   );
 }
 
-interface ServiceCardProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  imageSrc: string;
-  imageHint: string;
-}
-
-function ServiceCard({ icon: Icon, title, description, imageSrc, imageHint }: ServiceCardProps) {
-  return (
-    <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
-      <div className="relative h-48 w-full">
-        <Image 
-          src={imageSrc} 
-          alt={title} 
-          layout="fill" 
-          objectFit="cover" 
-          data-ai-hint={imageHint}
-        />
-      </div>
-      <CardHeader className="pb-3">
-        <div className="flex items-center mb-2">
-          <div className="p-2 bg-primary/10 rounded-md mr-3">
-            <Icon className="h-6 w-6 text-primary" />
-          </div>
-          <CardTitle className="font-headline text-xl font-semibold text-primary">{title}</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </CardContent>
-    </Card>
-  );
-}
