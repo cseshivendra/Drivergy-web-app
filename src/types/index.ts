@@ -12,11 +12,12 @@ export interface UserProfile {
   registrationTimestamp: string;
 }
 
+export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
 export interface LessonRequest {
   id:string;
   customerName: string;
   vehicleType: 'Two-Wheeler' | 'Four-Wheeler';
-  status: 'Pending' | 'Active' | 'Completed';
+  status: typeof LessonRequestStatusOptions[number];
   requestTimestamp: string;
 }
 
@@ -100,8 +101,7 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
-  // dlFileCopy field was already removed in a previous diagnostic step.
-  // If it were here, it would be: dlFileCopy: optionalFileField,
+  // dlFileCopy: optionalFileField, // dlFileCopy field removed as per previous diagnostic steps
 });
 // The .refine blocks for conditional dlNumber and dlTypeHeld have been removed for diagnosis.
 
@@ -114,14 +114,14 @@ const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  // trainerCertificateFile: fileField, // This field was already removed for diagnosis.
+  // trainerCertificateFile: fileField, // trainerCertificateFile removed as per previous diagnostic steps
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  // aadhaarCardFile: fileField, // This field was already removed for diagnosis.
+  // aadhaarCardFile: fileField, // aadhaarCardFile removed as per previous diagnostic steps
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  // drivingLicenseFile: fileField, // This field was already removed for diagnosis.
+  // drivingLicenseFile: fileField, // drivingLicenseFile removed as per previous diagnostic steps
 });
 
 
@@ -133,3 +133,4 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
+

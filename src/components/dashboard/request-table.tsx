@@ -2,12 +2,15 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { LessonRequest, VehicleType } from '@/types';
-import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle } from 'lucide-react'; // Renamed Car to FourWheelerIcon
+import { LessonRequestStatusOptions } from '@/types'; // Import status options
+import { User, Bike, Car as FourWheelerIcon, CalendarDays, HelpCircle, AlertCircle, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface RequestTableProps {
@@ -21,15 +24,23 @@ const ITEMS_PER_PAGE = 5;
 
 export default function RequestTable({ title, requests, vehicleType, isLoading }: RequestTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<LessonRequest['status'] | 'all'>('all');
+
+  const filteredRequests = useMemo(() => {
+    if (statusFilter === 'all') {
+      return requests;
+    }
+    return requests.filter(request => request.status === statusFilter);
+  }, [requests, statusFilter]);
 
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when requests data changes
-  }, [requests]);
+    setCurrentPage(1); // Reset to first page when requests data or filter changes
+  }, [requests, statusFilter]);
 
-  const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedRequests = requests.slice(startIndex, endIndex);
+  const paginatedRequests = filteredRequests.slice(startIndex, endIndex);
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -40,7 +51,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
   };
 
   const renderSkeletons = () => (
-    Array(ITEMS_PER_PAGE).fill(0).map((_, index) => ( // Use ITEMS_PER_PAGE for skeleton rows
+    Array(ITEMS_PER_PAGE).fill(0).map((_, index) => (
       <TableRow key={`skeleton-${index}`}>
         <TableCell><Skeleton className="h-5 w-32" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -65,8 +76,27 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
 
   return (
     <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <CardTitle className="font-headline text-2xl font-semibold mb-4 sm:mb-0">{title}</CardTitle>
+        <div className="w-full sm:w-auto sm:max-w-xs">
+          <Label htmlFor={`status-filter-${vehicleType.replace(/\s+/g, '-')}`} className="sr-only">Filter by Status</Label>
+          <Select 
+            value={statusFilter} 
+            onValueChange={(value) => setStatusFilter(value as LessonRequest['status'] | 'all')}
+            disabled={isLoading}
+          >
+            <SelectTrigger id={`status-filter-${vehicleType.replace(/\s+/g, '-')}`} className="w-full">
+              <Filter className="inline-block mr-2 h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {LessonRequestStatusOptions.map(status => (
+                <SelectItem key={status} value={status}>{status}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="overflow-x-auto">
@@ -104,8 +134,12 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
                   <TableCell colSpan={4} className="h-24 text-center">
                      <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                       <p className="text-lg">No {vehicleType.toLowerCase()} requests found.</p>
-                       <p className="text-sm">Check back later for new lesson requests.</p>
+                       <p className="text-lg">
+                         {requests.length === 0 ? `No ${vehicleType.toLowerCase()} requests found.` : `No ${vehicleType.toLowerCase()} requests match the current filter.`}
+                       </p>
+                       <p className="text-sm">
+                         {requests.length === 0 ? "Check back later for new lesson requests." : "Try adjusting your filter criteria."}
+                       </p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -114,10 +148,10 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
           </Table>
         </div>
       </CardContent>
-      {requests.length > 0 && !isLoading && (
+      {filteredRequests.length > 0 && !isLoading && (
          <CardFooter className="flex items-center justify-between pt-4 border-t">
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
+            Page {currentPage} of {totalPages} ({filteredRequests.length} item{filteredRequests.length === 1 ? '' : 's'})
           </span>
           <div className="flex space-x-2">
             <Button
@@ -139,7 +173,7 @@ export default function RequestTable({ title, requests, vehicleType, isLoading }
           </div>
         </CardFooter>
       )}
-      {(requests.length === 0 && !isLoading) && (
+      {(filteredRequests.length === 0 && !isLoading) && (
          <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
           <span className="text-sm text-muted-foreground">No data to paginate</span>
         </CardFooter>
