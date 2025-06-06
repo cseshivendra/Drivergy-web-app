@@ -93,9 +93,9 @@ const coursesData = [
 ];
 
 const slideImages = [
-  { src: "https://placehold.co/1920x1080.png?text=Drive+With+Confidence", hint: "learner car driving" },
-  { src: "https://placehold.co/1920x1080.png?text=Pass+Your+Test", hint: "driving test road" },
-  { src: "https://placehold.co/1920x1080.png?text=Expert+Instructors", hint: "city driving school" },
+  { src: "https://placehold.co/1920x1080.png", hint: "learner car driving" },
+  { src: "https://placehold.co/1920x1080.png", hint: "driving test road" },
+  { src: "https://placehold.co/1920x1080.png", hint: "city driving school" },
 ];
 
 export default function PortfolioSitePage() {
@@ -201,8 +201,7 @@ export default function PortfolioSitePage() {
           <div className="absolute inset-0 bg-black/50 z-[5] pointer-events-none"></div> {/* Dark overlay */}
           
           <div className="relative z-10 p-4 container mx-auto"> {/* Content */}
-            {/* Headline removed as per request */}
-            <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <div className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
