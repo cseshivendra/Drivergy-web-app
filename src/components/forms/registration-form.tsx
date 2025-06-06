@@ -35,6 +35,7 @@ import {
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
 import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon } from 'lucide-react'; 
 import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -99,7 +100,14 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
     if (data.userRole === 'customer') {
       const customerData = data as CustomerRegistrationFormValues;
-      const newCustomer = addCustomer(customerData);
+      // Ensure optional fields that might be empty strings are converted to undefined
+      const cleanedCustomerData = {
+        ...customerData,
+        phone: customerData.phone || undefined,
+        dlNumber: customerData.dlNumber || undefined,
+        dlTypeHeld: customerData.dlTypeHeld || undefined,
+      };
+      const newCustomer = addCustomer(cleanedCustomerData);
       registrationMessage = `${newCustomer.name} (ID: ${newCustomer.uniqueId}) has been successfully registered as a customer.`;
       console.log('Customer DL File (if any):', customerData.dlFileCopy?.[0]?.name);
       console.log('Customer Photo ID Type:', customerData.photoIdType);
@@ -107,7 +115,12 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       console.log('Customer Photo ID File:', customerData.photoIdFile?.[0]?.name);
       console.log('Customer Trainer Preference:', customerData.trainerPreference);
     } else if (data.userRole === 'trainer') {
-      const newTrainer = addTrainer(data as TrainerRegistrationFormValues);
+      const trainerData = data as TrainerRegistrationFormValues;
+      const cleanedTrainerData = {
+        ...trainerData,
+        phone: trainerData.phone || undefined,
+      }
+      const newTrainer = addTrainer(cleanedTrainerData);
       registrationMessage = `${newTrainer.name} (ID: ${newTrainer.uniqueId}) has been successfully registered as a trainer.`;
       console.log('Trainer Certificate File:', (data as TrainerRegistrationFormValues).trainerCertificateFile?.[0]?.name);
       console.log('Aadhaar Card File:', (data as TrainerRegistrationFormValues).aadhaarCardFile?.[0]?.name);
@@ -157,9 +170,20 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="Enter phone number" {...field} />
-                </FormControl>
+                <div className="flex items-center">
+                  <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
+                    +91
+                  </span>
+                  <FormControl>
+                    <Input 
+                      type="tel" 
+                      placeholder="Enter 10-digit number" 
+                      {...field} 
+                      className="rounded-l-none"
+                      value={field.value || ''} // Ensure value is controlled, handles undefined
+                    />
+                  </FormControl>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -288,6 +312,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     </FormItem>
                 )}
                 />
+                 {/* Placeholder for the second item in the grid if needed in future */}
+                 <div></div>
             </div>
             
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Driving License Details</h3>
@@ -645,4 +671,3 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
-

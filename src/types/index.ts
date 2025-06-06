@@ -11,12 +11,13 @@ export interface UserProfile {
   id: string;
   uniqueId: string;
   name: string;
-  contact: string;
+  contact: string; // Email
+  phone?: string; // Phone number is optional
   location: string;
   subscriptionPlan: string;
   registrationTimestamp: string;
   vehicleInfo?: string;
-  approvalStatus: ApprovalStatusType; // Added field
+  approvalStatus: ApprovalStatusType;
   // Customer specific details that might be useful on profile:
   dlStatus?: string;
   dlNumber?: string;
@@ -40,7 +41,7 @@ export interface SummaryData {
   activeSubscriptions: number;
   pendingRequests: number;
   totalEarnings: number;
-  totalCertifiedTrainers: number; // This might relate to 'Approved' trainers/customers
+  totalCertifiedTrainers: number;
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
@@ -55,9 +56,8 @@ export const Locations = [
   "Amritsar", "Allahabad", "Ranchi", "Howrah", "Coimbatore", "Jabalpur", "Gwalior",
   "Vijayawada", "Jodhpur", "Madurai", "Raipur", "Kota", "Guwahati", "Chandigarh"
 ];
-export const SubscriptionPlans = ["Basic", "Premium", "Gold"]; // "Trainer" is a role, not typically a plan customers choose.
+export const SubscriptionPlans = ["Basic", "Premium", "Gold"];
 
-// Schema for Contact Us / Complaint Form
 export const ComplaintFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -67,7 +67,6 @@ export const ComplaintFormSchema = z.object({
 
 export type ComplaintFormValues = z.infer<typeof ComplaintFormSchema>;
 
-// Course Management Types
 export interface CourseModule {
   id: string;
   title: string;
@@ -87,7 +86,6 @@ export interface Course {
   image?: string;
 }
 
-// Registration Form Types
 export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] as const;
 export const SpecializationOptions = ["Two-Wheeler", "Car", "Three-Wheeler", "Defensive Driving"] as const;
 export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)", "Car (Automatic)", "Three-Wheeler"] as const;
@@ -96,14 +94,18 @@ export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Passport", "Driving License"] as const;
 
-// Use z.any() for file fields to avoid server-side issues during initial schema parsing
 const fileField = z.any(); 
 const optionalFileField = z.any().optional();
 
 const BaseRegistrationSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().optional(),
+  phone: z.string()
+    .optional()
+    .refine(val => !val || /^\d{10}$/.test(val), { // If phone is provided, it must be 10 digits
+      message: "Phone number must be 10 digits.",
+    })
+    .transform(val => val || undefined), // Ensure empty string becomes undefined for optional
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
@@ -114,8 +116,8 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
   trainerPreference: z.enum(TrainerPreferenceOptions, { required_error: "Please select your trainer preference."}),
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
-  dlNumber: z.string().optional(),
-  dlTypeHeld: z.string().optional(),
+  dlNumber: z.string().optional().transform(val => val || undefined),
+  dlTypeHeld: z.string().optional().transform(val => val || undefined),
   dlFileCopy: optionalFileField,
   photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
@@ -149,4 +151,3 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
-
