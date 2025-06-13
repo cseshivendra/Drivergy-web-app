@@ -149,7 +149,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                           variant="default" 
                           size="sm" 
                           onClick={() => handleUpdateStatus(user.id, user.name, 'Approved')}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground px-2 py-1"
+                          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
                            aria-label={`Approve ${user.name}`}
                         >
                           <Check className="h-3.5 w-3.5" />
