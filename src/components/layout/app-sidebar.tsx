@@ -14,6 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
+import { SheetTitle } from '@/components/ui/sheet'; // Import SheetTitle
 import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -55,6 +56,7 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
       <SidebarHeader className="p-0"> 
+        <SheetTitle className="sr-only">Main Navigation</SheetTitle> {/* Added for accessibility */}
         <AppLogo />
       </SidebarHeader>
       <SidebarContent className="p-2">
