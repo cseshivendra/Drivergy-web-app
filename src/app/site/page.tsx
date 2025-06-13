@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -70,25 +70,25 @@ const coursesData = [
     id: "car-program",
     icon: Car,
     title: "Comprehensive Car Program",
-    description: "Learn to drive a car from scratch with our certified instructors. Covers all essentials from basic controls to on-road practice.",
+    description: "Our flagship car driving program takes you from zero to hero. Learn essential car controls, traffic navigation, parking, and on-road practice with expert instructors.",
     imageSrc: "https://placehold.co/600x400.png",
-    imageHint: "car driving lesson"
+    imageHint: "car driving lesson student"
   },
   {
     id: "motorcycle-course",
     icon: Bike,
     title: "Motorcycle Rider Course",
-    description: "Master two-wheeler driving with our specialized motorcycle training. Safety gear and techniques included.",
+    description: "Become a skilled and safe motorcycle rider. Our course covers bike handling, balance, safety gear importance, and real-world riding scenarios.",
     imageSrc: "https://placehold.co/600x400.png",
-    imageHint: "motorcycle training bike"
+    imageHint: "motorcycle training bike rider"
   },
   {
     id: "rto-assistance",
     icon: ClipboardCheck,
     title: "RTO License Assistance",
-    description: "Navigate the RTO test with ease. Our course includes theory, mock tests, and guidance for your driving license.",
+    description: "Successfully navigate the RTO licensing process. We provide guidance for learners' and permanent licenses, including documentation support and test preparation.",
     imageSrc: "https://placehold.co/600x400.png",
-    imageHint: "license test exam"
+    imageHint: "license test exam RTO"
   }
 ];
 
@@ -127,6 +127,12 @@ export default function PortfolioSitePage() {
             </Button>
             <Button variant="ghost" asChild>
               <Link href="#courses">Courses</Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="#subscriptions">Plans</Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="#contact">Contact</Link>
             </Button>
             
             <DropdownMenu>
@@ -184,7 +190,7 @@ export default function PortfolioSitePage() {
           <div className="absolute inset-0 pointer-events-none">
             {slideImages.map((image, index) => (
               <Image
-                key={index} // Use a unique key, image.src might not be unique if placeholders are same
+                key={index}
                 src={image.src}
                 alt={`Background slide ${index + 1}`}
                 layout="fill"
@@ -230,30 +236,30 @@ export default function PortfolioSitePage() {
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Services</h2>
               <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-                We offer a range of services tailored to meet your driving needs.
+                We offer a range of services tailored to meet your driving needs, from beginner lessons to advanced techniques.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <ServiceCard
                 icon={Navigation}
                 title="Personalized Driving Lessons"
-                description="One-on-one training with certified instructors for two-wheelers and four-wheelers."
+                description="Tailored one-on-one training sessions with certified instructors for both two-wheelers and four-wheelers. Learn at your own pace, focusing on your specific needs and building confidence behind the wheel."
                 imageSrc="https://placehold.co/600x400.png"
-                imageHint="driving lesson car"
+                imageHint="driving lesson car instructor"
               />
               <ServiceCard
                 icon={BookOpen}
                 title="RTO Exam Preparation"
-                description="Comprehensive theory classes and mock tests to help you ace your RTO exam."
+                description="Ace your RTO exam with our comprehensive preparation module. We cover theory, traffic rules, and provide mock tests to ensure you're fully prepared for your driving license."
                 imageSrc="https://placehold.co/600x400.png"
-                imageHint="exam preparation book"
+                imageHint="exam preparation book test"
               />
               <ServiceCard
                 icon={ShieldCheck}
                 title="Defensive Driving Courses"
-                description="Learn advanced techniques for safe driving in various road conditions."
+                description="Master advanced driving techniques to navigate challenging road conditions and anticipate hazards. Our defensive driving course enhances your safety and awareness on the road."
                 imageSrc="https://placehold.co/600x400.png"
-                imageHint="safe driving shield"
+                imageHint="safe driving shield road"
               />
             </div>
           </div>
@@ -302,59 +308,77 @@ export default function PortfolioSitePage() {
           </div>
         </section>
 
-        {/* Subscription Plans Section Placeholder */}
+        {/* Subscription Plans Section */}
         <section id="subscriptions" className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Subscription Plans</h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Choose from a variety of subscription plans designed to fit your learning pace and budget. Details coming soon!
+            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Flexible Subscription Plans</h2>
+            <p className="text-lg text-muted-foreground mb-12 max-w-xl mx-auto">
+              Choose a plan that fits your learning pace and budget. All plans include expert guidance and progress tracking.
             </p>
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                    <CardHeader>
-                        <CardTitle className="text-2xl text-primary">Basic Plan</CardTitle>
-                        <CardDescription>Get started on your driving journey.</CardDescription>
+                <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                    <CardHeader className="pb-4">
+                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                           Basic Start
+                        </CardTitle>
+                        <CardDescription>Perfect for beginners to get started.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold mb-4">₹X,XXX</p>
-                        <ul className="space-y-2 text-muted-foreground text-left">
-                            <li>Feature 1</li>
-                            <li>Feature 2</li>
-                            <li>Feature 3</li>
+                    <CardContent className="flex-grow space-y-4">
+                        <p className="text-4xl font-bold mb-2">₹4,999</p>
+                        <ul className="space-y-2 text-muted-foreground text-sm text-left">
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />10 Practical Driving Sessions</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Basic Theory Classes</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Learner's License Assistance</li>
+                             <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Slot Booking</li>
                         </ul>
-                         <Button className="w-full mt-6 bg-primary hover:bg-primary/90">Choose Plan</Button>
                     </CardContent>
+                    <CardFooter className="mt-auto pt-6">
+                         <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
+                    </CardFooter>
                 </Card>
-                 <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-primary relative overflow-hidden">
-                     <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-bl-lg">Popular</div>
-                    <CardHeader>
-                        <CardTitle className="text-2xl text-primary">Premium Plan</CardTitle>
+                 <Card className="shadow-xl hover:shadow-2xl transition-shadow border-2 border-primary relative overflow-hidden flex flex-col transform scale-105 md:scale-110 z-10 bg-card">
+                     <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center">
+                        <Star className="h-3 w-3 mr-1.5" /> POPULAR
+                     </div>
+                    <CardHeader className="pb-4">
+                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                            Premium Pro
+                        </CardTitle>
                         <CardDescription>Our most comprehensive package.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold mb-4">₹Y,YYY</p>
-                        <ul className="space-y-2 text-muted-foreground text-left">
-                            <li>All Basic Features</li>
-                            <li>Premium Feature A</li>
-                            <li>Premium Feature B</li>
+                    <CardContent className="flex-grow space-y-4">
+                        <p className="text-4xl font-bold mb-2">₹8,499</p>
+                        <ul className="space-y-2 text-muted-foreground text-sm text-left">
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li>
                         </ul>
-                         <Button className="w-full mt-6 bg-primary hover:bg-primary/90">Choose Plan</Button>
                     </CardContent>
+                     <CardFooter className="mt-auto pt-6">
+                         <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
+                    </CardFooter>
                 </Card>
-                 <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                    <CardHeader>
-                        <CardTitle className="text-2xl text-primary">Gold Plan</CardTitle>
-                        <CardDescription>Value with extra benefits.</CardDescription>
+                 <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                    <CardHeader className="pb-4">
+                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                           Gold Standard
+                        </CardTitle>
+                        <CardDescription>Excellent value with extra benefits.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold mb-4">₹Z,ZZZ</p>
-                        <ul className="space-y-2 text-muted-foreground text-left">
-                            <li>Most Basic Features</li>
-                            <li>Gold Feature X</li>
-                            <li>Gold Feature Y</li>
+                    <CardContent className="flex-grow space-y-4">
+                        <p className="text-4xl font-bold mb-2">₹6,999</p>
+                        <ul className="space-y-2 text-muted-foreground text-sm text-left">
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Comprehensive Theory & Mock Tests</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Scheduling</li>
+                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Progress Tracking App Access</li>
                         </ul>
-                         <Button className="w-full mt-6 bg-primary hover:bg-primary/90">Choose Plan</Button>
                     </CardContent>
+                     <CardFooter className="mt-auto pt-6">
+                         <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
+                    </CardFooter>
                 </Card>
             </div>
           </div>
@@ -365,9 +389,16 @@ export default function PortfolioSitePage() {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Get In Touch</h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Have questions? We'd love to hear from you! Our contact form and details will be here.
+              Have questions or ready to enroll? We'd love to hear from you! Reach out to our team for assistance or visit our FAQ page.
             </p>
-            <Button size="lg" variant="outline">Contact Us Placeholder</Button>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Link href="/contact">Contact Support</Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                    <Link href="/about">Learn More About Us</Link>
+                </Button>
+            </div>
           </div>
         </section>
       </main>
@@ -375,7 +406,9 @@ export default function PortfolioSitePage() {
       {/* Footer */}
       <footer className="border-t border-border/40 bg-background py-8">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <SiteLogo />
+          <div className="flex justify-center mb-4">
+            <SiteLogo />
+          </div>
           <p className="mt-4 text-sm">
             &copy; {new Date().getFullYear()} Driverzy. All rights reserved.
           </p>
