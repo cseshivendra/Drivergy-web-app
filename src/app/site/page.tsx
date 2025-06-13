@@ -119,9 +119,9 @@ export default function PortfolioSitePage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header/Navbar */}
       <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto h-auto min-h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2">
           <SiteLogo />
-          <nav className="flex items-center space-x-1 sm:space-x-2">
+          <nav className="flex items-center flex-wrap gap-x-1 gap-y-2 sm:gap-x-2 justify-end">
             <Button variant="ghost" asChild>
               <Link href="#services">Services</Link>
             </Button>
@@ -184,7 +184,7 @@ export default function PortfolioSitePage() {
           <div className="absolute inset-0 pointer-events-none">
             {slideImages.map((image, index) => (
               <Image
-                key={image.src}
+                key={index} // Use a unique key, image.src might not be unique if placeholders are same
                 src={image.src}
                 alt={`Background slide ${index + 1}`}
                 layout="fill"
