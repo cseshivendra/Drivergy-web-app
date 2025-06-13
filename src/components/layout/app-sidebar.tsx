@@ -13,8 +13,9 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  useSidebar, // Import useSidebar to check if mobile
 } from '@/components/ui/sidebar';
-import { SheetTitle } from '@/components/ui/sheet'; // Import SheetTitle
+import { SheetTitle } from '@/components/ui/sheet';
 import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const [referralsOpen, setReferralsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const { isMobile } = useSidebar(); // Get isMobile state
 
   const AppLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
@@ -55,11 +57,14 @@ export default function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
+      {/* SheetTitle is now rendered conditionally inside Sidebar component's mobile view */}
+      {/* See the Sidebar component implementation in ui/sidebar.tsx for SheetContent where it would be placed */}
       <SidebarHeader className="p-0"> 
-        <SheetTitle className="sr-only">Main Navigation</SheetTitle> {/* Added for accessibility */}
+        {/* The SheetTitle for mobile is handled internally by the Sidebar component if needed or passed directly to SheetContent */}
         <AppLogo />
       </SidebarHeader>
       <SidebarContent className="p-2">
+        {isMobile && <SheetTitle className="sr-only">Main Navigation</SheetTitle>}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
