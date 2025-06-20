@@ -1,25 +1,33 @@
 
 'use client';
 
-import type { User } from 'firebase/auth';
-import { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
+import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type compatibility if needed elsewhere, but not functionally used for Firebase auth
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth, googleProvider } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 
-// Define a GuestUser type
+// Define a User type that can be a simulated regular user or a GuestUser
+export interface SimulatedUser {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  isGuest?: false; // Explicitly not a guest
+}
+
 export interface GuestUser {
   uid: string;
-  displayName: string;
+  displayName: string | null;
   email: string | null;
   photoURL: string | null;
   isGuest: true;
 }
 
+type AppUser = SimulatedUser | GuestUser;
+
 interface AuthContextType {
-  user: User | GuestUser | null;
+  user: AppUser | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>; // Kept for UI consistency, mocks Google sign-in
   signInAsGuest: () => void;
   signOut: () => Promise<void>;
 }
@@ -27,49 +35,43 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | GuestUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState(true); // Start true to mimic initial auth check
   const router = useRouter();
 
-  // Ref to hold the current user state for access within onAuthStateChanged
-  const userStateRef = useRef(user);
   useEffect(() => {
-    userStateRef.current = user;
-  }, [user]);
+    // Simulate checking for a stored session (e.g., in localStorage)
+    // For this mock, we'll just assume no user is logged in initially.
+    const storedUser = sessionStorage.getItem('mockUser');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
+  }, []);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      const currentAppUser = userStateRef.current;
-      const isCurrentAppUserGuest = 
-        currentAppUser && 
-        typeof currentAppUser === 'object' && 
-        'isGuest' in currentAppUser && 
-        currentAppUser.isGuest;
-
-      if (firebaseUser) {
-        setUser(firebaseUser); // Firebase user takes precedence
-      } else {
-        // No Firebase user. If current user is NOT a guest, then they are logged out.
-        // If current user IS a guest, onAuthStateChanged(null) should not log them out.
-        if (!isCurrentAppUserGuest) {
-          setUser(null);
-        }
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []); // Empty dependency array is correct for onAuthStateChanged listener setup.
+  const storeUserInSession = (userToStore: AppUser | null) => {
+    if (userToStore) {
+      sessionStorage.setItem('mockUser', JSON.stringify(userToStore));
+    } else {
+      sessionStorage.removeItem('mockUser');
+    }
+  };
 
   const signInWithGoogle = async () => {
     setLoading(true);
-    try {
-      await signInWithPopup(auth, googleProvider);
-      // User state will be updated by onAuthStateChanged
-    } catch (error) {
-      console.error("Error signing in with Google:", error);
-      setLoading(false); // Ensure loading is false on error
-    }
-    // setLoading(false) is handled by onAuthStateChanged
+    // Simulate Google sign-in
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    const mockGoogleUser: SimulatedUser = {
+      uid: `mock-google-${new Date().getTime()}`,
+      displayName: 'Mock Google User',
+      email: 'googleuser@example.com',
+      photoURL: 'https://placehold.co/100x100.png?text=GU', // Placeholder avatar
+      isGuest: false,
+    };
+    setUser(mockGoogleUser);
+    storeUserInSession(mockGoogleUser);
+    setLoading(false);
+    router.push('/');
   };
 
   const signInAsGuest = () => {
@@ -78,38 +80,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       uid: `guest-${new Date().getTime()}`,
       displayName: 'Guest User',
       email: null,
-      photoURL: null, 
+      photoURL: 'https://placehold.co/100x100.png?text=GU', // Placeholder for guest
       isGuest: true,
     };
     setUser(guestUser);
+    storeUserInSession(guestUser);
     setLoading(false);
-    // LoginPage useEffect will handle redirect to '/'
+    router.push('/');
   };
 
   const signOut = async () => {
     setLoading(true);
-    try {
-      const isGuestUser = user && typeof user === 'object' && 'isGuest' in user && user.isGuest;
-
-      if (isGuestUser) {
-        setUser(null); // Clear guest user
-        setLoading(false); // Manually set loading for guest
-      } else if (user) { // If it's a Firebase user
-        await firebaseSignOut(auth);
-        // onAuthStateChanged will handle setUser(null) and setLoading(false)
-      } else {
-        // No user to sign out, perhaps already null
-        setLoading(false);
-      }
-      router.push('/login');
-    } catch (error) {
-      console.error("Error signing out:", error);
-      // Ensure loading is false on error, especially if Firebase signout fails
-      const isGuestUser = user && typeof user === 'object' && 'isGuest' in user && user.isGuest;
-      if (!isGuestUser) {
-          setLoading(false);
-      }
-    }
+    await new Promise(resolve => setTimeout(resolve, 300)); // Simulate sign-out delay
+    setUser(null);
+    storeUserInSession(null);
+    setLoading(false);
+    router.push('/login');
   };
 
   return (

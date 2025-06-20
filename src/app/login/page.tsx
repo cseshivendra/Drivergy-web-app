@@ -31,7 +31,7 @@ export default function LoginPage() {
     </svg>
   );
 
-  if (loading || (user && isMounted)) { // Ensure redirect only after mount and user check
+  if (loading || (user && isMounted)) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Car className="h-16 w-16 animate-pulse text-primary" />
@@ -84,7 +84,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={signInWithGoogle}
+              onClick={signInWithGoogle} // Now uses the mocked function
               disabled={loading}
             >
               <GoogleIcon /> Sign in with Google
@@ -145,4 +145,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

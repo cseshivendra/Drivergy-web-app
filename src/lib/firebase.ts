@@ -1,21 +1,13 @@
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+// Firebase is not being used in this version of the application for authentication.
+// This file is kept to prevent import errors in other files that might still reference it,
+// but it does not initialize or export Firebase services.
 
-// TODO: Add your Firebase project configuration here
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
+// If you intend to use other Firebase services (like Firestore, Storage, etc.)
+// you would initialize them here. For now, it's effectively empty.
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
+export const app = undefined;
+export const auth = undefined;
+export const googleProvider = undefined;
 
-export { app, auth, googleProvider };
+// console.log("Firebase services are mocked/not initialized in this setup.");
