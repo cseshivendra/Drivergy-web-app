@@ -122,11 +122,11 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                     <TableCell>{user.contact}</TableCell>
                     <TableCell>{user.location}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' : // Use text-primary for dark theme readability
-                        user.subscriptionPlan === 'Gold' ? 'bg-gray-500/20 text-gray-300 dark:text-gray-400' :
-                        user.subscriptionPlan === 'Trainer' ? 'bg-gray-600/20 text-gray-200 dark:text-gray-300' :
-                        'bg-muted/50 text-muted-foreground' // Generic muted for basic/other
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
+                        user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
+                        user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
+                        'bg-muted text-muted-foreground' // Basic plan
                       }`}>
                         {user.subscriptionPlan}
                       </span>
@@ -226,4 +226,3 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     </Card>
   );
 }
-
