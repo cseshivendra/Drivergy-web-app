@@ -153,7 +153,7 @@ export default function PortfolioSitePage() {
       setCurrentImageIndex((prevIndex) =>
         prevIndex === slideImages.length - 1 ? 0 : prevIndex + 1
       );
-    }, 5000); // Change image every 5 seconds
+    }, 3000); // Change image every 3 seconds
 
     return () => clearTimeout(timer); // Cleanup timer on component unmount
   }, [currentImageIndex]);
