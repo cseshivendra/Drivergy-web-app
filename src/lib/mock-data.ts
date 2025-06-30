@@ -94,10 +94,12 @@ const sampleCustomer: UserProfile = {
 
 // --- Initial Data Seeding (if localStorage is empty) ---
 if (typeof window !== 'undefined') {
-  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS) && mockCustomers.length === 0) {
-      mockCustomers.push(sampleCustomer);
-      console.log('[mock-data] Seeded initial sample customer data as localStorage was empty.');
+  // Ensure the sample customer always exists for the login functionality
+  if (!mockCustomers.some(c => c.id === 'sample-customer-uid')) {
+    mockCustomers.unshift(sampleCustomer);
+    console.log('[mock-data] Sample customer was missing and has been re-seeded.');
   }
+  
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.INSTRUCTORS) && mockInstructors.length === 0) {
       // Instructors start empty
   }
@@ -461,4 +463,5 @@ const loggableCourses = mockCourses.map(c => {
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
 saveDataToLocalStorage(); 
+
 
