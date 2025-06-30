@@ -32,10 +32,12 @@ import {
   TrainerPreferenceOptions, 
   type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
+  IndianStates,
+  DistrictsByState,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
 import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin } from 'lucide-react'; 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface RegistrationFormProps {
@@ -98,6 +100,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   });
 
   const dlStatus = form.watch('dlStatus'); 
+  const selectedState = form.watch('state');
+
+  const availableDistricts = useMemo(() => {
+    if (selectedState && DistrictsByState[selectedState]) {
+      return DistrictsByState[selectedState];
+    }
+    return [];
+  }, [selectedState]);
+
+  // When the state changes, reset the district field to prevent invalid combinations
+  useEffect(() => {
+    form.setValue('district', '');
+  }, [selectedState, form]);
 
   function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
@@ -274,32 +289,58 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               />
             </div>
              <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-3">
-              <FormField
-                control={form.control}
-                name="district"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Mumbai Suburban" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Maharashtra" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                          <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {IndianStates.map(state => (
+                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                            ))}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="district"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ''}
+                        disabled={!selectedState || availableDistricts.length === 0}
+                      >
+                          <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select district" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              {availableDistricts.length > 0 ? (
+                                availableDistricts.map(district => (
+                                    <SelectItem key={district} value={district}>{district}</SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="disabled" disabled>First select a state</SelectItem>
+                              )}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={form.control}
                 name="pincode"
