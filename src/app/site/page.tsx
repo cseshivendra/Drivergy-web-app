@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -141,7 +141,7 @@ export default function PortfolioSitePage() {
               <Link href="#subscriptions">Plans</Link>
             </Button>
              <Button variant="ghost" asChild>
-              <Link href="#contact">Contact</Link>
+              <Link href="#contact">Support</Link>
             </Button>
             
             {user ? (
@@ -455,7 +455,10 @@ export default function PortfolioSitePage() {
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
                 <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Link href="/contact">Contact Support</Link>
+                    <Link href="/contact">
+                        <MessageSquareText />
+                        Support
+                    </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                     <Link href="/about">Learn More About Us</Link>

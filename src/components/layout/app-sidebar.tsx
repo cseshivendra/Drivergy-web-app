@@ -175,11 +175,11 @@ export default function AppSidebar() {
             <SidebarMenuButton
               asChild
               isActive={pathname === '/contact'}
-              tooltip={{ children: "Contact Us", side: "right", align: "center" }}
+              tooltip={{ children: "Support", side: "right", align: "center" }}
             >
               <Link href="/contact">
                 <MessageSquareText /> 
-                <span>Contact Us</span>
+                <span>Support</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
