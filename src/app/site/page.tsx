@@ -332,7 +332,10 @@ export default function PortfolioSitePage() {
                           <CardDescription>Perfect for beginners to get started.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-grow space-y-4">
-                          <p className="text-4xl font-bold mb-2">₹4,999</p>
+                          <div className="flex items-center justify-center gap-x-2 mb-2">
+                              <p className="text-4xl font-bold">₹3,999</p>
+                              <p className="text-xl font-medium text-muted-foreground line-through">₹4,999</p>
+                          </div>
                           <ul className="space-y-2 text-muted-foreground text-sm text-left">
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />10 Practical Driving Sessions</li>
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Basic Theory Classes</li>
@@ -344,7 +347,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full" asChild>
-                                <Link href="/site/payment?plan=Basic%20Start&price=4999">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Basic%20Start&price=3999">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -364,7 +367,10 @@ export default function PortfolioSitePage() {
                           <CardDescription>Our most comprehensive package.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-grow space-y-4">
-                          <p className="text-4xl font-bold mb-2">₹8,499</p>
+                          <div className="flex items-center justify-center gap-x-2 mb-2">
+                              <p className="text-4xl font-bold">₹7,499</p>
+                              <p className="text-xl font-medium text-muted-foreground line-through">₹8,499</p>
+                          </div>
                           <ul className="space-y-2 text-muted-foreground text-sm text-left">
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li>
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li>
@@ -377,7 +383,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                                <Link href="/site/payment?plan=Premium%20Pro&price=8499">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Premium%20Pro&price=7499">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -394,7 +400,10 @@ export default function PortfolioSitePage() {
                           <CardDescription>Excellent value with extra benefits.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex-grow space-y-4">
-                          <p className="text-4xl font-bold mb-2">₹6,999</p>
+                          <div className="flex items-center justify-center gap-x-2 mb-2">
+                              <p className="text-4xl font-bold">₹5,999</p>
+                              <p className="text-xl font-medium text-muted-foreground line-through">₹6,999</p>
+                          </div>
                           <ul className="space-y-2 text-muted-foreground text-sm text-left">
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li>
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Comprehensive Theory & Mock Tests</li>
@@ -406,7 +415,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full" asChild>
-                                <Link href="/site/payment?plan=Gold%20Standard&price=6999">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Gold%20Standard&price=5999">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
