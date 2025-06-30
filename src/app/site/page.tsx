@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut, Star, Check } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut, Star, Check, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/context/auth-context';
+import { useTheme } from '@/context/theme-context';
 import { useState, useEffect } from 'react';
 import {
   Tooltip,
@@ -107,6 +108,7 @@ const slideImages = [
 
 export default function PortfolioSitePage() {
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -185,6 +187,14 @@ export default function PortfolioSitePage() {
                 <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
                 <span className="hidden sm:inline">Admin Portal</span>
               </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
           </nav>
         </div>
