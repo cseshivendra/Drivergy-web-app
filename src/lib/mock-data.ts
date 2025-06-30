@@ -72,8 +72,8 @@ const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): str
 const sampleCustomer: UserProfile = {
   id: 'sample-customer-uid',
   uniqueId: 'CU987654',
-  name: 'Priya Patel',
-  contact: 'priya.patel@example.com',
+  name: 'Shivendra Singh',
+  contact: 'shivendra.singh@example.com',
   phone: '9123456789',
   location: 'Delhi',
   subscriptionPlan: 'Premium',
@@ -89,7 +89,7 @@ const sampleCustomer: UserProfile = {
   dlNumber: 'DL01A1234567',
   photoIdType: 'Aadhaar Card',
   photoIdNumber: '123456789012',
-  trainerPreference: 'Female',
+  trainerPreference: 'Any',
 };
 
 // --- Initial Data Seeding (if localStorage is empty) ---
@@ -463,5 +463,6 @@ const loggableCourses = mockCourses.map(c => {
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
 saveDataToLocalStorage(); 
+
 
 
