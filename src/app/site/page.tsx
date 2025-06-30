@@ -207,7 +207,7 @@ export default function PortfolioSitePage() {
               </Link>
             </Button>
             
-            <Button variant="outline" asChild>
+            <Button asChild>
               <Link href="/">
                 <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
                 <span className="hidden sm:inline">Admin Portal</span>
@@ -274,7 +274,7 @@ export default function PortfolioSitePage() {
         </section>
 
         {/* Services Section */}
-        <section id="services" className="py-12 md:py-16 bg-background">
+        <section id="services" className="py-8 md:py-12 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Services</h2>
@@ -404,8 +404,8 @@ export default function PortfolioSitePage() {
                       </CardHeader>
                       <CardContent className="flex-grow space-y-4">
                           <div className="flex items-center justify-center gap-x-2 mb-2">
-                              <p className="text-4xl font-bold">₹7,499</p>
-                              <p className="text-xl font-medium text-muted-foreground line-through">₹8,499</p>
+                              <p className="text-4xl font-bold">₹9,999</p>
+                              <p className="text-xl font-medium text-muted-foreground line-through">₹10,999</p>
                           </div>
                           <ul className="space-y-2 text-muted-foreground text-sm text-left">
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li>
@@ -419,7 +419,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                                <Link href="/site/payment?plan=Premium%20Pro&price=7499">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Premium%20Pro&price=9999">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -437,8 +437,8 @@ export default function PortfolioSitePage() {
                       </CardHeader>
                       <CardContent className="flex-grow space-y-4">
                           <div className="flex items-center justify-center gap-x-2 mb-2">
-                              <p className="text-4xl font-bold">₹9,999</p>
-                              <p className="text-xl font-medium text-muted-foreground line-through">₹10,999</p>
+                              <p className="text-4xl font-bold">₹7,499</p>
+                              <p className="text-xl font-medium text-muted-foreground line-through">₹8,499</p>
                           </div>
                           <ul className="space-y-2 text-muted-foreground text-sm text-left">
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li>
@@ -451,7 +451,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full" asChild>
-                                <Link href="/site/payment?plan=Gold%20Standard&price=9999">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Gold%20Standard&price=7499">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
