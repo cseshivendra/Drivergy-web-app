@@ -145,10 +145,18 @@ export default function PortfolioSitePage() {
             </Button>
             
             {user ? (
-              <Button variant="outline" onClick={signOut}>
-                <Power className="mr-0 sm:mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out">
+                      <Power className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Log Out</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
