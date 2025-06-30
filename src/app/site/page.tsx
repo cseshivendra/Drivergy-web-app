@@ -308,7 +308,7 @@ export default function PortfolioSitePage() {
           </div>
           <div className="absolute inset-0 bg-black/60 z-[5] pointer-events-none"></div> {/* Darker overlay for better contrast */}
           
-          <div className="relative z-10 p-4 container mx-auto animate-fade-in-up" style={{ animationDelay: '0.2s' }}> {/* Content */}
+          <div className="relative z-10 p-4 container mx-auto animate-fade-in-up"> {/* Content */}
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
                 Learn to Drive, Master the Road
             </h1>
@@ -337,7 +337,7 @@ export default function PortfolioSitePage() {
 
         {/* Services Section */}
         <section id="services" className="py-8 md:py-12 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Services</h2>
               <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
@@ -372,7 +372,7 @@ export default function PortfolioSitePage() {
 
         {/* Courses Section */}
         <section id="courses" className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
               <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
@@ -415,7 +415,7 @@ export default function PortfolioSitePage() {
 
         {/* Subscription Plans Section */}
         <section id="subscriptions" className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
             <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Flexible Subscription Plans</h2>
             <p className="text-lg text-muted-foreground mb-12 max-w-xl mx-auto">
               Choose a plan that fits your learning pace and budget. All plans include expert guidance and progress tracking.
@@ -529,7 +529,7 @@ export default function PortfolioSitePage() {
 
         {/* Testimonials Section */}
         <section id="testimonials" className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">What Our Users Say</h2>
               <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
@@ -575,10 +575,34 @@ export default function PortfolioSitePage() {
             </div>
           </div>
         </section>
+      </main>
 
-        {/* FAQ Section */}
+      {/* Footer */}
+      <footer className="border-t border-border/40 bg-background">
+        {/* Contact Section moved into footer */}
+        <section id="contact" className="py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
+            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Get In Touch</h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+              Have questions or ready to enroll? We'd love to hear from you! Reach out to our team for assistance or visit our FAQ page.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <Link href="/contact">
+                        <MessageSquareText />
+                        Support
+                    </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                    <Link href="#faq">FAQ</Link>
+                </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section moved into footer */}
         <section id="faq" className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl animate-fade-in-up">
             <div className="text-center mb-12">
               <div className="inline-flex items-center justify-center bg-primary/10 text-primary p-3 rounded-full mb-4">
                   <HelpCircle className="h-8 w-8" />
@@ -602,42 +626,21 @@ export default function PortfolioSitePage() {
             </Accordion>
           </div>
         </section>
-
-         {/* Contact Section Placeholder */}
-        <section id="contact" className="py-16 md:py-24 bg-muted/30">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
-            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Get In Touch</h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Have questions or ready to enroll? We'd love to hear from you! Reach out to our team for assistance or visit our FAQ page.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Link href="/contact">
-                        <MessageSquareText />
-                        Support
-                    </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                    <Link href="#faq">FAQ</Link>
-                </Button>
+        
+        {/* Final Copyright Footer */}
+        <div className="border-t border-border/40 bg-background py-8">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
+                <div className="flex justify-center">
+                    <SiteLogo />
+                </div>
+                <p className="text-sm">
+                    &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
+                </p>
             </div>
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 bg-background py-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 sm:gap-6">
-            <Link href="#contact" className="hover:text-primary transition-colors">
-              Get In Touch
-            </Link>
-            <Link href="#faq" className="hover:text-primary transition-colors">
-              FAQ
-            </Link>
-          </nav>
         </div>
       </footer>
     </div>
   );
 }
+
+    
