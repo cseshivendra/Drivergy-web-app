@@ -1,11 +1,10 @@
-
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -199,6 +198,9 @@ export default function PortfolioSitePage() {
             </Button>
             <Button variant="ghost" asChild>
               <Link href="#courses">Courses</Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="/site/blog">Blog</Link>
             </Button>
              <Button variant="ghost" asChild>
               <Link href="#subscriptions">Plans</Link>
@@ -642,5 +644,3 @@ export default function PortfolioSitePage() {
     </div>
   );
 }
-
-    
