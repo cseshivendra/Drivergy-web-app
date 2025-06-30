@@ -37,36 +37,95 @@ interface QuizSet {
   questions: Question[];
 }
 
-// Create mock quiz data
+// A base set of 15 questions to be used for each quiz set
+const baseQuestions = [
+  {
+    question: `A red traffic light indicates that you must:`,
+    options: ['Stop behind the line', 'Slow down', 'Proceed with caution', 'Go if the way is clear'],
+    correctAnswer: 'Stop behind the line',
+  },
+  {
+    question: `A triangular sign with a red border is a:`,
+    options: ['Mandatory sign', 'Warning sign', 'Informatory sign', 'Regulatory sign'],
+    correctAnswer: 'Warning sign',
+  },
+  {
+    question: `When is overtaking prohibited?`,
+    options: ['On a wide road', 'When the road ahead is not clearly visible', 'During the daytime', 'On a one-way street'],
+    correctAnswer: 'When the road ahead is not clearly visible',
+  },
+  {
+    question: `A blue circular sign with a white bicycle symbol indicates:`,
+    options: ['Bicycles are not allowed', 'Parking for bicycles', 'Compulsory pedal cycle track', 'Bicycle repair shop ahead'],
+    correctAnswer: 'Compulsory pedal cycle track',
+  },
+  {
+    question: `What is the minimum age for obtaining a license for a motorcycle with gears?`,
+    options: ['16 years', '18 years', '20 years', '21 years'],
+    correctAnswer: '18 years',
+  },
+  {
+    question: `What does a flashing yellow traffic light mean?`,
+    options: ['Stop completely', 'Speed up', 'Slow down and proceed with caution', 'The light is about to turn red'],
+    correctAnswer: 'Slow down and proceed with caution',
+  },
+  {
+    question: `If you are approached by an ambulance with its siren on, you should:`,
+    options: ['Increase your speed', 'Allow passage by moving to the left', 'Continue at the same speed', 'Stop in the middle of the road'],
+    correctAnswer: 'Allow passage by moving to the left',
+  },
+  {
+    question: `What does the sign showing a horn with a red slash across it mean?`,
+    options: ['Honking is compulsory', 'You may honk softly', 'Horn prohibited', 'Hospital nearby'],
+    correctAnswer: 'Horn prohibited',
+  },
+  {
+    question: `While driving, using a mobile phone is:`,
+    options: ['Allowed if using a hands-free device', 'Allowed for short calls', 'Prohibited', 'Allowed only when stopped'],
+    correctAnswer: 'Prohibited',
+  },
+  {
+    question: `The validity of a Learner's License is:`,
+    options: ['3 months', '6 months', '1 year', 'Until you get a permanent license'],
+    correctAnswer: '6 months',
+  },
+  {
+    question: `When parking a vehicle facing downhill, the front wheels should be turned:`,
+    options: ['Towards the right', 'Straight ahead', 'Towards the kerb or side of the road', 'It does not matter'],
+    correctAnswer: 'Towards the kerb or side of the road',
+  },
+  {
+    question: `Which of these documents must be carried while driving a vehicle?`,
+    options: ['Driving license, registration, insurance, PUC', 'Aadhaar card and PAN card', 'Vehicle purchase invoice', 'Your birth certificate'],
+    correctAnswer: 'Driving license, registration, insurance, PUC',
+  },
+  {
+    question: `What does the term 'tailgating' mean in driving?`,
+    options: ['Following another vehicle too closely', 'Checking your tail lights', 'Driving with the trunk open', 'Overtaking from the left'],
+    correctAnswer: 'Following another vehicle too closely',
+  },
+  {
+    question: `The hand signal for turning right is:`,
+    options: ['Extend the right arm straight out, palm facing forward', 'Rotate the arm in a clockwise circle', 'Extend the right arm and move it up and down', 'Point the arm downwards'],
+    correctAnswer: 'Extend the right arm straight out, palm facing forward',
+  },
+  {
+    question: `What is the purpose of a pedestrian crossing (Zebra crossing)?`,
+    options: ['For vehicles to stop', 'For pedestrians to safely cross the road', 'To mark the end of a speed limit', 'For parking'],
+    correctAnswer: 'For pedestrians to safely cross the road',
+  },
+];
+
+// Create mock quiz data with 10 sets, each having 15 questions
 const quizSets: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
   id: `set${i + 1}`,
   title: `Set ${i + 1}`,
-  questions: [
-    {
-      id: `q${i + 1}-1`,
-      question: `What does a red traffic light indicate? (Set ${i + 1})`,
-      options: ['Stop', 'Go', 'Slow down', 'Proceed with caution'],
-      correctAnswer: 'Stop',
-    },
-    {
-      id: `q${i + 1}-2`,
-      question: `This sign means: (Imagine a 'No Parking' sign)`,
-      options: ['Parking allowed', 'No stopping', 'No parking', 'Rest area'],
-      correctAnswer: 'No parking',
-    },
-    {
-      id: `q${i + 1}-3`,
-      question: 'When approaching a pedestrian crossing, what should you do?',
-      options: ['Speed up', 'Honk continuously', 'Stop and let pedestrians cross', 'Ignore it'],
-      correctAnswer: 'Stop and let pedestrians cross',
-    },
-    {
-      id: `q${i + 1}-4`,
-      question: `The maximum permissible speed for a car in the city is generally:`,
-      options: ['80 km/h', '100 km/h', '50 km/h', '120 km/h'],
-      correctAnswer: '50 km/h',
-    },
-  ],
+  questions: baseQuestions.map((q, j) => ({
+    id: `q${i + 1}-${j + 1}`,
+    question: `${q.question} (Set ${i + 1})`,
+    options: q.options,
+    correctAnswer: q.correctAnswer,
+  })),
 }));
 
 // A component to render a single quiz set
