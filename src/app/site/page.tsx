@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -309,6 +309,30 @@ export default function PortfolioSitePage() {
                     index === currentImageIndex ? "opacity-100 animate-fade-in-up" : "opacity-0 pointer-events-none"
                   )}
                 >
+                  {/* Animated decorative icons */}
+                  <div aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none hidden md:block">
+                    {index === 0 && (
+                      <>
+                        <Navigation className="absolute top-[20%] left-[15%] h-12 w-12 text-white/20 animate-float" style={{ animationDuration: '5s' }} />
+                        <MoveRight className="absolute bottom-[25%] right-[20%] h-16 w-16 text-white/10 animate-float" style={{ animationDelay: '1s' }} />
+                        <CircleDot className="absolute top-[50%] right-[10%] h-8 w-8 text-white/15 animate-pulse-subtle" />
+                      </>
+                    )}
+                    {index === 1 && (
+                      <>
+                        <TrendingUp className="absolute top-[25%] right-[18%] h-14 w-14 text-white/20 animate-pulse-subtle" />
+                        <Target className="absolute bottom-[20%] left-[15%] h-16 w-16 text-white/15 animate-spin-slow" style={{ animationDuration: '12s' }} />
+                      </>
+                    )}
+                    {index === 2 && (
+                      <>
+                        <KeyRound className="absolute top-[22%] left-[20%] h-12 w-12 text-white/20 animate-float" />
+                        <Award className="absolute bottom-[22%] right-[18%] h-16 w-16 text-white/25 animate-pulse-subtle" style={{ animationDelay: '0.5s', animationDuration: '4s' }} />
+                        <Star className="absolute top-[40%] right-[30%] h-6 w-6 text-white/15 animate-spin-slow" />
+                      </>
+                    )}
+                  </div>
+                  
                   <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
                     {slide.title}
                   </h1>
