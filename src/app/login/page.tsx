@@ -21,7 +21,7 @@ export default function LoginPage() {
   useEffect(() => {
     setIsMounted(true);
     if (user && !loading) {
-      router.push('/');
+      router.push('/site'); // Redirect to site page after login
     }
   }, [user, loading, router]);
 
@@ -81,6 +81,33 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
+             <div className="space-y-3">
+               <div>
+                <Label htmlFor="username">Username or Email</Label>
+                <Input id="username" type="text" placeholder="Enter your username" disabled />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="Enter your password" disabled />
+              </div>
+              <Button
+                variant="default"
+                className="w-full h-12 text-base bg-primary hover:bg-primary/90"
+                disabled // Username/password not implemented
+              >
+                Sign In
+              </Button>
+            </div>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
             <Button
               variant="outline"
               className="w-full h-12 text-base border-border hover:bg-accent/50"
@@ -108,40 +135,9 @@ export default function LoginPage() {
               <UserCheck className="mr-2 h-5 w-5" /> Sign in as Sample Customer
             </Button>
 
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="phone" className="text-muted-foreground text-sm">Phone Number (OTP)</Label>
-                <div className="relative mt-1">
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="Enter your phone number"
-                    className="h-12 text-base pl-10"
-                    disabled
-                  />
-                  <Smartphone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                </div>
-              </div>
-              <Button
-                variant="default"
-                className="w-full h-12 text-base bg-primary hover:bg-primary/90"
-                disabled // OTP not implemented
-              >
-                Send OTP
-              </Button>
-            </div>
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm flex items-start">
               <ShieldAlert className="h-5 w-5 mr-2 shrink-0" />
-              <span>OTP login is currently under development. Please use Google Sign-In or Guest Sign-In.</span>
+              <span>Username/password and OTP login are for demonstration only. Please use Google, Guest, or Sample Customer sign-in.</span>
             </div>
           </CardContent>
           <CardFooter className="flex justify-center pt-4 pb-6">

@@ -6,6 +6,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types'; // Import UserProfile
 import { mockCustomers } from '@/lib/mock-data';
+import { useToast } from '@/hooks/use-toast';
 
 // Define a User type that can be a simulated regular user or a GuestUser
 export interface SimulatedUser {
@@ -44,10 +45,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true); // Start true to mimic initial auth check
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Simulate checking for a stored session (e.g., in localStorage)
-    // For this mock, we'll just assume no user is logged in initially.
     const storedUser = sessionStorage.getItem('mockUser');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -63,70 +64,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const handleSuccessfulSignIn = (newUser: AppUser) => {
+    setUser(newUser);
+    storeUserInSession(newUser);
+    setLoading(false);
+    toast({
+      title: `Welcome to Drivergy, ${newUser.displayName}!`,
+      description: 'You are now logged in.',
+    });
+    router.push('/site');
+  };
+
   const signInWithGoogle = async () => {
     setLoading(true);
-    // Simulate Google sign-in
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
     const mockGoogleUser: SimulatedUser = {
       uid: `mock-google-${new Date().getTime()}`,
-      uniqueId: 'ADMIN-GOOGLE', // Assign an admin-like ID
+      uniqueId: 'ADMIN-GOOGLE',
       displayName: 'Mock Google User',
       email: 'googleuser@example.com',
-      photoURL: 'https://placehold.co/100x100.png?text=GU', // Placeholder avatar
+      photoURL: 'https://placehold.co/100x100.png?text=GU',
       isGuest: false,
     };
-    setUser(mockGoogleUser);
-    storeUserInSession(mockGoogleUser);
-    setLoading(false);
-    router.push('/');
+    handleSuccessfulSignIn(mockGoogleUser);
   };
 
   const signInAsGuest = () => {
     setLoading(true);
     const guestUser: GuestUser = {
       uid: `guest-${new Date().getTime()}`,
-      uniqueId: 'ADMIN-GUEST', // Assign an admin-like ID
+      uniqueId: 'ADMIN-GUEST',
       displayName: 'Guest User',
       email: null,
-      photoURL: 'https://placehold.co/100x100.png?text=GU', // Placeholder for guest
+      photoURL: 'https://placehold.co/100x100.png?text=GU',
       isGuest: true,
     };
-    setUser(guestUser);
-    storeUserInSession(guestUser);
-    setLoading(false);
-    router.push('/');
+    handleSuccessfulSignIn(guestUser);
   };
 
   const signInAsSampleCustomer = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const sampleCustomer = mockCustomers.find(c => c.id === 'sample-customer-uid');
 
     if (sampleCustomer) {
-      logInUser(sampleCustomer);
-      router.push('/');
+      logInUser(sampleCustomer, true); // Pass true to indicate it's a direct login action
     } else {
       console.error("Sample customer could not be found. Please clear local storage and refresh to re-seed data.");
       setLoading(false);
-      // Optionally, you could show a toast message here.
+      toast({
+        title: 'Login Error',
+        description: 'Sample customer data not found. Please try another login method.',
+        variant: 'destructive',
+      });
     }
   };
 
   const signOut = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 300)); // Simulate sign-out delay
+    await new Promise(resolve => setTimeout(resolve, 300));
     setUser(null);
     storeUserInSession(null);
     setLoading(false);
-    router.push('/login');
+    toast({
+      title: 'Logged Out',
+      description: 'You have been successfully signed out.',
+    });
+    router.push('/site');
   };
 
-  const logInUser = (userProfile: UserProfile) => {
+  const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
     setLoading(true);
     const newUser: SimulatedUser = {
       uid: userProfile.id,
-      uniqueId: userProfile.uniqueId, // Store the uniqueId for role checking
+      uniqueId: userProfile.uniqueId,
       displayName: userProfile.name,
       email: userProfile.contact,
       photoURL: `https://placehold.co/100x100.png?text=${userProfile.name.charAt(0)}`,
@@ -135,6 +147,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(newUser);
     storeUserInSession(newUser);
     setLoading(false);
+    
+    // Only show toast and redirect if it's a direct login action, not just a registration
+    if (isDirectLogin) {
+      toast({
+        title: `Welcome to Drivergy, ${newUser.displayName}!`,
+        description: 'You are now logged in.',
+      });
+      router.push('/site');
+    }
   };
 
   return (

@@ -16,7 +16,7 @@ import {
   useSidebar, // Import useSidebar to check if mobile
 } from '@/components/ui/sidebar';
 import { SheetTitle } from '@/components/ui/sheet';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -70,6 +70,19 @@ export default function AppSidebar() {
               <Link href="/">
                 <LayoutDashboard />
                 <span>Dashboard</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+           <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/site'}
+              tooltip={{ children: "Main Site", side: "right", align: "center" }}
+            >
+              <Link href="/site">
+                <Home />
+                <span>Main Site</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -130,20 +143,19 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          {isCustomer && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === '/rto-quiz'}
-                tooltip={{ children: "RTO Quiz", side: "right", align: "center" }}
-              >
-                <Link href="/rto-quiz">
-                  <ClipboardCheck />
-                  <span>RTO Quiz</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/rto-quiz'}
+              tooltip={{ children: "RTO Quiz", side: "right", align: "center" }}
+            >
+              <Link href="/rto-quiz">
+                <ClipboardCheck />
+                <span>RTO Quiz</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
 
           <SidebarMenuItem>
             <SidebarMenuButton

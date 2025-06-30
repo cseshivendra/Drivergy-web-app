@@ -137,7 +137,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         referralCodeApplied: customerData.referralCodeApplied || undefined,
       };
       newUser = addCustomer(cleanedCustomerData);
-      registrationMessage = `${newUser.name} (ID: ${newUser.uniqueId}) has been successfully registered. You are now logged in. Redirecting...`;
+      registrationMessage = `Welcome, ${newUser.name}! You are now logged in and can access your dashboard. Redirecting...`;
       if (cleanedCustomerData.referralCodeApplied) {
         toast({
             title: "Referral Code Applied!",
@@ -151,17 +151,16 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         phone: trainerData.phone || undefined,
       }
       newUser = addTrainer(cleanedTrainerData);
-      registrationMessage = `${newUser.name} (ID: ${newUser.uniqueId}) has been successfully registered as a trainer. You are now logged in. Redirecting...`;
+      registrationMessage = `Welcome, ${newUser.name}! Your trainer profile is created and you are logged in. Redirecting...`;
     }
 
-    toast({
-      title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
-      description: registrationMessage,
-    });
-    
     if (newUser) {
-      logInUser(newUser); // Log the user in
-      router.push('/');
+      logInUser(newUser); // Log the user in but don't show another toast/redirect
+      toast({
+        title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
+        description: registrationMessage,
+      });
+      router.push('/'); // Redirect to the main app dashboard
     } else {
        form.reset(defaultValues); 
     }

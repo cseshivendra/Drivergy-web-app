@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -18,7 +18,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useState, useEffect } from 'react';
@@ -211,42 +213,65 @@ export default function PortfolioSitePage() {
               <Link href="#contact">Support</Link>
             </Button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Register
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                     <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                        <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    <span>{user.displayName}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      My Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut}>
+                    <Power className="mr-2 h-4 w-4" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Register
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/site/register/customer">
+                        <User className="mr-2 h-4 w-4" />
+                        Register as Customer
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/site/register/trainer">
+                        <UserCog className="mr-2 h-4 w-4" />
+                        Register as Trainer
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
+                <Button asChild variant="outline">
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </Link>
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/site/register/customer">
-                    <User className="mr-2 h-4 w-4" />
-                    Register as Customer
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/site/register/trainer">
-                    <UserCog className="mr-2 h-4 w-4" />
-                    Register as Trainer
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            <Button asChild variant="outline">
-              <Link href="/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                Login
-              </Link>
-            </Button>
-            
-            <Button asChild>
-              <Link href="/">
-                <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
-                <span className="hidden sm:inline">User Portal</span>
-              </Link>
-            </Button>
+              </>
+            )}
 
             <Button
               variant="ghost"
@@ -301,7 +326,7 @@ export default function PortfolioSitePage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto bg-white border-white text-primary hover:bg-primary hover:text-primary-foreground font-semibold px-8 py-3 text-base" 
+                className="w-full sm:w-auto border-white text-primary bg-white hover:bg-gray-200 hover:border-gray-200 font-semibold px-8 py-3 text-base" 
                 asChild
               >
                 <Link href="/site/register/trainer">Register as Trainer</Link>
