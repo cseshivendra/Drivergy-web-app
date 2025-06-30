@@ -188,35 +188,36 @@ export default function PortfolioSitePage() {
                 </Tooltip>
               </TooltipProvider>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <LogIn className="mr-0 sm:mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Login / Signup</span>
-                    <ChevronDown className="ml-1 h-4 w-4 hidden sm:inline" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/login">
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Login
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/site/register/customer">
-                      <User className="mr-2 h-4 w-4" />
-                      Register as Customer
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/site/register/trainer">
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Register as Trainer
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <>
+                <Button asChild variant="ghost">
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </Link>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Register
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/site/register/customer">
+                        <User className="mr-2 h-4 w-4" />
+                        Register as Customer
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/site/register/trainer">
+                        <UserCog className="mr-2 h-4 w-4" />
+                        Register as Trainer
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
 
             <Button variant="outline" asChild>
