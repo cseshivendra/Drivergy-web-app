@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
   Accordion,
@@ -9,6 +10,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Car, HelpCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -63,15 +65,26 @@ export default function FaqPage() {
 
         <main className="flex-grow">
             <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
-                <header className="mb-12 text-center">
-                    <div className="inline-flex items-center justify-center bg-primary/10 text-primary p-4 rounded-full mb-4">
-                        <HelpCircle className="h-12 w-12" />
+                <Card className="shadow-lg overflow-hidden mb-12">
+                    <div className="relative h-56 w-full bg-primary/10">
+                        <Image 
+                            src="https://placehold.co/1200x300.png" 
+                            alt="Banner for FAQ page" 
+                            layout="fill" 
+                            objectFit="cover"
+                            data-ai-hint="question mark help"
+                        />
+                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+                             <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
+                                <HelpCircle className="h-10 w-10 text-primary" />
+                            </div>
+                            <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Frequently Asked Questions</h1>
+                            <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
+                                Find answers to common questions about our services and platform.
+                            </p>
+                        </div>
                     </div>
-                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Frequently Asked Questions</h1>
-                    <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Find answers to common questions about our services and platform.
-                    </p>
-                </header>
+                </Card>
 
                 <Accordion type="single" collapsible className="w-full">
                   {faqData.map((faq) => (

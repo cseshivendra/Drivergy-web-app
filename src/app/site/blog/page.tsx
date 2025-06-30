@@ -130,7 +130,7 @@ const blogPosts = [
   }
 ];
 
-const POSTS_PER_PAGE = 6; // 2 rows of 3 on large screens
+const POSTS_PER_PAGE = 6;
 
 export default function BlogPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,15 +162,26 @@ export default function BlogPage() {
 
         <main className="flex-grow">
             <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
-                <header className="mb-12 text-center">
-                    <div className="inline-flex items-center justify-center bg-primary/10 text-primary p-4 rounded-full mb-4">
-                        <BookText className="h-12 w-12" />
+                <Card className="shadow-lg overflow-hidden mb-12">
+                    <div className="relative h-56 w-full bg-primary/10">
+                        <Image 
+                            src="https://placehold.co/1200x300.png" 
+                            alt="Banner for blog page with driving theme" 
+                            layout="fill" 
+                            objectFit="cover"
+                            data-ai-hint="library books driving manual"
+                        />
+                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+                            <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
+                                <BookText className="h-10 w-10 text-primary" />
+                            </div>
+                            <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Drivergy Blog</h1>
+                            <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
+                                Your source for RTO exam tips, expert driving tricks, and road safety advice.
+                            </p>
+                        </div>
                     </div>
-                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Drivergy Blog</h1>
-                    <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Your source for RTO exam tips, expert driving tricks, and road safety advice.
-                    </p>
-                </header>
+                </Card>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {currentPosts.map((post, index) => (
