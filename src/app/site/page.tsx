@@ -174,43 +174,42 @@ export default function PortfolioSitePage() {
               <Link href="#contact">Support</Link>
             </Button>
             
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Register
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/site/register/customer">
+                    <User className="mr-2 h-4 w-4" />
+                    Register as Customer
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/site/register/trainer">
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Register as Trainer
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button asChild variant="outline">
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+              </Link>
+            </Button>
+            
             <Button variant="outline" asChild>
               <Link href="/">
                 <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
                 <span className="hidden sm:inline">Admin Portal</span>
               </Link>
             </Button>
-
-            <>
-              <Button asChild variant="outline">
-                <Link href="/login">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Login
-                </Link>
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Register
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/site/register/customer">
-                      <User className="mr-2 h-4 w-4" />
-                      Register as Customer
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/site/register/trainer">
-                      <UserCog className="mr-2 h-4 w-4" />
-                      Register as Trainer
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
 
             <Button
               variant="ghost"
