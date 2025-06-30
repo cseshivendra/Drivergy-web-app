@@ -627,34 +627,15 @@ export default function PortfolioSitePage() {
 
       {/* Footer */}
       <footer className="border-t border-border/40 bg-background py-8">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
-          <div className="flex justify-center">
-            <SiteLogo />
-          </div>
-          
-          <div className="flex items-center justify-center gap-6">
-              <Link href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Facebook className="h-5 w-5" />
-              </Link>
-              <Link href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Twitter className="h-5 w-5" />
-              </Link>
-              <Link href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Instagram className="h-5 w-5" />
-              </Link>
-              <Link href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Linkedin className="h-5 w-5" />
-              </Link>
-          </div>
-          
-          <p className="text-sm">
-            &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
-          </p>
-          <div className="text-xs">
-            <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <span className="mx-2">|</span>
-            <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
-          </div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 sm:gap-6">
+            <Link href="#contact" className="hover:text-primary transition-colors">
+              Get In Touch
+            </Link>
+            <Link href="#faq" className="hover:text-primary transition-colors">
+              FAQ
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>
