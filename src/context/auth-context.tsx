@@ -9,6 +9,7 @@ import type { UserProfile } from '@/types'; // Import UserProfile
 // Define a User type that can be a simulated regular user or a GuestUser
 export interface SimulatedUser {
   uid: string;
+  uniqueId: string; // Add uniqueId to identify role
   displayName: string | null;
   email: string | null;
   photoURL: string | null;
@@ -17,6 +18,7 @@ export interface SimulatedUser {
 
 export interface GuestUser {
   uid: string;
+  uniqueId: string; // Add uniqueId to identify role
   displayName: string | null;
   email: string | null;
   photoURL: string | null;
@@ -65,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
     const mockGoogleUser: SimulatedUser = {
       uid: `mock-google-${new Date().getTime()}`,
+      uniqueId: 'ADMIN-GOOGLE', // Assign an admin-like ID
       displayName: 'Mock Google User',
       email: 'googleuser@example.com',
       photoURL: 'https://placehold.co/100x100.png?text=GU', // Placeholder avatar
@@ -80,6 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const guestUser: GuestUser = {
       uid: `guest-${new Date().getTime()}`,
+      uniqueId: 'ADMIN-GUEST', // Assign an admin-like ID
       displayName: 'Guest User',
       email: null,
       photoURL: 'https://placehold.co/100x100.png?text=GU', // Placeholder for guest
@@ -104,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const newUser: SimulatedUser = {
       uid: userProfile.id,
+      uniqueId: userProfile.uniqueId, // Store the uniqueId for role checking
       displayName: userProfile.name,
       email: userProfile.contact,
       photoURL: `https://placehold.co/100x100.png?text=${userProfile.name.charAt(0)}`,

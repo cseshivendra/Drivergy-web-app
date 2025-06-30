@@ -165,9 +165,6 @@ export default function PortfolioSitePage() {
               <Link href="#courses">Courses</Link>
             </Button>
              <Button variant="ghost" asChild>
-               <Link href="/site/rto-quiz">RTO Quiz</Link>
-            </Button>
-             <Button variant="ghost" asChild>
               <Link href="#subscriptions">Plans</Link>
             </Button>
             <Button variant="ghost" asChild>
@@ -210,7 +207,7 @@ export default function PortfolioSitePage() {
             <Button asChild>
               <Link href="/">
                 <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
-                <span className="hidden sm:inline">Admin Portal</span>
+                <span className="hidden sm:inline">User Portal</span>
               </Link>
             </Button>
 
