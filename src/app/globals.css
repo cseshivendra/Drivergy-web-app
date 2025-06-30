@@ -11,6 +11,17 @@
   100% { transform: translateX(0px); opacity: 1; }
 }
 
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Removed @keyframes hero-bg-animate */
 
 @tailwind base;
@@ -33,6 +44,11 @@
   .animate-car-slide-logo {
     animation: car-slide-in-logo 0.7s ease-out 0.2s forwards;
     opacity: 0; /* Start hidden */
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out forwards;
+    opacity: 0;
   }
 
   /* Removed .animate-hero-bg */
