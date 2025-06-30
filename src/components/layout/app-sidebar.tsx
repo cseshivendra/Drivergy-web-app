@@ -73,6 +73,19 @@ export default function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/profile'}
+              tooltip={{ children: "Profile", side: "right", align: "center" }}
+            >
+              <Link href="/profile">
+                <User />
+                <span>Profile</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           
            <SidebarMenuItem>
             <SidebarMenuButton

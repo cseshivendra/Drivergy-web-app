@@ -302,3 +302,27 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationObjectSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationObjectSchema>;
+
+// Schema for updating user profile
+export const UserProfileUpdateSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  phone: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), {
+    message: "Phone number must be 10 digits if provided.",
+  }),
+  location: z.string().min(1, { message: "Please select a location." }),
+});
+
+export type UserProfileUpdateValues = z.infer<typeof UserProfileUpdateSchema>;
+
+// Schema for changing password
+export const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, { message: "Current password is required." }),
+  newPassword: z.string().min(6, { message: "New password must be at least 6 characters." }),
+  confirmNewPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmNewPassword, {
+  message: "New passwords don't match.",
+  path: ["confirmNewPassword"],
+});
+
+export type ChangePasswordValues = z.infer<typeof ChangePasswordSchema>;

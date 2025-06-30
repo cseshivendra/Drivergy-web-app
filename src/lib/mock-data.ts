@@ -1,5 +1,5 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues } from '@/types';
 import { addDays, format, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
@@ -219,6 +219,58 @@ export const authenticateUserByCredentials = async (username: string, password: 
     }
     console.log(`[mock-data] Authentication failed for username: ${username}`);
     return null;
+}
+
+export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  
+  const customerIndex = mockCustomers.findIndex(c => c.id === userId);
+  if (customerIndex !== -1) {
+    mockCustomers[customerIndex] = {
+      ...mockCustomers[customerIndex],
+      name: data.name,
+      contact: data.email,
+      phone: data.phone,
+      location: data.location,
+    };
+    saveDataToLocalStorage();
+    return mockCustomers[customerIndex];
+  }
+
+  const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
+  if (instructorIndex !== -1) {
+     mockInstructors[instructorIndex] = {
+      ...mockInstructors[instructorIndex],
+      name: data.name,
+      contact: data.email,
+      phone: data.phone,
+      location: data.location,
+    };
+    saveDataToLocalStorage();
+    return mockInstructors[instructorIndex];
+  }
+
+  return null;
+};
+
+export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+    
+    const customerIndex = mockCustomers.findIndex(c => c.id === userId);
+    if (customerIndex !== -1 && mockCustomers[customerIndex].password === currentPassword) {
+        mockCustomers[customerIndex].password = newPassword;
+        saveDataToLocalStorage();
+        return true;
+    }
+
+    const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
+    if (instructorIndex !== -1 && mockInstructors[instructorIndex].password === currentPassword) {
+        mockInstructors[instructorIndex].password = newPassword;
+        saveDataToLocalStorage();
+        return true;
+    }
+
+    return false;
 }
 
 export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
