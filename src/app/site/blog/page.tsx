@@ -130,7 +130,7 @@ const blogPosts = [
   }
 ];
 
-const POSTS_PER_PAGE = 8; // 2 rows of 4 on large screens
+const POSTS_PER_PAGE = 6; // 2 rows of 3 on large screens
 
 export default function BlogPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -172,7 +172,7 @@ export default function BlogPage() {
                     </p>
                 </header>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {currentPosts.map((post, index) => (
                         <Card key={index} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70">
                             <div className="relative h-56 w-full">
