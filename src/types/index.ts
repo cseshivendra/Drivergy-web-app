@@ -185,7 +185,8 @@ export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Pass
 const fileField = z.any(); 
 const optionalFileField = z.any().optional();
 
-const BaseRegistrationSchema = z.object({
+// Define the base object schema without refinement, so it can be extended
+const BaseRegistrationObjectSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }).max(20),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   confirmPassword: z.string(),
@@ -199,12 +200,10 @@ const BaseRegistrationSchema = z.object({
     .transform(val => val || undefined), // Ensure empty string becomes undefined for optional
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"], // Set error path to confirmPassword
 });
 
-const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
+// Extend the base object and then apply refinement
+const CustomerRegistrationSchema = BaseRegistrationObjectSchema.extend({
   userRole: z.literal('customer'),
   subscriptionPlan: z.enum(SubscriptionPlans, { required_error: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
@@ -222,9 +221,13 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
   photoIdFile: fileField.refine(val => val && val.length > 0, "Photo ID document is required."),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
-const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
+// Extend the base object and then apply refinement
+const TrainerRegistrationSchema = BaseRegistrationObjectSchema.extend({
   userRole: z.literal('trainer'),
   yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative.").max(50, "Years of experience seems too high.").optional(),
   specialization: z.enum(SpecializationOptions, { required_error: "Please select a specialization." }),
@@ -240,8 +243,10 @@ const TrainerRegistrationSchema = BaseRegistrationSchema.extend({
   aadhaarCardFile: fileField.refine(val => val && val.length > 0, "Aadhaar card copy is required."),
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
   drivingLicenseFile: fileField.refine(val => val && val.length > 0, "Driving license copy is required."),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
 });
-
 
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
  CustomerRegistrationSchema,
