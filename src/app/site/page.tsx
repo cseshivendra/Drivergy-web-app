@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -107,10 +108,25 @@ const coursesData = [
   }
 ];
 
-const slideImages = [
-  { src: "https://placehold.co/1920x1080.png", hint: "driving lesson student" },
-  { src: "https://placehold.co/1920x1080.png", hint: "driving instructor car" },
-  { src: "https://placehold.co/1920x1080.png", hint: "city road traffic" },
+const slidesData = [
+  {
+    src: "https://placehold.co/1920x1080.png",
+    hint: "driving lesson student",
+    title: "Learn to Drive, Master the Road",
+    description: "Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.",
+  },
+  {
+    src: "https://placehold.co/1920x1080.png",
+    hint: "driving instructor car",
+    title: "Empowering Driving Instructors",
+    description: "Access powerful tools to manage your schedule, track student progress, and grow your business.",
+  },
+  {
+    src: "https://placehold.co/1920x1080.png",
+    hint: "city road traffic",
+    title: "Your Journey to a License Starts Here",
+    description: "Comprehensive RTO assistance and test preparation to help you succeed.",
+  },
 ];
 
 const testimonialsData = [
@@ -147,11 +163,11 @@ export default function PortfolioSitePage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    if (slideImages.length === 0) return;
+    if (slidesData.length === 0) return;
 
     const timer = setTimeout(() => {
       setCurrentImageIndex((prevIndex) =>
-        prevIndex === slideImages.length - 1 ? 0 : prevIndex + 1
+        prevIndex === slidesData.length - 1 ? 0 : prevIndex + 1
       );
     }, 3000); // Change image every 3 seconds
 
@@ -263,12 +279,12 @@ export default function PortfolioSitePage() {
       {/* Main Content */}
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center text-center text-white overflow-hidden">
+        <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            {slideImages.map((image, index) => (
+            {slidesData.map((slide, index) => (
               <Image
                 key={index}
-                src={image.src}
+                src={slide.src}
                 alt={`Background slide ${index + 1}`}
                 layout="fill"
                 objectFit="cover"
@@ -277,20 +293,33 @@ export default function PortfolioSitePage() {
                   index === currentImageIndex && "active"
                 )}
                 priority={index === 0}
-                data-ai-hint={image.hint}
+                data-ai-hint={slide.hint}
               />
             ))}
           </div>
           <div className="absolute inset-0 bg-black/60 z-[5] pointer-events-none"></div> {/* Darker overlay for better contrast */}
           
-          <div className="relative z-10 p-4 container mx-auto animate-fade-in-up"> {/* Content */}
-            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
-                Learn to Drive, Master the Road
-            </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
-                Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+          <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
+            <div className="relative h-48 sm:h-56 w-full flex-grow flex items-center justify-center">
+              {slidesData.map((slide, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "absolute inset-0 flex flex-col items-center justify-center text-center p-4 transition-opacity duration-1000 ease-in-out",
+                    index === currentImageIndex ? "opacity-100 animate-fade-in-up" : "opacity-0 pointer-events-none"
+                  )}
+                >
+                  <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
+                    {slide.title}
+                  </h1>
+                  <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
+                    {slide.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
@@ -309,6 +338,7 @@ export default function PortfolioSitePage() {
             </div>
           </div>
         </section>
+
 
         {/* Services Section */}
         <section id="services" className="py-8 md:py-12 bg-background">
