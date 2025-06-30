@@ -593,7 +593,7 @@ export default function PortfolioSitePage() {
                     </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                    <Link href="/about">Learn More About Us</Link>
+                    <Link href="#faq">FAQ</Link>
                 </Button>
             </div>
           </div>
