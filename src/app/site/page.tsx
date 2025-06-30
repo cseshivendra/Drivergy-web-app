@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -581,6 +581,24 @@ export default function PortfolioSitePage() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
                 <div className="flex justify-center">
                     <SiteLogo />
+                </div>
+                 <div className="flex justify-center items-center gap-6">
+                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Facebook className="h-5 w-5" />
+                        <span className="sr-only">Facebook</span>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Twitter className="h-5 w-5" />
+                        <span className="sr-only">Twitter</span>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Instagram className="h-5 w-5" />
+                        <span className="sr-only">Instagram</span>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Linkedin className="h-5 w-5" />
+                        <span className="sr-only">LinkedIn</span>
+                    </a>
                 </div>
                 <p className="text-sm">
                     &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
