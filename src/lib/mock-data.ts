@@ -78,7 +78,49 @@ if (typeof window !== 'undefined') {
       // Instructors start empty
   }
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.COURSES) && mockCourses.length === 0) {
-      // Courses start empty
+    mockCourses = [
+        {
+            id: 'course1',
+            title: 'Comprehensive Car Program',
+            description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
+            icon: Car, // Will be hydrated later
+            totalEnrolled: 125,
+            totalCertified: 98,
+            image: 'https://placehold.co/600x400.png',
+            modules: [
+            { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
+            { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
+            { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
+            ],
+        },
+        {
+            id: 'course2',
+            title: 'Motorcycle Rider Course',
+            description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
+            icon: Bike, // Will be hydrated later
+            totalEnrolled: 88,
+            totalCertified: 71,
+            image: 'https://placehold.co/600x400.png',
+            modules: [
+            { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
+            { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
+            ],
+        },
+        {
+            id: 'course3',
+            title: 'RTO Test Preparation',
+            description: 'A specialized course to help you ace the official RTO driving test and get your license.',
+            icon: FileText, // Will be hydrated later
+            totalEnrolled: 210,
+            totalCertified: 195,
+            image: 'https://placehold.co/600x400.png',
+            modules: [
+            { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
+            { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
+            ],
+        },
+    ];
+    console.log('[mock-data] Seeded initial course data as localStorage was empty.');
   }
 
   if (mockTwoWheelerRequests.length === 0 && mockFourWheelerRequests.length === 0 && 
