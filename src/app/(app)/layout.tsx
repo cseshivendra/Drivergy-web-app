@@ -16,7 +16,7 @@ export default function AuthenticatedAppLayout({
 }) {
   return (
     <AuthGuard>
-      <SidebarProvider defaultOpen={false}>
+      <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen bg-background">
           <AppSidebar />
           <SidebarInset className="flex flex-col flex-1">
@@ -32,4 +32,3 @@ export default function AuthenticatedAppLayout({
     </AuthGuard>
   );
 }
-
