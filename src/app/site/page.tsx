@@ -326,7 +326,7 @@ export default function PortfolioSitePage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-white text-primary bg-white hover:bg-gray-200 hover:border-gray-200 font-semibold px-8 py-3 text-base" 
+                className="w-full sm:w-auto border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white font-semibold px-8 py-3 text-base transition-colors duration-300"
                 asChild
               >
                 <Link href="/site/register/trainer">Register as Trainer</Link>
@@ -425,7 +425,7 @@ export default function PortfolioSitePage() {
                   <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
                       <CardHeader className="pb-4">
                           <CardTitle className="text-2xl text-primary flex items-center justify-center">
-                            Basic Start
+                            Basic
                           </CardTitle>
                           <CardDescription>Perfect for beginners to get started.</CardDescription>
                       </CardHeader>
@@ -445,11 +445,11 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full" asChild>
-                                <Link href="/site/payment?plan=Basic%20Start&price=3999">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Basic&price=3999">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Click to start your driving journey with the Basic Start plan.</p>
+                                <p>Click to start your driving journey with the Basic plan.</p>
                             </TooltipContent>
                         </Tooltip>
                       </CardFooter>
@@ -460,7 +460,7 @@ export default function PortfolioSitePage() {
                       </div>
                       <CardHeader className="pb-4">
                           <CardTitle className="text-2xl text-primary flex items-center justify-center">
-                              Premium Pro
+                              Premium
                           </CardTitle>
                           <CardDescription>Our most comprehensive package.</CardDescription>
                       </CardHeader>
@@ -481,11 +481,11 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                                <Link href="/site/payment?plan=Premium%20Pro&price=9999">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Premium&price=9999">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Get the best value and features with our Premium Pro plan.</p>
+                                <p>Get the best value and features with our Premium plan.</p>
                             </TooltipContent>
                         </Tooltip>
                       </CardFooter>
@@ -493,7 +493,7 @@ export default function PortfolioSitePage() {
                   <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
                       <CardHeader className="pb-4">
                           <CardTitle className="text-2xl text-primary flex items-center justify-center">
-                            Gold Standard
+                            Gold
                           </CardTitle>
                           <CardDescription>Excellent value with extra benefits.</CardDescription>
                       </CardHeader>
@@ -513,7 +513,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full" asChild>
-                                <Link href="/site/payment?plan=Gold%20Standard&price=7499">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Gold&price=7499">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
