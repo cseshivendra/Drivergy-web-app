@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut, Star, Check, Sun, Moon } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -170,7 +170,7 @@ export default function PortfolioSitePage() {
 
             {user ? (
               <Button variant="outline" onClick={signOut}>
-                <LogOut className="mr-0 sm:mr-2 h-4 w-4" />
+                <Power className="mr-0 sm:mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
             ) : (
