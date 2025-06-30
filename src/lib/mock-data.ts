@@ -331,10 +331,6 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
   mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   console.log(`[mock-data] Automatically added lesson request for ${newUser.name}:`, JSON.parse(JSON.stringify(newRequest)));
   
-  if (data.referralCodeApplied) {
-    console.log(`[mock-data] Customer ${newUser.name} used referral code: ${data.referralCodeApplied}`);
-  }
-
   saveDataToLocalStorage();
   return newUser;
 };

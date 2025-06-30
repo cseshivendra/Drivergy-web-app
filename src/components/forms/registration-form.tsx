@@ -37,7 +37,7 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, Ticket, KeyRound, AtSign } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -72,7 +72,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         vehiclePreference: undefined,
         subscriptionPlan: plan || '', // Pre-fill plan from URL params
         trainerPreference: '', 
-        referralCodeApplied: '',
         flatHouseNumber: '',
         street: '',
         district: '',
@@ -137,15 +136,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         phone: customerData.phone || undefined,
         dlNumber: customerData.dlNumber || undefined,
         dlTypeHeld: customerData.dlTypeHeld || undefined,
-        referralCodeApplied: customerData.referralCodeApplied || undefined,
       };
       newUser = addCustomer(cleanedCustomerData);
-      if (cleanedCustomerData.referralCodeApplied) {
-        toast({
-            title: "Referral Code Applied!",
-            description: "Your discount will be reflected in the final payment."
-        });
-      }
     } else if (data.userRole === 'trainer') {
       const trainerData = data as TrainerRegistrationFormValues;
       const cleanedTrainerData = {
@@ -496,19 +488,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     <FormMessage />
                     </FormItem>
                 )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="referralCodeApplied"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center"><Ticket className="mr-2 h-4 w-4 text-primary" />Referral/Discount Code (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter code" {...field} value={field.value || ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
                 />
             </div>
             

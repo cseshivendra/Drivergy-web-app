@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Lock, Car, User, QrCode, ShieldCheck, UserPlus, LogIn } from 'lucide-react';
+import { CreditCard, Calendar, Lock, Car, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
+import { useState } from 'react';
 
 // Replicated SiteLogo for this page
 const SiteLogo = () => (
@@ -35,6 +36,10 @@ function PaymentGateway() {
   const plan = searchParams.get('plan') || 'Selected Plan';
   const price = searchParams.get('price') || '0';
 
+  const [referralCode, setReferralCode] = useState('');
+  const [finalPrice, setFinalPrice] = useState(price);
+  const [discountApplied, setDiscountApplied] = useState(false);
+
   const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
     e.preventDefault();
     // Simulate payment processing
@@ -44,6 +49,28 @@ function PaymentGateway() {
     });
     // In a real app, you would redirect to a success page or dashboard.
     router.push('/');
+  };
+  
+  const handleApplyCode = () => {
+    // Simple mock logic for demonstration
+    if (referralCode.trim().toUpperCase() === 'DRIVERGY10') {
+      const originalPrice = parseInt(price, 10);
+      if (isNaN(originalPrice) || originalPrice <= 0) return;
+
+      const discountAmount = originalPrice * 0.10;
+      setFinalPrice((originalPrice - discountAmount).toString());
+      setDiscountApplied(true);
+      toast({
+        title: "Discount Applied!",
+        description: "A 10% discount has been applied to your order."
+      });
+    } else {
+      toast({
+        title: "Invalid Code",
+        description: "The referral or discount code you entered is not valid.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
@@ -96,9 +123,40 @@ function PaymentGateway() {
             </CardDescription>
         </CardHeader>
         <CardContent>
+            <div className="space-y-3 mb-6 border-b pb-6">
+              <Label htmlFor="referral-code" className="flex items-center"><Ticket className="mr-2 h-4 w-4" />Referral/Discount Code (Optional)</Label>
+              <div className="flex items-center space-x-2">
+                  <Input
+                      id="referral-code"
+                      placeholder="e.g., DRIVERGY10"
+                      value={referralCode}
+                      onChange={(e) => setReferralCode(e.target.value)}
+                      disabled={discountApplied}
+                  />
+                  <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleApplyCode}
+                      disabled={discountApplied || !referralCode.trim()}
+                  >
+                      {discountApplied ? "Applied" : "Apply"}
+                  </Button>
+              </div>
+            </div>
+
             <div className="text-center mb-6 p-4 bg-muted/50 rounded-lg">
                 <p className="text-muted-foreground">Amount to Pay</p>
-                <p className="text-4xl font-bold text-foreground">₹{price}</p>
+                {discountApplied && (
+                    <p className="text-sm text-muted-foreground line-through">
+                        Original Price: ₹{price}
+                    </p>
+                )}
+                <p className="text-4xl font-bold text-foreground">₹{finalPrice}</p>
+                {discountApplied && (
+                    <p className="text-sm font-semibold text-green-600 mt-1">
+                        You saved ₹{parseInt(price, 10) - parseInt(finalPrice, 10)}!
+                    </p>
+                )}
             </div>
 
             <Tabs defaultValue="card" className="w-full">
@@ -128,7 +186,7 @@ function PaymentGateway() {
                             <Input id="cardHolderName" placeholder="John Doe" required />
                         </div>
                         <Button type="submit" className="w-full h-11">
-                            Pay ₹{price}
+                            Pay ₹{finalPrice}
                         </Button>
                     </form>
                 </TabsContent>
@@ -160,7 +218,7 @@ function PaymentGateway() {
                         </div>
 
                         <Button type="submit" className="w-full h-11">
-                            Verify & Pay ₹{price}
+                            Verify & Pay ₹{finalPrice}
                         </Button>
                     </form>
                 </TabsContent>

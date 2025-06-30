@@ -205,7 +205,6 @@ const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   subscriptionPlan: z.enum(SubscriptionPlans, { required_error: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
   trainerPreference: z.enum(TrainerPreferenceOptions, { required_error: "Please select your trainer preference."}),
-  referralCodeApplied: z.string().optional(),
   flatHouseNumber: z.string().min(1, { message: "House/Flat number is required." }),
   street: z.string().min(3, { message: "Street name is required." }),
   district: z.string().min(1, { message: "Please select a district." }),
