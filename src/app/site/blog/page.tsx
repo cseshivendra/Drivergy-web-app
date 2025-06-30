@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, BookText } from 'lucide-react';
+import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -54,10 +55,100 @@ const blogPosts = [
     date: "July 15, 2024",
     image: "https://placehold.co/600x400.png",
     imageHint: "city traffic car"
+  },
+  {
+    title: "Choosing Your First Car: A Beginner's Guide",
+    category: "Car Maintenance",
+    excerpt: "Buying your first car is a huge milestone. This guide covers everything from budget to insurance to help you make a smart choice.",
+    author: "Rohan Sharma",
+    date: "July 12, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "new car dealership"
+  },
+  {
+    title: "Night Driving: Tips for Staying Safe After Dark",
+    category: "Driving Skills",
+    excerpt: "Driving at night comes with its own set of risks. Learn how to improve visibility and stay alert on the road after sunset.",
+    author: "Priya Mehta",
+    date: "July 08, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "night road car lights"
+  },
+  {
+    title: "How to Handle a Tire Blowout Calmly and Safely",
+    category: "Safety",
+    excerpt: "A tire blowout can be a frightening experience. Know the steps to take to maintain control of your vehicle and pull over safely.",
+    author: "Anjali Verma",
+    date: "July 05, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "flat tire car"
+  },
+  {
+    title: "The Ultimate Pre-Road Trip Vehicle Checklist",
+    category: "Car Maintenance",
+    excerpt: "Before you hit the open road, it's crucial to ensure your vehicle is in top condition. Follow our checklist for a worry-free trip.",
+    author: "Vikram Singh",
+    date: "July 01, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "car road trip"
+  },
+  {
+    title: "Navigating Roundabouts in India: A Simple How-To",
+    category: "Driving Skills",
+    excerpt: "Roundabouts can be confusing for new drivers. This guide breaks down the rules and etiquette for safely navigating them.",
+    author: "Rohan Sharma",
+    date: "June 28, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "traffic roundabout aerial"
+  },
+  {
+    title: "Understanding Your Car's Dashboard Warning Lights",
+    category: "Car Maintenance",
+    excerpt: "What does that little light mean? We decode the most common dashboard warning lights so you know when to take action.",
+    author: "Priya Mehta",
+    date: "June 24, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "car dashboard lights"
+  },
+  {
+    title: "The Importance of Regular Oil Changes",
+    category: "Car Maintenance",
+    excerpt: "Learn why regular oil changes are the single most important thing you can do to keep your car's engine running smoothly for years to come.",
+    author: "Anjali Verma",
+    date: "June 20, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "car engine oil"
+  },
+  {
+    title: "Monsoon Driving Tips: How to Drive Safely in Heavy Rain",
+    category: "Safety",
+    excerpt: "Driving in the monsoon presents serious challenges. Learn how to prepare your car and drive safely through waterlogged roads and low visibility.",
+    author: "Vikram Singh",
+    date: "June 17, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "rainy road car"
   }
 ];
 
+const POSTS_PER_PAGE = 8; // 2 rows of 4 on large screens
+
 export default function BlogPage() {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(blogPosts.length / POSTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
+  const endIndex = startIndex + POSTS_PER_PAGE;
+  const currentPosts = blogPosts.slice(startIndex, endIndex);
+
+  const handlePrevious = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNext = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
         <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -70,7 +161,7 @@ export default function BlogPage() {
         </header>
 
         <main className="flex-grow">
-            <div className="container mx-auto max-w-5xl p-4 py-8 sm:p-6 lg:p-8">
+            <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
                 <header className="mb-12 text-center">
                     <div className="inline-flex items-center justify-center bg-primary/10 text-primary p-4 rounded-full mb-4">
                         <BookText className="h-12 w-12" />
@@ -81,8 +172,8 @@ export default function BlogPage() {
                     </p>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {blogPosts.map((post, index) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {currentPosts.map((post, index) => (
                         <Card key={index} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70">
                             <div className="relative h-56 w-full">
                                 <Image
@@ -118,6 +209,23 @@ export default function BlogPage() {
                         </Card>
                     ))}
                 </div>
+
+                 {totalPages > 1 && (
+                    <div className="flex items-center justify-center mt-12 space-x-4">
+                        <Button onClick={handlePrevious} disabled={currentPage === 1} variant="outline">
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Previous
+                        </Button>
+                        <span className="text-sm font-medium text-muted-foreground">
+                            Page {currentPage} of {totalPages}
+                        </span>
+                        <Button onClick={handleNext} disabled={currentPage === totalPages} variant="outline">
+                            Next
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                    </div>
+                )}
+
             </div>
         </main>
 
