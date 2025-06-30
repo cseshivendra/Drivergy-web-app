@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -106,6 +106,33 @@ const slideImages = [
   { src: "https://placehold.co/1920x1080.png", hint: "city driving school" },
 ];
 
+const testimonialsData = [
+    {
+      name: "Priya Sharma",
+      role: "Customer, Bangalore",
+      avatar: "https://placehold.co/100x100.png",
+      avatarHint: "woman portrait",
+      testimonial: "Drivergy made learning to drive so easy! My instructor was patient and professional. The scheduling system is fantastic. I passed my test on the first try. Highly recommended!",
+      rating: 5,
+    },
+    {
+      name: "Rohan Verma",
+      role: "Trainer, Mumbai",
+      avatar: "https://placehold.co/100x100.png",
+      avatarHint: "man portrait",
+      testimonial: "As an instructor, Drivergy's platform has streamlined my business. I can manage my bookings, track student progress, and receive payments all in one place. It lets me focus on what I do best - teaching.",
+      rating: 5,
+    },
+    {
+      name: "Anjali Mehta",
+      role: "Customer, Delhi",
+      avatar: "https://placehold.co/100x100.png",
+      avatarHint: "female driver",
+      testimonial: "I was nervous about driving in a big city, but the defensive driving course gave me the confidence I needed. The app is user-friendly and the support team is very responsive.",
+      rating: 4,
+    },
+  ];
+
 export default function PortfolioSitePage() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -139,6 +166,9 @@ export default function PortfolioSitePage() {
             </Button>
              <Button variant="ghost" asChild>
               <Link href="#subscriptions">Plans</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="#testimonials">Testimonials</Link>
             </Button>
              <Button variant="ghost" asChild>
               <Link href="#contact">Support</Link>
@@ -446,8 +476,57 @@ export default function PortfolioSitePage() {
           </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section id="testimonials" className="py-16 md:py-24 bg-muted/30">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">What Our Users Say</h2>
+              <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+                Real stories from satisfied students and successful instructors.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {testimonialsData.map((testimonial, index) => (
+                <Card key={index} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                    <CardContent className="pt-6 pb-4 flex-grow">
+                        <Quote className="h-8 w-8 text-primary/30 mb-4" />
+                        <p className="text-muted-foreground leading-relaxed italic">"{testimonial.testimonial}"</p>
+                    </CardContent>
+                    <CardFooter className="flex items-center gap-4 mt-auto pt-4 border-t">
+                        <Image 
+                            src={testimonial.avatar} 
+                            alt={testimonial.name}
+                            width={40}
+                            height={40}
+                            className="rounded-full"
+                            data-ai-hint={testimonial.avatarHint}
+                        />
+                        <div className="flex-1">
+                            <p className="font-semibold text-foreground">{testimonial.name}</p>
+                            <p className="text-xs text-muted-foreground">{testimonial.role}</p>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                key={i}
+                                className={cn(
+                                    "h-4 w-4",
+                                    i < testimonial.rating
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-muted-foreground/30"
+                                )}
+                                />
+                            ))}
+                        </div>
+                    </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
          {/* Contact Section Placeholder */}
-        <section id="contact" className="py-16 md:py-24 bg-muted/30">
+        <section id="contact" className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Get In Touch</h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
