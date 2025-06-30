@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,6 +23,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ClipboardCheck, CheckCircle, XCircle, Lightbulb, Clock, RefreshCw, Car } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
 
 
 // Define the structure for a single question
@@ -133,6 +136,8 @@ const quizSets: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
 // A component to render a single quiz set
 const QuizSetComponent = ({ quizSet }: { quizSet: QuizSet }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [score, setScore] = useState<number | null>(null);
   const [isStarted, setIsStarted] = useState(false);
@@ -202,6 +207,16 @@ const QuizSetComponent = ({ quizSet }: { quizSet: QuizSet }) => {
   };
   
   const handleStart = () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please register or log in to start the quiz. Redirecting...",
+        variant: "destructive"
+      });
+      router.push('/site/register/customer');
+      return;
+    }
+
     setIsStarted(true);
     setTimeLeft(30 * 60);
     setSelectedAnswers({});
