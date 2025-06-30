@@ -140,33 +140,6 @@ const testimonialsData = [
     },
   ];
   
-const faqData = [
-    {
-      id: "faq-1",
-      question: "What documents do I need to enroll?",
-      answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
-    },
-    {
-      id: "faq-2",
-      question: "Can I choose my instructor?",
-      answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
-    },
-    {
-      id: "faq-3",
-      question: "How do I book a driving lesson slot?",
-      answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
-    },
-    {
-      id: "faq-4",
-      question: "What types of vehicles are available for training?",
-      answer: "We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.",
-    },
-    {
-      id: "faq-5",
-      question: "What if I need to cancel or reschedule a lesson?",
-      answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
-    },
-];
 
 export default function PortfolioSitePage() {
   const { user, signOut } = useAuth();
@@ -209,7 +182,7 @@ export default function PortfolioSitePage() {
               <Link href="#testimonials">Testimonials</Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link href="#faq">FAQ</Link>
+              <Link href="/site/faq">FAQ</Link>
             </Button>
              <Button variant="ghost" asChild>
               <Link href="#contact">Support</Link>
@@ -596,38 +569,12 @@ export default function PortfolioSitePage() {
                     </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                    <Link href="#faq">FAQ</Link>
+                    <Link href="/site/faq">FAQ</Link>
                 </Button>
             </div>
           </div>
         </section>
 
-        {/* FAQ Section moved into footer */}
-        <section id="faq" className="py-16 md:py-24 bg-background">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl animate-fade-in-up">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center bg-primary/10 text-primary p-3 rounded-full mb-4">
-                  <HelpCircle className="h-8 w-8" />
-              </div>
-              <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Frequently Asked Questions</h2>
-              <p className="mt-3 text-lg text-muted-foreground">
-                Find answers to common questions about our services and platform.
-              </p>
-            </div>
-            <Accordion type="single" collapsible className="w-full">
-              {faqData.map((faq) => (
-                <AccordionItem value={faq.id} key={faq.id} className="border-b border-border/50">
-                  <AccordionTrigger className="text-left font-semibold text-lg hover:no-underline py-4">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground text-base pb-4">
-                    {faq.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </section>
         
         {/* Final Copyright Footer */}
         <div className="border-t border-border/40 bg-background py-8">

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -11,7 +10,7 @@ export default function Footer() {
           <Link href="/contact" className="hover:text-primary transition-colors">
             Get In Touch
           </Link>
-          <Link href="/site#faq" className="hover:text-primary transition-colors">
+          <Link href="/site/faq" className="hover:text-primary transition-colors">
             FAQ
           </Link>
         </nav>
