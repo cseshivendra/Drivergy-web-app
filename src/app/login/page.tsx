@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon } from 'lucide-react';
+import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, UserCheck } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInAsGuest, loading } = useAuth();
+  const { user, signInWithGoogle, signInAsGuest, signInAsSampleCustomer, loading } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
@@ -97,6 +97,15 @@ export default function LoginPage() {
               disabled={loading}
             >
               <UserCircle className="mr-2 h-5 w-5" /> Sign in as Guest
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base border-border hover:bg-accent/50"
+              onClick={signInAsSampleCustomer}
+              disabled={loading}
+            >
+              <UserCheck className="mr-2 h-5 w-5" /> Sign in as Sample Customer
             </Button>
 
             <div className="relative my-2">

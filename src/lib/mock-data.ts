@@ -1,6 +1,6 @@
 
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType } from '@/types';
-import { addDays, format } from 'date-fns';
+import { addDays, format, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
 
@@ -69,10 +69,34 @@ const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): str
   return format(addDays(new Date(), -days), 'MMM dd, yyyy HH:mm');
 };
 
+const sampleCustomer: UserProfile = {
+  id: 'sample-customer-uid',
+  uniqueId: 'CU987654',
+  name: 'Priya Patel',
+  contact: 'priya.patel@example.com',
+  phone: '9123456789',
+  location: 'Delhi',
+  subscriptionPlan: 'Premium',
+  registrationTimestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy HH:mm'),
+  vehicleInfo: 'Four-Wheeler',
+  approvalStatus: 'Approved',
+  flatHouseNumber: 'B-42',
+  street: 'Main Street',
+  district: 'New Delhi',
+  state: 'Delhi',
+  pincode: '110001',
+  dlStatus: 'Already Have DL',
+  dlNumber: 'DL01A1234567',
+  photoIdType: 'Aadhaar Card',
+  photoIdNumber: '123456789012',
+  trainerPreference: 'Female',
+};
+
 // --- Initial Data Seeding (if localStorage is empty) ---
 if (typeof window !== 'undefined') {
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS) && mockCustomers.length === 0) {
-      // Customers start empty
+      mockCustomers.push(sampleCustomer);
+      console.log('[mock-data] Seeded initial sample customer data as localStorage was empty.');
   }
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.INSTRUCTORS) && mockInstructors.length === 0) {
       // Instructors start empty
@@ -437,3 +461,4 @@ const loggableCourses = mockCourses.map(c => {
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
 saveDataToLocalStorage(); 
+

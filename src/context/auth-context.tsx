@@ -5,6 +5,7 @@ import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type comp
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types'; // Import UserProfile
+import { mockCustomers } from '@/lib/mock-data';
 
 // Define a User type that can be a simulated regular user or a GuestUser
 export interface SimulatedUser {
@@ -32,6 +33,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>; // Kept for UI consistency, mocks Google sign-in
   signInAsGuest: () => void;
+  signInAsSampleCustomer: () => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile) => void;
 }
@@ -95,6 +97,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
+  const signInAsSampleCustomer = async () => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+
+    const sampleCustomer = mockCustomers.find(c => c.id === 'sample-customer-uid');
+
+    if (sampleCustomer) {
+      logInUser(sampleCustomer);
+      router.push('/');
+    } else {
+      console.error("Sample customer could not be found. Please clear local storage and refresh to re-seed data.");
+      setLoading(false);
+      // Optionally, you could show a toast message here.
+    }
+  };
+
   const signOut = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 300)); // Simulate sign-out delay
@@ -120,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer }}>
       {children}
     </AuthContext.Provider>
   );
