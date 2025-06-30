@@ -16,7 +16,7 @@ import {
   useSidebar, // Import useSidebar to check if mobile
 } from '@/components/ui/sidebar';
 import { SheetTitle } from '@/components/ui/sheet';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -126,6 +126,19 @@ export default function AppSidebar() {
               <Link href="/courses">
                 <BookOpen />
                 <span>Courses</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              isActive={pathname === '/rto-quiz'}
+              tooltip={{ children: "RTO Quiz", side: "right", align: "center" }}
+            >
+              <Link href="/rto-quiz">
+                <ClipboardCheck />
+                <span>RTO Quiz</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
