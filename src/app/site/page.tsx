@@ -101,9 +101,9 @@ const coursesData = [
 ];
 
 const slideImages = [
-  { src: "https://placehold.co/1920x1080.png", hint: "learner car driving" },
-  { src: "https://placehold.co/1920x1080.png", hint: "driving test road" },
-  { src: "https://placehold.co/1920x1080.png", hint: "city driving school" },
+  { src: "https://placehold.co/1920x1080.png", hint: "driving lesson student" },
+  { src: "https://placehold.co/1920x1080.png", hint: "driving instructor car" },
+  { src: "https://placehold.co/1920x1080.png", hint: "city road traffic" },
 ];
 
 const testimonialsData = [
@@ -244,10 +244,16 @@ export default function PortfolioSitePage() {
               />
             ))}
           </div>
-          <div className="absolute inset-0 bg-black/50 z-[5] pointer-events-none"></div> {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60 z-[5] pointer-events-none"></div> {/* Darker overlay for better contrast */}
           
           <div className="relative z-10 p-4 container mx-auto"> {/* Content */}
-            <div className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4">
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
+                Learn to Drive, Master the Road
+            </h1>
+            <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
+                Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
@@ -258,15 +264,12 @@ export default function PortfolioSitePage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-white text-destructive hover:bg-white hover:text-primary font-semibold px-8 py-3 text-base" 
+                className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3 text-base" 
                 asChild
               >
                 <Link href="/site/register/trainer">Register as Trainer</Link>
               </Button>
             </div>
-             <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl drop-shadow-sm">
-              Start your driving journey with a school that makes it easy
-            </p>
           </div>
         </section>
 
