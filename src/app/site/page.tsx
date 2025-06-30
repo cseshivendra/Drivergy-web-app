@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -173,6 +174,13 @@ export default function PortfolioSitePage() {
               <Link href="#contact">Support</Link>
             </Button>
             
+            <Button variant="outline" asChild>
+              <Link href="/">
+                <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
+                <span className="hidden sm:inline">Admin Portal</span>
+              </Link>
+            </Button>
+
             <>
               <Button asChild variant="outline">
                 <Link href="/login">
@@ -204,12 +212,6 @@ export default function PortfolioSitePage() {
               </DropdownMenu>
             </>
 
-            <Button variant="outline" asChild>
-              <Link href="/">
-                <LogIn className="mr-0 sm:mr-2 h-4 w-4" /> 
-                <span className="hidden sm:inline">Admin Portal</span>
-              </Link>
-            </Button>
             <Button
               variant="ghost"
               size="icon"
