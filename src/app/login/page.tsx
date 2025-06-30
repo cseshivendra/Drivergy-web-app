@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -167,7 +167,13 @@ export default function LoginPage() {
               <span>OTP login is for demonstration only. Please use Google, Guest, or Sample Customer sign-in, or register to create a username/password.</span>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-center pt-4 pb-6">
+          <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
+             <p className="text-sm text-muted-foreground">
+                Don't have an account?{' '}
+                <Link href="/site" className="font-semibold text-primary hover:underline">
+                    Sign Up
+                </Link>
+            </p>
             <p className="text-xs text-muted-foreground">
               By signing in, you agree to our Terms of Service.
             </p>
