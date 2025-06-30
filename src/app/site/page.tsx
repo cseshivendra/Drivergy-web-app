@@ -301,7 +301,7 @@ export default function PortfolioSitePage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3 text-base" 
+                className="w-full sm:w-auto bg-white border-white text-primary hover:bg-primary hover:text-primary-foreground font-semibold px-8 py-3 text-base" 
                 asChild
               >
                 <Link href="/site/register/trainer">Register as Trainer</Link>
