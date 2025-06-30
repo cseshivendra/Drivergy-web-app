@@ -341,14 +341,9 @@ export default function PortfolioSitePage() {
                           </ul>
                       </CardContent>
                       <CardFooter className="mt-auto pt-6">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>A great starting point for new learners covering all the essentials.</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                           <Link href="/site/payment?plan=Basic%20Start&price=4999">Choose Plan</Link>
+                        </Button>
                       </CardFooter>
                   </Card>
                   <Card className="shadow-xl hover:shadow-2xl transition-shadow border-2 border-primary relative overflow-hidden flex flex-col transform scale-105 md:scale-110 z-10 bg-card">
@@ -372,14 +367,9 @@ export default function PortfolioSitePage() {
                           </ul>
                       </CardContent>
                       <CardFooter className="mt-auto pt-6">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>The ultimate package with advanced training and full RTO support.</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                          <Link href="/site/payment?plan=Premium%20Pro&price=8499">Choose Plan</Link>
+                        </Button>
                       </CardFooter>
                   </Card>
                   <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
@@ -399,14 +389,9 @@ export default function PortfolioSitePage() {
                           </ul>
                       </CardContent>
                       <CardFooter className="mt-auto pt-6">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>The perfect balance of practical sessions and comprehensive theory.</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                          <Link href="/site/payment?plan=Gold%20Standard&price=6999">Choose Plan</Link>
+                        </Button>
                       </CardFooter>
                   </Card>
               </div>
