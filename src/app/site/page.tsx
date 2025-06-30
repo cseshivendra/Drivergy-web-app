@@ -144,42 +144,41 @@ export default function PortfolioSitePage() {
               <Link href="#contact">Contact</Link>
             </Button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost">
-                  <UserPlus className="mr-0 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Register</span>
-                  <ChevronDown className="ml-1 h-4 w-4 hidden sm:inline" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/site/register/customer">
-                    <User className="mr-2 h-4 w-4" />
-                    Register as Customer
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/site/register/trainer">
-                    <UserCog className="mr-2 h-4 w-4" />
-                    Register as Trainer
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             {user ? (
               <Button variant="outline" onClick={signOut}>
                 <Power className="mr-0 sm:mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
             ) : (
-              <Button variant="outline" asChild>
-                <Link href="/login">
-                  <LogIn className="mr-0 sm:mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Login</span>
-                </Link>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <LogIn className="mr-0 sm:mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Login / Signup</span>
+                    <ChevronDown className="ml-1 h-4 w-4 hidden sm:inline" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Login
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/site/register/customer">
+                      <User className="mr-2 h-4 w-4" />
+                      Register as Customer
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/site/register/trainer">
+                      <UserCog className="mr-2 h-4 w-4" />
+                      Register as Trainer
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             <Button variant="outline" asChild>
