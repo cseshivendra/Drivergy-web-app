@@ -4,6 +4,7 @@
 import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type compatibility if needed elsewhere, but not functionally used for Firebase auth
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import type { UserProfile } from '@/types'; // Import UserProfile
 
 // Define a User type that can be a simulated regular user or a GuestUser
 export interface SimulatedUser {
@@ -30,6 +31,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>; // Kept for UI consistency, mocks Google sign-in
   signInAsGuest: () => void;
   signOut: () => Promise<void>;
+  logInUser: (userProfile: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,8 +100,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/login');
   };
 
+  const logInUser = (userProfile: UserProfile) => {
+    setLoading(true);
+    const newUser: SimulatedUser = {
+      uid: userProfile.id,
+      displayName: userProfile.name,
+      email: userProfile.contact,
+      photoURL: `https://placehold.co/100x100.png?text=${userProfile.name.charAt(0)}`,
+      isGuest: false,
+    };
+    setUser(newUser);
+    storeUserInSession(newUser);
+    setLoading(false);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser }}>
       {children}
     </AuthContext.Provider>
   );

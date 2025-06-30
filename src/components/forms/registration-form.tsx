@@ -34,11 +34,14 @@ import {
   type TrainerRegistrationFormValues,
   IndianStates,
   DistrictsByState,
+  type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
 import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -46,6 +49,8 @@ interface RegistrationFormProps {
 
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
+  const { logInUser } = useAuth();
+  const router = useRouter();
 
   const defaultValues = useMemo((): RegistrationFormValues => {
     const base = {
@@ -118,6 +123,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     console.log('Registration Data:', data);
 
     let registrationMessage = "";
+    let newUser: UserProfile | undefined;
 
     if (data.userRole === 'customer') {
       const customerData = data as CustomerRegistrationFormValues;
@@ -128,8 +134,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         dlNumber: customerData.dlNumber || undefined,
         dlTypeHeld: customerData.dlTypeHeld || undefined,
       };
-      const newCustomer = addCustomer(cleanedCustomerData);
-      registrationMessage = `${newCustomer.name} (ID: ${newCustomer.uniqueId}) has been successfully registered as a customer.`;
+      newUser = addCustomer(cleanedCustomerData);
+      registrationMessage = `${newUser.name} (ID: ${newUser.uniqueId}) has been successfully registered. You are now logged in. Redirecting...`;
       console.log('Customer DL File (if any):', customerData.dlFileCopy?.[0]?.name);
       console.log('Customer Photo ID Type:', customerData.photoIdType);
       console.log('Customer Photo ID Number:', customerData.photoIdNumber);
@@ -141,8 +147,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         ...trainerData,
         phone: trainerData.phone || undefined,
       }
-      const newTrainer = addTrainer(cleanedTrainerData);
-      registrationMessage = `${newTrainer.name} (ID: ${newTrainer.uniqueId}) has been successfully registered as a trainer.`;
+      newUser = addTrainer(cleanedTrainerData);
+      registrationMessage = `${newUser.name} (ID: ${newUser.uniqueId}) has been successfully registered as a trainer. You are now logged in. Redirecting...`;
       console.log('Trainer Certificate File:', (data as TrainerRegistrationFormValues).trainerCertificateFile?.[0]?.name);
       console.log('Aadhaar Card File:', (data as TrainerRegistrationFormValues).aadhaarCardFile?.[0]?.name);
       console.log('Driving License File:', (data as TrainerRegistrationFormValues).drivingLicenseFile?.[0]?.name);
@@ -152,7 +158,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
       description: registrationMessage,
     });
-    form.reset(defaultValues); 
+    
+    if (newUser) {
+      logInUser(newUser); // Log the user in
+      if (newUser.uniqueId.startsWith('CU')) {
+         // Redirect back to the quiz page for customers
+        router.push('/site/rto-quiz');
+      } else {
+        // Redirect trainers to the main dashboard
+        router.push('/');
+      }
+    } else {
+       form.reset(defaultValues); 
+    }
   }
 
   return (
