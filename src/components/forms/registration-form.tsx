@@ -37,7 +37,7 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, Ticket } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, Ticket, KeyRound, AtSign } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -49,12 +49,14 @@ interface RegistrationFormProps {
 
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
-  const { logInUser } = useAuth();
   const router = useRouter();
 
   const defaultValues = useMemo((): RegistrationFormValues => {
     const base = {
       userRole: userRole,
+      username: '',
+      password: '',
+      confirmPassword: '',
       name: '',
       email: '',
       phone: '',
@@ -123,12 +125,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
 
-    let registrationMessage = "";
     let newUser: UserProfile | undefined;
 
     if (data.userRole === 'customer') {
       const customerData = data as CustomerRegistrationFormValues;
-      // Ensure optional fields that might be empty strings are converted to undefined
       const cleanedCustomerData = {
         ...customerData,
         phone: customerData.phone || undefined,
@@ -137,7 +137,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         referralCodeApplied: customerData.referralCodeApplied || undefined,
       };
       newUser = addCustomer(cleanedCustomerData);
-      registrationMessage = `Welcome, ${newUser.name}! You are now logged in and can access your dashboard. Redirecting...`;
       if (cleanedCustomerData.referralCodeApplied) {
         toast({
             title: "Referral Code Applied!",
@@ -151,16 +150,14 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         phone: trainerData.phone || undefined,
       }
       newUser = addTrainer(cleanedTrainerData);
-      registrationMessage = `Welcome, ${newUser.name}! Your trainer profile is created and you are logged in. Redirecting...`;
     }
 
     if (newUser) {
-      logInUser(newUser); // Log the user in but don't show another toast/redirect
       toast({
         title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
-        description: registrationMessage,
+        description: "Registration successful! Please log in with your new username and password.",
       });
-      router.push('/'); // Redirect to the main app dashboard
+      router.push('/login'); // Redirect to the login page
     } else {
        form.reset(defaultValues); 
     }
@@ -169,19 +166,65 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter full name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+            <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Username</FormLabel>
+                <FormControl>
+                    <Input placeholder="Create a username" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+             <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+        </div>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+            <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password</FormLabel>
+                <FormControl>
+                    <Input type="password" placeholder="Create a password" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password</FormLabel>
+                <FormControl>
+                    <Input type="password" placeholder="Confirm your password" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
+        <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
           <FormField
             control={form.control}
@@ -594,6 +637,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         {userRole === 'trainer' && (
           <>
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
                 control={form.control}

@@ -11,12 +11,16 @@ import { Label } from '@/components/ui/label';
 import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, UserCheck } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInAsGuest, signInAsSampleCustomer, loading } = useAuth();
+  const { user, signInWithGoogle, signInAsGuest, signInAsSampleCustomer, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
@@ -24,6 +28,15 @@ export default function LoginPage() {
       router.push('/site'); // Redirect to site page after login
     }
   }, [user, loading, router]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password) {
+        toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
+        return;
+    }
+    await signInWithCredentials(username, password);
+  };
 
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -81,23 +94,37 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
-             <div className="space-y-3">
-               <div>
-                <Label htmlFor="username">Username or Email</Label>
-                <Input id="username" type="text" placeholder="Enter your username" disabled />
+            <form onSubmit={handleSignIn} className="space-y-3">
+              <div>
+                <Label htmlFor="username">Username</Label>
+                <Input 
+                  id="username" 
+                  type="text" 
+                  placeholder="Enter your username" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={loading}
+                />
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="Enter your password" disabled />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="Enter your password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
               </div>
               <Button
-                variant="default"
+                type="submit"
                 className="w-full h-12 text-base bg-primary hover:bg-primary/90"
-                disabled // Username/password not implemented
+                disabled={loading}
               >
                 Sign In
               </Button>
-            </div>
+            </form>
 
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center">
@@ -111,7 +138,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={signInWithGoogle} // Now uses the mocked function
+              onClick={signInWithGoogle}
               disabled={loading}
             >
               <GoogleIcon /> Sign in with Google
@@ -137,7 +164,7 @@ export default function LoginPage() {
 
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm flex items-start">
               <ShieldAlert className="h-5 w-5 mr-2 shrink-0" />
-              <span>Username/password and OTP login are for demonstration only. Please use Google, Guest, or Sample Customer sign-in.</span>
+              <span>OTP login is for demonstration only. Please use Google, Guest, or Sample Customer sign-in, or register to create a username/password.</span>
             </div>
           </CardContent>
           <CardFooter className="flex justify-center pt-4 pb-6">

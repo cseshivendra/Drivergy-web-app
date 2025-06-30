@@ -58,11 +58,6 @@ export let mockFourWheelerRequests: LessonRequest[] = getItemFromLocalStorage<Le
 export let mockRescheduleRequests: RescheduleRequest[] = getItemFromLocalStorage<RescheduleRequest[]>(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, []);
 export let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, []);
 
-
-// Filter out "Sneha Patel (Sample)" data after loading from localStorage or initializing
-mockCustomers = mockCustomers.filter(customer => customer.name !== "Shivendra Singh");
-
-
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
   const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
   return format(addDays(new Date(), -days), 'MMM dd, yyyy HH:mm');
@@ -72,6 +67,8 @@ const sampleCustomer: UserProfile = {
   id: 'sample-customer-uid',
   uniqueId: 'CU987654',
   name: 'Shivendra Singh',
+  username: 'shivendra',
+  password: 'password123',
   contact: 'shivendra.singh@example.com',
   phone: '9123456789',
   location: 'Delhi',
@@ -95,9 +92,17 @@ const sampleCustomer: UserProfile = {
 // --- Initial Data Seeding (if localStorage is empty) ---
 if (typeof window !== 'undefined') {
   // Ensure the sample customer always exists for the login functionality
-  if (!mockCustomers.some(c => c.id === 'sample-customer-uid')) {
-    mockCustomers.unshift(sampleCustomer);
+  const sampleCustomerExists = mockCustomers.some(c => c.id === 'sample-customer-uid');
+  if (!sampleCustomerExists) {
+    mockCustomers.push(sampleCustomer);
     console.log('[mock-data] Sample customer was missing and has been re-seeded.');
+  } else {
+    // If exists, ensure it's up-to-date
+    const sampleIndex = mockCustomers.findIndex(c => c.id === 'sample-customer-uid');
+    mockCustomers[sampleIndex] = {
+        ...mockCustomers[sampleIndex], // Keep existing data
+        ...sampleCustomer, // Overwrite with latest sample data structure
+    };
   }
   
   if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.INSTRUCTORS) && mockInstructors.length === 0) {
@@ -204,6 +209,18 @@ const saveDataToLocalStorage = () => {
 
 
 // --- User Management ---
+export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+    const allUsers = [...mockCustomers, ...mockInstructors];
+    const user = allUsers.find(u => u.username === username && u.password === password);
+    if (user) {
+        console.log(`[mock-data] Authenticated user: ${user.name}`);
+        return user;
+    }
+    console.log(`[mock-data] Authentication failed for username: ${username}`);
+    return null;
+}
+
 export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
   console.log('[mock-data] addCustomer called with:', JSON.parse(JSON.stringify(data)));
   const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now(); 
@@ -212,6 +229,8 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     id: newId,
     uniqueId: `CU${202500 + newIdSuffix}`,
     name: data.name,
+    username: data.username,
+    password: data.password, // In a real app, this should be hashed
     contact: data.email, 
     phone: data.phone,
     location: data.location,
@@ -276,6 +295,8 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     id: newId,
     uniqueId: `TR${202500 + newIdSuffix}`,
     name: data.name,
+    username: data.username,
+    password: data.password, // In a real app, this should be hashed
     contact: data.email, 
     location: data.location,
     subscriptionPlan: "Trainer", 

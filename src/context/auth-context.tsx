@@ -5,7 +5,7 @@ import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type comp
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types'; // Import UserProfile
-import { mockCustomers } from '@/lib/mock-data';
+import { mockCustomers, authenticateUserByCredentials } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 
 // Define a User type that can be a simulated regular user or a GuestUser
@@ -32,11 +32,12 @@ type AppUser = SimulatedUser | GuestUser;
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>; // Kept for UI consistency, mocks Google sign-in
+  signInWithGoogle: () => Promise<void>;
+  signInWithCredentials: (username: string, password: string) => Promise<boolean>;
   signInAsGuest: () => void;
   signInAsSampleCustomer: () => Promise<void>;
   signOut: () => Promise<void>;
-  logInUser: (userProfile: UserProfile) => void;
+  logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,6 +89,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     handleSuccessfulSignIn(mockGoogleUser);
   };
+  
+  const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
+    setLoading(true);
+    const userProfile = await authenticateUserByCredentials(username, password);
+    if (userProfile) {
+        logInUser(userProfile, true); // true to redirect
+        return true;
+    }
+    setLoading(false);
+    toast({
+        title: 'Login Failed',
+        description: 'Invalid username or password.',
+        variant: 'destructive',
+    });
+    return false;
+  };
 
   const signInAsGuest = () => {
     setLoading(true);
@@ -106,13 +123,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
+    // Find sample customer directly from mock data.
     const sampleCustomer = mockCustomers.find(c => c.id === 'sample-customer-uid');
 
     if (sampleCustomer) {
       logInUser(sampleCustomer, true); // Pass true to indicate it's a direct login action
     } else {
-      console.error("Sample customer could not be found. Please clear local storage and refresh to re-seed data.");
       setLoading(false);
+      console.error("Sample customer could not be found. Please clear local storage and refresh to re-seed data.");
       toast({
         title: 'Login Error',
         description: 'Sample customer data not found. Please try another login method.',
@@ -148,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     storeUserInSession(newUser);
     setLoading(false);
     
-    // Only show toast and redirect if it's a direct login action, not just a registration
+    // Only show toast and redirect if it's a direct login action
     if (isDirectLogin) {
       toast({
         title: `Welcome to Drivergy, ${newUser.displayName}!`,
@@ -159,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer, signInWithCredentials }}>
       {children}
     </AuthContext.Provider>
   );

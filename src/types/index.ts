@@ -11,6 +11,8 @@ export interface UserProfile {
   id: string;
   uniqueId: string;
   name: string;
+  username?: string; // Add username
+  password?: string; // Add password
   contact: string; // Email
   phone?: string; // Phone number is optional
   location: string;
@@ -184,6 +186,9 @@ const fileField = z.any();
 const optionalFileField = z.any().optional();
 
 const BaseRegistrationSchema = z.object({
+  username: z.string().min(3, { message: "Username must be at least 3 characters." }).max(20),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  confirmPassword: z.string(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string()
@@ -194,6 +199,9 @@ const BaseRegistrationSchema = z.object({
     .transform(val => val || undefined), // Ensure empty string becomes undefined for optional
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"], // Set error path to confirmPassword
 });
 
 const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
