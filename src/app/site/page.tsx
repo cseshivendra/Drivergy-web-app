@@ -437,8 +437,8 @@ export default function PortfolioSitePage() {
                       </CardHeader>
                       <CardContent className="flex-grow space-y-4">
                           <div className="flex items-center justify-center gap-x-2 mb-2">
-                              <p className="text-4xl font-bold">₹5,999</p>
-                              <p className="text-xl font-medium text-muted-foreground line-through">₹6,999</p>
+                              <p className="text-4xl font-bold">₹9,999</p>
+                              <p className="text-xl font-medium text-muted-foreground line-through">₹10,999</p>
                           </div>
                           <ul className="space-y-2 text-muted-foreground text-sm text-left">
                               <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li>
@@ -451,7 +451,7 @@ export default function PortfolioSitePage() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <Button className="w-full" asChild>
-                                <Link href="/site/payment?plan=Gold%20Standard&price=5999">Choose Plan</Link>
+                                <Link href="/site/payment?plan=Gold%20Standard&price=9999">Choose Plan</Link>
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent>
