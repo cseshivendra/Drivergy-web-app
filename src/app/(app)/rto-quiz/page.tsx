@@ -155,10 +155,19 @@ const QuizSetComponent = ({ quizSet }: { quizSet: QuizSet }) => {
     });
     const finalScore = (correctCount / quizSet.questions.length) * 100;
     setScore(finalScore);
-    toast({
-      title: `${quizSet.title} Submitted!`,
-      description: `You scored ${finalScore.toFixed(0)}%. ${correctCount} out of ${quizSet.questions.length} correct.`,
-    });
+
+    if (finalScore >= 60) {
+      toast({
+        title: `Congratulations! You Passed ${quizSet.title}!`,
+        description: `You scored ${finalScore.toFixed(0)}%. ${correctCount} out of ${quizSet.questions.length} correct.`,
+      });
+    } else {
+      toast({
+        title: `You Failed ${quizSet.title}`,
+        description: `You scored ${finalScore.toFixed(0)}%. Keep practicing!`,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
