@@ -41,12 +41,12 @@ const setItemInLocalStorage = <T>(key: string, value: T): void => {
 };
 
 const LOCAL_STORAGE_KEYS = {
-  CUSTOMERS: 'driverzyMockCustomers_v1', 
-  INSTRUCTORS: 'driverzyMockInstructors_v1',
-  TWO_WHEELER_REQUESTS: 'driverzyMockTwoWheelerRequests_v1',
-  FOUR_WHEELER_REQUESTS: 'driverzyMockFourWheelerRequests_v1',
-  SUMMARY_DATA: 'driverzyMockSummaryData_v1',
-  COURSES: 'driverzyMockCourses_v1', 
+  CUSTOMERS: 'drivergyMockCustomers_v1', 
+  INSTRUCTORS: 'drivergyMockInstructors_v1',
+  TWO_WHEELER_REQUESTS: 'drivergyMockTwoWheelerRequests_v1',
+  FOUR_WHEELER_REQUESTS: 'drivergyMockFourWheelerRequests_v1',
+  SUMMARY_DATA: 'drivergyMockSummaryData_v1',
+  COURSES: 'drivergyMockCourses_v1', 
 };
 
 // Initialize from localStorage or with defaults (empty arrays)
@@ -389,4 +389,3 @@ const loggableCourses = mockCourses.map(c => {
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
 saveDataToLocalStorage(); 
-

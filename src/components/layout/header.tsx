@@ -50,8 +50,8 @@ export default function Header() {
               <Car className="h-7 w-7 text-primary animate-car-slide-logo" />
               <span className={cn(
                 "font-headline text-2xl font-bold text-primary",
-                "animate-typing-driverzy" // Apply typing animation class
-              )}>Driverzy</span>
+                "animate-typing-drivergy" // Apply typing animation class
+              )}>Drivergy</span>
             </Link>
           )}
         </div>

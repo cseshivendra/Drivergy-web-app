@@ -6,7 +6,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/context/theme-context';
 
 export const metadata: Metadata = {
-  title: 'Driverzy',
+  title: 'Drivergy',
   description: 'Admin Dashboard for Driving School',
 };
 

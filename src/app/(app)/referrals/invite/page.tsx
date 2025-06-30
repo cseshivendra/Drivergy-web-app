@@ -24,10 +24,10 @@ export default function InviteReferralsPage() {
   }, [user?.uid]);
 
   const referralUrl = useMemo(() => {
-    return `https://driverzy.example.com/signup?ref=${referralCode}`;
+    return `https://drivergy.example.com/signup?ref=${referralCode}`;
   }, [referralCode]);
 
-  const referralMessage = `Hey! I'm inviting you to join Driverzy, a great platform for driving instructors and students. Sign up using my referral link: ${referralUrl}`;
+  const referralMessage = `Hey! I'm inviting you to join Drivergy, a great platform for driving instructors and students. Sign up using my referral link: ${referralUrl}`;
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(referralUrl)
@@ -91,7 +91,7 @@ export default function InviteReferralsPage() {
           </div>
           <CardTitle className="font-headline text-3xl font-bold text-primary">Invite Friends & Earn Rewards</CardTitle>
           <CardDescription className="text-lg">
-            Share Driverzy with your friends and colleagues. Let them know about the best platform for driving education!
+            Share Drivergy with your friends and colleagues. Let them know about the best platform for driving education!
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

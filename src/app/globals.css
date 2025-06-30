@@ -1,10 +1,10 @@
 
-@keyframes typing-driverzy {
+@keyframes typing-drivergy {
   from { width: 0; }
   to { width: 100%; } /* Expands to the natural width of the content */
 }
 
-/* Removed @keyframes blink-caret-driverzy */
+/* Removed @keyframes blink-caret-drivergy */
 
 @keyframes car-slide-in-logo {
   0% { transform: translateX(-15px); opacity: 0; }
@@ -18,15 +18,15 @@
 @tailwind utilities;
 
 @layer utilities {
-  .animate-typing-driverzy {
+  .animate-typing-drivergy {
     display: inline-block;
     overflow: hidden;
     white-space: nowrap;
     vertical-align: bottom; /* Aligns better with an adjacent icon */
     /* Removed border-right for cursor */
     animation:
-      typing-driverzy 1.2s steps(8, end) 0.5s forwards; /* 8 characters for "Driverzy" */
-      /* Removed blink-caret-driverzy animation */
+      typing-drivergy 1.2s steps(8, end) 0.5s forwards; /* 8 characters for "Drivergy" */
+      /* Removed blink-caret-drivergy animation */
     width: 0; /* Start with no width */
   }
 
@@ -164,4 +164,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-

@@ -18,7 +18,7 @@ export default function AboutPage() {
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <div className="text-center">
               <Car className="h-16 w-16 text-primary mx-auto mb-2" />
-              <h1 className="font-headline text-4xl font-bold text-white">About Driverzy</h1>
+              <h1 className="font-headline text-4xl font-bold text-white">About Drivergy</h1>
               <p className="text-lg text-primary-foreground/90 mt-1">Your Partner in Safe Driving Education</p>
             </div>
           </div>
@@ -30,7 +30,7 @@ export default function AboutPage() {
               Our Mission
             </h2>
             <p className="text-lg text-foreground leading-relaxed">
-              At Driverzy, our mission is to revolutionize driving education by providing a seamless,
+              At Drivergy, our mission is to revolutionize driving education by providing a seamless,
               efficient, and transparent platform for both students and instructors. We aim to empower
               learners with the skills and confidence needed for safe driving, while supporting instructors
               with robust tools to manage their services.
@@ -43,7 +43,7 @@ export default function AboutPage() {
               Who We Are
             </h2>
             <p className="text-foreground leading-relaxed">
-              Driverzy is a dedicated team of technology enthusiasts and road safety advocates.
+              Drivergy is a dedicated team of technology enthusiasts and road safety advocates.
               We believe that learning to drive should be an accessible and positive experience.
               Our platform is built with cutting-edge technology to connect aspiring drivers
               with qualified instructors, simplifying the journey from beginner to licensed driver.
@@ -67,7 +67,7 @@ export default function AboutPage() {
 
            <section className="text-center pt-4">
             <p className="text-muted-foreground">
-              Thank you for choosing Driverzy. Let's hit the road to safer driving, together!
+              Thank you for choosing Drivergy. Let's hit the road to safer driving, together!
             </p>
           </section>
 

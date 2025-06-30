@@ -33,9 +33,9 @@ export default function AppSidebar() {
       </div>
       <span className={cn(
         "font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter",
-        "animate-typing-driverzy" // Apply typing animation class
+        "animate-typing-drivergy" // Apply typing animation class
       )}>
-        Driverzy
+        Drivergy
       </span>
     </Link>
   );
@@ -57,10 +57,7 @@ export default function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
-      {/* SheetTitle is now rendered conditionally inside Sidebar component's mobile view */}
-      {/* See the Sidebar component implementation in ui/sidebar.tsx for SheetContent where it would be placed */}
       <SidebarHeader className="p-0"> 
-        {/* The SheetTitle for mobile is handled internally by the Sidebar component if needed or passed directly to SheetContent */}
         <AppLogo />
       </SidebarHeader>
       <SidebarContent className="p-2">

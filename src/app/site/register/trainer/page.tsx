@@ -14,9 +14,9 @@ const SiteLogo = () => (
     </div>
     <span className={cn(
       "font-headline text-2xl font-extrabold text-primary tracking-tighter",
-      "animate-typing-driverzy"
+      "animate-typing-drivergy"
     )}>
-      Driverzy
+      Drivergy
     </span>
   </Link>
 );
@@ -41,7 +41,7 @@ export default function SiteRegisterTrainerPage() {
               </div>
               <CardTitle className="font-headline text-3xl font-bold">Register as a Trainer</CardTitle>
               <CardDescription>
-                Become a Driverzy Trainer! Fill in your details to start connecting with students.
+                Become a Drivergy Trainer! Fill in your details to start connecting with students.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -56,7 +56,7 @@ export default function SiteRegisterTrainerPage() {
             <SiteLogo />
           </div>
           <p className="text-sm">
-            &copy; {new Date().getFullYear()} Driverzy. All rights reserved.
+            &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
           </p>
         </div>
       </footer>

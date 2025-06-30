@@ -23,9 +23,9 @@ const SiteLogo = () => (
     </div>
     <span className={cn(
       "font-headline text-2xl font-extrabold text-primary tracking-tighter",
-      "animate-typing-driverzy"
+      "animate-typing-drivergy"
     )}>
-      Driverzy
+      Drivergy
     </span>
   </Link>
 );
@@ -410,7 +410,7 @@ export default function PortfolioSitePage() {
             <SiteLogo />
           </div>
           <p className="mt-4 text-sm">
-            &copy; {new Date().getFullYear()} Driverzy. All rights reserved.
+            &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
           </p>
           <div className="mt-2 text-xs">
             <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
@@ -422,4 +422,3 @@ export default function PortfolioSitePage() {
     </div>
   );
 }
-
