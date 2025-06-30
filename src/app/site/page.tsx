@@ -225,7 +225,7 @@ export default function PortfolioSitePage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="w-full sm:w-auto border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-3 text-base" 
+                className="w-full sm:w-auto border-white text-destructive hover:bg-white hover:text-primary font-semibold px-8 py-3 text-base" 
                 asChild
               >
                 <Link href="/site/register/trainer">Register as Trainer</Link>
@@ -341,9 +341,16 @@ export default function PortfolioSitePage() {
                           </ul>
                       </CardContent>
                       <CardFooter className="mt-auto pt-6">
-                        <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                           <Link href="/site/payment?plan=Basic%20Start&price=4999">Choose Plan</Link>
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button className="w-full" asChild>
+                                <Link href="/site/payment?plan=Basic%20Start&price=4999">Choose Plan</Link>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Click to start your driving journey with the Basic Start plan.</p>
+                            </TooltipContent>
+                        </Tooltip>
                       </CardFooter>
                   </Card>
                   <Card className="shadow-xl hover:shadow-2xl transition-shadow border-2 border-primary relative overflow-hidden flex flex-col transform scale-105 md:scale-110 z-10 bg-card">
@@ -367,9 +374,16 @@ export default function PortfolioSitePage() {
                           </ul>
                       </CardContent>
                       <CardFooter className="mt-auto pt-6">
-                        <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                          <Link href="/site/payment?plan=Premium%20Pro&price=8499">Choose Plan</Link>
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                                <Link href="/site/payment?plan=Premium%20Pro&price=8499">Choose Plan</Link>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Get the best value and features with our Premium Pro plan.</p>
+                            </TooltipContent>
+                        </Tooltip>
                       </CardFooter>
                   </Card>
                   <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
@@ -389,9 +403,16 @@ export default function PortfolioSitePage() {
                           </ul>
                       </CardContent>
                       <CardFooter className="mt-auto pt-6">
-                        <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                          <Link href="/site/payment?plan=Gold%20Standard&price=6999">Choose Plan</Link>
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button className="w-full" asChild>
+                                <Link href="/site/payment?plan=Gold%20Standard&price=6999">Choose Plan</Link>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>A balanced plan with great features and value.</p>
+                            </TooltipContent>
+                        </Tooltip>
                       </CardFooter>
                   </Card>
               </div>
