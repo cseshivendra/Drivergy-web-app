@@ -6,9 +6,10 @@ import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
-import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData } from '@/types';
-import { Users, UserCheck, Search, ListChecks } from 'lucide-react';
+import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
+import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest } from '@/types';
+import { Users, UserCheck, Search, ListChecks, Repeat } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -17,18 +18,19 @@ export default function AdminDashboard() {
   const [customers, setCustomers] = useState<UserProfile[]>([]);
   const [instructors, setInstructors] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
+  const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [loadingInstructors, setLoadingInstructors] = useState(true);
   const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
+  const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState(''); 
 
   const loadInitialDataAndRequests = useCallback(async (currentSearchTerm: string) => {
-    console.log('[DashboardPage] loadInitialDataAndRequests called with searchTerm:', currentSearchTerm);
     setLoadingSummary(true);
     fetchSummaryData().then(data => {
       setSummaryData(data);
@@ -40,13 +42,18 @@ export default function AdminDashboard() {
       setAllLessonRequests(data);
       setLoadingAllLessonRequests(false);
     });
+
+    setLoadingRescheduleRequests(true);
+    fetchRescheduleRequests(currentSearchTerm).then(data => {
+      setRescheduleRequests(data);
+      setLoadingRescheduleRequests(false);
+    });
   }, []);
 
   const loadFilteredUserData = useCallback(async (
     currentFilters: { location?: string; subscriptionPlan?: string },
     currentSearchTerm: string
   ) => {
-    console.log('[DashboardPage] loadFilteredUserData called with filters:', currentFilters, 'searchTerm:', currentSearchTerm);
     setLoadingCustomers(true);
     fetchCustomers(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
       setCustomers(data);
@@ -62,32 +69,24 @@ export default function AdminDashboard() {
 
 
   useEffect(() => {
-    console.log('[DashboardPage] Main useEffect triggered. Filters:', filters, 'SearchTerm:', searchTerm);
-    // Load summary and lesson requests (which might depend on search term if customerName is searched)
     loadInitialDataAndRequests(searchTerm);
-    // Load user data based on both filters and search term
     loadFilteredUserData(filters, searchTerm);
   }, [loadInitialDataAndRequests, loadFilteredUserData, filters, searchTerm]);
 
 
   const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
-    console.log('[DashboardPage] handleFilterChange called with newFilters:', newFilters);
     setFilters(newFilters);
   };
 
   const handleSearch = () => {
-    console.log('[DashboardPage] handleSearch called. TempSearchTerm:', tempSearchTerm);
     setSearchTerm(tempSearchTerm.trim());
   };
 
-  const handleUserActioned = () => {
-    console.log('[DashboardPage] handleUserActioned called. Re-fetching data.');
-    // Re-fetch summary data as counts might change (e.g., active subscriptions if that's tied to approval)
+  const handleActioned = () => {
     fetchSummaryData().then(data => setSummaryData(data));
-    // Re-fetch user data as pending lists will change
     loadFilteredUserData(filters, searchTerm);
-     // Re-fetch lesson requests if needed (e.g. if summaryData.pendingRequests is directly shown from there)
     fetchAllLessonRequests(searchTerm).then(data => setAllLessonRequests(data));
+    fetchRescheduleRequests(searchTerm).then(data => setRescheduleRequests(data));
   };
 
 
@@ -123,18 +122,24 @@ export default function AdminDashboard() {
           title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
           users={customers} 
           isLoading={loadingCustomers} 
-          onUserActioned={handleUserActioned}
+          onUserActioned={handleActioned}
         />
         <UserTable 
           title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
           users={instructors} 
           isLoading={loadingInstructors} 
-          onUserActioned={handleUserActioned}
+          onUserActioned={handleActioned}
         />
         <RequestTable 
-          title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Requests</>} 
+          title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
           requests={allLessonRequests} 
           isLoading={loadingAllLessonRequests} 
+        />
+        <RescheduleRequestTable
+          title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
+          requests={rescheduleRequests}
+          isLoading={loadingRescheduleRequests}
+          onActioned={handleActioned}
         />
       </main>
     </div>

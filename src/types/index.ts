@@ -30,6 +30,7 @@ export interface UserProfile {
   photoIdType?: string;
   photoIdNumber?: string;
   trainerPreference?: typeof TrainerPreferenceOptions[number];
+  upcomingLesson?: string; // For reschedule approval
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -41,11 +42,25 @@ export interface LessonRequest {
   requestTimestamp: string;
 }
 
+export const RescheduleRequestStatusOptions = ["Pending", "Approved", "Rejected"] as const;
+export type RescheduleRequestStatusType = typeof RescheduleRequestStatusOptions[number];
+
+export interface RescheduleRequest {
+  id: string;
+  userId: string;
+  customerName: string;
+  originalLessonDate: string;
+  requestedRescheduleDate: string;
+  status: RescheduleRequestStatusType;
+  requestTimestamp: string;
+}
+
 export interface SummaryData {
   totalCustomers: number;
   totalInstructors: number;
   activeSubscriptions: number;
-  pendingRequests: number;
+  pendingRequests: number; // Lesson requests
+  pendingRescheduleRequests: number; // New field
   totalEarnings: number;
   totalCertifiedTrainers: number;
 }

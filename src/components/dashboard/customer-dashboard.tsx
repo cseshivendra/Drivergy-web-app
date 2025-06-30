@@ -3,53 +3,90 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchUserById } from '@/lib/mock-data';
+import { fetchUserById, addRescheduleRequest } from '@/lib/mock-data';
 import type { UserProfile } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { add, differenceInHours, format } from 'date-fns';
+import { add, differenceInHours, format, parse } from 'date-fns';
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<(UserProfile & { upcomingLesson?: string }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [upcomingLessonDate, setUpcomingLessonDate] = useState<Date | null>(null);
   const [isReschedulable, setIsReschedulable] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
       fetchUserById(user.uid).then(userProfile => {
         if (userProfile) {
           setProfile(userProfile);
+          
+          const lessonDateString = userProfile.upcomingLesson;
+          const now = new Date();
+          let lessonDate: Date;
+
+          if (lessonDateString) {
+            // Use date-fns to parse the specific format from mock data
+            lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
+          } else {
+            // Simulate fetching an upcoming lesson if none is set
+            const hoursToAdd = Math.random() > 0.5 ? 12 : 36;
+            lessonDate = add(now, { hours: hoursToAdd });
+          }
+          
+          setUpcomingLessonDate(lessonDate);
+          
+          // Check if the lesson can be rescheduled (more than 24 hours away)
+          setIsReschedulable(differenceInHours(lessonDate, now) > 24);
+
         }
         setLoading(false);
       });
     }
-
-    // Simulate fetching an upcoming lesson. Runs only on client.
-    // In a real app, this would be a fetch call.
-    const now = new Date();
-    // To demonstrate both enabled/disabled states, randomly set a date in the near or far future.
-    const hoursToAdd = Math.random() > 0.5 ? 12 : 36; // 12h (not reschedulable) or 36h (reschedulable)
-    const lessonDate = add(now, { hours: hoursToAdd });
-    setUpcomingLessonDate(lessonDate);
-    
-    // Check if the lesson can be rescheduled (more than 24 hours away)
-    if (differenceInHours(lessonDate, now) > 24) {
-      setIsReschedulable(true);
-    }
-
   }, [user]);
   
-  const handleSimulatedAction = (title: string, description: string) => {
-    toast({ title, description });
+  const handleUpgradePlan = () => {
+    toast({ title: 'Redirecting to Plans', description: 'You can choose a new plan on our main site.' });
+     // In a real app, you'd likely use router.push('/site#subscriptions')
   };
+  
+  const handleCancelPlan = () => {
+     toast({
+        title: 'Cancellation Request Submitted',
+        description: 'We have received your request. Our team will contact you shortly.',
+        variant: 'destructive'
+    });
+  }
+
+  const handleRescheduleRequest = async () => {
+    if (!profile || !upcomingLessonDate || !user) return;
+    setIsSubmitting(true);
+    try {
+        await addRescheduleRequest(user.uid, profile.name, upcomingLessonDate);
+        toast({
+            title: 'Reschedule Request Sent',
+            description: 'Your request has been sent for approval. You will be notified of the outcome.',
+        });
+        setIsReschedulable(false); // Prevent multiple requests for the same slot
+    } catch (error) {
+        toast({
+            title: 'Error',
+            description: 'Could not send reschedule request. Please try again.',
+            variant: 'destructive',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -101,10 +138,10 @@ export default function CustomerDashboard() {
           <CardFooter>
             <Button 
                 className="w-full"
-                disabled={!isReschedulable}
-                onClick={() => handleSimulatedAction('Reschedule Request Sent', 'Our team will contact you to confirm a new slot.')}
+                disabled={!isReschedulable || isSubmitting}
+                onClick={handleRescheduleRequest}
             >
-              <Repeat className="mr-2 h-4 w-4" /> Reschedule
+              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : <><Repeat className="mr-2 h-4 w-4" />Reschedule</>}
             </Button>
           </CardFooter>
            {!isReschedulable && upcomingLessonDate && (
@@ -145,14 +182,14 @@ export default function CustomerDashboard() {
           <CardFooter className="grid grid-cols-2 gap-4">
             <Button 
                 variant="default"
-                onClick={() => handleSimulatedAction('Upgrade Plan', 'Redirecting to plan selection page...')}
+                onClick={handleUpgradePlan}
                 className="w-full bg-green-600 hover:bg-green-700"
             >
               <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade
             </Button>
              <Button 
                 variant="destructive"
-                onClick={() => handleSimulatedAction('Cancel Plan', 'Your cancellation request has been submitted.')}
+                onClick={handleCancelPlan}
                 className="w-full"
             >
               <XCircle className="mr-2 h-4 w-4" /> Cancel

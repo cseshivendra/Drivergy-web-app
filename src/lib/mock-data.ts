@@ -1,5 +1,5 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
 import { addDays, format, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
@@ -45,6 +45,7 @@ const LOCAL_STORAGE_KEYS = {
   INSTRUCTORS: 'drivergyMockInstructors_v1',
   TWO_WHEELER_REQUESTS: 'drivergyMockTwoWheelerRequests_v1',
   FOUR_WHEELER_REQUESTS: 'drivergyMockFourWheelerRequests_v1',
+  RESCHEDULE_REQUESTS: 'drivergyMockRescheduleRequests_v1',
   SUMMARY_DATA: 'drivergyMockSummaryData_v1',
   COURSES: 'drivergyMockCourses_v1', 
 };
@@ -54,6 +55,7 @@ export let mockCustomers: UserProfile[] = getItemFromLocalStorage<UserProfile[]>
 export let mockInstructors: UserProfile[] = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.INSTRUCTORS, []);
 export let mockTwoWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []);
 export let mockFourWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
+export let mockRescheduleRequests: RescheduleRequest[] = getItemFromLocalStorage<RescheduleRequest[]>(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, []);
 export let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, []);
 
 
@@ -160,6 +162,7 @@ const calculatedInitialSummary: SummaryData = {
   totalInstructors: mockInstructors.length,
   activeSubscriptions: mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length,
   pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
+  pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
   totalEarnings: (mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length) * 500, 
   totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
 };
@@ -168,6 +171,7 @@ export let mockSummaryData: SummaryData = getItemFromLocalStorage<SummaryData>(L
 mockSummaryData.totalCustomers = mockCustomers.length;
 mockSummaryData.totalInstructors = mockInstructors.length;
 mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
 
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
@@ -191,6 +195,7 @@ const saveDataToLocalStorage = () => {
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.INSTRUCTORS, mockInstructors);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, mockRescheduleRequests);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.SUMMARY_DATA, mockSummaryData);
   const coursesToSave = mockCourses.map(c => ({ ...c, icon: undefined }));
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.COURSES, coursesToSave); 
@@ -397,11 +402,72 @@ export const fetchAllLessonRequests = async (searchTerm?: string): Promise<Lesso
   return allRequests;
 };
 
+// --- Reschedule Request Management ---
+export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date): Promise<RescheduleRequest> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+    const newRequest: RescheduleRequest = {
+        id: `resched-${Date.now()}`,
+        userId,
+        customerName,
+        originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
+        // For simulation, let's request a date 2 days after the original
+        requestedRescheduleDate: format(addDays(originalDate, 2), 'MMM dd, yyyy, h:mm a'),
+        status: 'Pending',
+        requestTimestamp: format(new Date(), 'MMM dd, yyyy, h:mm a'),
+    };
+    mockRescheduleRequests.unshift(newRequest); // Add to the top
+    mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
+    saveDataToLocalStorage();
+    console.log('[mock-data] Added reschedule request:', JSON.parse(JSON.stringify(newRequest)));
+    return newRequest;
+};
+
+export const fetchRescheduleRequests = async (searchTerm?: string): Promise<RescheduleRequest[]> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+    let results = [...mockRescheduleRequests];
+    if (searchTerm && searchTerm.trim() !== '') {
+        const lowerSearchTerm = searchTerm.toLowerCase().trim();
+        results = results.filter(req =>
+            req.customerName.toLowerCase().includes(lowerSearchTerm) ||
+            req.id.toLowerCase().includes(lowerSearchTerm)
+        );
+    }
+    results.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+    console.log(`[mock-data] fetchRescheduleRequests returning ${results.length} items.`);
+    return results;
+};
+
+export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
+    const requestIndex = mockRescheduleRequests.findIndex(req => req.id === requestId);
+    if (requestIndex !== -1) {
+        mockRescheduleRequests[requestIndex].status = newStatus;
+        
+        // If approved, find the customer and update their "upcoming lesson"
+        if (newStatus === 'Approved') {
+            const customerId = mockRescheduleRequests[requestIndex].userId;
+            const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
+            if (customerIndex !== -1) {
+                mockCustomers[customerIndex].upcomingLesson = mockRescheduleRequests[requestIndex].requestedRescheduleDate;
+                 console.log(`[mock-data] Updated upcoming lesson for customer ${customerId} to ${mockRescheduleRequests[requestIndex].requestedRescheduleDate}`);
+            }
+        }
+        
+        mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
+        saveDataToLocalStorage();
+        console.log(`[mock-data] Updated reschedule request ${requestId} to status ${newStatus}.`);
+        return true;
+    }
+    console.error(`[mock-data] Reschedule request with ID ${requestId} not found.`);
+    return false;
+};
+
+
 // --- Summary & Courses ---
 export const fetchSummaryData = async (): Promise<SummaryData> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
-  const currentPendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
+  const currentPendingLessonRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
                                  mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   
   const currentActiveCustomerSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length;
@@ -411,7 +477,8 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
     totalCustomers: mockCustomers.length, 
     totalInstructors: mockInstructors.length, 
     activeSubscriptions: currentActiveCustomerSubscriptions + activeApprovedTrainers, 
-    pendingRequests: currentPendingRequests,
+    pendingRequests: currentPendingLessonRequests,
+    pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
     totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
     totalEarnings: (currentActiveCustomerSubscriptions + activeApprovedTrainers) * 500, 
   };
