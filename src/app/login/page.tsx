@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const { user, signInWithGoogle, signInAsGuest, signInAsSampleCustomer, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect');
+
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const [username, setUsername] = useState('');
@@ -25,9 +28,9 @@ export default function LoginPage() {
   useEffect(() => {
     setIsMounted(true);
     if (user && !loading) {
-      router.push('/site'); // Redirect to site page after login
+      router.push(redirect || '/site'); // Redirect to intended page or site page after login
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, redirect]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +38,28 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
-    await signInWithCredentials(username, password);
+    const loggedIn = await signInWithCredentials(username, password);
+    if (loggedIn) {
+        router.push(redirect || '/site');
+    }
   };
+
+  const handleGoogleSignIn = async () => {
+    await signInWithGoogle();
+    router.push(redirect || '/site');
+  }
+
+  const handleGuestSignIn = async () => {
+    signInAsGuest();
+    router.push(redirect || '/site');
+  }
+
+  const handleSampleCustomerSignIn = async () => {
+    await signInAsSampleCustomer();
+     // The auth context handles the redirect for this one, but we can be explicit
+     const loggedInUser = await authenticateUserByCredentials('shivendra', 'password123');
+     if(loggedInUser) router.push(redirect || '/site');
+  }
 
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -138,7 +161,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={signInWithGoogle}
+              onClick={handleGoogleSignIn}
               disabled={loading}
             >
               <GoogleIcon /> Sign in with Google
@@ -147,7 +170,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={signInAsGuest}
+              onClick={handleGuestSignIn}
               disabled={loading}
             >
               <UserCircle className="mr-2 h-5 w-5" /> Sign in as Guest
@@ -156,7 +179,7 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={signInAsSampleCustomer}
+              onClick={handleSampleCustomerSignIn}
               disabled={loading}
             >
               <UserCheck className="mr-2 h-5 w-5" /> Sign in as Sample Customer

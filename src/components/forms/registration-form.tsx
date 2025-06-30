@@ -41,7 +41,7 @@ import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2,
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -50,6 +50,9 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const plan = searchParams.get('plan');
+  const price = searchParams.get('price');
 
   const defaultValues = useMemo((): RegistrationFormValues => {
     const base = {
@@ -67,7 +70,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       return {
         ...base,
         vehiclePreference: undefined,
-        subscriptionPlan: '', 
+        subscriptionPlan: plan || '', // Pre-fill plan from URL params
         trainerPreference: '', 
         referralCodeApplied: '',
         flatHouseNumber: '',
@@ -99,7 +102,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         drivingLicenseFile: undefined, 
       } as TrainerRegistrationFormValues;
     }
-  }, [userRole]);
+  }, [userRole, plan]);
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -153,11 +156,20 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     }
 
     if (newUser) {
-      toast({
-        title: `${userRole === 'customer' ? 'Customer' : 'Trainer'} Registered!`,
-        description: "Registration successful! Please log in with your new username and password.",
+       toast({
+        title: "Registration Successful!",
+        description: "Please log in to continue.",
       });
-      router.push('/login'); // Redirect to the login page
+
+      // Redirect to payment page if coming from subscription flow, otherwise redirect to login
+      if (plan && price) {
+        // Need to log the user in first, then redirect to payment.
+        // For simulation, we'll just redirect to login and have them log in manually.
+        const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
+        router.push(`/login?redirect=${redirectUrl}`);
+      } else {
+        router.push('/login');
+      }
     } else {
        form.reset(defaultValues); 
     }
@@ -444,7 +456,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={!!plan}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select plan" />
