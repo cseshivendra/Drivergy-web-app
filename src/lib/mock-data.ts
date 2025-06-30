@@ -58,10 +58,7 @@ export let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORA
 
 
 // Filter out "Sneha Patel (Sample)" data after loading from localStorage or initializing
-mockCustomers = mockCustomers.filter(customer => customer.name !== "Sneha Patel (Sample)");
-mockInstructors = mockInstructors.filter(instructor => instructor.name !== "Sneha Patel (Sample)");
-mockTwoWheelerRequests = mockTwoWheelerRequests.filter(request => request.customerName !== "Sneha Patel (Sample)");
-mockFourWheelerRequests = mockFourWheelerRequests.filter(request => request.customerName !== "Sneha Patel (Sample)");
+mockCustomers = mockCustomers.filter(customer => customer.name !== "Shivendra Singh");
 
 
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
@@ -90,6 +87,7 @@ const sampleCustomer: UserProfile = {
   photoIdType: 'Aadhaar Card',
   photoIdNumber: '123456789012',
   trainerPreference: 'Any',
+  myReferralCode: 'SHIVENDRA2024',
 };
 
 // --- Initial Data Seeding (if localStorage is empty) ---
@@ -204,8 +202,9 @@ const saveDataToLocalStorage = () => {
 export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
   console.log('[mock-data] addCustomer called with:', JSON.parse(JSON.stringify(data)));
   const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now(); 
+  const newId = `u${newIdSuffix}`;
   const newUser: UserProfile = {
-    id: `u${newIdSuffix}`,
+    id: newId,
     uniqueId: `CU${202500 + newIdSuffix}`,
     name: data.name,
     contact: data.email, 
@@ -225,6 +224,7 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     photoIdType: data.photoIdType,
     photoIdNumber: data.photoIdNumber,
     trainerPreference: data.trainerPreference,
+    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
   };
   mockCustomers.push(newUser);
   console.log('[mock-data] Customer added. Current mockCustomers:', JSON.parse(JSON.stringify(mockCustomers)));
@@ -254,9 +254,10 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
 
   mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
   console.log(`[mock-data] Automatically added lesson request for ${newUser.name}:`, JSON.parse(JSON.stringify(newRequest)));
-  console.log(`[mock-data] Customer Photo ID Type: ${data.photoIdType}, Number: ${data.photoIdNumber}, File: ${data.photoIdFile?.[0]?.name || 'No file'}`);
-  console.log(`[mock-data] Customer DL File: ${data.dlFileCopy?.[0]?.name || 'No file'}`);
-
+  
+  if (data.referralCodeApplied) {
+    console.log(`[mock-data] Customer ${newUser.name} used referral code: ${data.referralCodeApplied}`);
+  }
 
   saveDataToLocalStorage();
   return newUser;
@@ -265,8 +266,9 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
 export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => {
   console.log('[mock-data] addTrainer called with:', JSON.parse(JSON.stringify(data)));
   const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now();
+  const newId = `u${newIdSuffix}`;
   const newTrainer: UserProfile = {
-    id: `u${newIdSuffix}`,
+    id: newId,
     uniqueId: `TR${202500 + newIdSuffix}`,
     name: data.name,
     contact: data.email, 
@@ -274,7 +276,8 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     subscriptionPlan: "Trainer", 
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
     vehicleInfo: data.trainerVehicleType,
-    approvalStatus: 'Pending', 
+    approvalStatus: 'Pending',
+    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
   };
   mockInstructors.push(newTrainer);
   console.log('[mock-data] Trainer added. Current mockInstructors:', JSON.parse(JSON.stringify(mockInstructors)));
@@ -462,7 +465,4 @@ const loggableCourses = mockCourses.map(c => {
 });
 console.log('[mock-data] Final initial mockCourses (icons represented by name):', JSON.parse(JSON.stringify(loggableCourses)));
 
-saveDataToLocalStorage(); 
-
-
-
+saveDataToLocalStorage();

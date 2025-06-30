@@ -37,7 +37,7 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, Ticket } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -67,6 +67,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         vehiclePreference: undefined,
         subscriptionPlan: '', 
         trainerPreference: '', 
+        referralCodeApplied: '',
         flatHouseNumber: '',
         street: '',
         district: '',
@@ -133,14 +134,16 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         phone: customerData.phone || undefined,
         dlNumber: customerData.dlNumber || undefined,
         dlTypeHeld: customerData.dlTypeHeld || undefined,
+        referralCodeApplied: customerData.referralCodeApplied || undefined,
       };
       newUser = addCustomer(cleanedCustomerData);
       registrationMessage = `${newUser.name} (ID: ${newUser.uniqueId}) has been successfully registered. You are now logged in. Redirecting...`;
-      console.log('Customer DL File (if any):', customerData.dlFileCopy?.[0]?.name);
-      console.log('Customer Photo ID Type:', customerData.photoIdType);
-      console.log('Customer Photo ID Number:', customerData.photoIdNumber);
-      console.log('Customer Photo ID File:', customerData.photoIdFile?.[0]?.name);
-      console.log('Customer Trainer Preference:', customerData.trainerPreference);
+      if (cleanedCustomerData.referralCodeApplied) {
+        toast({
+            title: "Referral Code Applied!",
+            description: "Your discount will be reflected in the final payment."
+        });
+      }
     } else if (data.userRole === 'trainer') {
       const trainerData = data as TrainerRegistrationFormValues;
       const cleanedTrainerData = {
@@ -149,9 +152,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       }
       newUser = addTrainer(cleanedTrainerData);
       registrationMessage = `${newUser.name} (ID: ${newUser.uniqueId}) has been successfully registered as a trainer. You are now logged in. Redirecting...`;
-      console.log('Trainer Certificate File:', (data as TrainerRegistrationFormValues).trainerCertificateFile?.[0]?.name);
-      console.log('Aadhaar Card File:', (data as TrainerRegistrationFormValues).aadhaarCardFile?.[0]?.name);
-      console.log('Driving License File:', (data as TrainerRegistrationFormValues).drivingLicenseFile?.[0]?.name);
     }
 
     toast({
@@ -161,13 +161,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     
     if (newUser) {
       logInUser(newUser); // Log the user in
-      if (newUser.uniqueId.startsWith('CU')) {
-         // Redirect back to the quiz page for customers
-        router.push('/site/rto-quiz');
-      } else {
-        // Redirect trainers to the main dashboard
-        router.push('/');
-      }
+      router.push('/');
     } else {
        form.reset(defaultValues); 
     }
@@ -425,7 +419,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
                 control={form.control}
@@ -449,8 +443,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     </FormItem>
                 )}
                 />
-                 {/* Placeholder for the second item in the grid if needed in future */}
-                 <div></div>
+                 <FormField
+                  control={form.control}
+                  name="referralCodeApplied"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center"><Ticket className="mr-2 h-4 w-4 text-primary" />Referral/Discount Code (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter code" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
             
             <FormField

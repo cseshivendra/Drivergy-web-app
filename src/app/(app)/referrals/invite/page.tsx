@@ -1,27 +1,42 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MessageSquare, Smartphone, Copy, Gift, Share2 } from 'lucide-react';
+import { Mail, MessageSquare, Smartphone, Copy, Gift, Share2, Save } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
+import { fetchUserById } from '@/lib/mock-data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InviteReferralsPage() { 
   const { toast } = useToast();
   const { user } = useAuth();
   const [email, setEmail] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [initialReferralCode, setInitialReferralCode] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const referralCode = useMemo(() => {
+  useEffect(() => {
     if (user?.uid) {
-      return `REF-${user.uid.substring(0, 6).toUpperCase()}`;
+      setLoading(true);
+      fetchUserById(user.uid).then(userProfile => {
+        const code = userProfile?.myReferralCode || `REF-${user.uid.substring(0, 6).toUpperCase()}`;
+        setReferralCode(code);
+        setInitialReferralCode(code);
+        setLoading(false);
+      });
+    } else {
+        const guestCode = 'REF-GUEST123';
+        setReferralCode(guestCode);
+        setInitialReferralCode(guestCode);
+        setLoading(false);
     }
-    return 'REF-GUEST123'; 
-  }, [user?.uid]);
+  }, [user]);
 
   const referralUrl = useMemo(() => {
     return `https://drivergy.example.com/signup?ref=${referralCode}`;
@@ -45,6 +60,16 @@ export default function InviteReferralsPage() {
           variant: 'destructive',
         });
       });
+  };
+  
+  const handleSaveCode = () => {
+    // In a real app, you would save this to the backend.
+    // For now, we just simulate it with a toast.
+    toast({
+        title: 'Referral Code Updated!',
+        description: `Your new referral code is now "${referralCode}".`
+    });
+    setInitialReferralCode(referralCode); // Set the new "saved" state
   };
 
   const handleSendEmail = (e: React.FormEvent) => {
@@ -96,15 +121,43 @@ export default function InviteReferralsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3 rounded-lg border bg-card p-4 shadow-sm">
-            <Label htmlFor="referral-code" className="text-sm font-medium text-muted-foreground">Your Unique Referral Code</Label>
-            <Input id="referral-code" value={referralCode} readOnly className="text-lg font-semibold" />
-            <Label htmlFor="referral-url" className="text-sm font-medium text-muted-foreground">Your Referral URL</Label>
-            <div className="flex items-center space-x-2">
-              <Input id="referral-url" value={referralUrl} readOnly className="text-base" />
-              <Button variant="outline" size="icon" onClick={handleCopyUrl} aria-label="Copy referral URL">
-                <Copy className="h-5 w-5" />
-              </Button>
-            </div>
+             {loading ? (
+                <>
+                    <Skeleton className="h-5 w-1/3 mb-2" />
+                    <Skeleton className="h-10 w-full mb-3" />
+                    <Skeleton className="h-5 w-1/3 mb-2" />
+                    <Skeleton className="h-10 w-full" />
+                </>
+             ) : (
+                <>
+                    <Label htmlFor="referral-code" className="text-sm font-medium text-muted-foreground">Your Unique Referral Code</Label>
+                    <div className="flex items-center space-x-2">
+                        <Input 
+                            id="referral-code"
+                            value={referralCode}
+                            onChange={(e) => setReferralCode(e.target.value)}
+                            className="text-lg font-semibold" 
+                        />
+                        <Button
+                            variant="default"
+                            size="icon"
+                            onClick={handleSaveCode}
+                            aria-label="Save referral code"
+                            disabled={referralCode === initialReferralCode || !referralCode}
+                        >
+                            <Save className="h-5 w-5" />
+                        </Button>
+                    </div>
+
+                    <Label htmlFor="referral-url" className="text-sm font-medium text-muted-foreground">Your Referral URL</Label>
+                    <div className="flex items-center space-x-2">
+                    <Input id="referral-url" value={referralUrl} readOnly className="text-base" />
+                    <Button variant="outline" size="icon" onClick={handleCopyUrl} aria-label="Copy referral URL">
+                        <Copy className="h-5 w-5" />
+                    </Button>
+                    </div>
+                </>
+             )}
           </div>
 
           <Tabs defaultValue="email" className="w-full">
