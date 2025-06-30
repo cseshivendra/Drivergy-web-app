@@ -1,58 +1,56 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { fetchCourses } from '@/lib/mock-data';
-import type { Course } from '@/types';
-import { Users, Award, Clock, PlayCircle, BookOpen } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Users, Award, Clock, PlayCircle, BookOpen, Car, Bike, FileText } from 'lucide-react';
+
+const courses = [
+    {
+        id: 'course1',
+        title: 'Comprehensive Car Program',
+        description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
+        icon: Car,
+        totalEnrolled: 125,
+        totalCertified: 98,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+        { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
+        { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
+        { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
+        ],
+    },
+    {
+        id: 'course2',
+        title: 'Motorcycle Rider Course',
+        description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
+        icon: Bike,
+        totalEnrolled: 88,
+        totalCertified: 71,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+        { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
+        { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
+        ],
+    },
+    {
+        id: 'course3',
+        title: 'RTO Test Preparation',
+        description: 'A specialized course to help you ace the official RTO driving test and get your license.',
+        icon: FileText,
+        totalEnrolled: 210,
+        totalCertified: 195,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+        { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
+        { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
+        ],
+    },
+];
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetchCourses().then(data => {
-      setCourses(data);
-      setIsLoading(false);
-    });
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
-        <div className="flex items-center mb-8">
-          <BookOpen className="h-10 w-10 text-primary mr-3" />
-          <h1 className="font-headline text-4xl font-bold">Our Driving Courses</h1>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Array(3).fill(0).map((_, index) => (
-            <Card key={index} className="shadow-lg overflow-hidden">
-              <Skeleton className="h-48 w-full" />
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6 mt-1" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-around mb-4">
-                  <Skeleton className="h-8 w-24" />
-                  <Skeleton className="h-8 w-24" />
-                </div>
-                <Skeleton className="h-10 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
       <header className="mb-12 text-center">
@@ -65,7 +63,7 @@ export default function CoursesPage() {
         </p>
       </header>
       
-      {courses.length === 0 && !isLoading ? (
+      {courses.length === 0 ? (
         <p className="text-center text-muted-foreground text-xl">No courses available at the moment. Please check back later.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
