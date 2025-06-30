@@ -122,7 +122,7 @@ const quizSets: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
   title: `Set ${i + 1}`,
   questions: baseQuestions.map((q, j) => ({
     id: `q${i + 1}-${j + 1}`,
-    question: `${q.question} (Set ${i + 1})`,
+    question: `${q.question}`,
     options: q.options,
     correctAnswer: q.correctAnswer,
   })),
