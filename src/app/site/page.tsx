@@ -271,7 +271,7 @@ export default function PortfolioSitePage() {
         </section>
 
         {/* Services Section */}
-        <section id="services" className="py-16 md:py-24 bg-background">
+        <section id="services" className="py-12 md:py-16 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Services</h2>
