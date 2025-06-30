@@ -56,9 +56,7 @@ export default function LoginPage() {
 
   const handleSampleCustomerSignIn = async () => {
     await signInAsSampleCustomer();
-     // The auth context handles the redirect for this one, but we can be explicit
-     const loggedInUser = await authenticateUserByCredentials('shivendra', 'password123');
-     if(loggedInUser) router.push(redirect || '/site');
+    // The auth context handles the redirect for this one.
   }
 
   const GoogleIcon = () => (
