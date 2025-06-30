@@ -185,49 +185,42 @@ export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Pass
 const fileField = z.any(); 
 const optionalFileField = z.any().optional();
 
-// Define the base object schema without refinement, so it can be extended
+// Base schema without any refinements or transforms
 const BaseRegistrationObjectSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }).max(20),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   confirmPassword: z.string(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string()
-    .optional()
-    .refine(val => !val || /^\d{10}$/.test(val), { // If phone is provided, it must be 10 digits
-      message: "Phone number must be 10 digits.",
-    })
-    .transform(val => val || undefined), // Ensure empty string becomes undefined for optional
+  phone: z.string().optional(),
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
 
-// Extend the base object and then apply refinement
-const CustomerRegistrationSchema = BaseRegistrationObjectSchema.extend({
+// --- Schemas for Discriminated Union ---
+// These MUST be pure ZodObjects without refinements (.refine, .superRefine, .transform)
+
+const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   userRole: z.literal('customer'),
   subscriptionPlan: z.enum(SubscriptionPlans, { required_error: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
   trainerPreference: z.enum(TrainerPreferenceOptions, { required_error: "Please select your trainer preference."}),
-  referralCodeApplied: z.string().optional().transform(val => val || undefined),
+  referralCodeApplied: z.string().optional(),
   flatHouseNumber: z.string().min(1, { message: "House/Flat number is required." }),
   street: z.string().min(3, { message: "Street name is required." }),
   district: z.string().min(1, { message: "Please select a district." }),
   state: z.string().min(1, { message: "Please select a state." }),
   pincode: z.string().regex(/^\d{6}$/, { message: "Please enter a valid 6-digit pincode." }),
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
-  dlNumber: z.string().optional().transform(val => val || undefined),
-  dlTypeHeld: z.string().optional().transform(val => val || undefined),
+  dlNumber: z.string().optional(),
+  dlTypeHeld: z.string().optional(),
   dlFileCopy: optionalFileField,
   photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
-  photoIdFile: fileField.refine(val => val && val.length > 0, "Photo ID document is required."),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
+  photoIdFile: fileField,
 });
 
-// Extend the base object and then apply refinement
-const TrainerRegistrationSchema = BaseRegistrationObjectSchema.extend({
+const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   userRole: z.literal('trainer'),
   yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative.").max(50, "Years of experience seems too high.").optional(),
   specialization: z.enum(SpecializationOptions, { required_error: "Please select a specialization." }),
@@ -235,24 +228,77 @@ const TrainerRegistrationSchema = BaseRegistrationObjectSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  trainerCertificateFile: fileField.refine(val => val && val.length > 0, "Trainer certificate is required."),
+  trainerCertificateFile: fileField,
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  aadhaarCardFile: fileField.refine(val => val && val.length > 0, "Aadhaar card copy is required."),
+  aadhaarCardFile: fileField,
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  drivingLicenseFile: fileField.refine(val => val && val.length > 0, "Driving license copy is required."),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
+  drivingLicenseFile: fileField,
 });
 
+// Create the final schema by applying all refinements to the union
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
- CustomerRegistrationSchema,
- TrainerRegistrationSchema,
-]);
+  CustomerRegistrationObjectSchema,
+  TrainerRegistrationObjectSchema,
+]).superRefine((data, ctx) => {
+  // Password confirmation check (common to both)
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Passwords don't match",
+      path: ["confirmPassword"],
+    });
+  }
+
+  // Phone number check (common to both)
+  if (data.phone && !/^\d{10}$/.test(data.phone)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Phone number must be 10 digits.",
+      path: ["phone"],
+    });
+  }
+  
+  // Customer-specific file checks
+  if (data.userRole === 'customer') {
+    if (!data.photoIdFile || data.photoIdFile.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Photo ID document is required.",
+        path: ["photoIdFile"],
+      });
+    }
+  }
+
+  // Trainer-specific file checks
+  if (data.userRole === 'trainer') {
+    if (!data.trainerCertificateFile || data.trainerCertificateFile.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Trainer certificate is required.",
+        path: ["trainerCertificateFile"],
+      });
+    }
+    if (!data.aadhaarCardFile || data.aadhaarCardFile.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Aadhaar card copy is required.",
+        path: ["aadhaarCardFile"],
+      });
+    }
+    if (!data.drivingLicenseFile || data.drivingLicenseFile.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Driving license copy is required.",
+        path: ["drivingLicenseFile"],
+      });
+    }
+  }
+});
+
 
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
-export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationSchema>;
-export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationSchema>;
+export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationObjectSchema>;
+export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationObjectSchema>;
