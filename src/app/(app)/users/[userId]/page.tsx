@@ -62,7 +62,10 @@ export default function UserDetailsPage() {
       content += `Internal ID: ${user.id}\n`;
       content += `Contact: ${user.contact}\n`;
       content += `Location: ${user.location}\n`;
-      if (user.address) content += `Address: ${user.address}\n`;
+      if (user.flatHouseNumber) content += `Flat/House No.: ${user.flatHouseNumber}\n`;
+      if (user.street) content += `Street: ${user.street}\n`;
+      if (user.district) content += `District: ${user.district}\n`;
+      if (user.state) content += `State: ${user.state}\n`;
       if (user.pincode) content += `Pincode: ${user.pincode}\n`;
       content += `Registration: ${user.registrationTimestamp}\n`;
       content += `Subscription: ${user.subscriptionPlan}\n`;
@@ -79,7 +82,10 @@ export default function UserDetailsPage() {
         `Name,"${user.name}"`,
         `Contact,"${user.contact}"`,
         `Location,"${user.location}"`,
-        `Address,"${user.address || 'N/A'}"`,
+        `Flat/House No.,"${user.flatHouseNumber || 'N/A'}"`,
+        `Street,"${user.street || 'N/A'}"`,
+        `District,"${user.district || 'N/A'}"`,
+        `State,"${user.state || 'N/A'}"`,
         `Pincode,"${user.pincode || 'N/A'}"`,
         `Registration Date,"${user.registrationTimestamp}"`,
         `Subscription Plan,"${user.subscriptionPlan}"`,
@@ -189,16 +195,25 @@ export default function UserDetailsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
               <InfoItem icon={Fingerprint} label="Internal ID" value={user.id} />
               <InfoItem icon={Mail} label="Contact Email" value={user.contact} />
-              {/* Add phone here if available and desired */}
-              {/* <InfoItem icon={Phone} label="Phone Number" value={user.phone || 'N/A'} /> */}
               <InfoItem icon={MapPin} label="Location" value={user.location} />
-              {user.address && <InfoItem icon={Home} label="Full Address" value={user.address} />}
-              {user.pincode && <InfoItem icon={MapPin} label="Pincode" value={user.pincode} />}
               <InfoItem icon={CalendarDays} label="Registration Date" value={user.registrationTimestamp} />
-              {/* Add gender here if available and desired */}
-              {/* <InfoItem icon={GenderIcon} label="Gender" value={user.gender || 'N/A'} /> */}
             </div>
           </div>
+          
+          {isCustomer && (
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mt-4 mb-3 border-b pb-2 flex items-center">
+                <Home className="mr-2 h-5 w-5 text-primary" /> Address Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                  <InfoItem icon={Home} label="Flat/House No." value={user.flatHouseNumber} />
+                  <InfoItem icon={MapPin} label="Street/Road" value={user.street} />
+                  <InfoItem icon={MapPin} label="District" value={user.district} />
+                  <InfoItem icon={MapPin} label="State" value={user.state} />
+                  <InfoItem icon={MapPin} label="Pincode" value={user.pincode} />
+              </div>
+            </div>
+          )}
 
           <div>
             <h3 className="text-xl font-semibold text-foreground mt-4 mb-3 border-b pb-2 flex items-center">
@@ -218,7 +233,6 @@ export default function UserDetailsPage() {
               <InfoItem icon={FileText} label={isCustomer ? "Subscription Plan" : "Role"} value={user.subscriptionPlan} />
               <InfoItem icon={Car} label={isCustomer ? "Vehicle Preference" : "Training Vehicle"} value={user.vehicleInfo || 'N/A'} />
               
-              {/* Customer Specific (Example: DL Info) */}
               {isCustomer && (user as any).dlStatus && (
                 <>
                   <InfoItem icon={FileText} label="DL Status" value={(user as any).dlStatus} />
@@ -231,7 +245,6 @@ export default function UserDetailsPage() {
                 </>
               )}
 
-              {/* Trainer Specific (Example: Experience) */}
               {!isCustomer && (user as any).yearsOfExperience !== undefined && (
                  <InfoItem icon={CalendarDays} label="Years of Experience" value={(user as any).yearsOfExperience} />
               )}

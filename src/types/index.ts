@@ -18,7 +18,10 @@ export interface UserProfile {
   registrationTimestamp: string;
   vehicleInfo?: string;
   approvalStatus: ApprovalStatusType;
-  address?: string;
+  flatHouseNumber?: string;
+  street?: string;
+  district?: string;
+  state?: string;
   pincode?: string;
   // Customer specific details that might be useful on profile:
   dlStatus?: string;
@@ -117,7 +120,10 @@ const CustomerRegistrationSchema = BaseRegistrationSchema.extend({
   subscriptionPlan: z.enum(SubscriptionPlans, { required_error: "Please select a subscription plan." }),
   vehiclePreference: z.enum(VehiclePreferenceOptions, { required_error: "Vehicle preference is required for customers." }),
   trainerPreference: z.enum(TrainerPreferenceOptions, { required_error: "Please select your trainer preference."}),
-  address: z.string().min(10, { message: "Please enter a full address of at least 10 characters." }),
+  flatHouseNumber: z.string().min(1, { message: "House/Flat number is required." }),
+  street: z.string().min(3, { message: "Street name is required." }),
+  district: z.string().min(3, { message: "District is required." }),
+  state: z.string().min(2, { message: "State is required." }),
   pincode: z.string().regex(/^\d{6}$/, { message: "Please enter a valid 6-digit pincode." }),
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional().transform(val => val || undefined),

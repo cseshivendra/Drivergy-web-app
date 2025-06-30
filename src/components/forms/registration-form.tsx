@@ -60,7 +60,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         vehiclePreference: undefined,
         subscriptionPlan: '', 
         trainerPreference: '', 
-        address: '',
+        flatHouseNumber: '',
+        street: '',
+        district: '',
+        state: '',
         pincode: '',
         dlStatus: '',
         dlNumber: '',
@@ -241,32 +244,78 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         {userRole === 'customer' && (
           <>
-             <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4 text-primary" />Full Address</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Enter your full address including house number, street, and landmark" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="pincode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Pincode</FormLabel>
-                  <FormControl>
-                    <Input type="text" maxLength={6} placeholder="Enter 6-digit pincode" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Address Details</h3>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="flatHouseNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4 text-primary" />Flat / House No.</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., A-101, Flat 4B" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="street"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Road / Street Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., M.G. Road" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Mumbai Suburban" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Maharashtra" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pincode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Pincode</FormLabel>
+                    <FormControl>
+                      <Input type="text" maxLength={6} placeholder="Enter 6-digit pincode" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Course & License Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -344,8 +393,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                  {/* Placeholder for the second item in the grid if needed in future */}
                  <div></div>
             </div>
-            
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Driving License Details</h3>
             
             <FormField
               control={form.control}
