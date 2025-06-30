@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserById } from '@/lib/mock-data';
 import type { UserProfile } from '@/types';
-import { User, Mail, Phone, MapPin, FileText, CalendarDays, Fingerprint, Car, ShieldCheck, X, FileType, FileSpreadsheet, Users as GenderIcon } from 'lucide-react'; // Added X, FileType, FileSpreadsheet, GenderIcon
+import { User, Mail, Phone, MapPin, FileText, CalendarDays, Fingerprint, Car, ShieldCheck, X, FileType, FileSpreadsheet, Users as GenderIcon, Home } from 'lucide-react'; // Added X, FileType, FileSpreadsheet, GenderIcon, Home, Pin
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,8 @@ export default function UserDetailsPage() {
       content += `Internal ID: ${user.id}\n`;
       content += `Contact: ${user.contact}\n`;
       content += `Location: ${user.location}\n`;
+      if (user.address) content += `Address: ${user.address}\n`;
+      if (user.pincode) content += `Pincode: ${user.pincode}\n`;
       content += `Registration: ${user.registrationTimestamp}\n`;
       content += `Subscription: ${user.subscriptionPlan}\n`;
       content += `Vehicle Info: ${user.vehicleInfo || 'N/A'}\n`;
@@ -77,6 +79,8 @@ export default function UserDetailsPage() {
         `Name,"${user.name}"`,
         `Contact,"${user.contact}"`,
         `Location,"${user.location}"`,
+        `Address,"${user.address || 'N/A'}"`,
+        `Pincode,"${user.pincode || 'N/A'}"`,
         `Registration Date,"${user.registrationTimestamp}"`,
         `Subscription Plan,"${user.subscriptionPlan}"`,
         `Vehicle Info,"${user.vehicleInfo || 'N/A'}"`,
@@ -188,6 +192,8 @@ export default function UserDetailsPage() {
               {/* Add phone here if available and desired */}
               {/* <InfoItem icon={Phone} label="Phone Number" value={user.phone || 'N/A'} /> */}
               <InfoItem icon={MapPin} label="Location" value={user.location} />
+              {user.address && <InfoItem icon={Home} label="Full Address" value={user.address} />}
+              {user.pincode && <InfoItem icon={MapPin} label="Pincode" value={user.pincode} />}
               <InfoItem icon={CalendarDays} label="Registration Date" value={user.registrationTimestamp} />
               {/* Add gender here if available and desired */}
               {/* <InfoItem icon={GenderIcon} label="Gender" value={user.gender || 'N/A'} /> */}
@@ -270,4 +276,3 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
-

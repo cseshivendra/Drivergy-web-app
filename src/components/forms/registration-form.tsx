@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -33,7 +34,7 @@ import {
   type TrainerRegistrationFormValues,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin } from 'lucide-react'; 
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -59,6 +60,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         vehiclePreference: undefined,
         subscriptionPlan: '', 
         trainerPreference: '', 
+        address: '',
+        pincode: '',
         dlStatus: '',
         dlNumber: '',
         dlTypeHeld: '',
@@ -238,6 +241,32 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         {userRole === 'customer' && (
           <>
+             <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4 text-primary" />Full Address</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Enter your full address including house number, street, and landmark" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pincode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Pincode</FormLabel>
+                  <FormControl>
+                    <Input type="text" maxLength={6} placeholder="Enter 6-digit pincode" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
               <FormField
                 control={form.control}
