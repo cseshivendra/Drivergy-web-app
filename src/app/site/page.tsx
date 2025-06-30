@@ -165,6 +165,9 @@ export default function PortfolioSitePage() {
               <Link href="#courses">Courses</Link>
             </Button>
              <Button variant="ghost" asChild>
+               <Link href="/site/rto-quiz">RTO Quiz</Link>
+            </Button>
+             <Button variant="ghost" asChild>
               <Link href="#subscriptions">Plans</Link>
             </Button>
             <Button variant="ghost" asChild>

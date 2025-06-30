@@ -132,19 +132,6 @@ export default function AppSidebar() {
 
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
-              isActive={pathname === '/rto-quiz'}
-              tooltip={{ children: "RTO Quiz", side: "right", align: "center" }}
-            >
-              <Link href="/rto-quiz">
-                <ClipboardCheck />
-                <span>RTO Quiz</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <SidebarMenuItem>
-            <SidebarMenuButton
               onClick={() => setReferralsOpen(!referralsOpen)}
               isActive={pathname.startsWith('/referrals')}
               tooltip={{ children: "Referrals", side: "right", align: "center" }}
