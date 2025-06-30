@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut, Star, Check } from 'lucide-react'; // Added Check icon
+import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, LogOut, Star, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from '@/context/auth-context';
 import { useState, useEffect } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 const SiteLogo = () => (
   <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -315,72 +322,95 @@ export default function PortfolioSitePage() {
             <p className="text-lg text-muted-foreground mb-12 max-w-xl mx-auto">
               Choose a plan that fits your learning pace and budget. All plans include expert guidance and progress tracking.
             </p>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
-                           Basic Start
-                        </CardTitle>
-                        <CardDescription>Perfect for beginners to get started.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-4">
-                        <p className="text-4xl font-bold mb-2">₹4,999</p>
-                        <ul className="space-y-2 text-muted-foreground text-sm text-left">
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />10 Practical Driving Sessions</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Basic Theory Classes</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Learner's License Assistance</li>
-                             <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Slot Booking</li>
-                        </ul>
-                    </CardContent>
-                    <CardFooter className="mt-auto pt-6">
-                         <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
-                    </CardFooter>
-                </Card>
-                 <Card className="shadow-xl hover:shadow-2xl transition-shadow border-2 border-primary relative overflow-hidden flex flex-col transform scale-105 md:scale-110 z-10 bg-card">
-                     <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center">
-                        <Star className="h-3 w-3 mr-1.5" /> POPULAR
-                     </div>
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
-                            Premium Pro
-                        </CardTitle>
-                        <CardDescription>Our most comprehensive package.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-4">
-                        <p className="text-4xl font-bold mb-2">₹8,499</p>
-                        <ul className="space-y-2 text-muted-foreground text-sm text-left">
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li>
-                        </ul>
-                    </CardContent>
-                     <CardFooter className="mt-auto pt-6">
-                         <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
-                    </CardFooter>
-                </Card>
-                 <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
-                           Gold Standard
-                        </CardTitle>
-                        <CardDescription>Excellent value with extra benefits.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-grow space-y-4">
-                        <p className="text-4xl font-bold mb-2">₹6,999</p>
-                        <ul className="space-y-2 text-muted-foreground text-sm text-left">
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Comprehensive Theory & Mock Tests</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Scheduling</li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Progress Tracking App Access</li>
-                        </ul>
-                    </CardContent>
-                     <CardFooter className="mt-auto pt-6">
-                         <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
-                    </CardFooter>
-                </Card>
-            </div>
+             <TooltipProvider>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                      <CardHeader className="pb-4">
+                          <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                            Basic Start
+                          </CardTitle>
+                          <CardDescription>Perfect for beginners to get started.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow space-y-4">
+                          <p className="text-4xl font-bold mb-2">₹4,999</p>
+                          <ul className="space-y-2 text-muted-foreground text-sm text-left">
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />10 Practical Driving Sessions</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Basic Theory Classes</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Learner's License Assistance</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Slot Booking</li>
+                          </ul>
+                      </CardContent>
+                      <CardFooter className="mt-auto pt-6">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>A great starting point for new learners covering all the essentials.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </CardFooter>
+                  </Card>
+                  <Card className="shadow-xl hover:shadow-2xl transition-shadow border-2 border-primary relative overflow-hidden flex flex-col transform scale-105 md:scale-110 z-10 bg-card">
+                      <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center">
+                          <Star className="h-3 w-3 mr-1.5" /> POPULAR
+                      </div>
+                      <CardHeader className="pb-4">
+                          <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                              Premium Pro
+                          </CardTitle>
+                          <CardDescription>Our most comprehensive package.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow space-y-4">
+                          <p className="text-4xl font-bold mb-2">₹8,499</p>
+                          <ul className="space-y-2 text-muted-foreground text-sm text-left">
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li>
+                          </ul>
+                      </CardContent>
+                      <CardFooter className="mt-auto pt-6">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>The ultimate package with advanced training and full RTO support.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </CardFooter>
+                  </Card>
+                  <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                      <CardHeader className="pb-4">
+                          <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                            Gold Standard
+                          </CardTitle>
+                          <CardDescription>Excellent value with extra benefits.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow space-y-4">
+                          <p className="text-4xl font-bold mb-2">₹6,999</p>
+                          <ul className="space-y-2 text-muted-foreground text-sm text-left">
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Comprehensive Theory & Mock Tests</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Scheduling</li>
+                              <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Progress Tracking App Access</li>
+                          </ul>
+                      </CardContent>
+                      <CardFooter className="mt-auto pt-6">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button className="w-full bg-primary hover:bg-primary/90">Choose Plan</Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>The perfect balance of practical sessions and comprehensive theory.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </CardFooter>
+                  </Card>
+              </div>
+            </TooltipProvider>
           </div>
         </section>
 
