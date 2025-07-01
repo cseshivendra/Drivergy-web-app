@@ -74,21 +74,24 @@ export default function SiteRegisterTrainerPage() {
                   <span className="sr-only">LinkedIn</span>
               </a>
           </div>
-          <div className="flex items-center justify-center gap-x-8 pt-4">
-              <Image 
-                  src="https://placehold.co/100x30.png"
-                  alt="Startup India Logo"
-                  width={100}
-                  height={30}
-                  data-ai-hint="startup india logo"
-              />
-              <Image 
-                  src="https://placehold.co/100x30.png"
-                  alt="Made in India Logo"
-                  width={100}
-                  height={30}
-                  data-ai-hint="made in india logo"
-              />
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">
+              {/* Startup India Badge */}
+              <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-saffron">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span className="font-semibold text-foreground">Startup India</span>
+              </div>
+
+              {/* Made in India Badge */}
+              <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-india-blue">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                      <path d="M12 3V21M3 12H21M6.34 6.34L17.66 17.66M6.34 17.66L17.66 6.34" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                  </svg>
+                  <span className="font-semibold text-foreground">Made in India</span>
+              </div>
           </div>
           <p className="text-sm pt-2">
             &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
