@@ -278,7 +278,7 @@ export default function BlogPage() {
                             <rect x="3" y="5" width="18" height="4" fill="#FF9933"/>
                             <rect x="3" y="9" width="18" height="4" fill="white"/>
                             <rect x="3" y="13" width="18" height="4" fill="#138808"/>
-                            <circle cx="12" cy="11" r="1.5" stroke="#000080" stroke-width="0.5" fill="none"/>
+                            <circle cx="12" cy="11" r="1.5" stroke="#000080" strokeWidth="0.5" fill="none"/>
                         </svg>
                         <span className="font-semibold text-foreground">Made in India</span>
                     </div>
