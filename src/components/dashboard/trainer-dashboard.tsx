@@ -1,0 +1,201 @@
+
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance } from '@/lib/mock-data';
+import type { UserProfile, TrainerSummaryData } from '@/types';
+import SummaryCard from '@/components/dashboard/summary-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Badge } from '../ui/badge';
+import type React from 'react';
+
+const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    stroke="none"
+    {...props}
+  >
+    <text
+      x="50%"
+      y="50%"
+      dominantBaseline="middle"
+      textAnchor="middle"
+      fontSize="18"
+      fontFamily="system-ui, sans-serif"
+      fill="currentColor"
+    >
+      ₹
+    </text>
+  </svg>
+);
+
+export default function TrainerDashboard() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
+  const [students, setStudents] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const [summaryData, studentData] = await Promise.all([
+        fetchTrainerSummary(user.uid),
+        fetchAssignedCustomers(user.uid)
+      ]);
+      setSummary(summaryData);
+      setStudents(studentData);
+    } catch (error) {
+      console.error("Failed to fetch trainer dashboard data", error);
+      toast({ title: "Error", description: "Could not load dashboard data.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAttendance = async (studentId: string, studentName: string, status: 'Present' | 'Absent') => {
+    const success = await updateUserAttendance(studentId, status);
+    if(success) {
+        toast({ title: 'Attendance Marked', description: `${studentName} marked as ${status}.` });
+        const updatedStudents = students.map(s => s.id === studentId ? { ...s, attendance: status } : s);
+        setStudents(updatedStudents);
+    } else {
+        toast({ title: 'Error', description: 'Could not update attendance.', variant: 'destructive' });
+    }
+  };
+  
+  const handleViewDetails = (student: UserProfile) => {
+    window.open(`/users/${student.id}`, '_blank');
+    toast({ 
+      title: "Opening Details",
+      description: `Opening details for ${student.name} in a new tab.`,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+        <Skeleton className="h-10 w-1/3 mb-4" />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-[126px] w-full rounded-lg" />
+            <Skeleton className="h-[126px] w-full rounded-lg" />
+            <Skeleton className="h-[126px] w-full rounded-lg" />
+            <Skeleton className="h-[126px] w-full rounded-lg" />
+        </div>
+        <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+      <header className="mb-4">
+        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+          Trainer Dashboard
+        </h1>
+        <p className="text-muted-foreground">Manage your students and track your progress.</p>
+      </header>
+
+       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <SummaryCard title="Total Students" value={summary?.totalStudents ?? 0} icon={Users} description="All students assigned to you" />
+          <SummaryCard title="Total Earnings" value={`₹${(summary?.totalEarnings ?? 0).toLocaleString('en-IN')}`} icon={RupeeIconSvg} description="Your gross earnings" />
+          <SummaryCard title="Upcoming Lessons" value={summary?.upcomingLessons ?? 0} icon={CalendarClock} description="Confirmed upcoming sessions" />
+          <SummaryCard title="Your Rating" value={summary?.rating ?? 0} icon={Star} description="Average student rating" />
+       </div>
+
+      <Card className="shadow-lg border-primary">
+          <CardHeader>
+              <CardTitle className="font-headline text-2xl font-semibold flex items-center">
+                <User className="inline-block mr-3 h-6 w-6 align-middle" />
+                My Students
+              </CardTitle>
+          </CardHeader>
+          <CardContent>
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead>Student Name</TableHead>
+                          <TableHead>Plan</TableHead>
+                          <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Pickup Location</TableHead>
+                          <TableHead>Attendance</TableHead>
+                          <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {students.length > 0 ? students.map(student => (
+                          <TableRow key={student.id}>
+                              <TableCell className="font-medium">{student.name}</TableCell>
+                              <TableCell>
+                                <Badge variant={student.subscriptionPlan === 'Premium' ? 'default' : 'secondary'}>
+                                  {student.subscriptionPlan}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{`${student.flatHouseNumber}, ${student.street}, ${student.district}`}</TableCell>
+                              <TableCell>
+                                <Badge variant={
+                                    student.attendance === 'Present' ? 'default' :
+                                    student.attendance === 'Absent' ? 'destructive' : 'outline'
+                                } className="capitalize">
+                                  {student.attendance || 'Pending'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                  <div className="flex items-center justify-center space-x-1.5">
+                                      <Button variant="outline" size="sm" onClick={() => handleViewDetails(student)}><Eye className="mr-1 h-3 w-3"/>View</Button>
+                                      <Button 
+                                        variant="default" size="sm" 
+                                        onClick={() => handleAttendance(student.id, student.name, 'Present')}
+                                        disabled={student.attendance === 'Present'}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                      </Button>
+                                      <Button 
+                                        variant="destructive" size="sm" 
+                                        onClick={() => handleAttendance(student.id, student.name, 'Absent')}
+                                        disabled={student.attendance === 'Absent'}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                  </div>
+                              </TableCell>
+                          </TableRow>
+                      )) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                    <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                                    <p className="text-lg">No students assigned yet.</p>
+                                    <p className="text-sm">Check back later for new student assignments.</p>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                      )}
+                  </TableBody>
+              </Table>
+          </CardContent>
+          {students.length > 0 && (
+             <CardFooter>
+                  <p className="text-xs text-muted-foreground">Mark attendance for each completed lesson.</p>
+            </CardFooter>
+          )}
+      </Card>
+
+    </div>
+  );
+}

@@ -52,6 +52,7 @@ export default function AppSidebar() {
   }, [pathname]);
 
   const isCustomer = user?.uniqueId?.startsWith('CU');
+  const isTrainer = user?.uniqueId?.startsWith('TR');
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
@@ -100,7 +101,7 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {!isCustomer && (
+          {!isCustomer && !isTrainer && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={() => setCreateOpen(!createOpen)}
@@ -169,47 +170,48 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => setReferralsOpen(!referralsOpen)}
-              isActive={pathname.startsWith('/referrals')}
-              tooltip={{ children: "Referrals", side: "right", align: "center" }}
-              className="justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Gift />
-                <span>Referrals</span>
-              </div>
-              <ChevronDown className={cn("h-4 w-4 transition-transform", referralsOpen && "rotate-180")} />
-            </SidebarMenuButton>
-            {referralsOpen && (
-              <SidebarMenuSub>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    asChild
-                    isActive={pathname === '/referrals/invite'}
-                  >
-                    <Link href="/referrals/invite">
-                      <Send className="mr-2 h-4 w-4" />
-                      Invite Friends
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    asChild
-                    isActive={pathname === '/referrals/track'}
-                  >
-                    <Link href="/referrals/track">
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      Track Referrals
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            )}
-          </SidebarMenuItem>
+          {!isTrainer && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => setReferralsOpen(!referralsOpen)}
+                isActive={pathname.startsWith('/referrals')}
+                tooltip={{ children: "Referrals", side: "right", align: "center" }}
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Gift />
+                  <span>Referrals</span>
+                </div>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", referralsOpen && "rotate-180")} />
+              </SidebarMenuButton>
+              {referralsOpen && (
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={pathname === '/referrals/invite'}
+                    >
+                      <Link href="/referrals/invite">
+                        <Send className="mr-2 h-4 w-4" />
+                        Invite Friends
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton
+                      asChild
+                      isActive={pathname === '/referrals/track'}
+                    >
+                      <Link href="/referrals/track">
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Track Referrals
+                      </Link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              )}
+            </SidebarMenuItem>
+          )}
 
           <SidebarMenuItem>
             <SidebarMenuButton

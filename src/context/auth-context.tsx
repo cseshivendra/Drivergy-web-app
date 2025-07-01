@@ -5,7 +5,7 @@ import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type comp
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types'; // Import UserProfile
-import { mockCustomers, authenticateUserByCredentials } from '@/lib/mock-data';
+import { mockCustomers, mockInstructors, authenticateUserByCredentials } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 
 // Define a User type that can be a simulated regular user or a GuestUser
@@ -36,6 +36,7 @@ interface AuthContextType {
   signInWithCredentials: (username: string, password: string) => Promise<boolean>;
   signInAsGuest: () => void;
   signInAsSampleCustomer: () => Promise<void>;
+  signInAsSampleTrainer: () => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -123,17 +124,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Find sample customer directly from mock data.
     const sampleCustomer = mockCustomers.find(c => c.id === 'sample-customer-uid');
 
     if (sampleCustomer) {
-      logInUser(sampleCustomer, true); // Pass true to indicate it's a direct login action
+      logInUser(sampleCustomer, true);
     } else {
       setLoading(false);
-      console.error("Sample customer could not be found. Please clear local storage and refresh to re-seed data.");
+      console.error("Sample customer could not be found.");
       toast({
         title: 'Login Error',
         description: 'Sample customer data not found. Please try another login method.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const signInAsSampleTrainer = async () => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const sampleTrainer = mockInstructors.find(i => i.id === 'sample-trainer-uid');
+    if (sampleTrainer) {
+      logInUser(sampleTrainer, true);
+    } else {
+      setLoading(false);
+      console.error("Sample trainer could not be found.");
+      toast({
+        title: 'Login Error',
+        description: 'Sample trainer data not found. Please try another login method.',
         variant: 'destructive',
       });
     }
@@ -166,7 +183,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     storeUserInSession(newUser);
     setLoading(false);
     
-    // Only show toast and redirect if it's a direct login action
     if (isDirectLogin) {
       toast({
         title: `Welcome to Drivergy, ${newUser.displayName}!`,
@@ -177,7 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer, signInWithCredentials }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer, signInAsSampleTrainer, signInWithCredentials }}>
       {children}
     </AuthContext.Provider>
   );

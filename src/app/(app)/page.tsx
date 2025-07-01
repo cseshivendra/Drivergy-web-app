@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
 import CustomerDashboard from '@/components/dashboard/customer-dashboard';
+import TrainerDashboard from '@/components/dashboard/trainer-dashboard';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -18,11 +19,11 @@ export default function DashboardPage() {
     return <CustomerDashboard />;
   }
   
-  // Note: a check for 'TR' for a trainer dashboard could be added here in the future
-  // if (user.uniqueId && user.uniqueId.startsWith('TR')) {
-  //   return <TrainerDashboard />;
-  // }
+  // Check if the uniqueId starts with 'TR' to show trainer dashboard
+  if (user.uniqueId && user.uniqueId.startsWith('TR')) {
+    return <TrainerDashboard />;
+  }
 
-  // Default to Admin Dashboard for guests, Google sign-ins, or other non-customer roles
+  // Default to Admin Dashboard for guests, Google sign-ins, or other non-customer/trainer roles
   return <AdminDashboard />;
 }

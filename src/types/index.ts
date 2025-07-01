@@ -11,10 +11,10 @@ export interface UserProfile {
   id: string;
   uniqueId: string;
   name: string;
-  username?: string; // Add username
-  password?: string; // Add password
+  username?: string;
+  password?: string;
   contact: string; // Email
-  phone?: string; // Phone number is optional
+  phone?: string;
   location: string;
   subscriptionPlan: string;
   registrationTimestamp: string;
@@ -26,13 +26,16 @@ export interface UserProfile {
   district?: string;
   state?: string;
   pincode?: string;
-  // Customer specific details that might be useful on profile:
   dlStatus?: string;
   dlNumber?: string;
   photoIdType?: string;
   photoIdNumber?: string;
   trainerPreference?: typeof TrainerPreferenceOptions[number];
-  upcomingLesson?: string; // For reschedule approval
+  upcomingLesson?: string;
+  assignedTrainerId?: string;
+  attendance?: 'Present' | 'Absent' | 'Pending';
+  yearsOfExperience?: number;
+  specialization?: string;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -61,10 +64,17 @@ export interface SummaryData {
   totalCustomers: number;
   totalInstructors: number;
   activeSubscriptions: number;
-  pendingRequests: number; // Lesson requests
-  pendingRescheduleRequests: number; // New field
+  pendingRequests: number;
+  pendingRescheduleRequests: number;
   totalEarnings: number;
   totalCertifiedTrainers: number;
+}
+
+export interface TrainerSummaryData {
+  totalStudents: number;
+  totalEarnings: number;
+  upcomingLessons: number;
+  rating: number;
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';

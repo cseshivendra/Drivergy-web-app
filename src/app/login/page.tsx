@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,13 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, UserCheck } from 'lucide-react';
+import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, UserCheck, UserCog } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInAsGuest, signInAsSampleCustomer, signInWithCredentials, loading } = useAuth();
+  const { user, signInWithGoogle, signInAsGuest, signInAsSampleCustomer, signInAsSampleTrainer, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
@@ -58,6 +59,12 @@ export default function LoginPage() {
     await signInAsSampleCustomer();
     // The auth context handles the redirect for this one.
   }
+  
+  const handleSampleTrainerSignIn = async () => {
+    await signInAsSampleTrainer();
+    // The auth context handles the redirect for this one.
+  }
+
 
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -164,15 +171,6 @@ export default function LoginPage() {
             >
               <GoogleIcon /> Sign in with Google
             </Button>
-
-            <Button
-              variant="outline"
-              className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={handleGuestSignIn}
-              disabled={loading}
-            >
-              <UserCircle className="mr-2 h-5 w-5" /> Sign in as Guest
-            </Button>
             
             <Button
               variant="outline"
@@ -182,10 +180,28 @@ export default function LoginPage() {
             >
               <UserCheck className="mr-2 h-5 w-5" /> Sign in as Sample Customer
             </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base border-border hover:bg-accent/50"
+              onClick={handleSampleTrainerSignIn}
+              disabled={loading}
+            >
+              <UserCog className="mr-2 h-5 w-5" /> Sign in as Sample Trainer
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="w-full h-12 text-base border-border hover:bg-accent/50"
+              onClick={handleGuestSignIn}
+              disabled={loading}
+            >
+              <UserCircle className="mr-2 h-5 w-5" /> Sign in as Guest (Admin)
+            </Button>
 
             <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm flex items-start">
               <ShieldAlert className="h-5 w-5 mr-2 shrink-0" />
-              <span>OTP login is for demonstration only. Please use Google, Guest, or Sample Customer sign-in, or register to create a username/password.</span>
+              <span>OTP login is for demonstration only. Please use one of the sample login buttons or register a new account.</span>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
