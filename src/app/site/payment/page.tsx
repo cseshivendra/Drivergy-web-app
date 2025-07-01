@@ -267,12 +267,20 @@ export default function PaymentPage() {
                     </a>
                 </div>
                 <div className="flex items-center justify-center gap-x-8 pt-4">
-                    <div className="flex items-center justify-center p-2 border border-muted-foreground/30 rounded-lg bg-background">
-                        <p className="font-bold text-xs sm:text-sm text-foreground tracking-wide">Startup India</p>
-                    </div>
-                    <div className="flex items-center justify-center p-2 border border-muted-foreground/30 rounded-lg bg-background">
-                        <p className="font-bold text-xs sm:text-sm text-foreground tracking-wide">Made in India</p>
-                    </div>
+                    <Image 
+                        src="https://placehold.co/100x30.png"
+                        alt="Startup India Logo"
+                        width={100}
+                        height={30}
+                        data-ai-hint="startup india logo"
+                    />
+                    <Image 
+                        src="https://placehold.co/100x30.png"
+                        alt="Made in India Logo"
+                        width={100}
+                        height={30}
+                        data-ai-hint="made in india logo"
+                    />
                 </div>
                 <p className="text-sm pt-2">
                     &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
