@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import { Car, HelpCircle, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import ChatWidget from '@/components/chatbot/chat-widget';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -149,6 +150,7 @@ export default function FaqPage() {
                 </p>
             </div>
         </footer>
+        <ChatWidget />
     </div>
   );
 }

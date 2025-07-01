@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useState } from 'react';
+import ChatWidget from '@/components/chatbot/chat-widget';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -288,6 +289,7 @@ export default function BlogPage() {
                 </p>
             </div>
         </footer>
+        <ChatWidget />
     </div>
   );
 }

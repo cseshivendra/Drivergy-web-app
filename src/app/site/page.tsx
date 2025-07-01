@@ -29,6 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import ChatWidget from '@/components/chatbot/chat-widget';
 
 
 const SiteLogo = () => (
@@ -679,6 +680,7 @@ export default function PortfolioSitePage() {
             </div>
         </div>
       </footer>
+      <ChatWidget />
     </div>
   );
 }
