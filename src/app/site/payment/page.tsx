@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Lock, Car, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket } from 'lucide-react';
+import { CreditCard, Calendar, Lock, Car, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -243,13 +244,35 @@ export default function PaymentPage() {
             <PaymentGateway />
         </main>
         <footer className="border-t border-border/40 bg-background py-8">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-            <div className="flex justify-center mb-4">
-                <SiteLogo />
-            </div>
-            <p className="text-sm">
-                &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
-            </p>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
+                <div className="flex justify-center mb-4">
+                    <SiteLogo />
+                </div>
+                 <div className="flex justify-center items-center gap-6">
+                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Facebook className="h-5 w-5" />
+                        <span className="sr-only">Facebook</span>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Twitter className="h-5 w-5" />
+                        <span className="sr-only">Twitter</span>
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Instagram className="h-5 w-5" />
+                        <span className="sr-only">Instagram</span>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Linkedin className="h-5 w-5" />
+                        <span className="sr-only">LinkedIn</span>
+                    </a>
+                </div>
+                <div className="flex items-center justify-center gap-x-8 pt-4">
+                    <Image src="https://placehold.co/120x40.png" alt="Startup India Logo" width={120} height={40} data-ai-hint="startup india logo" />
+                    <Image src="https://placehold.co/120x40.png" alt="Made in India Logo" width={120} height={40} data-ai-hint="made in india logo" />
+                </div>
+                <p className="text-sm pt-2">
+                    &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
+                </p>
             </div>
       </footer>
     </div>
