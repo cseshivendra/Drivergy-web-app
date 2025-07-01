@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation'; // Import usePathname
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
 
@@ -13,33 +13,31 @@ interface AuthGuardProps {
 export default function AuthGuard({ children }: AuthGuardProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname(); // Get current pathname
+  const pathname = usePathname();
 
-  // Define if the current path should bypass the strict auth check
-  const isPublicUserDetailsPath = pathname.startsWith('/users/');
+  // The user details page is inside the app layout but can be viewed publicly.
+  const isPublicAppPage = pathname.startsWith('/users/');
 
   useEffect(() => {
-    // If it's the public user details path, don't enforce login redirect
-    if (isPublicUserDetailsPath) {
-      return;
-    }
-
-    // For all other paths, enforce authentication
-    if (!loading && !user) {
+    // If we're not loading and there's no user, redirect to login,
+    // UNLESS it's a page that's allowed to be public.
+    if (!loading && !user && !isPublicAppPage) {
       router.push('/login');
     }
-  }, [user, loading, router, pathname, isPublicUserDetailsPath]); // Added pathname and isPublicUserDetailsPath
+  }, [user, loading, router, pathname, isPublicAppPage]);
 
-  // If it's a public user details path, render children directly
-  // This allows the page to be viewed without login, but still within the app's layout
-  if (isPublicUserDetailsPath) {
-    return <>{children}</>;
-  }
-
-  // For protected paths, show loading or redirect
-  if (loading || !user) {
+  // While auth state is loading, always show the loading screen.
+  // This prevents the UI from flashing a "logged out" state.
+  if (loading) {
     return <Loading />;
   }
 
-  return <>{children}</>;
+  // If we have a user OR it's a public page, show the content.
+  // The user object will be available (or null) for the sidebar to use correctly.
+  if (user || isPublicAppPage) {
+    return <>{children}</>;
+  }
+
+  // If there's no user and it's not a public page, show loading while redirecting.
+  return <Loading />;
 }
