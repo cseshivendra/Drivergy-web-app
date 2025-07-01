@@ -274,10 +274,11 @@ export default function BlogPage() {
 
                     {/* Made in India Badge */}
                     <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-india-blue">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/>
-                            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-                            <path d="M12 3V21M3 12H21M6.34 6.34L17.66 17.66M6.34 17.66L17.66 6.34" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
+                            <rect x="3" y="5" width="18" height="4" fill="#FF9933"/>
+                            <rect x="3" y="9" width="18" height="4" fill="white"/>
+                            <rect x="3" y="13" width="18" height="4" fill="#138808"/>
+                            <circle cx="12" cy="11" r="1.5" stroke="#000080" stroke-width="0.5" fill="none"/>
                         </svg>
                         <span className="font-semibold text-foreground">Made in India</span>
                     </div>
