@@ -7,9 +7,10 @@ import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
-import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat } from 'lucide-react';
+import FeedbackTable from '@/components/dashboard/feedback-table'; // Import new component
+import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback } from '@/types';
+import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -19,12 +20,14 @@ export default function AdminDashboard() {
   const [instructors, setInstructors] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
+  const [feedback, setFeedback] = useState<Feedback[]>([]); // New state for feedback
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [loadingInstructors, setLoadingInstructors] = useState(true);
   const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
   const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
+  const [loadingFeedback, setLoadingFeedback] = useState(true); // New loading state
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +50,12 @@ export default function AdminDashboard() {
     fetchRescheduleRequests(currentSearchTerm).then(data => {
       setRescheduleRequests(data);
       setLoadingRescheduleRequests(false);
+    });
+
+    setLoadingFeedback(true); // Fetch feedback
+    fetchAllFeedback().then(data => {
+      setFeedback(data);
+      setLoadingFeedback(false);
     });
   }, []);
 
@@ -83,10 +92,9 @@ export default function AdminDashboard() {
   };
 
   const handleActioned = () => {
-    fetchSummaryData().then(data => setSummaryData(data));
+    // A single function to reload all data after an action
+    loadInitialDataAndRequests(searchTerm);
     loadFilteredUserData(filters, searchTerm);
-    fetchAllLessonRequests(searchTerm).then(data => setAllLessonRequests(data));
-    fetchRescheduleRequests(searchTerm).then(data => setRescheduleRequests(data));
   };
 
 
@@ -140,6 +148,11 @@ export default function AdminDashboard() {
           requests={rescheduleRequests}
           isLoading={loadingRescheduleRequests}
           onActioned={handleActioned}
+        />
+        <FeedbackTable
+          title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
+          feedback={feedback}
+          isLoading={loadingFeedback}
         />
       </main>
     </div>

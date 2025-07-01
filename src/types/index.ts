@@ -33,9 +33,11 @@ export interface UserProfile {
   trainerPreference?: typeof TrainerPreferenceOptions[number];
   upcomingLesson?: string;
   assignedTrainerId?: string;
+  assignedTrainerName?: string;
   attendance?: 'Present' | 'Absent' | 'Pending';
   yearsOfExperience?: number;
   specialization?: string;
+  feedbackSubmitted?: boolean;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -75,6 +77,17 @@ export interface TrainerSummaryData {
   totalEarnings: number;
   upcomingLessons: number;
   rating: number;
+}
+
+export interface Feedback {
+  id: string;
+  customerId: string;
+  customerName: string;
+  trainerId: string;
+  trainerName: string;
+  rating: number;
+  comment: string;
+  submissionDate: string;
 }
 
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
@@ -335,3 +348,9 @@ export const ChangePasswordSchema = z.object({
 });
 
 export type ChangePasswordValues = z.infer<typeof ChangePasswordSchema>;
+
+export const FeedbackFormSchema = z.object({
+  rating: z.number().min(1, "Rating is required.").max(5),
+  comment: z.string().min(10, "Comment must be at least 10 characters.").max(500, "Comment cannot exceed 500 characters."),
+});
+export type FeedbackFormValues = z.infer<typeof FeedbackFormSchema>;

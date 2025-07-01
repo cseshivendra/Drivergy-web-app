@@ -3,16 +3,105 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchUserById, addRescheduleRequest } from '@/lib/mock-data';
-import type { UserProfile } from '@/types';
+import { fetchUserById, addRescheduleRequest, addFeedback } from '@/lib/mock-data';
+import type { UserProfile, FeedbackFormValues } from '@/types';
+import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2 } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { add, differenceInHours, format, parse } from 'date-fns';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+
+// Helper component for Star Rating input
+const StarRating = ({ rating, setRating, disabled = false }: { rating: number; setRating: (r: number) => void; disabled?: boolean }) => {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={cn(
+            "h-8 w-8 cursor-pointer transition-colors",
+            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30",
+            !disabled && "hover:text-yellow-300"
+          )}
+          onClick={() => !disabled && setRating(star)}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Form component for the feedback dialog
+function FeedbackForm({ profile, onSubmitted }: { profile: UserProfile; onSubmitted: () => void }) {
+  const { toast } = useToast();
+  const form = useForm<FeedbackFormValues>({
+    resolver: zodResolver(FeedbackFormSchema),
+    defaultValues: { rating: 0, comment: '' },
+  });
+
+  async function onSubmit(data: FeedbackFormValues) {
+    if (!profile.assignedTrainerId || !profile.assignedTrainerName) {
+      toast({ title: "Error", description: "No trainer assigned to rate.", variant: "destructive" });
+      return;
+    }
+
+    const success = await addFeedback(profile.id, profile.name, profile.assignedTrainerId, profile.assignedTrainerName, data.rating, data.comment);
+
+    if (success) {
+      toast({ title: "Feedback Submitted!", description: "Thank you for your valuable feedback." });
+      onSubmitted();
+    } else {
+      toast({ title: "Submission Failed", description: "Could not submit your feedback.", variant: "destructive" });
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="rating"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Your Rating</FormLabel>
+              <FormControl>
+                <StarRating rating={field.value} setRating={field.onChange} disabled={form.formState.isSubmitting} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="comment"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Your Feedback</FormLabel>
+              <FormControl>
+                <Textarea placeholder={`Share your experience with ${profile.assignedTrainerName}...`} {...field} disabled={form.formState.isSubmitting} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <DialogFooter>
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit Feedback"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
+  );
+}
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
@@ -22,6 +111,7 @@ export default function CustomerDashboard() {
   const [upcomingLessonDate, setUpcomingLessonDate] = useState<Date | null>(null);
   const [isReschedulable, setIsReschedulable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
@@ -34,17 +124,13 @@ export default function CustomerDashboard() {
           let lessonDate: Date;
 
           if (lessonDateString) {
-            // Use date-fns to parse the specific format from mock data
             lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
           } else {
-            // Simulate fetching an upcoming lesson if none is set
             const hoursToAdd = Math.random() > 0.5 ? 12 : 36;
             lessonDate = add(now, { hours: hoursToAdd });
           }
           
           setUpcomingLessonDate(lessonDate);
-          
-          // Check if the lesson can be rescheduled (more than 24 hours away)
           setIsReschedulable(differenceInHours(lessonDate, now) > 24);
 
         }
@@ -55,7 +141,6 @@ export default function CustomerDashboard() {
   
   const handleUpgradePlan = () => {
     toast({ title: 'Redirecting to Plans', description: 'You can choose a new plan on our main site.' });
-     // In a real app, you'd likely use router.push('/site#subscriptions')
   };
   
   const handleCancelPlan = () => {
@@ -75,7 +160,7 @@ export default function CustomerDashboard() {
             title: 'Reschedule Request Sent',
             description: 'Your request has been sent for approval. You will be notified of the outcome.',
         });
-        setIsReschedulable(false); // Prevent multiple requests for the same slot
+        setIsReschedulable(false);
     } catch (error) {
         toast({
             title: 'Error',
@@ -92,7 +177,7 @@ export default function CustomerDashboard() {
     return (
       <div className="container mx-auto p-4 py-8 space-y-8">
         <Skeleton className="h-10 w-1/2 mb-8" />
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-64 w-full" />
@@ -197,6 +282,35 @@ export default function CustomerDashboard() {
           </CardFooter>
         </Card>
 
+        {/* Feedback Card */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <MessageSquare className="h-7 w-7 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="font-headline text-xl">Rate Your Trainer</CardTitle>
+                <CardDescription>Your feedback helps us improve.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-grow">
+            <p className="text-sm text-muted-foreground mb-4">
+              Share your experience with your trainer, {profile?.assignedTrainerName || 'N/A'}.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button
+              className="w-full"
+              onClick={() => setIsFeedbackDialogOpen(true)}
+              disabled={!profile?.assignedTrainerId || profile?.feedbackSubmitted}
+            >
+              {profile?.feedbackSubmitted ? "Feedback Submitted" : "Give Feedback"}
+            </Button>
+          </CardFooter>
+        </Card>
+
         {/* RTO Quiz Card */}
         <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
           <CardHeader>
@@ -222,42 +336,32 @@ export default function CustomerDashboard() {
           </CardFooter>
         </Card>
 
-        {/* My Progress Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BarChart2 className="h-7 w-7 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="font-headline text-xl">My Progress</CardTitle>
-                <CardDescription>Track your learning milestones.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-1 text-sm">
-                  <span>Theory Lessons</span>
-                  <span>75%</span>
-                </div>
-                <Progress value={75} />
-              </div>
-              <div>
-                <div className="flex justify-between mb-1 text-sm">
-                  <span>Practical Sessions</span>
-                  <span>40%</span>
-                </div>
-                <Progress value={40} />
-              </div>
-            </div>
-          </CardContent>
-           <CardFooter>
-                <p className="text-xs text-center text-muted-foreground pt-2 w-full">Progress tracking is coming soon!</p>
-           </CardFooter>
-        </Card>
       </div>
+      
+      {/* Feedback Dialog */}
+      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Feedback for {profile?.assignedTrainerName}</DialogTitle>
+            <DialogDescription>
+              Let us know how your training experience was. Your feedback is valuable.
+            </DialogDescription>
+          </DialogHeader>
+          {profile && (
+            <FeedbackForm
+              profile={profile}
+              onSubmitted={() => {
+                setIsFeedbackDialogOpen(false);
+                // Refresh profile data to update the button state
+                if (user?.uid) {
+                  fetchUserById(user.uid).then(setProfile);
+                }
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

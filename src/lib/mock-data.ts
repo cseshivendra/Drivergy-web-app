@@ -1,5 +1,5 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback } from '@/types';
 import { addDays, format, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
@@ -46,7 +46,8 @@ const LOCAL_STORAGE_KEYS = {
   FOUR_WHEELER_REQUESTS: 'drivergyMockFourWheelerRequests_v1',
   RESCHEDULE_REQUESTS: 'drivergyMockRescheduleRequests_v1',
   SUMMARY_DATA: 'drivergyMockSummaryData_v1',
-  COURSES: 'drivergyMockCourses_v1', 
+  COURSES: 'drivergyMockCourses_v1',
+  FEEDBACK: 'drivergyMockFeedback_v1',
 };
 
 // Initialize from localStorage or with defaults (empty arrays)
@@ -56,6 +57,7 @@ export let mockTwoWheelerRequests: LessonRequest[] = getItemFromLocalStorage<Les
 export let mockFourWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
 export let mockRescheduleRequests: RescheduleRequest[] = getItemFromLocalStorage<RescheduleRequest[]>(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, []);
 export let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, []);
+export let mockFeedback: Feedback[] = getItemFromLocalStorage<Feedback[]>(LOCAL_STORAGE_KEYS.FEEDBACK, []);
 
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
   const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
@@ -131,6 +133,7 @@ if (typeof window !== 'undefined') {
   if (sampleCustomerIndex !== -1) {
     if (!mockCustomers[sampleCustomerIndex].assignedTrainerId) {
       mockCustomers[sampleCustomerIndex].assignedTrainerId = sampleTrainer.id;
+      mockCustomers[sampleCustomerIndex].assignedTrainerName = sampleTrainer.name;
     }
   }
 
@@ -220,6 +223,7 @@ const saveDataToLocalStorage = () => {
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, mockRescheduleRequests);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.SUMMARY_DATA, mockSummaryData);
+  setItemInLocalStorage(LOCAL_STORAGE_KEYS.FEEDBACK, mockFeedback);
   const coursesToSave = mockCourses.map(c => ({ ...c, icon: undefined }));
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.COURSES, coursesToSave); 
 };
@@ -373,14 +377,22 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
   return newTrainer;
 };
 
-export const updateUserApprovalStatus = async (userId: string, userName: string, newStatus: ApprovalStatusType): Promise<boolean> => {
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2)); 
+export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
   let userFound = false;
   
   const customerIndex = mockCustomers.findIndex(c => c.id === userId);
   if (customerIndex !== -1) {
     mockCustomers[customerIndex].approvalStatus = newStatus;
     userFound = true;
+    if (newStatus === 'Approved' && !mockCustomers[customerIndex].assignedTrainerId) {
+        const approvedTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved');
+        if (approvedTrainers.length > 0) {
+            const randomTrainer = approvedTrainers[Math.floor(Math.random() * approvedTrainers.length)];
+            mockCustomers[customerIndex].assignedTrainerId = randomTrainer.id;
+            mockCustomers[customerIndex].assignedTrainerName = randomTrainer.name;
+        }
+    }
   } else {
     const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
     if (instructorIndex !== -1) {
@@ -451,6 +463,12 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
   const user = allUsers.find(u => u.id === userId);
   
   if (user) {
+    if (user.uniqueId.startsWith('CU') && user.assignedTrainerId && !user.assignedTrainerName) {
+      const trainer = mockInstructors.find(i => i.id === user.assignedTrainerId);
+      if (trainer) {
+          user.assignedTrainerName = trainer.name;
+      }
+    }
     console.log(`[mock-data] fetchUserById for ID '${userId}':`, JSON.parse(JSON.stringify(user)));
   } else {
     console.log(`[mock-data] fetchUserById for ID '${userId}': User not found.`);
@@ -599,13 +617,21 @@ export const fetchTrainerSummary = async (trainerId: string): Promise<TrainerSum
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     const assignedCustomers = mockCustomers.filter(c => c.assignedTrainerId === trainerId && c.approvalStatus === 'Approved');
     
+    // Calculate average rating for the trainer
+    const trainerFeedback = mockFeedback.filter(f => f.trainerId === trainerId);
+    let avgRating = 4.8; // Default mock rating
+    if (trainerFeedback.length > 0) {
+        const totalRating = trainerFeedback.reduce((acc, curr) => acc + curr.rating, 0);
+        avgRating = parseFloat((totalRating / trainerFeedback.length).toFixed(1));
+    }
+    
     const totalEarnings = assignedCustomers.length * 2000; // Mock earning per student
     
     const summary: TrainerSummaryData = {
         totalStudents: assignedCustomers.length,
         totalEarnings: totalEarnings,
         upcomingLessons: assignedCustomers.filter(c => c.upcomingLesson && new Date(c.upcomingLesson) > new Date()).length,
-        rating: 4.8 // Mock rating
+        rating: avgRating
     };
     return summary;
 }
@@ -620,5 +646,36 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
     }
     return false;
 };
+
+// --- Feedback Management ---
+
+export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  const newFeedback: Feedback = {
+    id: `fb-${Date.now()}`,
+    customerId,
+    customerName,
+    trainerId,
+    trainerName,
+    rating,
+    comment,
+    submissionDate: format(new Date(), 'MMM dd, yyyy HH:mm'),
+  };
+  mockFeedback.unshift(newFeedback);
+  
+  const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
+  if (customerIndex !== -1) {
+    mockCustomers[customerIndex].feedbackSubmitted = true;
+  }
+
+  saveDataToLocalStorage();
+  return true;
+};
+
+export const fetchAllFeedback = async (): Promise<Feedback[]> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+    return [...mockFeedback].sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.requestTimestamp).getTime());
+};
+
 
 saveDataToLocalStorage();
