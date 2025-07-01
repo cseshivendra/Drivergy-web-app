@@ -449,7 +449,14 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 3));
   const allUsers = [...mockCustomers, ...mockInstructors];
   const user = allUsers.find(u => u.id === userId);
-  console.log(`[mock-data] fetchUserById for ID '${userId}':`, JSON.parse(JSON.stringify(user)));
+  
+  // Conditionally log the user object to prevent JSON.parse error on undefined
+  if (user) {
+    console.log(`[mock-data] fetchUserById for ID '${userId}':`, JSON.parse(JSON.stringify(user)));
+  } else {
+    console.log(`[mock-data] fetchUserById for ID '${userId}': User not found.`);
+  }
+
   return user || null;
 };
 
