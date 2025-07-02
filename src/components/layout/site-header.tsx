@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -26,6 +27,8 @@ import {
   SheetContent,
   SheetTrigger,
   SheetClose,
+  SheetHeader,
+  SheetTitle,
 } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/auth-context';
@@ -177,6 +180,9 @@ export default function SiteHeader() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[80vw]">
+              <SheetHeader>
+                <SheetTitle className="sr-only">Site Navigation</SheetTitle>
+              </SheetHeader>
               <div className="mt-8 flex flex-col gap-6">
                 <nav className="flex flex-col gap-4">
                   {navLinks.map((link) => (

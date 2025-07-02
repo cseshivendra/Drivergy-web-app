@@ -13,9 +13,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-  useSidebar, // Import useSidebar to check if mobile
 } from '@/components/ui/sidebar';
-import { SheetTitle } from '@/components/ui/sheet';
 import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -26,7 +24,6 @@ export default function AppSidebar() {
   const { user } = useAuth();
   const [referralsOpen, setReferralsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
-  const { isMobile } = useSidebar(); // Get isMobile state
 
   const AppLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
@@ -60,7 +57,6 @@ export default function AppSidebar() {
         <AppLogo />
       </SidebarHeader>
       <SidebarContent className="p-2">
-        {isMobile && <SheetTitle className="sr-only">Main Navigation</SheetTitle>}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
