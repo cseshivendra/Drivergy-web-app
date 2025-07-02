@@ -6,8 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Car, User, UserCog, ArrowLeft, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, User, UserCog, ArrowLeft, Facebook, Twitter, Instagram, Linkedin, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/context/theme-context';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -38,6 +39,7 @@ export default function UnifiedRegisterPage() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
   const searchParams = useSearchParams();
   const planFromUrl = searchParams.get('plan');
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (planFromUrl) {
@@ -59,9 +61,19 @@ export default function UnifiedRegisterPage() {
       <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
           <SiteLogo />
-          <Button variant="outline" asChild>
-            <Link href="/site">Back to Site</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/site">Back to Site</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       </header>
 
