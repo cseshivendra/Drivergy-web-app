@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube, ExternalLink, FileText, IndianRupee, Receipt, Search, Type, Ticket } from 'lucide-react';
+import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube, ExternalLink, FileText, IndianRupee, Receipt, Search, Type, Ticket, CreditCard } from 'lucide-react';
 import SiteHeader from '@/components/layout/site-header';
 import ChatWidget from '@/components/chatbot/chat-widget';
 
@@ -61,6 +61,13 @@ const rtoServices = [
         icon: Search,
         link: "https://vahan.parivahan.gov.in/nrservices/faces/user/searchstatus.xhtml",
         imageHint: "vehicle search details"
+    },
+    {
+        title: "Recharge Your FASTag",
+        description: "Easily recharge your FASTag for any vehicle through the official IHMCL portal or your issuing bank.",
+        icon: CreditCard,
+        link: "https://fastag.ihmcl.com/",
+        imageHint: "fastag recharge car"
     }
 ];
 
