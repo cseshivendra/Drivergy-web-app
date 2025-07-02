@@ -537,22 +537,12 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 
   if (customerIndex !== -1 && trainer) {
     const customer = mockCustomers[customerIndex];
-    customer.approvalStatus = 'Approved';
+    // Change status to 'In Progress' for trainer approval, not 'Approved'
+    customer.approvalStatus = 'In Progress';
     customer.assignedTrainerId = trainer.id;
     customer.assignedTrainerName = trainer.name;
     
-    // Set a mock upcoming lesson date
-    customer.upcomingLesson = format(addDays(new Date(), Math.floor(Math.random() * 5) + 2), 'MMM dd, yyyy, h:mm a');
-
-    // Update summary data
-    mockSummaryData.activeSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
-    const allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests];
-    const requestIndex = allRequests.findIndex(r => r.customerName === customer.name && r.status === 'Pending');
-    if (requestIndex !== -1) {
-       allRequests[requestIndex].status = 'Active'; 
-    }
-    
-    mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+    // Do not set upcoming lesson yet, wait for trainer approval
     
     saveDataToLocalStorage();
     return true;
@@ -686,6 +676,51 @@ export const fetchCourses = async (): Promise<Course[]> => {
 };
 
 // --- Trainer Specific Functions ---
+
+export const fetchPendingAssignments = async (trainerId: string): Promise<UserProfile[]> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+    const assigned = mockCustomers.filter(
+        c => c.assignedTrainerId === trainerId && c.approvalStatus === 'In Progress'
+    );
+    return assigned;
+};
+
+export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
+    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
+    const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
+
+    if (customerIndex !== -1) {
+        const customer = mockCustomers[customerIndex];
+        if (newStatus === 'Approved') {
+            customer.approvalStatus = 'Approved';
+            // Set mock upcoming lesson date upon approval
+            customer.upcomingLesson = format(addDays(new Date(), Math.floor(Math.random() * 5) + 2), 'MMM dd, yyyy, h:mm a');
+            
+            // Update lesson request status from Pending to Active
+            const vehicleType = customer.vehicleInfo === 'Two-Wheeler' ? 'Two-Wheeler' : 'Four-Wheeler';
+            const requestList = vehicleType === 'Two-Wheeler' ? mockTwoWheelerRequests : mockFourWheelerRequests;
+            const requestIndex = requestList.findIndex(r => r.customerName === customer.name && r.status === 'Pending');
+            if (requestIndex !== -1) {
+                requestList[requestIndex].status = 'Active';
+            }
+            
+            // Update summary data
+            mockSummaryData.activeSubscriptions++;
+            mockSummaryData.pendingRequests = Math.max(0, mockSummaryData.pendingRequests - 1);
+            mockSummaryData.totalCertifiedTrainers++;
+
+        } else if (newStatus === 'Rejected') {
+            customer.approvalStatus = 'Pending'; // Back to admin queue
+            customer.assignedTrainerId = undefined;
+            customer.assignedTrainerName = undefined;
+        }
+
+        saveDataToLocalStorage();
+        return true;
+    }
+    return false;
+};
+
 
 export const fetchAssignedCustomers = async (trainerId: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));

@@ -3,14 +3,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance, fetchUserById } from '@/lib/mock-data';
+import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance, fetchUserById, fetchPendingAssignments, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
 import type { UserProfile, TrainerSummaryData, ApprovalStatusType } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass } from 'lucide-react';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
@@ -65,6 +65,7 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [students, setStudents] = useState<UserProfile[]>([]);
+  const [pendingAssignments, setPendingAssignments] = useState<UserProfile[]>([]);
   const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,14 +73,16 @@ export default function TrainerDashboard() {
     if (!user) return;
     setLoading(true);
     try {
-      const [summaryData, studentData, profileData] = await Promise.all([
+      const [summaryData, studentData, profileData, assignmentsData] = await Promise.all([
         fetchTrainerSummary(user.uid),
         fetchAssignedCustomers(user.uid),
         fetchUserById(user.uid),
+        fetchPendingAssignments(user.uid)
       ]);
       setSummary(summaryData);
       setStudents(studentData);
       setTrainerProfile(profileData);
+      setPendingAssignments(assignmentsData);
     } catch (error) {
       console.error("Failed to fetch trainer dashboard data", error);
       toast({ title: "Error", description: "Could not load dashboard data.", variant: "destructive" });
@@ -91,6 +94,16 @@ export default function TrainerDashboard() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
+    const success = await updateAssignmentStatusByTrainer(studentId, status);
+    if (success) {
+      toast({ title: `Request ${status}`, description: `You have ${status.toLowerCase()} the request for ${studentName}.` });
+      fetchData(); // Refresh all data
+    } else {
+      toast({ title: 'Error', description: 'Could not update assignment status.', variant: 'destructive' });
+    }
+  };
 
   const handleAttendance = async (studentId: string, studentName: string, status: 'Present' | 'Absent') => {
     const success = await updateUserAttendance(studentId, status);
@@ -177,6 +190,67 @@ export default function TrainerDashboard() {
           <SummaryCard title="Upcoming Lessons" value={summary?.upcomingLessons ?? 0} icon={CalendarClock} description="Confirmed upcoming sessions" />
           <SummaryCard title="Your Rating" value={summary?.rating ?? 0} icon={Star} description="Average student rating" />
        </div>
+
+      <Card className="shadow-lg border-primary">
+          <CardHeader>
+              <CardTitle className="font-headline text-2xl font-semibold flex items-center">
+                <BellRing className="inline-block mr-3 h-6 w-6 align-middle" />
+                New Student Requests
+              </CardTitle>
+          </CardHeader>
+          <CardContent className="overflow-x-auto">
+              <Table>
+                  <TableHeader>
+                      <TableRow>
+                          <TableHead>Student Name</TableHead>
+                          <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact No.</TableHead>
+                          <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Pickup Location</TableHead>
+                          <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead>
+                          <TableHead className="text-center">Actions</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {pendingAssignments.length > 0 ? pendingAssignments.map(student => (
+                          <TableRow key={student.id}>
+                              <TableCell className="font-medium">{student.name}</TableCell>
+                              <TableCell>{student.phone || 'N/A'}</TableCell>
+                              <TableCell className="min-w-[200px]">{`${student.flatHouseNumber}, ${student.street}, ${student.district}`}</TableCell>
+                              <TableCell>{student.vehicleInfo || 'N/A'}</TableCell>
+                              <TableCell className="text-center">
+                                  <div className="flex items-center justify-center space-x-1.5">
+                                      <Button 
+                                        variant="default" size="sm" 
+                                        onClick={() => handleAssignmentResponse(student.id, student.name, 'Approved')}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        <Check className="h-4 w-4" />
+                                        <span className="ml-1.5 hidden sm:inline">Accept</span>
+                                      </Button>
+                                      <Button 
+                                        variant="destructive" size="sm" 
+                                        onClick={() => handleAssignmentResponse(student.id, student.name, 'Rejected')}
+                                      >
+                                        <X className="h-4 w-4" />
+                                        <span className="ml-1.5 hidden sm:inline">Reject</span>
+                                      </Button>
+                                  </div>
+                              </TableCell>
+                          </TableRow>
+                      )) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                    <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                                    <p className="text-lg">No new student requests.</p>
+                                    <p className="text-sm">Check back later for new assignments from the admin.</p>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                      )}
+                  </TableBody>
+              </Table>
+          </CardContent>
+      </Card>
 
       <Card className="shadow-lg border-primary">
           <CardHeader>
