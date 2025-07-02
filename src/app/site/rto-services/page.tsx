@@ -1,11 +1,10 @@
-
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube, ExternalLink, FileText, IndianRupee, Receipt, Search, Type } from 'lucide-react';
+import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube, ExternalLink, FileText, IndianRupee, Receipt, Search, Type, Ticket } from 'lucide-react';
 import SiteHeader from '@/components/layout/site-header';
 import ChatWidget from '@/components/chatbot/chat-widget';
 
@@ -38,7 +37,7 @@ const rtoServices = [
     {
         title: "Check Your Challan Status",
         description: "Check the status of any traffic challans issued against your vehicle or driving license using the e-Challan system.",
-        icon: Search,
+        icon: Ticket,
         link: "https://echallan.parivahan.gov.in/index/accused-challan",
         imageHint: "traffic ticket search"
     },
@@ -55,6 +54,13 @@ const rtoServices = [
         icon: Type,
         link: "https://www.bookmyhsrp.com/",
         imageHint: "number plate car"
+    },
+    {
+        title: "Check Vehicle Details",
+        description: "Find details of any vehicle by entering its registration number on the Vahan portal.",
+        icon: Search,
+        link: "https://vahan.parivahan.gov.in/nrservices/faces/user/searchstatus.xhtml",
+        imageHint: "vehicle search details"
     }
 ];
 
