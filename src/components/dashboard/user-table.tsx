@@ -375,7 +375,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                 {availableTrainers.length > 0 ? (
                   availableTrainers.map(trainer => (
                     <SelectItem key={trainer.id} value={trainer.id}>
-                      {trainer.name} ({trainer.location})
+                      {trainer.name} ({[trainer.gender, trainer.location].filter(Boolean).join(', ')})
                     </SelectItem>
                   ))
                 ) : (
