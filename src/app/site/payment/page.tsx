@@ -79,7 +79,7 @@ function PaymentGateway() {
 
   if (!user) {
     const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
-    const registerUrl = `/site/register/customer?plan=${encodeURIComponent(plan)}&price=${price}`;
+    const registerUrl = `/site/register?plan=${encodeURIComponent(plan)}&price=${price}`;
     
     return (
        <Card className="w-full max-w-lg shadow-xl">

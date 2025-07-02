@@ -232,28 +232,12 @@ export default function PortfolioSitePage() {
               </DropdownMenu>
             ) : (
               <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button>
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Register
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/site/register/customer">
-                        <User className="mr-2 h-4 w-4" />
-                        Register as Customer
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/site/register/trainer">
-                        <UserCog className="mr-2 h-4 w-4" />
-                        Register as Trainer
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button asChild>
+                  <Link href="/site/register">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Sign Up
+                  </Link>
+                </Button>
                 
                 <Button asChild variant="outline">
                   <Link href="/login">
