@@ -1,5 +1,5 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData } from '@/types';
 import { addDays, format, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
@@ -91,6 +91,9 @@ const sampleCustomer: UserProfile = {
   myReferralCode: 'SHIVENDRA2024',
   attendance: 'Pending',
   photoURL: 'https://placehold.co/100x100.png?text=SS',
+  subscriptionStartDate: format(addDays(new Date(), 3), 'MMM dd, yyyy'),
+  totalLessons: 20,
+  completedLessons: 5,
 };
 
 const sampleTrainer: UserProfile = {
@@ -305,6 +308,15 @@ export const changeUserPassword = async (userId: string, currentPassword: string
 export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
   const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now(); 
   const newId = `u${newIdSuffix}`;
+  const getLessonsForPlan = (plan: string): number => {
+    switch (plan) {
+      case 'Premium': return 20;
+      case 'Gold': return 15;
+      case 'Basic': return 10;
+      default: return 0;
+    }
+  };
+
   const newUser: UserProfile = {
     id: newId,
     uniqueId: `CU${202500 + newIdSuffix}`,
@@ -332,6 +344,9 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
     attendance: 'Pending',
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
+    subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
+    totalLessons: getLessonsForPlan(data.subscriptionPlan),
+    completedLessons: 0,
   };
   mockCustomers.push(newUser);
   
@@ -754,14 +769,23 @@ export const fetchTrainerSummary = async (trainerId: string): Promise<TrainerSum
 }
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-    const studentIndex = mockCustomers.findIndex(c => c.id === studentId);
-    if (studentIndex !== -1) {
-        mockCustomers[studentIndex].attendance = status;
-        saveDataToLocalStorage();
-        return true;
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
+  const studentIndex = mockCustomers.findIndex(c => c.id === studentId);
+  if (studentIndex !== -1) {
+    const student = mockCustomers[studentIndex];
+    // Only increment lessons if marking as 'Present' and it wasn't already 'Present'
+    if (status === 'Present' && student.attendance !== 'Present' && student.completedLessons !== undefined && student.totalLessons !== undefined) {
+      if (student.completedLessons < student.totalLessons) {
+        student.completedLessons += 1;
+      }
     }
-    return false;
+    student.attendance = status;
+    // Logic to clear upcoming lesson and set a new one could go here. For now, we keep it simple.
+    
+    saveDataToLocalStorage();
+    return true;
+  }
+  return false;
 };
 
 // --- Feedback Management ---
@@ -793,6 +817,33 @@ export const fetchAllFeedback = async (): Promise<Feedback[]> => {
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     return [...mockFeedback].sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.requestTimestamp).getTime());
 };
+
+export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  const progressData: LessonProgressData[] = mockCustomers
+    .filter(c => c.approvalStatus === 'Approved' && c.assignedTrainerName)
+    .map(c => ({
+      studentId: c.uniqueId,
+      studentName: c.name,
+      trainerName: c.assignedTrainerName!,
+      subscriptionPlan: c.subscriptionPlan,
+      totalLessons: c.totalLessons || 0,
+      completedLessons: c.completedLessons || 0,
+      remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+    }));
+  return progressData.sort((a, b) => a.remainingLessons - b.remainingLessons);
+};
+
+export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
+  const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
+  if (customerIndex !== -1) {
+    mockCustomers[customerIndex].subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
+    saveDataToLocalStorage();
+    return true;
+  }
+  return false;
+}
 
 
 saveDataToLocalStorage();

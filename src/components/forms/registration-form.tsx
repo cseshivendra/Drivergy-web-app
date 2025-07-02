@@ -37,11 +37,14 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff, CalendarIcon } from 'lucide-react'; 
 import { useMemo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { Calendar } from '../ui/calendar';
+import { format } from 'date-fns';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -86,6 +89,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         photoIdType: '', 
         photoIdNumber: '',
         photoIdFile: undefined,
+        subscriptionStartDate: undefined,
       } as CustomerRegistrationFormValues;
     } else { // trainer
       return {
@@ -485,7 +489,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 )}
               />
             </div>
-
+            
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
                 control={form.control}
@@ -509,8 +513,52 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     </FormItem>
                 )}
                 />
+                <FormField
+                  control={form.control}
+                  name="subscriptionStartDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col pt-2">
+                      <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-primary" />Subscription Start Date<span className="text-destructive ml-1">*</span></FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        Your lesson plan will start from this date.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
-            
+
             <FormField
               control={form.control}
               name="dlStatus"
@@ -655,7 +703,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="yearsOfExperience"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience</FormLabel>
+                    <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel>
                     <FormControl>
                         <Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                     </FormControl>

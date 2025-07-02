@@ -8,12 +8,13 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchExistingInstructors } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList } from 'lucide-react';
+import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchExistingInstructors, fetchCustomerLessonProgress } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData } from '@/types';
+import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import LessonProgressTable from './lesson-progress-table';
 
 export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -23,6 +24,7 @@ export default function AdminDashboard() {
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
@@ -31,6 +33,7 @@ export default function AdminDashboard() {
   const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
   const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
+  const [loadingLessonProgress, setLoadingLessonProgress] = useState(true);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,6 +62,12 @@ export default function AdminDashboard() {
     fetchAllFeedback().then(data => {
       setFeedback(data);
       setLoadingFeedback(false);
+    });
+
+    setLoadingLessonProgress(true);
+    fetchCustomerLessonProgress().then(data => {
+      setLessonProgress(data);
+      setLoadingLessonProgress(false);
     });
   }, []);
 
@@ -180,6 +189,11 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="management" className="mt-6 space-y-8">
+            <LessonProgressTable
+              title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
+              data={lessonProgress}
+              isLoading={loadingLessonProgress}
+            />
             <UserTable 
               title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
               users={existingInstructors} 

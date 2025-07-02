@@ -40,6 +40,9 @@ export interface UserProfile {
   feedbackSubmitted?: boolean;
   gender?: string;
   photoURL?: string;
+  subscriptionStartDate?: string;
+  totalLessons?: number;
+  completedLessons?: number;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -198,6 +201,16 @@ export const DistrictsByState: Record<string, string[]> = {
   "West Bengal": ["Alipurduar","Bankura","Birbhum","Cooch Behar","Dakshin Dinajpur (South Dinajpur)","Darjeeling","Hooghly","Howrah","Jalpaiguri","Jhargram","Kalimpong","Kolkata","Malda","Murshidabad","Nadia","North 24 Parganas","Paschim Medinipur (West Medinipur)","Paschim (West) Burdwan","Purba Burdwan (Bardhaman)","Purba Medinipur (East Medinipur)","Purulia","South 24 Parganas","Uttar Dinajpur (North Dinajpur)"],
 };
 
+export interface LessonProgressData {
+  studentId: string;
+  studentName: string;
+  trainerName: string;
+  subscriptionPlan: string;
+  totalLessons: number;
+  completedLessons: number;
+  remainingLessons: number;
+}
+
 export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] as const;
 export const SpecializationOptions = ["Two-Wheeler", "Car", "Three-Wheeler", "Defensive Driving"] as const;
 export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)", "Car (Automatic)", "Three-Wheeler"] as const;
@@ -297,6 +310,9 @@ const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
   photoIdFile: fileField,
+  subscriptionStartDate: z.date({
+    required_error: "A subscription start date is required.",
+  }),
 });
 
 const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
