@@ -436,7 +436,7 @@ export const fetchCustomers = async (location?: string, subscription?: string, s
 export const fetchInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
-  let results = mockInstructors.filter(i => i.approvalStatus === 'Pending');
+  let results = mockInstructors.filter(i => i.approvalStatus === 'Pending' || i.approvalStatus === 'In Progress');
 
   if (location && location.trim() !== '' && location !== 'all') {
     results = results.filter(i => i.location.toLowerCase() === location.toLowerCase().trim());
@@ -538,7 +538,7 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
         originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
         requestedRescheduleDate: format(addDays(originalDate, 2), 'MMM dd, yyyy, h:mm a'),
         status: 'Pending',
-        requestTimestamp: format(new Date(), 'MMM dd, yyyy, h:mm a'),
+        requestTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
     };
     mockRescheduleRequests.unshift(newRequest);
     mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
