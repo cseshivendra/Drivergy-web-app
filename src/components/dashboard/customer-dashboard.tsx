@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRouter } from 'next/navigation';
 
 
 // Helper component for Star Rating input
@@ -113,6 +114,7 @@ const timeSlots = [
 ];
 
 export default function CustomerDashboard() {
+  const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<(UserProfile & { upcomingLesson?: string }) | null>(null);
@@ -139,6 +141,9 @@ export default function CustomerDashboard() {
           if (userProfile.subscriptionStartDate) {
             const startDate = parse(userProfile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
             setIsStartDateEditable(isFuture(startDate));
+          } else {
+            // Allow setting the start date if it doesn't exist yet
+            setIsStartDateEditable(true);
           }
 
           const lessonDateString = userProfile.upcomingLesson;
@@ -194,6 +199,7 @@ export default function CustomerDashboard() {
   
   const handleUpgradePlan = () => {
     toast({ title: 'Redirecting to Plans', description: 'You can choose a new plan on our main site.' });
+    router.push('/site#subscriptions');
   };
   
   const handleCancelPlan = () => {
