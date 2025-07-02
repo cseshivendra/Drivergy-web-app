@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
+import { Locations, GenderOptions } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+
 
 interface UserTableProps {
   title: ReactNode;
@@ -34,6 +37,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   const [availableTrainers, setAvailableTrainers] = useState<UserProfile[]>([]);
   const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [assignFilters, setAssignFilters] = useState<{ location?: string; gender?: string }>({});
+  const [loadingTrainers, setLoadingTrainers] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1); 
@@ -41,9 +46,14 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   
   useEffect(() => {
     if (isAssignDialogOpen) {
-      fetchApprovedInstructors().then(setAvailableTrainers);
+      setLoadingTrainers(true);
+      fetchApprovedInstructors(assignFilters).then(trainers => {
+        setAvailableTrainers(trainers);
+        setLoadingTrainers(false);
+      });
     }
-  }, [isAssignDialogOpen]);
+  }, [isAssignDialogOpen, assignFilters]);
+
 
   const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -62,6 +72,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     setSelectedUserForAssignment(user);
     setIsAssignDialogOpen(true);
     setSelectedTrainerId(null);
+    setAssignFilters({});
   };
   
   const handleConfirmAssignment = async () => {
@@ -359,30 +370,70 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
           <DialogHeader>
             <DialogTitle>Assign Trainer to {selectedUserForAssignment?.name}</DialogTitle>
             <DialogDescription>
-              Select an approved trainer from the list below to assign to this customer. This will also approve the customer's registration.
+              Filter and select an approved trainer. This will also approve the customer's registration.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="trainer-select">Available Trainers</Label>
-            <Select
-              value={selectedTrainerId || ''}
-              onValueChange={setSelectedTrainerId}
-            >
-              <SelectTrigger id="trainer-select">
-                <SelectValue placeholder="Select a trainer" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTrainers.length > 0 ? (
-                  availableTrainers.map(trainer => (
-                    <SelectItem key={trainer.id} value={trainer.id}>
-                      {trainer.name} ({[trainer.gender, trainer.location].filter(Boolean).join(', ')})
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="none" disabled>No approved trainers available</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                      <Label htmlFor="assign-location-filter">Location</Label>
+                      <Select
+                          value={assignFilters.location || 'all'}
+                          onValueChange={(value) => setAssignFilters(prev => ({...prev, location: value === 'all' ? undefined : value}))}
+                      >
+                          <SelectTrigger id="assign-location-filter">
+                              <SelectValue placeholder="Filter by Location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="all">All Locations</SelectItem>
+                              {Locations.map(loc => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="assign-gender-filter">Gender</Label>
+                      <Select
+                           value={assignFilters.gender || 'all'}
+                           onValueChange={(value) => setAssignFilters(prev => ({...prev, gender: value === 'all' ? undefined : value}))}
+                      >
+                          <SelectTrigger id="assign-gender-filter">
+                              <SelectValue placeholder="Filter by Gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="all">Any Gender</SelectItem>
+                              {GenderOptions.filter(o => o !== 'Prefer not to say' && o !== 'Other').map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  </div>
+              </div>
+              
+              <Separator className="my-2" />
+
+              <div className="space-y-2">
+                  <Label htmlFor="trainer-select">Available Trainers</Label>
+                  <Select
+                      value={selectedTrainerId || ''}
+                      onValueChange={setSelectedTrainerId}
+                      disabled={loadingTrainers}
+                  >
+                      <SelectTrigger id="trainer-select">
+                          <SelectValue placeholder={loadingTrainers ? "Loading trainers..." : "Select a trainer"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {loadingTrainers ? (
+                              <SelectItem value="loading" disabled>Loading...</SelectItem>
+                          ) : availableTrainers.length > 0 ? (
+                              availableTrainers.map(trainer => (
+                                  <SelectItem key={trainer.id} value={trainer.id}>
+                                      {trainer.name} ({[trainer.gender, trainer.location].filter(Boolean).join(', ')})
+                                  </SelectItem>
+                              ))
+                          ) : (
+                              <SelectItem value="none" disabled>No trainers match filters</SelectItem>
+                          )}
+                      </SelectContent>
+                  </Select>
+              </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>Cancel</Button>

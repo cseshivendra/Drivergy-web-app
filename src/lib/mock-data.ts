@@ -508,9 +508,19 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
   return user || null;
 };
 
-export const fetchApprovedInstructors = async (): Promise<UserProfile[]> => {
+export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-  return mockInstructors.filter(i => i.approvalStatus === 'Approved');
+  let results = mockInstructors.filter(i => i.approvalStatus === 'Approved');
+
+  if (filters.location && filters.location !== 'all') {
+    results = results.filter(i => i.location === filters.location);
+  }
+
+  if (filters.gender && filters.gender !== 'all') {
+    results = results.filter(i => i.gender === filters.gender);
+  }
+
+  return results;
 };
 
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
