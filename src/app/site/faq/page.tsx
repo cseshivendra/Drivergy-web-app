@@ -9,7 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Car, HelpCircle, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, HelpCircle, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
@@ -117,6 +117,10 @@ export default function FaqPage() {
                     <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                         <Linkedin className="h-5 w-5" />
                         <span className="sr-only">LinkedIn</span>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Youtube className="h-5 w-5" />
+                        <span className="sr-only">Youtube</span>
                     </a>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">

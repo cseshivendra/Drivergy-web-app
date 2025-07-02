@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Lock, Car, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { CreditCard, Calendar, Lock, Car, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -257,6 +257,10 @@ export default function PaymentPage() {
                     <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                         <Linkedin className="h-5 w-5" />
                         <span className="sr-only">LinkedIn</span>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Youtube className="h-5 w-5" />
+                        <span className="sr-only">Youtube</span>
                     </a>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">

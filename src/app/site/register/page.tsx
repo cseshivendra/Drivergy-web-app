@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Car, User, UserCog, ArrowLeft, Facebook, Twitter, Instagram, Linkedin, Sun, Moon } from 'lucide-react';
+import { Car, User, UserCog, ArrowLeft, Facebook, Twitter, Instagram, Linkedin, Sun, Moon, Youtube } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/context/theme-context';
 import SiteHeader from '@/components/layout/site-header';
@@ -130,10 +130,14 @@ export default function UnifiedRegisterPage() {
                   <Linkedin className="h-5 w-5" />
                   <span className="sr-only">LinkedIn</span>
               </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Youtube className="h-5 w-5" />
+                  <span className="sr-only">Youtube</span>
+              </a>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">
               <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="currentColor" className="h-5 w-5 text-saffron">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-saffron">
                     <path d="M12.96,2.83,4.29,7.75a1,1,0,0,0-.54.88V15.37a1,1,0,0,0,.54.88l8.67,4.92a1,1,0,0,0,1.08,0l8.67-4.92a1,1,0,0,0,.54-.88V8.63a1,1,0,0,0-.54-.88L14.04,2.83A1,1,0,0,0,12.96,2.83ZM13.5,15.55a2.17,2.17,0,1,1,2.17-2.17A2.17,2.17,0,0,1,13.5,15.55Z" />
                   </svg>
                   <span className="font-semibold text-foreground">Startup India</span>

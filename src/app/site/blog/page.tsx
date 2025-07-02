@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -6,7 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { useState } from 'react';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
@@ -150,6 +149,10 @@ export default function BlogPage() {
                     <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                         <Linkedin className="h-5 w-5" />
                         <span className="sr-only">LinkedIn</span>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Youtube className="h-5 w-5" />
+                        <span className="sr-only">Youtube</span>
                     </a>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">

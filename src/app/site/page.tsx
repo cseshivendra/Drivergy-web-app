@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn, Youtube } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -545,6 +545,10 @@ export default function PortfolioSitePage() {
                     <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                         <Linkedin className="h-5 w-5" />
                         <span className="sr-only">LinkedIn</span>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                        <Youtube className="h-5 w-5" />
+                        <span className="sr-only">Youtube</span>
                     </a>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">
