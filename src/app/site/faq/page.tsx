@@ -52,6 +52,16 @@ const faqData = [
       question: "What if I need to cancel or reschedule a lesson?",
       answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
     },
+    {
+      id: "faq-6",
+      question: "How do I redeem a coupon code?",
+      answer: "You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount."
+    },
+    {
+      id: "faq-7",
+      question: "How can I use the points earned from referrals?",
+      answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey."
+    }
 ];
 
 export default function FaqPage() {
