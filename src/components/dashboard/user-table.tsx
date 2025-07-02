@@ -148,6 +148,16 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
       description: `Opening details for ${user.name} in a new tab.`,
     });
   };
+  
+  const getStatusColor = (status: ApprovalStatusType) => {
+    switch (status) {
+      case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
+      case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
+      case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
+      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
+    }
+  };
 
 
   const renderSkeletons = () => (
@@ -160,6 +170,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell> 
         <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-9 w-[160px]" /></TableCell> 
       </TableRow>
     ))
@@ -183,6 +194,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                   <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
                   <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
                   <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
+                  <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>
                   <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Verification</TableHead>
                 </TableRow>
               </TableHeader>
@@ -209,6 +221,11 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                         <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
                         <TableCell>{user.registrationTimestamp}</TableCell>
                         <TableCell>
+                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus)}`}>
+                            {user.approvalStatus}
+                          </span>
+                        </TableCell>
+                        <TableCell>
                            {isTrainer ? (
                             <div className="flex items-center justify-center space-x-1.5">
                               <Button 
@@ -233,7 +250,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                                     <span>Approved</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'In Progress')}>
-                                    <Hourglass className="mr-2 h-4 w-4 text-yellow-500" />
+                                    <Hourglass className="mr-2 h-4 w-4 text-blue-500" />
                                     <span>In Progress</span>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}>
@@ -283,7 +300,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center"> 
+                    <TableCell colSpan={9} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                         <p className="text-lg">No pending enrollments found.</p>

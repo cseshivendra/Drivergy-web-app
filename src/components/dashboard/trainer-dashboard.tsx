@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance, fetchUserById } from '@/lib/mock-data';
-import type { UserProfile, TrainerSummaryData } from '@/types';
+import type { UserProfile, TrainerSummaryData, ApprovalStatusType } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -38,6 +38,27 @@ const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
     </text>
   </svg>
 );
+
+const getStatusBadgeVariant = (status: ApprovalStatusType): "default" | "secondary" | "destructive" | "outline" => {
+    switch(status) {
+        case 'Approved': return 'default';
+        case 'Rejected': return 'destructive';
+        case 'Pending':
+        case 'In Progress':
+        default:
+            return 'secondary';
+    }
+}
+
+const getStatusBadgeClass = (status: ApprovalStatusType): string => {
+     switch (status) {
+      case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
+      case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
+      case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
+      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+}
 
 export default function TrainerDashboard() {
   const { user } = useAuth();
@@ -117,7 +138,9 @@ export default function TrainerDashboard() {
                     <CardDescription className="text-lg mt-4">
                         <div className="flex items-center justify-center gap-2">
                             <span>Verification Status:</span>
-                            <Badge variant="outline" className="text-base border-yellow-400 text-yellow-600">{trainerProfile.approvalStatus}</Badge>
+                            <Badge className={`text-base ${getStatusBadgeClass(trainerProfile.approvalStatus)}`}>
+                                {trainerProfile.approvalStatus}
+                            </Badge>
                         </div>
                     </CardDescription>
                 </CardHeader>
@@ -140,7 +163,7 @@ export default function TrainerDashboard() {
             <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
               Welcome, {trainerProfile.name}!
             </h1>
-            <Badge variant="default" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700 text-base">
+            <Badge className={`text-base ${getStatusBadgeClass(trainerProfile.approvalStatus)}`}>
                 <ShieldCheck className="mr-2 h-5 w-5"/>
                 Verified
             </Badge>
