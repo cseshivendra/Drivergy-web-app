@@ -477,6 +477,40 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
   return user || null;
 };
 
+export const fetchApprovedInstructors = async (): Promise<UserProfile[]> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
+  return mockInstructors.filter(i => i.approvalStatus === 'Approved');
+};
+
+export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
+  const trainer = mockInstructors.find(t => t.id === trainerId);
+
+  if (customerIndex !== -1 && trainer) {
+    const customer = mockCustomers[customerIndex];
+    customer.approvalStatus = 'Approved';
+    customer.assignedTrainerId = trainer.id;
+    customer.assignedTrainerName = trainer.name;
+    
+    // Set a mock upcoming lesson date
+    customer.upcomingLesson = format(addDays(new Date(), Math.floor(Math.random() * 5) + 2), 'MMM dd, yyyy, h:mm a');
+
+    // Update summary data
+    mockSummaryData.activeSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
+    const allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests];
+    const requestIndex = allRequests.findIndex(r => r.customerName === customer.name && r.status === 'Pending');
+    if (requestIndex !== -1) {
+       allRequests[requestIndex].status = 'Active'; 
+    }
+    
+    mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+    
+    saveDataToLocalStorage();
+    return true;
+  }
+  return false;
+};
 
 // --- Lesson Request Management ---
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {

@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User } from 'lucide-react';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
@@ -125,12 +125,13 @@ export default function TrainerDashboard() {
                 My Students
               </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
               <Table>
                   <TableHeader>
                       <TableRow>
                           <TableHead>Student Name</TableHead>
-                          <TableHead>Plan</TableHead>
+                          <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact No.</TableHead>
+                          <TableHead><CalendarClock className="inline-block mr-2 h-4 w-4" />Upcoming Lesson</TableHead>
                           <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Pickup Location</TableHead>
                           <TableHead>Attendance</TableHead>
                           <TableHead className="text-center">Actions</TableHead>
@@ -140,12 +141,9 @@ export default function TrainerDashboard() {
                       {students.length > 0 ? students.map(student => (
                           <TableRow key={student.id}>
                               <TableCell className="font-medium">{student.name}</TableCell>
-                              <TableCell>
-                                <Badge variant={student.subscriptionPlan === 'Premium' ? 'default' : 'secondary'}>
-                                  {student.subscriptionPlan}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{`${student.flatHouseNumber}, ${student.street}, ${student.district}`}</TableCell>
+                              <TableCell>{student.phone || 'N/A'}</TableCell>
+                              <TableCell>{student.upcomingLesson || 'N/A'}</TableCell>
+                              <TableCell className="min-w-[200px]">{`${student.flatHouseNumber}, ${student.street}, ${student.district}`}</TableCell>
                               <TableCell>
                                 <Badge variant={
                                     student.attendance === 'Present' ? 'default' :
@@ -177,7 +175,7 @@ export default function TrainerDashboard() {
                           </TableRow>
                       )) : (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-24 text-center">
+                            <TableCell colSpan={6} className="h-24 text-center">
                                 <div className="flex flex-col items-center justify-center text-muted-foreground">
                                     <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                                     <p className="text-lg">No students assigned yet.</p>

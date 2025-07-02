@@ -7,11 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { updateUserApprovalStatus } from '@/lib/mock-data';
-
+import { updateUserApprovalStatus, fetchApprovedInstructors, assignTrainerToCustomer } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface UserTableProps {
   title: ReactNode;
@@ -25,10 +27,22 @@ const ITEMS_PER_PAGE = 5;
 export default function UserTable({ title, users, isLoading, onUserActioned }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+  
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [selectedUserForAssignment, setSelectedUserForAssignment] = useState<UserProfile | null>(null);
+  const [availableTrainers, setAvailableTrainers] = useState<UserProfile[]>([]);
+  const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   useEffect(() => {
     setCurrentPage(1); 
   }, [users]);
+  
+  useEffect(() => {
+    if (isAssignDialogOpen) {
+      fetchApprovedInstructors().then(setAvailableTrainers);
+    }
+  }, [isAssignDialogOpen]);
 
   const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -42,9 +56,51 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
+  
+  const openAssignDialog = (user: UserProfile) => {
+    setSelectedUserForAssignment(user);
+    setIsAssignDialogOpen(true);
+    setSelectedTrainerId(null);
+  };
+  
+  const handleConfirmAssignment = async () => {
+    if (!selectedUserForAssignment || !selectedTrainerId) {
+      toast({
+        title: "Assignment Error",
+        description: "Please select a trainer before confirming.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsAssigning(true);
+    const success = await assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
+    
+    if (success) {
+      toast({
+        title: "Assignment Successful",
+        description: `${selectedUserForAssignment.name} has been assigned a trainer.`,
+      });
+      onUserActioned();
+      setIsAssignDialogOpen(false);
+    } else {
+      toast({
+        title: "Assignment Failed",
+        description: "Could not complete the assignment. Please try again.",
+        variant: "destructive",
+      });
+    }
+    setIsAssigning(false);
+  };
 
   const handleUpdateStatus = async (userId: string, userName: string, newStatus: ApprovalStatusType) => {
     try {
+      if (newStatus === 'Approved') {
+        // This case should now be handled by the assignment flow
+        toast({ title: "Action Required", description: "Please use the 'Assign' button to approve and assign a trainer." });
+        return;
+      }
+      
       const success = await updateUserApprovalStatus(userId, newStatus);
       if (success) {
         toast({
@@ -94,135 +150,177 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   );
 
   return (
-    <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
-                <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
-                <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
-                <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
-                <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
-                <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
-                <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
-                <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-medium">{user.uniqueId}</TableCell>
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.contact}</TableCell>
-                    <TableCell>{user.location}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
-                        user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
-                        user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
-                        'bg-muted text-muted-foreground' // Basic plan
-                      }`}>
-                        {user.subscriptionPlan}
-                      </span>
-                    </TableCell>
-                    <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
-                    <TableCell>{user.registrationTimestamp}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center space-x-1.5">
-                        <Button 
-                          variant="outline"
-                          size="sm" 
-                          onClick={() => handleViewDetails(user)}
-                          className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                          aria-label={`View details for ${user.name}`}
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                           <span className="ml-1.5 hidden sm:inline">View</span>
-                        </Button>
-                        <Button 
-                          variant="default" 
-                          size="sm" 
-                          onClick={() => handleUpdateStatus(user.id, user.name, 'Approved')}
-                          className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
-                           aria-label={`Approve ${user.name}`}
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                          <span className="ml-1.5 hidden sm:inline">Approve</span>
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm" 
-                          onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}
-                          className="px-2 py-1"
-                           aria-label={`Reject ${user.name}`}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                           <span className="ml-1.5 hidden sm:inline">Reject</span>
-                        </Button>
+    <>
+      <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
+        <CardHeader>
+          <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
+                  <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
+                  <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
+                  <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
+                  <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
+                  <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
+                  <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
+                  <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
+                  paginatedUsers.map((user) => (
+                    <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-medium">{user.uniqueId}</TableCell>
+                      <TableCell>{user.name}</TableCell>
+                      <TableCell>{user.contact}</TableCell>
+                      <TableCell>{user.location}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
+                          user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
+                          user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
+                          'bg-muted text-muted-foreground' // Basic plan
+                        }`}>
+                          {user.subscriptionPlan}
+                        </span>
+                      </TableCell>
+                      <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
+                      <TableCell>{user.registrationTimestamp}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center space-x-1.5">
+                          <Button 
+                            variant="outline"
+                            size="sm" 
+                            onClick={() => handleViewDetails(user)}
+                            className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
+                            aria-label={`View details for ${user.name}`}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            <span className="ml-1.5 hidden sm:inline">View</span>
+                          </Button>
+                          <Button 
+                            variant="default" 
+                            size="sm" 
+                            onClick={() => openAssignDialog(user)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
+                            aria-label={`Assign trainer for ${user.name}`}
+                          >
+                            <UserCheck className="h-3.5 w-3.5" />
+                            <span className="ml-1.5 hidden sm:inline">Assign</span>
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}
+                            className="px-2 py-1"
+                            aria-label={`Reject ${user.name}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                            <span className="ml-1.5 hidden sm:inline">Reject</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center"> 
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                        <p className="text-lg">No pending enrollments found.</p>
+                        <p className="text-sm">Check back later or adjust filters if applicable.</p>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} className="h-24 text-center"> 
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                      <p className="text-lg">No pending enrollments found.</p>
-                      <p className="text-sm">Check back later or adjust filters if applicable.</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-      {users.length > 0 && !isLoading && (
-        <CardFooter className="flex items-center justify-between pt-4 border-t">
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages} ({users.length} item{users.length === 1 ? '' : 's'})
-          </span>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePreviousPage}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </CardFooter>
-      )}
-      {(users.length === 0 && !isLoading) && (
-         <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
-          <span className="text-sm text-muted-foreground">No data to paginate</span>
-        </CardFooter>
-      )}
-       {isLoading && (
-         <CardFooter className="flex items-center justify-between pt-4 border-t min-h-[68px]">
-          <Skeleton className="h-5 w-20" />
-          <div className="flex space-x-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-20" />
+        </CardContent>
+        {users.length > 0 && !isLoading && (
+          <CardFooter className="flex items-center justify-between pt-4 border-t">
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages} ({users.length} item{users.length === 1 ? '' : 's'})
+            </span>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </CardFooter>
+        )}
+        {(users.length === 0 && !isLoading) && (
+          <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
+            <span className="text-sm text-muted-foreground">No data to paginate</span>
+          </CardFooter>
+        )}
+        {isLoading && (
+          <CardFooter className="flex items-center justify-between pt-4 border-t min-h-[68px]">
+            <Skeleton className="h-5 w-20" />
+            <div className="flex space-x-2">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-20" />
+            </div>
+          </CardFooter>
+        )}
+      </Card>
+      
+      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Trainer to {selectedUserForAssignment?.name}</DialogTitle>
+            <DialogDescription>
+              Select an approved trainer from the list below to assign to this customer. This will also approve the customer's registration.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="trainer-select">Available Trainers</Label>
+            <Select
+              value={selectedTrainerId || ''}
+              onValueChange={setSelectedTrainerId}
+            >
+              <SelectTrigger id="trainer-select">
+                <SelectValue placeholder="Select a trainer" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableTrainers.length > 0 ? (
+                  availableTrainers.map(trainer => (
+                    <SelectItem key={trainer.id} value={trainer.id}>
+                      {trainer.name} ({trainer.location})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="none" disabled>No approved trainers available</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
-        </CardFooter>
-      )}
-    </Card>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleConfirmAssignment} disabled={!selectedTrainerId || isAssigning}>
+              {isAssigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Confirm Assignment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
