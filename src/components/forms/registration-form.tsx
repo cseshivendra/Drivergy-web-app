@@ -167,7 +167,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="username"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Username</FormLabel>
+                <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
                 <FormControl>
                     <Input placeholder="Create a username" {...field} />
                 </FormControl>
@@ -180,7 +180,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="name"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name</FormLabel>
+                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel>
                     <FormControl>
                         <Input placeholder="Enter full name" {...field} />
                     </FormControl>
@@ -195,7 +195,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password</FormLabel>
+                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password<span className="text-destructive ml-1">*</span></FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
@@ -223,7 +223,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password</FormLabel>
+                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password<span className="text-destructive ml-1">*</span></FormLabel>
                    <div className="relative">
                     <FormControl>
                       <Input
@@ -255,7 +255,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Email Address</FormLabel>
+                <FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Email Address<span className="text-destructive ml-1">*</span></FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="you@example.com" {...field} />
                 </FormControl>
@@ -294,7 +294,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Location</FormLabel>
+                <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>
@@ -316,7 +316,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="gender"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender</FormLabel>
+                <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender<span className="text-destructive ml-1">*</span></FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>
@@ -344,7 +344,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="flatHouseNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4 text-primary" />Flat / House No.</FormLabel>
+                    <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4 text-primary" />Flat / House No.<span className="text-destructive ml-1">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., A-101, Flat 4B" {...field} />
                     </FormControl>
@@ -357,7 +357,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="street"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Road / Street Name</FormLabel>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Road / Street Name<span className="text-destructive ml-1">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., M.G. Road" {...field} />
                     </FormControl>
@@ -372,7 +372,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                   name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State</FormLabel>
+                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State<span className="text-destructive ml-1">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
@@ -394,7 +394,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                   name="district"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District</FormLabel>
+                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District<span className="text-destructive ml-1">*</span></FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
                         value={field.value || ''}
@@ -424,7 +424,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="pincode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Pincode</FormLabel>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Pincode<span className="text-destructive ml-1">*</span></FormLabel>
                     <FormControl>
                       <Input type="text" maxLength={6} placeholder="Enter 6-digit pincode" {...field} />
                     </FormControl>
@@ -441,7 +441,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="vehiclePreference"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference</FormLabel>
+                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference<span className="text-destructive ml-1">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl>
                         <SelectTrigger>
@@ -467,7 +467,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="subscriptionPlan"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan</FormLabel>
+                    <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan<span className="text-destructive ml-1">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={!!plan}>
                       <FormControl>
                         <SelectTrigger>
@@ -492,7 +492,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="trainerPreference"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
+                    <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference<span className="text-destructive ml-1">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                         <SelectTrigger>
@@ -516,7 +516,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               name="dlStatus"
               render={({ field }) => (
                   <FormItem>
-                  <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status</FormLabel>
+                  <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status<span className="text-destructive ml-1">*</span></FormLabel>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
                       <FormControl>
                       <SelectTrigger>
@@ -593,7 +593,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="photoIdType"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="flex items-center"><CreditCard className="mr-2 h-4 w-4 text-primary" />Photo ID Type</FormLabel>
+                        <FormLabel className="flex items-center"><CreditCard className="mr-2 h-4 w-4 text-primary" />Photo ID Type<span className="text-destructive ml-1">*</span></FormLabel>
                          <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
@@ -615,7 +615,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="photoIdNumber"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Photo ID Number</FormLabel>
+                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Photo ID Number<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                         <Input placeholder="Enter ID Number" {...field} />
                         </FormControl>
@@ -629,7 +629,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="photoIdFile"
                 render={({ field: { value, onChange, ...fieldProps } }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Photo ID Document</FormLabel>
+                    <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Photo ID Document<span className="text-destructive ml-1">*</span></FormLabel>
                     <FormControl>
                         <Input 
                             type="file" 
@@ -668,7 +668,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="specialization"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization</FormLabel>
+                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                         <SelectTrigger>
@@ -692,7 +692,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="trainerVehicleType"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training</FormLabel>
+                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                             <SelectTrigger>
@@ -714,7 +714,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="vehicleNumber"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number</FormLabel>
+                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                             <Input placeholder="e.g., MH01AB1234" {...field} />
                         </FormControl>
@@ -728,7 +728,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 name="fuelType"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel</FormLabel>
+                    <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                         <SelectTrigger>
@@ -754,7 +754,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="trainerCertificateNumber"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Trainer Certificate No.</FormLabel>
+                        <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Trainer Certificate No.<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                             <Input placeholder="Enter certificate number" {...field} />
                         </FormControl>
@@ -767,7 +767,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="trainerCertificateFile"
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Trainer Certificate</FormLabel>
+                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Trainer Certificate<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                             <Input 
                               type="file" 
@@ -789,7 +789,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="aadhaarCardNumber"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Aadhaar Card No.</FormLabel>
+                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Aadhaar Card No.<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                             <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
                         </FormControl>
@@ -802,7 +802,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="aadhaarCardFile"
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card</FormLabel>
+                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                             <Input 
                               type="file" 
@@ -824,7 +824,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="drivingLicenseNumber"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.</FormLabel>
+                        <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                             <Input placeholder="Enter DL number" {...field} />
                         </FormControl>
@@ -837,7 +837,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="drivingLicenseFile"
                     render={({ field: { value, onChange, ...fieldProps } }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Driving License</FormLabel>
+                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                            <Input 
                               type="file" 
