@@ -1,11 +1,10 @@
-
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, Lock, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, Lock, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -232,12 +231,20 @@ export default function PortfolioSitePage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" asChild>
-                <Link href="/login">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Login / Register</span>
-                </Link>
-              </Button>
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/site/register">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Register
+                  </Link>
+                </Button>
+              </>
             )}
 
             <Button
@@ -333,7 +340,7 @@ export default function PortfolioSitePage() {
                 className="w-full sm:w-auto border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white font-semibold px-8 py-3 text-base transition-colors duration-300"
                 asChild
               >
-                <Link href="/site/register/trainer">Register as Trainer</Link>
+                <Link href="/site/register">Register as Trainer</Link>
               </Button>
             </div>
           </div>
