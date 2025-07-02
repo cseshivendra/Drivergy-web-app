@@ -95,12 +95,12 @@ export default function LoginPage() {
       <div className="absolute top-6 right-6 z-30 flex items-center space-x-2">
         <Button
           variant="outline"
+          size="icon"
           asChild
           className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
         >
-          <Link href="/site">
+          <Link href="/site" aria-label="Back to site">
             <Home className="h-5 w-5" />
-            Back to Site
           </Link>
         </Button>
         <Button
