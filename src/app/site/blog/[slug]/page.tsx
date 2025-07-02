@@ -3,17 +3,18 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { notFound, useRouter } from 'next/navigation';
+
+import { blogPosts } from '@/lib/blog-data';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin, LogIn, UserPlus, Power, LayoutDashboard, Moon, Sun, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { Car, User, Calendar, Facebook, Twitter, Instagram, Linkedin, LogIn, UserPlus, Power, LayoutDashboard, Moon, Sun, ChevronDown, ArrowLeft } from 'lucide-react';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { blogPosts } from '@/lib/blog-data';
 
 
 const SiteLogo = () => (
@@ -27,29 +28,20 @@ const SiteLogo = () => (
     </Link>
 );
 
-const POSTS_PER_PAGE = 6;
 
-export default function BlogPage() {
-  const [currentPage, setCurrentPage] = useState(1);
+export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
 
-  const totalPages = Math.ceil(blogPosts.length / POSTS_PER_PAGE);
-  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const endIndex = startIndex + POSTS_PER_PAGE;
-  const currentPosts = blogPosts.slice(startIndex, endIndex);
+  const post = blogPosts.find((p) => p.slug === params.slug);
 
-  const handlePrevious = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNext = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-
+  if (!post) {
+    notFound();
+  }
+  
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto h-auto min-h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2">
           <SiteLogo />
@@ -129,91 +121,49 @@ export default function BlogPage() {
             </Button>
           </nav>
         </div>
-    </header>
+      </header>
 
         <main className="flex-grow">
-            <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
-                <Card className="shadow-lg overflow-hidden mb-12">
-                    <div className="relative h-56 w-full bg-primary/10">
-                        <Image 
-                            src="https://placehold.co/1200x300.png" 
-                            alt="Banner for blog page with driving theme" 
-                            layout="fill" 
+            <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
+                <Button variant="outline" onClick={() => router.back()} className="mb-8">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Blog
+                </Button>
+
+                <Card className="shadow-2xl overflow-hidden">
+                    <div className="relative h-64 md:h-80 w-full">
+                        <Image
+                            src={post.image}
+                            alt={post.title}
+                            layout="fill"
                             objectFit="cover"
-                            data-ai-hint="library books driving manual"
+                            priority
+                            data-ai-hint={post.imageHint}
                         />
-                        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                            <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                                <BookText className="h-10 w-10 text-primary" />
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    </div>
+                    <CardHeader className="relative -mt-16 z-10 p-6 md:p-8">
+                        <Badge variant="secondary" className="w-fit mb-3 text-sm">{post.category}</Badge>
+                        <CardTitle className="font-headline text-3xl md:text-4xl font-bold text-white drop-shadow-lg">{post.title}</CardTitle>
+                        <div className="flex items-center gap-6 text-sm text-white/90 mt-4">
+                            <div className="flex items-center">
+                                <User className="h-4 w-4 mr-1.5" />
+                                <span>{post.author}</span>
                             </div>
-                            <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Drivergy Blog</h1>
-                            <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                                Your source for RTO exam tips, expert driving tricks, and road safety advice.
-                            </p>
+                            <div className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-1.5" />
+                                <span>{post.date}</span>
+                            </div>
                         </div>
-                    </div>
+                    </CardHeader>
+                    <CardContent className="p-6 md:p-8 prose dark:prose-invert max-w-none text-base md:text-lg leading-relaxed">
+                        {post.content}
+                    </CardContent>
                 </Card>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {currentPosts.map((post) => (
-                       <Link key={post.slug} href={`/site/blog/${post.slug}`} className="group block">
-                        <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
-                            <div className="relative h-56 w-full">
-                                <Image
-                                    src={post.image}
-                                    alt={post.title}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    data-ai-hint={post.imageHint}
-                                />
-                            </div>
-                            <CardHeader>
-                                <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
-                                <CardTitle className="font-headline text-xl font-semibold text-primary group-hover:underline">{post.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                                <p className="text-muted-foreground text-sm">{post.excerpt}</p>
-                            </CardContent>
-                            <CardFooter className="mt-auto pt-4 border-t border-border/50 flex flex-col items-start gap-4">
-                                <div className="flex items-center text-xs text-muted-foreground w-full justify-between">
-                                    <div className="flex items-center">
-                                        <User className="h-4 w-4 mr-1.5" />
-                                        <span>{post.author}</span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Calendar className="h-4 w-4 mr-1.5" />
-                                        <span>{post.date}</span>
-                                    </div>
-                                </div>
-                                <p className="text-sm font-semibold text-primary group-hover:underline mt-2">
-                                  Read More &rarr;
-                                </p>
-                            </CardFooter>
-                        </Card>
-                       </Link>
-                    ))}
-                </div>
-
-                 {totalPages > 1 && (
-                    <div className="flex items-center justify-center mt-12 space-x-4">
-                        <Button onClick={handlePrevious} disabled={currentPage === 1} variant="outline">
-                            <ChevronLeft className="h-4 w-4 mr-2" />
-                            Previous
-                        </Button>
-                        <span className="text-sm font-medium text-muted-foreground">
-                            Page {currentPage} of {totalPages}
-                        </span>
-                        <Button onClick={handleNext} disabled={currentPage === totalPages} variant="outline">
-                            Next
-                            <ChevronRight className="h-4 w-4 ml-2" />
-                        </Button>
-                    </div>
-                )}
-
             </div>
         </main>
-
-        <footer className="border-t border-border/40 bg-background py-8">
+      
+      <footer className="border-t border-border/40 bg-background py-8">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
                 <div className="flex justify-center mb-4">
                     <SiteLogo />
