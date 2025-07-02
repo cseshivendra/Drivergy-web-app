@@ -42,7 +42,7 @@ const courses = [
         icon: FileText,
         totalEnrolled: 210,
         totalCertified: 195,
-        image: 'https://placehold.co/600x400.png',
+        image: 'https://placehold.co/600x400/d92525/ffffff.png',
         modules: [
         { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
         { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
