@@ -206,7 +206,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
                         <TableCell>{user.name}</TableCell>
-                        <TableCell>{user.contact}</TableCell>
+                        <TableCell>{user.phone || 'N/A'}</TableCell>
                         <TableCell>{user.location}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
