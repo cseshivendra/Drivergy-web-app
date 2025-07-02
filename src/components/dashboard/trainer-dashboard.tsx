@@ -113,14 +113,16 @@ export default function TrainerDashboard() {
                     <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
                         <Hourglass className="h-12 w-12 text-yellow-500" />
                     </div>
-                    <CardTitle className="font-headline text-2xl font-bold">Account Under Review</CardTitle>
-                    <CardDescription className="text-lg">
-                        Your current verification status is: 
-                        <Badge variant="outline" className="ml-2 text-base border-yellow-400 text-yellow-600">{trainerProfile.approvalStatus}</Badge>
+                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {trainerProfile.name}!</CardTitle>
+                    <CardDescription className="text-lg mt-4">
+                        <div className="flex items-center justify-center gap-2">
+                            <span>Verification Status:</span>
+                            <Badge variant="outline" className="text-base border-yellow-400 text-yellow-600">{trainerProfile.approvalStatus}</Badge>
+                        </div>
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground max-w-md mx-auto">
                         Your profile is currently being verified by our team. You will be able to access your full dashboard and see assigned students once your account is approved.
                         <br /><br />
                         Thank you for your patience.
@@ -136,7 +138,7 @@ export default function TrainerDashboard() {
       <header className="mb-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-            Trainer Dashboard
+              Welcome, {trainerProfile.name}!
             </h1>
             <Badge variant="default" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700 text-base">
                 <ShieldCheck className="mr-2 h-5 w-5"/>
