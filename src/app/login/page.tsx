@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, UserCheck, UserCog } from 'lucide-react';
+import { Car, Smartphone, ShieldAlert, UserCircle, Sun, Moon, UserCheck, UserCog, Home } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
@@ -92,7 +92,17 @@ export default function LoginPage() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background z-10 transition-colors duration-500 ease-in-out"></div>
 
-      <div className="absolute top-6 right-6 z-30">
+      <div className="absolute top-6 right-6 z-30 flex items-center space-x-2">
+        <Button
+          variant="outline"
+          asChild
+          className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
+        >
+          <Link href="/site">
+            <Home className="h-5 w-5" />
+            Back to Site
+          </Link>
+        </Button>
         <Button
           variant="outline"
           size="icon"
