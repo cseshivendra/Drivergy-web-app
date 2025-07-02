@@ -183,7 +183,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                   <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
                   <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
                   <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
-                  <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
+                  <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Verification</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
