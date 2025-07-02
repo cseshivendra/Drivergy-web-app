@@ -3,14 +3,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance } from '@/lib/mock-data';
+import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance, fetchUserById } from '@/lib/mock-data';
 import type { UserProfile, TrainerSummaryData } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone } from 'lucide-react';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
@@ -44,18 +44,21 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [students, setStudents] = useState<UserProfile[]>([]);
+  const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const [summaryData, studentData] = await Promise.all([
+      const [summaryData, studentData, profileData] = await Promise.all([
         fetchTrainerSummary(user.uid),
-        fetchAssignedCustomers(user.uid)
+        fetchAssignedCustomers(user.uid),
+        fetchUserById(user.uid),
       ]);
       setSummary(summaryData);
       setStudents(studentData);
+      setTrainerProfile(profileData);
     } catch (error) {
       console.error("Failed to fetch trainer dashboard data", error);
       toast({ title: "Error", description: "Could not load dashboard data.", variant: "destructive" });
@@ -87,7 +90,7 @@ export default function TrainerDashboard() {
     });
   };
 
-  if (loading) {
+  if (loading || !trainerProfile) {
     return (
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <Skeleton className="h-10 w-1/3 mb-4" />
@@ -102,13 +105,45 @@ export default function TrainerDashboard() {
     );
   }
 
+  if (trainerProfile.approvalStatus !== 'Approved') {
+    return (
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
+            <Card className="shadow-xl text-center p-8">
+                <CardHeader>
+                    <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
+                        <Hourglass className="h-12 w-12 text-yellow-500" />
+                    </div>
+                    <CardTitle className="font-headline text-2xl font-bold">Account Under Review</CardTitle>
+                    <CardDescription className="text-lg">
+                        Your current verification status is: 
+                        <Badge variant="outline" className="ml-2 text-base border-yellow-400 text-yellow-600">{trainerProfile.approvalStatus}</Badge>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">
+                        Your profile is currently being verified by our team. You will be able to access your full dashboard and see assigned students once your account is approved.
+                        <br /><br />
+                        Thank you for your patience.
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   return (
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
       <header className="mb-4">
-        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-          Trainer Dashboard
-        </h1>
-        <p className="text-muted-foreground">Manage your students and track your progress.</p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+            Trainer Dashboard
+            </h1>
+            <Badge variant="default" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700 text-base">
+                <ShieldCheck className="mr-2 h-5 w-5"/>
+                Verified
+            </Badge>
+        </div>
+        <p className="text-muted-foreground mt-1">Manage your students and track your progress.</p>
       </header>
 
        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
