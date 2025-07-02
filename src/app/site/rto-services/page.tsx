@@ -1,10 +1,11 @@
+
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube, ExternalLink, FileText, IndianRupee, Receipt, Search } from 'lucide-react';
+import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube, ExternalLink, FileText, IndianRupee, Receipt, Search, Type } from 'lucide-react';
 import SiteHeader from '@/components/layout/site-header';
 import ChatWidget from '@/components/chatbot/chat-widget';
 
@@ -47,6 +48,13 @@ const rtoServices = [
         icon: Receipt,
         link: "https://echallan.parivahan.gov.in/index/accused-challan",
         imageHint: "online payment receipt"
+    },
+    {
+        title: "Order High Security Number Plate (HSRP)",
+        description: "Book an appointment to get a High Security Registration Plate (HSRP) and color-coded sticker for your vehicle.",
+        icon: Type,
+        link: "https://www.bookmyhsrp.com/",
+        imageHint: "number plate car"
     }
 ];
 
@@ -56,7 +64,7 @@ export default function RtoServicesPage() {
         <SiteHeader />
 
         <main className="flex-grow">
-            <div className="container mx-auto max-w-5xl p-4 py-8 sm:p-6 lg:p-8">
+            <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
                 <Card className="shadow-lg overflow-hidden mb-12">
                     <div className="relative h-56 w-full bg-primary/10">
                         <Image 
@@ -78,7 +86,7 @@ export default function RtoServicesPage() {
                     </div>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     {rtoServices.map((service) => (
                         <Card key={service.title} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
                             <CardHeader>
