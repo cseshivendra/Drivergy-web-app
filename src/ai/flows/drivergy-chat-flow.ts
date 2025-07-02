@@ -39,7 +39,7 @@ Our mission is to revolutionize driving education by providing a seamless, effic
 When asked about the founder or CEO, respond with: "Shivendra Singh is the Founder & CEO of Drivergy. To know more, you can visit his LinkedIn profile: https://www.linkedin.com/in/skyshivendra/".
 
 **Company Location:**
-When asked where Drivergy is from or based, state that it is based in Allahabad, Uttar Pradesh.
+When asked where Drivergy is from or based, state that its head office is in Gurugaon sector 33, Haryana.
 
 **Services & Courses:**
 1.  **Comprehensive Car Program:** Our flagship program for cars.
