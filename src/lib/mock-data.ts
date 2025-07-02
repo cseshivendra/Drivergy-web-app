@@ -90,6 +90,7 @@ const sampleCustomer: UserProfile = {
   trainerPreference: 'Any',
   myReferralCode: 'SHIVENDRA2024',
   attendance: 'Pending',
+  photoURL: 'https://placehold.co/100x100.png?text=SS',
 };
 
 const sampleTrainer: UserProfile = {
@@ -109,6 +110,7 @@ const sampleTrainer: UserProfile = {
   myReferralCode: 'RAJESHPRO',
   specialization: 'Car',
   yearsOfExperience: 8,
+  photoURL: 'https://placehold.co/100x100.png?text=RK',
 };
 
 // --- Initial Data Seeding (if localStorage is empty) ---
@@ -256,6 +258,8 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
       contact: data.email,
       phone: data.phone,
       location: data.location,
+      // Simulate photo update with a new placeholder to show change
+      photoURL: data.photo ? `https://placehold.co/100x100.png?text=${data.name.charAt(0)}&v=${Date.now()}` : mockCustomers[customerIndex].photoURL,
     };
     saveDataToLocalStorage();
     return mockCustomers[customerIndex];
@@ -269,6 +273,7 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
       contact: data.email,
       phone: data.phone,
       location: data.location,
+      photoURL: data.photo ? `https://placehold.co/100x100.png?text=${data.name.charAt(0)}&v=${Date.now()}` : mockInstructors[instructorIndex].photoURL,
     };
     saveDataToLocalStorage();
     return mockInstructors[instructorIndex];
@@ -326,6 +331,7 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     trainerPreference: data.trainerPreference,
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
     attendance: 'Pending',
+    photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
   };
   mockCustomers.push(newUser);
   
@@ -376,6 +382,7 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     vehicleInfo: data.trainerVehicleType,
     approvalStatus: 'Pending',
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
+    photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
   };
   mockInstructors.push(newTrainer);
   mockSummaryData.totalInstructors = mockInstructors.length; 

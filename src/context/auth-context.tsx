@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       uniqueId: userProfile.uniqueId,
       displayName: userProfile.name,
       email: userProfile.contact,
-      photoURL: `https://placehold.co/100x100.png?text=${userProfile.name.charAt(0)}`,
+      photoURL: userProfile.photoURL || `https://placehold.co/100x100.png?text=${userProfile.name.charAt(0)}`,
       isGuest: false,
     };
     setUser(newUser);

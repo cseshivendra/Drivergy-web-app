@@ -39,6 +39,7 @@ export interface UserProfile {
   specialization?: string;
   feedbackSubmitted?: boolean;
   gender?: string;
+  photoURL?: string;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -382,6 +383,7 @@ export const UserProfileUpdateSchema = z.object({
     message: "Phone number must be 10 digits if provided.",
   }),
   location: z.string().min(1, { message: "Please select a location." }),
+  photo: z.any().optional(),
 });
 
 export type UserProfileUpdateValues = z.infer<typeof UserProfileUpdateSchema>;

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -21,13 +20,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
-import { User, KeyRound, Mail, Phone, MapPin, Loader2 } from 'lucide-react';
+import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Locations } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   const { toast } = useToast();
   const { logInUser } = useAuth();
+  const [preview, setPreview] = useState<string | null>(profile.photoURL || null);
 
   const form = useForm<UserProfileUpdateValues>({
     resolver: zodResolver(UserProfileUpdateSchema),
@@ -36,6 +37,7 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
       email: profile.contact || '',
       phone: profile.phone || '',
       location: profile.location || '',
+      photo: undefined,
     },
   });
 
@@ -46,7 +48,7 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
         title: "Profile Updated",
         description: "Your personal information has been successfully updated.",
       });
-      // Re-login user to update session/context data like displayName
+      // Re-login user to update session/context data like displayName and photoURL
       logInUser(updatedProfile, false); 
     } else {
       toast({
@@ -57,15 +59,59 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
     }
   }
 
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      form.setValue('photo', file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center"><User className="mr-2 h-5 w-5 text-primary" /> Personal Information</CardTitle>
-        <CardDescription>Update your personal details here.</CardDescription>
+        <CardDescription>Update your personal details and profile picture here.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-md">
+                <AvatarImage src={preview || undefined} alt={profile.name} />
+                <AvatarFallback>{profile.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <FormField
+                control={form.control}
+                name="photo"
+                render={() => (
+                  <FormItem>
+                    <FormControl>
+                      <Button asChild variant="outline" className="relative">
+                        <label htmlFor="photo-upload" className="cursor-pointer">
+                          <Camera className="mr-2 h-4 w-4" />
+                          Change Photo
+                          <Input 
+                            id="photo-upload"
+                            type="file" 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer sr-only"
+                            accept="image/png, image/jpeg"
+                            onChange={handlePhotoChange}
+                          />
+                        </label>
+                      </Button>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <FormField
               control={form.control}
               name="name"
