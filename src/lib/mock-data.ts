@@ -459,6 +459,31 @@ export const fetchInstructors = async (location?: string, subscription?: string,
   return results;
 };
 
+export const fetchExistingInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  
+  let results = mockInstructors.filter(i => i.approvalStatus === 'Approved' || i.approvalStatus === 'Rejected');
+
+  if (location && location.trim() !== '' && location !== 'all') {
+    results = results.filter(i => i.location.toLowerCase() === location.toLowerCase().trim());
+  }
+  if (subscription && subscription !== 'all' && subscription !== 'Trainer') { 
+    results = []; 
+  }
+
+  if (searchTerm && searchTerm.trim() !== '') {
+    const lowerSearchTerm = searchTerm.toLowerCase().trim();
+    results = results.filter(i =>
+      i.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
+      i.name.toLowerCase().includes(lowerSearchTerm) ||
+      i.contact.toLowerCase().includes(lowerSearchTerm)
+    );
+  }
+  results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
+  return results;
+};
+
+
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 3));
   const allUsers = [...mockCustomers, ...mockInstructors];

@@ -8,9 +8,9 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table'; // Import new component
-import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback } from '@/lib/mock-data';
+import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchExistingInstructors } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare } from 'lucide-react';
+import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [customers, setCustomers] = useState<UserProfile[]>([]);
   const [instructors, setInstructors] = useState<UserProfile[]>([]);
+  const [existingInstructors, setExistingInstructors] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]); // New state for feedback
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [loadingInstructors, setLoadingInstructors] = useState(true);
+  const [loadingExistingInstructors, setLoadingExistingInstructors] = useState(true);
   const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
   const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
   const [loadingFeedback, setLoadingFeedback] = useState(true); // New loading state
@@ -73,6 +75,12 @@ export default function AdminDashboard() {
     fetchInstructors(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
       setInstructors(data);
       setLoadingInstructors(false);
+    });
+
+    setLoadingExistingInstructors(true);
+    fetchExistingInstructors(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
+      setExistingInstructors(data);
+      setLoadingExistingInstructors(false);
     });
   }, []);
 
@@ -136,6 +144,12 @@ export default function AdminDashboard() {
           title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
           users={instructors} 
           isLoading={loadingInstructors} 
+          onUserActioned={handleActioned}
+        />
+        <UserTable 
+          title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
+          users={existingInstructors} 
+          isLoading={loadingExistingInstructors} 
           onUserActioned={handleActioned}
         />
         <RequestTable 
