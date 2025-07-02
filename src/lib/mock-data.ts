@@ -839,6 +839,13 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
   const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
   if (customerIndex !== -1) {
     mockCustomers[customerIndex].subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
+
+    // Also update the upcoming lesson to be relative to the new start date
+    // Let's set it 2 days after the start date at 9 AM for demonstration.
+    const firstLessonDate = addDays(newDate, 2);
+    firstLessonDate.setHours(9, 0, 0, 0);
+    mockCustomers[customerIndex].upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+
     saveDataToLocalStorage();
     return true;
   }

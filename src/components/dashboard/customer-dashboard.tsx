@@ -134,36 +134,49 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     if (user?.uid) {
+      setLoading(true);
       fetchUserById(user.uid).then(userProfile => {
         if (userProfile) {
           setProfile(userProfile);
-          
-          if (userProfile.subscriptionStartDate) {
-            const startDate = parse(userProfile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
-            setIsStartDateEditable(isFuture(startDate));
-          } else {
-            // Allow setting the start date if it doesn't exist yet
-            setIsStartDateEditable(true);
-          }
-
-          const lessonDateString = userProfile.upcomingLesson;
-          const now = new Date();
-          let lessonDate: Date;
-
-          if (lessonDateString) {
-            lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
-          } else {
-            const hoursToAdd = Math.random() > 0.5 ? 12 : 36;
-            lessonDate = add(now, { hours: hoursToAdd });
-          }
-          
-          setUpcomingLessonDate(lessonDate);
-          setIsReschedulable(differenceInHours(lessonDate, now) > 24);
         }
         setLoading(false);
       });
+    } else if (!user) {
+        setLoading(false);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (profile) {
+      // Determine if start date can be edited
+      if (profile.subscriptionStartDate) {
+        const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
+        setIsStartDateEditable(isFuture(startDate));
+      } else {
+        // If no start date is set, it can be edited
+        setIsStartDateEditable(true);
+      }
+
+      // Determine upcoming lesson and if it can be rescheduled
+      const lessonDateString = profile.upcomingLesson;
+      const now = new Date();
+      let lessonDate: Date | null = null;
+
+      if (lessonDateString) {
+        try {
+          lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
+        } catch(e) { console.error("Error parsing date:", e)}
+      } 
+      
+      setUpcomingLessonDate(lessonDate);
+
+      if (lessonDate) {
+        setIsReschedulable(differenceInHours(lessonDate, now) > 24);
+      } else {
+        setIsReschedulable(false);
+      }
+    }
+  }, [profile]);
 
   const handleStartDateChange = async () => {
     if (!profile || !newStartDate || !user) return;
@@ -173,7 +186,7 @@ export default function CustomerDashboard() {
       if (success) {
         toast({
           title: 'Start Date Updated',
-          description: `Your subscription will now start on ${format(newStartDate, 'PPP')}.`,
+          description: `Your subscription will now start on ${format(newStartDate, 'PPP')}. Your first lesson has been scheduled accordingly.`,
         });
         fetchUserById(user.uid).then(userProfile => {
           if (userProfile) setProfile(userProfile);
