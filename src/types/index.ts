@@ -38,6 +38,7 @@ export interface UserProfile {
   yearsOfExperience?: number;
   specialization?: string;
   feedbackSubmitted?: boolean;
+  gender?: string;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -196,7 +197,6 @@ export const DistrictsByState: Record<string, string[]> = {
   "West Bengal": ["Alipurduar","Bankura","Birbhum","Cooch Behar","Dakshin Dinajpur (South Dinajpur)","Darjeeling","Hooghly","Howrah","Jalpaiguri","Jhargram","Kalimpong","Kolkata","Malda","Murshidabad","Nadia","North 24 Parganas","Paschim Medinipur (West Medinipur)","Paschim (West) Burdwan","Purba Burdwan (Bardhaman)","Purba Medinipur (East Medinipur)","Purulia","South 24 Parganas","Uttar Dinajpur (North Dinajpur)"],
 };
 
-
 export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] as const;
 export const SpecializationOptions = ["Two-Wheeler", "Car", "Three-Wheeler", "Defensive Driving"] as const;
 export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)", "Car (Automatic)", "Three-Wheeler"] as const;
@@ -205,10 +205,69 @@ export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Passport", "Driving License"] as const;
 
-const fileField = z.any(); 
+// --- Career Page Types ---
+export interface JobOpening {
+  id: string;
+  title: string;
+  location: string;
+  type: 'Full-time' | 'Part-time' | 'Contract';
+  description: string;
+  requirements: string[];
+}
+
+export const JobOpenings: JobOpening[] = [
+  {
+    id: 'job-1',
+    title: 'Certified Driving Instructor',
+    location: 'Delhi, Mumbai, Bangalore',
+    type: 'Full-time',
+    description: 'We are looking for patient, professional, and certified driving instructors to join our growing team. You will be responsible for teaching students of all skill levels how to drive safely and confidently.',
+    requirements: ['Valid Driving Instructor License.', 'Minimum 3 years of teaching experience.', 'Excellent communication and interpersonal skills.', 'Own vehicle (Car or Two-Wheeler) in good condition.'],
+  },
+  {
+    id: 'job-2',
+    title: 'Customer Support Specialist',
+    location: 'Gurugaon (Remote option available)',
+    type: 'Full-time',
+    description: 'As a Customer Support Specialist, you will be the first point of contact for our users. You will assist them with queries, resolve issues, and ensure a seamless experience on our platform.',
+    requirements: ['Proven experience in a customer service role.', 'Fluent in English and Hindi (additional languages are a plus).', 'Strong problem-solving skills.', 'Familiarity with CRM software.'],
+  },
+  {
+    id: 'job-3',
+    title: 'Marketing Manager',
+    location: 'Gurugaon',
+    type: 'Full-time',
+    description: 'We are seeking a creative and data-driven Marketing Manager to lead our marketing efforts. You will be responsible for developing and executing strategies to increase brand awareness and user acquisition.',
+    requirements: ['5+ years of experience in digital marketing.', 'Proven track record of successful marketing campaigns.', 'Strong analytical and leadership skills.', 'Experience in the education or tech startup industry is a plus.'],
+  },
+];
+
+const fileField = z.any();
 const optionalFileField = z.any().optional();
 
-// Base schema without any refinements or transforms
+// --- Zod Schemas ---
+
+export const CareerFormSchema = z.object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+    email: z.string().email({ message: "Please enter a valid email address." }),
+    phone: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), {
+        message: "Phone number must be 10 digits if provided.",
+    }),
+    position: z.string().min(1, { message: "Please select a position." }),
+    resume: fileField,
+    coverLetter: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (!data.resume || data.resume.length === 0) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Resume/CV is required.",
+            path: ["resume"],
+        });
+    }
+});
+
+export type CareerFormValues = z.infer<typeof CareerFormSchema>;
+
 const BaseRegistrationObjectSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters." }).max(20),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
@@ -219,9 +278,6 @@ const BaseRegistrationObjectSchema = z.object({
   location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
-
-// --- Schemas for Discriminated Union ---
-// These MUST be pure ZodObjects without refinements (.refine, .superRefine, .transform)
 
 const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   userRole: z.literal('customer'),
@@ -260,12 +316,10 @@ const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   drivingLicenseFile: fileField,
 });
 
-// Create the final schema by applying all refinements to the union
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
   CustomerRegistrationObjectSchema,
   TrainerRegistrationObjectSchema,
 ]).superRefine((data, ctx) => {
-  // Password confirmation check (common to both)
   if (data.password !== data.confirmPassword) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -274,7 +328,6 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
     });
   }
 
-  // Phone number check (common to both)
   if (data.phone && !/^\d{10}$/.test(data.phone)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -283,7 +336,6 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
     });
   }
   
-  // Customer-specific file checks
   if (data.userRole === 'customer') {
     if (!data.photoIdFile || data.photoIdFile.length === 0) {
       ctx.addIssue({
@@ -294,7 +346,6 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
     }
   }
 
-  // Trainer-specific file checks
   if (data.userRole === 'trainer') {
     if (!data.trainerCertificateFile || data.trainerCertificateFile.length === 0) {
       ctx.addIssue({
@@ -320,12 +371,10 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
   }
 });
 
-
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationObjectSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationObjectSchema>;
 
-// Schema for updating user profile
 export const UserProfileUpdateSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -337,7 +386,6 @@ export const UserProfileUpdateSchema = z.object({
 
 export type UserProfileUpdateValues = z.infer<typeof UserProfileUpdateSchema>;
 
-// Schema for changing password
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, { message: "Current password is required." }),
   newPassword: z.string().min(6, { message: "New password must be at least 6 characters." }),

@@ -53,7 +53,7 @@ const navLinks = [
   { href: '/site#courses', label: 'Courses' },
   { href: '/site/blog', label: 'Blog' },
   { href: '/site#subscriptions', label: 'Plans' },
-  { href: '/site#testimonials', label: 'Testimonials' },
+  { href: '/site/career', label: 'Careers' },
   { href: '/site/faq', label: 'FAQ' },
   { href: '/site#contact', label: 'Support' },
 ];
