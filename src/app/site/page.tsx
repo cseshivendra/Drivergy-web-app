@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, Lock, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -12,17 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from '@/context/auth-context';
-import { useTheme } from '@/context/theme-context';
-import { useState, useEffect } from 'react';
+
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +20,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import ChatWidget from '@/components/chatbot/chat-widget';
+import SiteHeader from '@/components/layout/site-header';
+import { useState, useEffect } from 'react';
 
 
 const SiteLogo = () => (
@@ -158,8 +150,6 @@ const testimonialsData = [
   
 
 export default function PortfolioSitePage() {
-  const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -177,87 +167,7 @@ export default function PortfolioSitePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {/* Header/Navbar */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto h-auto min-h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2">
-          <SiteLogo />
-          <nav className="flex items-center flex-wrap gap-x-1 gap-y-2 sm:gap-x-2 justify-end">
-            <Button variant="ghost" asChild>
-              <Link href="#services">Services</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="#courses">Courses</Link>
-            </Button>
-             <Button variant="ghost" asChild>
-              <Link href="/site/blog">Blog</Link>
-            </Button>
-             <Button variant="ghost" asChild>
-              <Link href="#subscriptions">Plans</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="#testimonials">Testimonials</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/site/faq">FAQ</Link>
-            </Button>
-             <Button variant="ghost" asChild>
-              <Link href="#contact">Support</Link>
-            </Button>
-            
-            {user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                     <Avatar className="h-6 w-6">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
-                        <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                    <span>{user.displayName}</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      My Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut}>
-                    <Power className="mr-2 h-4 w-4" />
-                    Log Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/login">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Login
-                  </Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/site/register">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Register
-                  </Link>
-                </Button>
-              </>
-            )}
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* Main Content */}
       <main className="flex-grow">

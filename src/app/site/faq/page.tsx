@@ -12,6 +12,7 @@ import {
 import { Car, HelpCircle, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import ChatWidget from '@/components/chatbot/chat-widget';
+import SiteHeader from '@/components/layout/site-header';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -55,14 +56,7 @@ const faqData = [
 export default function FaqPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-                <SiteLogo />
-                <Button variant="outline" asChild>
-                    <Link href="/site">Back to Site</Link>
-                </Button>
-            </div>
-        </header>
+        <SiteHeader />
 
         <main className="flex-grow">
             <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">

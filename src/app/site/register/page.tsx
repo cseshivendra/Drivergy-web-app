@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Car, User, UserCog, ArrowLeft, Facebook, Twitter, Instagram, Linkedin, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/context/theme-context';
+import SiteHeader from '@/components/layout/site-header';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -39,8 +40,7 @@ export default function UnifiedRegisterPage() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
   const searchParams = useSearchParams();
   const planFromUrl = searchParams.get('plan');
-  const { theme, toggleTheme } = useTheme();
-
+  
   useEffect(() => {
     if (planFromUrl) {
       setSelectedRole('customer');
@@ -58,24 +58,7 @@ export default function UnifiedRegisterPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          <SiteLogo />
-          <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/site">Back to Site</Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main className="flex-grow flex items-center justify-center p-4">
         <div className="container mx-auto max-w-3xl py-8 sm:py-6 lg:py-8">
@@ -150,7 +133,7 @@ export default function UnifiedRegisterPage() {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">
               <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 text-saffron">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="currentColor" className="h-5 w-5 text-saffron">
                     <path d="M12.96,2.83,4.29,7.75a1,1,0,0,0-.54.88V15.37a1,1,0,0,0,.54.88l8.67,4.92a1,1,0,0,0,1.08,0l8.67-4.92a1,1,0,0,0,.54-.88V8.63a1,1,0,0,0-.54-.88L14.04,2.83A1,1,0,0,0,12.96,2.83ZM13.5,15.55a2.17,2.17,0,1,1,2.17-2.17A2.17,2.17,0,0,1,13.5,15.55Z" />
                   </svg>
                   <span className="font-semibold text-foreground">Startup India</span>

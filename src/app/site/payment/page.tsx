@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
 import { useState } from 'react';
+import SiteHeader from '@/components/layout/site-header';
 
 // Replicated SiteLogo for this page
 const SiteLogo = () => (
@@ -231,14 +232,7 @@ function PaymentGateway() {
 export default function PaymentPage() {
   return (
      <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-            <SiteLogo />
-            <Button variant="outline" asChild>
-                <Link href="/site">Back to Site</Link>
-            </Button>
-            </div>
-        </header>
+        <SiteHeader />
         <main className="flex-grow flex items-center justify-center p-4">
             <PaymentGateway />
         </main>
