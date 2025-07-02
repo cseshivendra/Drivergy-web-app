@@ -109,7 +109,7 @@ export default function SiteHeader() {
       >
         <Button
           asChild
-          className={cn(isMobile && 'w-full text-lg py-6')}
+          className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}
         >
           <Link href="/login">
             <Lock className="mr-2 h-4 w-4" />
@@ -117,9 +117,8 @@ export default function SiteHeader() {
           </Link>
         </Button>
         <Button
-          variant="ghost"
           asChild
-          className={cn(isMobile && 'w-full text-lg py-6')}
+          className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}
         >
           <Link href="/site/register">
             <UserPlus className="mr-2 h-4 w-4" />
