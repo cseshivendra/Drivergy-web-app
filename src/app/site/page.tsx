@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, LogIn, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, Lock, UserPlus, User, UserCog, ChevronDown, Bike, ClipboardCheck, Power, Star, Check, Sun, Moon, MessageSquareText, Quote, HelpCircle, LayoutDashboard, BookText, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -239,9 +239,9 @@ export default function PortfolioSitePage() {
                   </Link>
                 </Button>
                 
-                <Button asChild variant="outline">
+                <Button asChild>
                   <Link href="/login">
-                    <LogIn className="mr-2 h-4 w-4" />
+                    <Lock className="mr-2 h-4 w-4" />
                     Login
                   </Link>
                 </Button>
