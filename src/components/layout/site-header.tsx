@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -51,6 +50,7 @@ const SiteLogo = () => (
 const navLinks = [
   { href: '/site#services', label: 'Services' },
   { href: '/site#courses', label: 'Courses' },
+  { href: '/site/rto-services', label: 'RTO Services' },
   { href: '/site/blog', label: 'Blog' },
   { href: '/site#subscriptions', label: 'Plans' },
   { href: '/site/career', label: 'Careers' },
