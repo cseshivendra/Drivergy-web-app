@@ -132,21 +132,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     let newUser: UserProfile | undefined;
 
     if (data.userRole === 'customer') {
-      const customerData = data as CustomerRegistrationFormValues;
-      const cleanedCustomerData = {
-        ...customerData,
-        phone: customerData.phone || undefined,
-        dlNumber: customerData.dlNumber || undefined,
-        dlTypeHeld: customerData.dlTypeHeld || undefined,
-      };
-      newUser = addCustomer(cleanedCustomerData);
+      newUser = addCustomer(data);
     } else if (data.userRole === 'trainer') {
-      const trainerData = data as TrainerRegistrationFormValues;
-      const cleanedTrainerData = {
-        ...trainerData,
-        phone: trainerData.phone || undefined,
-      }
-      newUser = addTrainer(cleanedTrainerData);
+      newUser = addTrainer(data);
     }
 
     if (newUser) {
