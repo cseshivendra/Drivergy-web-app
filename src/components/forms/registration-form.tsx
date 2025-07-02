@@ -37,8 +37,8 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign } from 'lucide-react'; 
-import { useMemo, useEffect } from 'react';
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff } from 'lucide-react'; 
+import { useMemo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -53,6 +53,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan');
   const price = searchParams.get('price');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const defaultValues = useMemo((): RegistrationFormValues => {
     const base = {
@@ -200,31 +202,61 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-            <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
+           <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
                 <FormItem>
-                <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password</FormLabel>
-                <FormControl>
-                    <Input type="password" placeholder="Create a password" {...field} />
-                </FormControl>
-                <FormMessage />
+                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a password"
+                        {...field}
+                        className="pr-10"
+                      />
+                    </FormControl>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
             <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
                 <FormItem>
-                <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password</FormLabel>
-                <FormControl>
-                    <Input type="password" placeholder="Confirm your password" {...field} />
-                </FormControl>
-                <FormMessage />
+                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password</FormLabel>
+                   <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm your password"
+                        {...field}
+                        className="pr-10"
+                      />
+                    </FormControl>
+                     <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
         </div>
 
