@@ -7,13 +7,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2 } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { updateUserApprovalStatus, fetchApprovedInstructors, assignTrainerToCustomer } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface UserTableProps {
   title: ReactNode;
@@ -94,10 +95,25 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   };
 
   const handleUpdateStatus = async (userId: string, userName: string, newStatus: ApprovalStatusType) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "User not found in the current view.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const isTrainer = user.uniqueId.startsWith('TR');
+
     try {
-      if (newStatus === 'Approved') {
-        // This case should now be handled by the assignment flow
-        toast({ title: "Action Required", description: "Please use the 'Assign' button to approve and assign a trainer." });
+      // The "Assign" button flow is only for customers. Trainers can be approved directly.
+      if (!isTrainer && newStatus === 'Approved') {
+        toast({
+          title: "Action Required",
+          description: "Please use the 'Assign' button to approve and assign a trainer to this customer.",
+          variant: 'destructive',
+        });
         return;
       }
       
@@ -172,60 +188,99 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
               </TableHeader>
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
-                  paginatedUsers.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
-                      <TableCell className="font-medium">{user.uniqueId}</TableCell>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.contact}</TableCell>
-                      <TableCell>{user.location}</TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
-                          user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
-                          user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
-                          'bg-muted text-muted-foreground' // Basic plan
-                        }`}>
-                          {user.subscriptionPlan}
-                        </span>
-                      </TableCell>
-                      <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
-                      <TableCell>{user.registrationTimestamp}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center space-x-1.5">
-                          <Button 
-                            variant="outline"
-                            size="sm" 
-                            onClick={() => handleViewDetails(user)}
-                            className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                            aria-label={`View details for ${user.name}`}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                            <span className="ml-1.5 hidden sm:inline">View</span>
-                          </Button>
-                          <Button 
-                            variant="default" 
-                            size="sm" 
-                            onClick={() => openAssignDialog(user)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
-                            aria-label={`Assign trainer for ${user.name}`}
-                          >
-                            <UserCheck className="h-3.5 w-3.5" />
-                            <span className="ml-1.5 hidden sm:inline">Assign</span>
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}
-                            className="px-2 py-1"
-                            aria-label={`Reject ${user.name}`}
-                          >
-                            <X className="h-3.5 w-3.5" />
-                            <span className="ml-1.5 hidden sm:inline">Reject</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  paginatedUsers.map((user) => {
+                    const isTrainer = user.uniqueId.startsWith('TR');
+                    return (
+                      <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="font-medium">{user.uniqueId}</TableCell>
+                        <TableCell>{user.name}</TableCell>
+                        <TableCell>{user.contact}</TableCell>
+                        <TableCell>{user.location}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
+                            user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
+                            user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
+                            'bg-muted text-muted-foreground' // Basic plan
+                          }`}>
+                            {user.subscriptionPlan}
+                          </span>
+                        </TableCell>
+                        <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
+                        <TableCell>{user.registrationTimestamp}</TableCell>
+                        <TableCell>
+                           {isTrainer ? (
+                            <div className="flex items-center justify-center space-x-1.5">
+                              <Button 
+                                variant="outline" size="sm" 
+                                onClick={() => handleViewDetails(user)}
+                                className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
+                                aria-label={`View details for ${user.name}`}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span className="ml-1.5 hidden sm:inline">View</span>
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="w-[130px] justify-between">
+                                    <span>Update Status</span>
+                                    <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'Approved')}>
+                                    <Check className="mr-2 h-4 w-4 text-green-500" />
+                                    <span>Approved</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'In Progress')}>
+                                    <Hourglass className="mr-2 h-4 w-4 text-yellow-500" />
+                                    <span>In Progress</span>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}>
+                                    <X className="mr-2 h-4 w-4 text-red-500" />
+                                    <span>Rejected</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center space-x-1.5">
+                              <Button 
+                                variant="outline"
+                                size="sm" 
+                                onClick={() => handleViewDetails(user)}
+                                className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
+                                aria-label={`View details for ${user.name}`}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span className="ml-1.5 hidden sm:inline">View</span>
+                              </Button>
+                              <Button 
+                                variant="default" 
+                                size="sm" 
+                                onClick={() => openAssignDialog(user)}
+                                className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
+                                aria-label={`Assign trainer for ${user.name}`}
+                              >
+                                <UserCheck className="h-3.5 w-3.5" />
+                                <span className="ml-1.5 hidden sm:inline">Assign</span>
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}
+                                className="px-2 py-1"
+                                aria-label={`Reject ${user.name}`}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                <span className="ml-1.5 hidden sm:inline">Reject</span>
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center"> 

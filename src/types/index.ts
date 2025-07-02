@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import type React from 'react';
 
-export const ApprovalStatusOptions = ["Pending", "Approved", "Rejected"] as const;
+export const ApprovalStatusOptions = ["Pending", "Approved", "In Progress", "Rejected"] as const;
 export type ApprovalStatusType = typeof ApprovalStatusOptions[number];
 
 export const TrainerPreferenceOptions = ["Male", "Female", "Any"] as const;
