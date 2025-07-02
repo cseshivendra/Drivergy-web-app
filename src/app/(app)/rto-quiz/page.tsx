@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -56,7 +55,6 @@ interface QuizSet {
 const availableLanguages = [
   { code: 'en', name: 'English' },
   { code: 'hi', name: 'हिंदी (Hindi)' },
-  { code: 'mr', name: 'मराठी (Marathi)' },
 ];
 
 // A base set of 15 questions with translations for English, Hindi, and Marathi
@@ -600,4 +598,3 @@ export default function AppRtoQuizPage() {
     </div>
   );
 }
-
