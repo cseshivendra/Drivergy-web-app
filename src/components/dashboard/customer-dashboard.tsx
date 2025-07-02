@@ -13,7 +13,7 @@ import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, 
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { add, differenceInHours, format, isFuture, parse } from 'date-fns';
+import { add, differenceInHours, format, isFuture, parse, addDays } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -22,6 +22,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 // Helper component for Star Rating input
 const StarRating = ({ rating, setRating, disabled = false }: { rating: number; setRating: (r: number) => void; disabled?: boolean }) => {
@@ -105,6 +107,11 @@ function FeedbackForm({ profile, onSubmitted }: { profile: UserProfile; onSubmit
   );
 }
 
+const timeSlots = [
+  "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+  "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"
+];
+
 export default function CustomerDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -117,6 +124,11 @@ export default function CustomerDashboard() {
   const [isStartDateDialogOpen, setIsStartDateDialogOpen] = useState(false);
   const [newStartDate, setNewStartDate] = useState<Date | undefined>(undefined);
   const [isStartDateEditable, setIsStartDateEditable] = useState(false);
+
+  // State for reschedule dialog
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
+  const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
+  const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
 
   useEffect(() => {
     if (user?.uid) {
@@ -193,14 +205,24 @@ export default function CustomerDashboard() {
   }
 
   const handleRescheduleRequest = async () => {
-    if (!profile || !upcomingLessonDate || !user) return;
+    if (!profile || !upcomingLessonDate || !user || !newRescheduleDate || !newRescheduleTime) return;
+
+    const [hours, period] = newRescheduleTime.split(/:| /);
+    let hour24 = parseInt(hours, 10);
+    if (period === 'PM' && hour24 !== 12) hour24 += 12;
+    if (period === 'AM' && hour24 === 12) hour24 = 0;
+    
+    const finalNewDate = new Date(newRescheduleDate);
+    finalNewDate.setHours(hour24, 0, 0, 0);
+
     setIsSubmitting(true);
     try {
-        await addRescheduleRequest(user.uid, profile.name, upcomingLessonDate);
+        await addRescheduleRequest(user.uid, profile.name, upcomingLessonDate, finalNewDate);
         toast({
             title: 'Reschedule Request Sent',
             description: 'Your request has been sent for approval. You will be notified of the outcome.',
         });
+        setIsRescheduleDialogOpen(false);
         setIsReschedulable(false);
     } catch (error) {
         toast({
@@ -265,9 +287,9 @@ export default function CustomerDashboard() {
             <Button 
                 className="w-full"
                 disabled={!isReschedulable || isSubmitting}
-                onClick={handleRescheduleRequest}
+                onClick={() => setIsRescheduleDialogOpen(true)}
             >
-              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : <><Repeat className="mr-2 h-4 w-4" />Reschedule</>}
+              <Repeat className="mr-2 h-4 w-4" />Reschedule
             </Button>
           </CardFooter>
            {!isReschedulable && upcomingLessonDate && (
@@ -430,7 +452,6 @@ export default function CustomerDashboard() {
               profile={profile}
               onSubmitted={() => {
                 setIsFeedbackDialogOpen(false);
-                // Refresh profile data to update the button state
                 if (user?.uid) {
                   fetchUserById(user.uid).then(setProfile);
                 }
@@ -460,6 +481,43 @@ export default function CustomerDashboard() {
             <Button onClick={handleStartDateChange} disabled={isSubmitting || !newStartDate}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Confirm New Date
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reschedule Lesson</DialogTitle>
+            <DialogDescription>
+              Select a new date and time for your lesson. Your trainer will need to approve this change.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex justify-center">
+              <Calendar
+                mode="single"
+                selected={newRescheduleDate}
+                onSelect={setNewRescheduleDate}
+                disabled={(date) => date <= addDays(new Date(), 1)} // Can only schedule for tomorrow onwards
+              />
+            </div>
+            <Select value={newRescheduleTime} onValueChange={setNewRescheduleTime}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a time slot" />
+                </SelectTrigger>
+                <SelectContent>
+                    {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+                </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRescheduleDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleRescheduleRequest} disabled={isSubmitting || !newRescheduleDate || !newRescheduleTime}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Request Reschedule
             </Button>
           </DialogFooter>
         </DialogContent>

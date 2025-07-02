@@ -582,14 +582,14 @@ export const fetchAllLessonRequests = async (searchTerm?: string): Promise<Lesso
 };
 
 // --- Reschedule Request Management ---
-export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date): Promise<RescheduleRequest> => {
+export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     const newRequest: RescheduleRequest = {
         id: `resched-${Date.now()}`,
         userId,
         customerName,
         originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
-        requestedRescheduleDate: format(addDays(originalDate, 2), 'MMM dd, yyyy, h:mm a'),
+        requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
         status: 'Pending',
         requestTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
     };
