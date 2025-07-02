@@ -134,30 +134,33 @@ export default function SiteHeader() {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6 lg:px-8">
         <SiteLogo />
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <Button variant="ghost" asChild key={link.href}>
-              <Link href={link.href}>{link.label}</Link>
-            </Button>
-          ))}
-        </nav>
+        {/* This div groups nav and auth buttons to the right */}
+        <div className="hidden lg:flex items-center gap-4">
+            {/* Desktop Navigation */}
+            <nav className="flex items-center gap-1">
+            {navLinks.map((link) => (
+                <Button variant="ghost" asChild key={link.href}>
+                <Link href={link.href}>{link.label}</Link>
+                </Button>
+            ))}
+            </nav>
 
-        <div className="hidden lg:flex items-center gap-2">
-          {renderAuthButtons()}
-          <Button
+            {renderAuthButtons()}
+
+            <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
             aria-label="Toggle theme"
-          >
+            >
             {theme === 'light' ? (
-              <Moon className="h-5 w-5" />
+                <Moon className="h-5 w-5" />
             ) : (
-              <Sun className="h-5 w-5" />
+                <Sun className="h-5 w-5" />
             )}
-          </Button>
+            </Button>
         </div>
+
 
         {/* Mobile Navigation */}
         <div className="flex items-center lg:hidden">
