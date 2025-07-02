@@ -5,9 +5,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin, LogIn, UserPlus, Power, LayoutDashboard, Moon, Sun, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import ChatWidget from '@/components/chatbot/chat-widget';
+import { useAuth } from '@/context/auth-context';
+import { useTheme } from '@/context/theme-context';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -135,6 +140,8 @@ const POSTS_PER_PAGE = 6;
 
 export default function BlogPage() {
   const [currentPage, setCurrentPage] = useState(1);
+  const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const totalPages = Math.ceil(blogPosts.length / POSTS_PER_PAGE);
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
@@ -152,14 +159,86 @@ export default function BlogPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-        <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-                <SiteLogo />
-                <Button variant="outline" asChild>
-                    <Link href="/site">Back to Site</Link>
+      <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto h-auto min-h-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-2">
+          <SiteLogo />
+          <nav className="flex items-center flex-wrap gap-x-1 gap-y-2 sm:gap-x-2 justify-end">
+            <Button variant="ghost" asChild>
+              <Link href="/site#services">Services</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/site#courses">Courses</Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="/site/blog">Blog</Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="/site#subscriptions">Plans</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/site#testimonials">Testimonials</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/site/faq">FAQ</Link>
+            </Button>
+             <Button variant="ghost" asChild>
+              <Link href="/site#contact">Support</Link>
+            </Button>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                     <Avatar className="h-6 w-6">
+                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} />
+                        <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    <span>{user.displayName}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      My Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={signOut}>
+                    <Power className="mr-2 h-4 w-4" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </Link>
                 </Button>
-            </div>
-        </header>
+                <Button asChild>
+                  <Link href="/site/register">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Register
+                  </Link>
+                </Button>
+              </>
+            )}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+          </nav>
+        </div>
+    </header>
 
         <main className="flex-grow">
             <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
