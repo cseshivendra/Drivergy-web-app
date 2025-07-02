@@ -7,12 +7,13 @@ import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
-import FeedbackTable from '@/components/dashboard/feedback-table'; // Import new component
+import FeedbackTable from '@/components/dashboard/feedback-table';
 import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchExistingInstructors } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History } from 'lucide-react';
+import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const [existingInstructors, setExistingInstructors] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
-  const [feedback, setFeedback] = useState<Feedback[]>([]); // New state for feedback
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
@@ -29,7 +30,7 @@ export default function AdminDashboard() {
   const [loadingExistingInstructors, setLoadingExistingInstructors] = useState(true);
   const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
   const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
-  const [loadingFeedback, setLoadingFeedback] = useState(true); // New loading state
+  const [loadingFeedback, setLoadingFeedback] = useState(true);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
       setLoadingRescheduleRequests(false);
     });
 
-    setLoadingFeedback(true); // Fetch feedback
+    setLoadingFeedback(true);
     fetchAllFeedback().then(data => {
       setFeedback(data);
       setLoadingFeedback(false);
@@ -100,7 +101,6 @@ export default function AdminDashboard() {
   };
 
   const handleActioned = () => {
-    // A single function to reload all data after an action
     loadInitialDataAndRequests(searchTerm);
     loadFilteredUserData(filters, searchTerm);
   };
@@ -134,40 +134,65 @@ export default function AdminDashboard() {
           currentFilters={filters}
         />
         
-        <UserTable 
-          title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
-          users={customers} 
-          isLoading={loadingCustomers} 
-          onUserActioned={handleActioned}
-        />
-        <UserTable 
-          title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
-          users={instructors} 
-          isLoading={loadingInstructors} 
-          onUserActioned={handleActioned}
-        />
-        <UserTable 
-          title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
-          users={existingInstructors} 
-          isLoading={loadingExistingInstructors} 
-          onUserActioned={handleActioned}
-        />
-        <RequestTable 
-          title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
-          requests={allLessonRequests} 
-          isLoading={loadingAllLessonRequests} 
-        />
-        <RescheduleRequestTable
-          title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
-          requests={rescheduleRequests}
-          isLoading={loadingRescheduleRequests}
-          onActioned={handleActioned}
-        />
-        <FeedbackTable
-          title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
-          feedback={feedback}
-          isLoading={loadingFeedback}
-        />
+        <Tabs defaultValue="verifications" className="w-full">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+            <TabsTrigger value="verifications">
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              Verifications
+            </TabsTrigger>
+            <TabsTrigger value="requests">
+              <BellRing className="mr-2 h-4 w-4" />
+              Requests
+            </TabsTrigger>
+            <TabsTrigger value="management">
+              <ClipboardList className="mr-2 h-4 w-4" />
+              Management
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="verifications" className="mt-6 space-y-8">
+            <UserTable 
+              title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
+              users={customers} 
+              isLoading={loadingCustomers} 
+              onUserActioned={handleActioned}
+            />
+            <UserTable 
+              title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
+              users={instructors} 
+              isLoading={loadingInstructors} 
+              onUserActioned={handleActioned}
+            />
+          </TabsContent>
+          
+          <TabsContent value="requests" className="mt-6 space-y-8">
+             <RequestTable 
+              title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
+              requests={allLessonRequests} 
+              isLoading={loadingAllLessonRequests} 
+            />
+            <RescheduleRequestTable
+              title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
+              requests={rescheduleRequests}
+              isLoading={loadingRescheduleRequests}
+              onActioned={handleActioned}
+            />
+          </TabsContent>
+
+          <TabsContent value="management" className="mt-6 space-y-8">
+            <UserTable 
+              title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
+              users={existingInstructors} 
+              isLoading={loadingExistingInstructors} 
+              onUserActioned={handleActioned}
+            />
+            <FeedbackTable
+              title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
+              feedback={feedback}
+              isLoading={loadingFeedback}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
