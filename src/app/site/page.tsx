@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -231,21 +232,12 @@ export default function PortfolioSitePage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <>
-                <Button asChild>
-                  <Link href="/site/register">
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Sign Up
-                  </Link>
-                </Button>
-                
-                <Button asChild>
-                  <Link href="/login">
-                    <Lock className="mr-2 h-4 w-4" />
-                    Login
-                  </Link>
-                </Button>
-              </>
+              <Button variant="ghost" asChild>
+                <Link href="/login">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Login / Register</span>
+                </Link>
+              </Button>
             )}
 
             <Button
