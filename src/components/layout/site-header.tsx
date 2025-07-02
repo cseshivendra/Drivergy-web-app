@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Car,
-  LogIn,
+  Lock,
   UserPlus,
   Power,
   LayoutDashboard,
@@ -108,16 +108,19 @@ export default function SiteHeader() {
         className={cn('flex items-center gap-2', isMobile && 'flex-col gap-4 w-full')}
       >
         <Button
-          variant="ghost"
           asChild
           className={cn(isMobile && 'w-full text-lg py-6')}
         >
           <Link href="/login">
-            <LogIn className="mr-2 h-4 w-4" />
+            <Lock className="mr-2 h-4 w-4" />
             Login
           </Link>
         </Button>
-        <Button asChild className={cn(isMobile && 'w-full text-lg py-6')}>
+        <Button
+          variant="ghost"
+          asChild
+          className={cn(isMobile && 'w-full text-lg py-6')}
+        >
           <Link href="/site/register">
             <UserPlus className="mr-2 h-4 w-4" />
             Register
