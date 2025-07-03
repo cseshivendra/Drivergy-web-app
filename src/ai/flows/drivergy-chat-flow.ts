@@ -110,13 +110,19 @@ const drivergyChatFlow = ai.defineFlow(
       userProfile = await fetchUserById(input.userId);
     }
     
-    const {output} = await prompt({
-        query: input.query,
-        user: userProfile || undefined,
-    });
-    if (!output) {
-      return { response: "I'm sorry, I had trouble generating a response. Please try again." };
+    try {
+      const {output} = await prompt({
+          query: input.query,
+          user: userProfile || undefined,
+      });
+      if (!output) {
+        return { response: "I'm sorry, I had trouble generating a response. Please try again." };
+      }
+      return output;
+    } catch (e) {
+      console.error("Chatbot API error:", e);
+      // It's better to return a user-friendly message. The console.error will log details for debugging.
+      return { response: "I'm having some trouble right now. Please try again later." };
     }
-    return output;
   }
 );
