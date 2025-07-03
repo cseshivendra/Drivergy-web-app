@@ -1,6 +1,6 @@
 
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData } from '@/types';
-import { addDays, format, subDays } from 'date-fns';
+import { addDays, format, subDays, isPast } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react'; // For course icons
 import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
 
@@ -834,22 +834,23 @@ export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[
   return progressData.sort((a, b) => a.remainingLessons - b.remainingLessons);
 };
 
-export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<boolean> => {
+export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
   const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
   if (customerIndex !== -1) {
-    mockCustomers[customerIndex].subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
+    const customer = mockCustomers[customerIndex];
+    customer.subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
 
     // Also update the upcoming lesson to be relative to the new start date
     // Let's set it 2 days after the start date at 9 AM for demonstration.
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
-    mockCustomers[customerIndex].upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+    customer.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
 
     saveDataToLocalStorage();
-    return true;
+    return { ...customer };
   }
-  return false;
+  return null;
 }
 
 

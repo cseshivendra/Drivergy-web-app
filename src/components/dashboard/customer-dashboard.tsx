@@ -13,7 +13,7 @@ import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, 
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { add, differenceInHours, format, isFuture, parse, addDays } from 'date-fns';
+import { add, differenceInHours, format, isFuture, parse, addDays, isPast } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -151,7 +151,7 @@ export default function CustomerDashboard() {
       // Determine if start date can be edited
       if (profile.subscriptionStartDate) {
         const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
-        setIsStartDateEditable(isFuture(startDate));
+        setIsStartDateEditable(!isPast(startDate));
       } else {
         // If no start date is set, it can be edited
         setIsStartDateEditable(true);
@@ -182,15 +182,13 @@ export default function CustomerDashboard() {
     if (!profile || !newStartDate || !user) return;
     setIsSubmitting(true);
     try {
-      const success = await updateSubscriptionStartDate(user.uid, newStartDate);
-      if (success) {
+      const updatedProfile = await updateSubscriptionStartDate(user.uid, newStartDate);
+      if (updatedProfile) {
         toast({
           title: 'Start Date Updated',
           description: `Your subscription will now start on ${format(newStartDate, 'PPP')}. Your first lesson has been scheduled accordingly.`,
         });
-        fetchUserById(user.uid).then(userProfile => {
-          if (userProfile) setProfile(userProfile);
-        });
+        setProfile(updatedProfile);
         setIsStartDateDialogOpen(false);
       } else {
         toast({
