@@ -256,9 +256,6 @@ export const JobOpenings: JobOpening[] = [
   },
 ];
 
-const fileField = z.any();
-const optionalFileField = z.any().optional();
-
 // --- Zod Schemas ---
 
 export const CareerFormSchema = z.object({
@@ -268,16 +265,8 @@ export const CareerFormSchema = z.object({
         message: "Phone number must be 10 digits if provided.",
     }),
     position: z.string().min(1, { message: "Please select a position." }),
-    resume: fileField,
+    resume: z.any().refine(files => files?.length == 1, "Resume is required."),
     coverLetter: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (!data.resume || data.resume.length === 0) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Resume/CV is required.",
-            path: ["resume"],
-        });
-    }
 });
 
 export type CareerFormValues = z.infer<typeof CareerFormSchema>;
@@ -306,10 +295,8 @@ const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   dlStatus: z.enum(DLStatusOptions, { required_error: "Please select your Driving License status."}),
   dlNumber: z.string().optional(),
   dlTypeHeld: z.string().optional(),
-  dlFileCopy: optionalFileField,
   photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
-  photoIdFile: fileField,
   subscriptionStartDate: z.date({
     required_error: "A subscription start date is required.",
   }),
@@ -323,14 +310,11 @@ const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Please select fuel type."}),
   vehicleNumber: z.string().min(1, { message: "Vehicle number is required." }).max(20, { message: "Vehicle number seems too long."}),
   trainerCertificateNumber: z.string().min(1, { message: "Trainer certificate number is required." }).max(50),
-  trainerCertificateFile: fileField,
   aadhaarCardNumber: z.string()
     .min(12, { message: "Aadhaar number must be 12 digits." })
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
-  aadhaarCardFile: fileField,
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
-  drivingLicenseFile: fileField,
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
@@ -351,40 +335,6 @@ export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
       message: "Phone number must be 10 digits.",
       path: ["phone"],
     });
-  }
-  
-  if (data.userRole === 'customer') {
-    if (!data.photoIdFile || data.photoIdFile.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Photo ID document is required.",
-        path: ["photoIdFile"],
-      });
-    }
-  }
-
-  if (data.userRole === 'trainer') {
-    if (!data.trainerCertificateFile || data.trainerCertificateFile.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Trainer certificate is required.",
-        path: ["trainerCertificateFile"],
-      });
-    }
-    if (!data.aadhaarCardFile || data.aadhaarCardFile.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Aadhaar card copy is required.",
-        path: ["aadhaarCardFile"],
-      });
-    }
-    if (!data.drivingLicenseFile || data.drivingLicenseFile.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Driving license copy is required.",
-        path: ["drivingLicenseFile"],
-      });
-    }
   }
 });
 

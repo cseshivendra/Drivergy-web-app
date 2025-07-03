@@ -85,10 +85,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         dlStatus: '',
         dlNumber: '',
         dlTypeHeld: '',
-        dlFileCopy: undefined,
         photoIdType: '', 
         photoIdNumber: '',
-        photoIdFile: undefined,
         subscriptionStartDate: undefined,
       } as CustomerRegistrationFormValues;
     } else { // trainer
@@ -100,11 +98,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         fuelType: undefined,
         vehicleNumber: '',
         trainerCertificateNumber: '',
-        trainerCertificateFile: undefined, 
         aadhaarCardNumber: '',
-        aadhaarCardFile: undefined, 
         drivingLicenseNumber: '',
-        drivingLicenseFile: undefined, 
       } as TrainerRegistrationFormValues;
     }
   }, [userRole, plan]);
@@ -612,25 +607,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     )}
                   />
                 </div>
-                <FormField
-                    control={form.control}
-                    name="dlFileCopy"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload DL Copy</FormLabel>
-                        <FormControl>
-                            <Input 
-                              type="file" 
-                              {...fieldProps} 
-                              onChange={(event) => onChange(event.target.files)}
-                              accept=".pdf,.jpg,.jpeg,.png"
-                            />
-                        </FormControl>
-                        <FormDescription>PDF, JPG, PNG accepted.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
               </>
             )}
 
@@ -672,25 +648,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     )}
                 />
             </div>
-            <FormField
-                control={form.control}
-                name="photoIdFile"
-                render={({ field: { value, onChange, ...fieldProps } }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Photo ID Document<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                        <Input 
-                            type="file" 
-                            {...fieldProps} 
-                            onChange={(event) => onChange(event.target.files)}
-                            accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                    </FormControl>
-                    <FormDescription>PDF, JPG, PNG accepted. This is required.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
           </>
         )}
 
@@ -795,6 +752,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             />
 
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
+            <p className="text-sm text-muted-foreground">Please provide the following document numbers for verification purposes. Uploading files is not required at this time.</p>
 
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
@@ -812,19 +770,13 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 />
                 <FormField
                     control={form.control}
-                    name="trainerCertificateFile"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
+                    name="drivingLicenseNumber"
+                    render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Trainer Certificate<span className="text-destructive ml-1">*</span></FormLabel>
+                        <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
-                            <Input 
-                              type="file" 
-                              {...fieldProps} 
-                              onChange={(event) => onChange(event.target.files)}
-                              accept=".pdf,.jpg,.jpeg,.png"
-                            />
+                            <Input placeholder="Enter DL number" {...field} />
                         </FormControl>
-                        <FormDescription>PDF, JPG, PNG accepted.</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -841,60 +793,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         <FormControl>
                             <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
                         </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="aadhaarCardFile"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input 
-                              type="file" 
-                              {...fieldProps} 
-                              onChange={(event) => onChange(event.target.files)}
-                              accept=".pdf,.jpg,.jpeg,.png"
-                            />
-                        </FormControl>
-                         <FormDescription>PDF, JPG, PNG accepted.</FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                 <FormField
-                    control={form.control}
-                    name="drivingLicenseNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter DL number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="drivingLicenseFile"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                           <Input 
-                              type="file" 
-                              {...fieldProps} 
-                              onChange={(event) => onChange(event.target.files)}
-                              accept=".pdf,.jpg,.jpeg,.png"
-                            />
-                        </FormControl>
-                         <FormDescription>PDF, JPG, PNG accepted.</FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
