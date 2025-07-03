@@ -132,6 +132,21 @@ const testimonialsData = [
 
 export default function PortfolioSitePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const heroSlides = [
+    { src: 'https://placehold.co/1920x1080.png', hint: 'road learning earning' },
+    { src: 'https://placehold.co/1920x1080.png', hint: 'driving lesson student' },
+    { src: 'https://placehold.co/1920x1080.png', hint: 'safe driving shield road' }
+  ];
+
+  useEffect(() => {
+    const slideInterval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(slideInterval);
+  }, [heroSlides.length]);
 
   useEffect(() => {
     // Show popup only on first visit per session
@@ -156,16 +171,26 @@ export default function PortfolioSitePage() {
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
-          {/* Static Image Background */}
+          {/* Image Slideshow Background */}
           <div className="absolute top-0 left-0 w-full h-full z-[1]">
-             <Image
-              src="https://placehold.co/1920x1080.png"
-              alt="Scenic road for driving"
-              layout="fill"
-              objectFit="cover"
-              priority
-              data-ai-hint="road learning earning"
-            />
+            {heroSlides.map((slide, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "hero-bg-slide",
+                  index === currentSlide && "active"
+                )}
+              >
+                <Image
+                  src={slide.src}
+                  alt="Scenic road for driving"
+                  layout="fill"
+                  objectFit="cover"
+                  priority={index === 0}
+                  data-ai-hint={slide.hint}
+                />
+              </div>
+            ))}
           </div>
           
           <div className="absolute inset-0 bg-black/60 z-[5]"></div>
