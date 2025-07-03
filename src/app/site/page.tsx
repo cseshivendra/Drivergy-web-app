@@ -129,16 +129,31 @@ const testimonialsData = [
     },
   ];
   
+const heroSlides = [
+  { 
+    src: 'https://placehold.co/1920x1080.png', 
+    hint: 'road learning earning',
+    title: 'Learn to Drive, Master the Road',
+    description: 'Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.'
+  },
+  { 
+    src: 'https://placehold.co/1920x1080.png', 
+    hint: 'driving lesson student',
+    title: 'Your Journey to Safe Driving Starts Here',
+    description: 'Our certified instructors are dedicated to building your skills and confidence on the road.'
+  },
+  { 
+    src: 'https://placehold.co/1920x1080.png', 
+    hint: 'safe driving shield road',
+    title: 'Unlock Your Freedom. Get Your License.',
+    description: "From RTO test prep to advanced driving techniques, we've got you covered."
+  }
+];
+
 
 export default function PortfolioSitePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const heroSlides = [
-    { src: 'https://placehold.co/1920x1080.png', hint: 'road learning earning' },
-    { src: 'https://placehold.co/1920x1080.png', hint: 'driving lesson student' },
-    { src: 'https://placehold.co/1920x1080.png', hint: 'safe driving shield road' }
-  ];
 
   useEffect(() => {
     const slideInterval = setInterval(() => {
@@ -196,16 +211,28 @@ export default function PortfolioSitePage() {
           <div className="absolute inset-0 bg-black/60 z-[5]"></div>
           
           <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
-            <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center animate-fade-in-up">
-                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
-                  Learn to Drive, Master the Road
-                </h1>
-                <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
-                  Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.
-                </p>
+            {/* Text content slideshow */}
+            <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center">
+              {heroSlides.map((slide, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "absolute inset-0 flex flex-col items-center justify-center p-4 transition-opacity duration-1000 ease-in-out",
+                    currentSlide === index ? "opacity-100" : "opacity-0"
+                  )}
+                >
+                    <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
+                      {slide.title}
+                    </h1>
+                    <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
+                      {slide.description}
+                    </p>
+                </div>
+              ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            {/* Buttons (static) */}
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 z-10 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
