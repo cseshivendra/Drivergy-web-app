@@ -114,6 +114,9 @@ const drivergyChatFlow = ai.defineFlow(
         query: input.query,
         user: userProfile || undefined,
     });
-    return output!;
+    if (!output) {
+      return { response: "I'm sorry, I had trouble generating a response. Please try again." };
+    }
+    return output;
   }
 );
