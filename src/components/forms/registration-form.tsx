@@ -37,7 +37,7 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff, CalendarIcon } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff, CalendarIcon, Loader2 } from 'lucide-react'; 
 import { useMemo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -120,7 +120,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     return [];
   }, [selectedState]);
 
-  // When the state changes, reset the district field to prevent invalid combinations
   useEffect(() => {
     form.setValue('district', '');
   }, [selectedState, form]);
@@ -130,15 +129,15 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       let newUser: UserProfile | undefined;
 
       if (data.userRole === 'customer') {
-        newUser = await addCustomer(data);
+        newUser = await addCustomer(data as CustomerRegistrationFormValues);
       } else if (data.userRole === 'trainer') {
-        newUser = await addTrainer(data);
+        newUser = await addTrainer(data as TrainerRegistrationFormValues);
       }
 
       if (newUser) {
         toast({
           title: "Registration Successful!",
-          description: "Please log in to continue.",
+          description: "Your account has been created. Please log in to continue.",
         });
 
         if (plan && price) {
@@ -148,32 +147,13 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           router.push('/login');
         }
       } else {
-        // This case should ideally not happen if addCustomer/addTrainer always return a user or throw an error.
-        // But as a fallback, show an error.
         throw new Error("Registration failed: No user data returned.");
       }
     } catch (error) {
       console.error('Registration failed:', error);
-      let description = "An unexpected error occurred. Please try again.";
-
-      // Check if it's a Firebase error
-      if (typeof error === 'object' && error !== null && 'code' in error) {
-        const firebaseError = error as { code: string };
-        switch (firebaseError.code) {
-          case 'unavailable':
-            description = "Could not connect to the database. Please check your internet connection and Firebase project configuration in your .env.local file.";
-            break;
-          case 'permission-denied':
-            description = "Database permission denied. Please check your Firestore security rules in the Firebase console.";
-            break;
-          default:
-            description = `An error occurred: ${firebaseError.code}. Please check the console for details.`;
-        }
-      }
-
       toast({
         title: "Registration Failed",
-        description: description,
+        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
@@ -826,7 +806,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         <div className="flex justify-end pt-4">
           <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? 'Submitting...' :
+            {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
               userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
           </Button>
         </div>
