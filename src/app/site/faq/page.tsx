@@ -61,6 +61,11 @@ const faqData = [
       id: "faq-7",
       question: "How can I use the points earned from referrals?",
       answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey."
+    },
+    {
+      id: "faq-8",
+      question: "Is our driving school completion certificate valid at the RTO?",
+      answer: "While our completion certificate is a testament to your training with us and is valued by many, the official driving license is issued only by the Regional Transport Office (RTO) after you pass their official test. Our courses are designed to thoroughly prepare you for this test, and we provide assistance in the process, but our certificate is not a substitute for a government-issued license.",
     }
 ];
 
