@@ -88,11 +88,11 @@ export default function AppSidebar() {
             <SidebarMenuButton
               asChild
               isActive={pathname === '/site'}
-              tooltip={{ children: "Main Site", side: "right", align: "center" }}
+              tooltip={{ children: "Home Page", side: "right", align: "center" }}
             >
               <Link href="/site">
                 <Home />
-                <span>Main Site</span>
+                <span>Home Page</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
