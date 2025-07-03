@@ -156,19 +156,19 @@ export default function PortfolioSitePage() {
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
-          {/* Video Background */}
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-[1] pointer-events-none">
-            <iframe
-              className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2"
-              src="https://www.youtube.com/embed/D7tit_JZKvk?autoplay=1&mute=1&loop=1&playlist=D7tit_JZKvk&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3&playsinline=1"
-              frameBorder="0"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              title="Background Video"
-            ></iframe>
+          {/* Static Image Background */}
+          <div className="absolute top-0 left-0 w-full h-full z-[1]">
+             <Image
+              src="https://placehold.co/1920x1080.png"
+              alt="Scenic road for driving"
+              layout="fill"
+              objectFit="cover"
+              priority
+              data-ai-hint="road learning earning"
+            />
           </div>
           
-          <div className="absolute inset-0 bg-black/60 z-[5] pointer-events-none"></div> {/* Darker overlay for better contrast */}
+          <div className="absolute inset-0 bg-black/60 z-[5]"></div>
           
           <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
             <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center animate-fade-in-up">
