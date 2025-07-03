@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -101,27 +102,6 @@ const coursesData = [
   }
 ];
 
-const slidesData = [
-  {
-    src: "https://placehold.co/1920x1080.png",
-    hint: "driving lesson student",
-    title: "Learn to Drive, Master the Road",
-    description: "Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.",
-  },
-  {
-    src: "https://placehold.co/1920x1080.png",
-    hint: "driving instructor car",
-    title: "Empowering Driving Instructors",
-    description: "Access powerful tools to manage your schedule, track student progress, and grow your business.",
-  },
-  {
-    src: "https://placehold.co/1920x1080.png",
-    hint: "city road traffic",
-    title: "Your Journey to a License Starts Here",
-    description: "Comprehensive RTO assistance and test preparation to help you succeed.",
-  },
-];
-
 const testimonialsData = [
     {
       name: "Priya Sharma",
@@ -151,20 +131,7 @@ const testimonialsData = [
   
 
 export default function PortfolioSitePage() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-
-  useEffect(() => {
-    if (slidesData.length === 0) return;
-
-    const timer = setTimeout(() => {
-      setCurrentImageIndex((prevIndex) =>
-        prevIndex === slidesData.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 3000); // Change image every 3 seconds
-
-    return () => clearTimeout(timer); // Cleanup timer on component unmount
-  }, [currentImageIndex]);
 
   useEffect(() => {
     // Show popup only on first visit per session
@@ -189,67 +156,28 @@ export default function PortfolioSitePage() {
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none">
-            {slidesData.map((slide, index) => (
-              <Image
-                key={index}
-                src={slide.src}
-                alt={`Background slide ${index + 1}`}
-                layout="fill"
-                objectFit="cover"
-                className={cn(
-                  "hero-bg-slide",
-                  index === currentImageIndex && "active"
-                )}
-                priority={index === 0}
-                data-ai-hint={slide.hint}
-              />
-            ))}
+          {/* Video Background */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-[1] pointer-events-none">
+            <iframe
+              className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2"
+              src="https://www.youtube.com/embed/D7tit_JZKvk?autoplay=1&mute=1&loop=1&playlist=D7tit_JZKvk&controls=0&showinfo=0&modestbranding=1&iv_load_policy=3&playsinline=1"
+              frameBorder="0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              title="Background Video"
+            ></iframe>
           </div>
+          
           <div className="absolute inset-0 bg-black/60 z-[5] pointer-events-none"></div> {/* Darker overlay for better contrast */}
           
           <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
-            <div className="relative h-48 sm:h-56 w-full flex-grow flex items-center justify-center">
-              {slidesData.map((slide, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center text-center p-4 transition-opacity duration-1000 ease-in-out",
-                    index === currentImageIndex ? "opacity-100 animate-fade-in-up" : "opacity-0 pointer-events-none"
-                  )}
-                >
-                  {/* Animated decorative icons */}
-                  <div aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none hidden md:block">
-                    {index === 0 && (
-                      <>
-                        <Navigation className="absolute top-[20%] left-[15%] h-12 w-12 text-white/20 animate-float" style={{ animationDuration: '5s' }} />
-                        <MoveRight className="absolute bottom-[25%] right-[20%] h-16 w-16 text-white/10 animate-float" style={{ animationDelay: '1s' }} />
-                        <CircleDot className="absolute top-[50%] right-[10%] h-8 w-8 text-white/15 animate-pulse-subtle" />
-                      </>
-                    )}
-                    {index === 1 && (
-                      <>
-                        <TrendingUp className="absolute top-[25%] right-[18%] h-14 w-14 text-white/20 animate-pulse-subtle" />
-                        <Target className="absolute bottom-[20%] left-[15%] h-16 w-16 text-white/15 animate-spin-slow" style={{ animationDuration: '12s' }} />
-                      </>
-                    )}
-                    {index === 2 && (
-                      <>
-                        <KeyRound className="absolute top-[22%] left-[20%] h-12 w-12 text-white/20 animate-float" />
-                        <Award className="absolute bottom-[22%] right-[18%] h-16 w-16 text-white/25 animate-pulse-subtle" style={{ animationDelay: '0.5s', animationDuration: '4s' }} />
-                        <Star className="absolute top-[40%] right-[30%] h-6 w-6 text-white/15 animate-spin-slow" />
-                      </>
-                    )}
-                  </div>
-                  
-                  <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
-                    {slide.title}
-                  </h1>
-                  <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
-                    {slide.description}
-                  </p>
-                </div>
-              ))}
+            <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center animate-fade-in-up">
+                <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
+                  Learn to Drive, Master the Road
+                </h1>
+                <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
+                  Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.
+                </p>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
