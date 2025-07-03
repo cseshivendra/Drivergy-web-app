@@ -24,6 +24,7 @@ import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera } from 'lucide-rea
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Locations } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from 'next/image';
 
 function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   const { toast } = useToast();
@@ -73,7 +74,17 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
 
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg overflow-hidden">
+      <div className="relative h-48 w-full">
+        <Image
+          src="https://placehold.co/1200x400.png"
+          alt="User profile banner"
+          layout="fill"
+          objectFit="cover"
+          data-ai-hint="desk paperwork documents"
+        />
+        <div className="absolute inset-0 bg-black/30" />
+      </div>
       <CardHeader>
         <CardTitle className="flex items-center"><User className="mr-2 h-5 w-5 text-primary" /> Personal Information</CardTitle>
         <CardDescription>Update your personal details and profile picture here.</CardDescription>

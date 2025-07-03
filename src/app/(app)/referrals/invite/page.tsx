@@ -12,6 +12,7 @@ import { Mail, MessageSquare, Smartphone, Copy, Gift, Share2, Save } from 'lucid
 import { useAuth } from '@/context/auth-context';
 import { fetchUserById } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
+import Image from 'next/image';
 
 export default function InviteReferralsPage() { 
   const { toast } = useToast();
@@ -109,7 +110,16 @@ export default function InviteReferralsPage() {
 
   return (
     <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
-      <Card className="shadow-xl">
+      <Card className="shadow-xl overflow-hidden">
+        <div className="relative h-48 w-full">
+            <Image
+                src="https://placehold.co/800x300.png"
+                alt="Referral program banner"
+                layout="fill"
+                objectFit="cover"
+                data-ai-hint="friends high five"
+            />
+        </div>
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
             <Gift className="h-12 w-12 text-primary" />

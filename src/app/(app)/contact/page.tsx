@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { ComplaintFormSchema, type ComplaintFormValues } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { Paperclip, MessageSquareText } from 'lucide-react'; 
+import Image from 'next/image';
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -45,7 +46,16 @@ export default function ContactPage() {
 
   return (
     <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
-      <Card className="shadow-lg">
+      <Card className="shadow-lg overflow-hidden">
+        <div className="relative h-48 w-full">
+          <Image
+            src="https://placehold.co/800x300.png"
+            alt="Contact us banner"
+            layout="fill"
+            objectFit="cover"
+            data-ai-hint="support customer service"
+          />
+        </div>
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
             <MessageSquareText className="h-8 w-8 text-primary" />

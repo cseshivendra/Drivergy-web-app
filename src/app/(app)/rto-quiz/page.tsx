@@ -35,6 +35,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
 
 
 // Define the structure for a single question
@@ -592,7 +593,16 @@ export default function AppRtoQuizPage() {
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
-      <Card className="shadow-xl">
+      <Card className="shadow-xl overflow-hidden">
+        <div className="relative h-48 w-full">
+          <Image
+            src="https://placehold.co/800x300.png"
+            alt="RTO Quiz Banner"
+            layout="fill"
+            objectFit="cover"
+            data-ai-hint="exam paper test"
+          />
+        </div>
         <QuizCardContent />
       </Card>
     </div>
