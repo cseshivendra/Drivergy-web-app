@@ -214,7 +214,7 @@ export interface LessonProgressData {
 export const VehiclePreferenceOptions = ["Two-Wheeler", "Four-Wheeler", "Both"] as const;
 export const SpecializationOptions = ["Two-Wheeler", "Car", "Three-Wheeler", "Defensive Driving"] as const;
 export const TrainerVehicleTypeOptions = ["Scooter", "Motorcycle", "Car (Manual)", "Car (Automatic)", "Three-Wheeler"] as const;
-export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "LPG", "Hybrid"] as const;
+export const FuelTypeOptions = ["Petrol", "Diesel", "Electric", "CNG", "Hybrid"] as const;
 export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as const;
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Passport", "Driving License"] as const;
