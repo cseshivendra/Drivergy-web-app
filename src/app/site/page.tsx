@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -23,6 +22,7 @@ import {
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
 import { useState, useEffect } from 'react';
+import PromotionalPopup from '@/components/popups/promotional-popup';
 
 
 const SiteLogo = () => (
@@ -152,6 +152,7 @@ const testimonialsData = [
 
 export default function PortfolioSitePage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   useEffect(() => {
     if (slidesData.length === 0) return;
@@ -165,10 +166,24 @@ export default function PortfolioSitePage() {
     return () => clearTimeout(timer); // Cleanup timer on component unmount
   }, [currentImageIndex]);
 
+  useEffect(() => {
+    // Show popup only on first visit per session
+    const popupShown = sessionStorage.getItem('promotionalPopupShown');
+    if (!popupShown) {
+      const popupTimer = setTimeout(() => {
+        setIsPopupOpen(true);
+        sessionStorage.setItem('promotionalPopupShown', 'true');
+      }, 2000); // Delay popup by 2 seconds
+      
+      return () => clearTimeout(popupTimer);
+    }
+  }, []);
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <SiteHeader />
+      <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} />
 
       {/* Main Content */}
       <main className="flex-grow">
@@ -293,82 +308,8 @@ export default function PortfolioSitePage() {
           </div>
         </section>
 
-        {/* Promotions & Posters Section */}
-        <section id="posters" className="py-16 md:py-24 bg-muted/20">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
-            <div className="text-center mb-12">
-              <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Promotions & Posters</h2>
-              <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-                Check out our latest offers and events. Click on a poster to learn more!
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Poster 1 */}
-              <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
-                <Link href="/site/register">
-                  <div className="relative h-96 w-full">
-                    <Image 
-                      src="https://placehold.co/600x800.png" 
-                      alt="Special discount poster" 
-                      layout="fill" 
-                      objectFit="cover"
-                      className="group-hover:scale-105 transition-transform duration-500"
-                      data-ai-hint="driving school promotion"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-6">
-                        <h3 className="text-2xl font-bold text-white font-headline drop-shadow-md">Student Discount</h3>
-                        <p className="text-white/90 mt-1 drop-shadow-sm">Get 15% off on your first Premium plan.</p>
-                    </div>
-                  </div>
-                </Link>
-              </Card>
-              {/* Poster 2 */}
-              <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
-                <Link href="/site/rto-services">
-                  <div className="relative h-96 w-full">
-                    <Image 
-                      src="https://placehold.co/600x800.png" 
-                      alt="RTO assistance poster" 
-                      layout="fill" 
-                      objectFit="cover"
-                      className="group-hover:scale-105 transition-transform duration-500"
-                      data-ai-hint="rto license poster"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-6">
-                        <h3 className="text-2xl font-bold text-white font-headline drop-shadow-md">Hassle-Free RTO</h3>
-                        <p className="text-white/90 mt-1 drop-shadow-sm">We help you with all your license needs.</p>
-                    </div>
-                  </div>
-                </Link>
-              </Card>
-              {/* Poster 3 */}
-              <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
-                <Link href="/site/register">
-                  <div className="relative h-96 w-full">
-                    <Image 
-                      src="https://placehold.co/600x800.png" 
-                      alt="Referral program poster" 
-                      layout="fill" 
-                      objectFit="cover"
-                      className="group-hover:scale-105 transition-transform duration-500"
-                      data-ai-hint="refer friend bonus"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    <div className="absolute bottom-0 left-0 p-6">
-                        <h3 className="text-2xl font-bold text-white font-headline drop-shadow-md">Refer & Earn</h3>
-                        <p className="text-white/90 mt-1 drop-shadow-sm">Invite friends and get rewards.</p>
-                    </div>
-                  </div>
-                </Link>
-              </Card>
-            </div>
-          </div>
-        </section>
-
         {/* Courses Section */}
-        <section id="courses" className="py-16 md:py-24 bg-background">
+        <section id="courses" className="py-16 md:py-24 bg-muted/20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <div className="text-center mb-12">
               <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
@@ -411,7 +352,7 @@ export default function PortfolioSitePage() {
         </section>
 
         {/* Subscription Plans Section */}
-        <section id="subscriptions" className="py-16 md:py-24 bg-muted/30">
+        <section id="subscriptions" className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
             <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Flexible Subscription Plans</h2>
             <p className="text-lg text-muted-foreground mb-12 max-w-xl mx-auto">
