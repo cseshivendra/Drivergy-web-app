@@ -126,33 +126,40 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   }, [selectedState, form]);
 
   async function onSubmit(data: RegistrationFormValues) {
-    console.log('Registration Data:', data);
+    try {
+      let newUser: UserProfile | undefined;
 
-    let newUser: UserProfile | undefined;
-
-    if (data.userRole === 'customer') {
-      newUser = await addCustomer(data);
-    } else if (data.userRole === 'trainer') {
-      newUser = await addTrainer(data);
-    }
-
-    if (newUser) {
-       toast({
-        title: "Registration Successful!",
-        description: "Please log in to continue.",
-      });
-
-      // Redirect to payment page if coming from subscription flow, otherwise redirect to login
-      if (plan && price) {
-        // Need to log the user in first, then redirect to payment.
-        // For simulation, we'll just redirect to login and have them log in manually.
-        const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
-        router.push(`/login?redirect=${redirectUrl}`);
-      } else {
-        router.push('/login');
+      if (data.userRole === 'customer') {
+        newUser = await addCustomer(data);
+      } else if (data.userRole === 'trainer') {
+        newUser = await addTrainer(data);
       }
-    } else {
-       form.reset(defaultValues); 
+
+      if (newUser) {
+        toast({
+          title: "Registration Successful!",
+          description: "Please log in to continue.",
+        });
+
+        if (plan && price) {
+          const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
+          router.push(`/login?redirect=${redirectUrl}`);
+        } else {
+          router.push('/login');
+        }
+      } else {
+        // This case should ideally not happen if addCustomer/addTrainer always return a user or throw an error.
+        // But as a fallback, show an error.
+        throw new Error("Registration failed: No user data returned.");
+      }
+    } catch (error) {
+      console.error('Registration failed:', error);
+      toast({
+        title: "Registration Failed",
+        description: "An unexpected error occurred. Please check the console and try again.",
+        variant: "destructive",
+      });
+      // The form.formState.isSubmitting will be set to false automatically by react-hook-form on promise rejection.
     }
   }
 
