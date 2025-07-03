@@ -154,12 +154,28 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       }
     } catch (error) {
       console.error('Registration failed:', error);
+      let description = "An unexpected error occurred. Please try again.";
+
+      // Check if it's a Firebase error
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        const firebaseError = error as { code: string };
+        switch (firebaseError.code) {
+          case 'unavailable':
+            description = "Could not connect to the database. Please check your internet connection and Firebase project configuration in your .env.local file.";
+            break;
+          case 'permission-denied':
+            description = "Database permission denied. Please check your Firestore security rules in the Firebase console.";
+            break;
+          default:
+            description = `An error occurred: ${firebaseError.code}. Please check the console for details.`;
+        }
+      }
+
       toast({
         title: "Registration Failed",
-        description: "An unexpected error occurred. Please check the console and try again.",
+        description: description,
         variant: "destructive",
       });
-      // The form.formState.isSubmitting will be set to false automatically by react-hook-form on promise rejection.
     }
   }
 

@@ -3,8 +3,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchAssignedCustomers, fetchTrainerSummary, updateUserAttendance, fetchUserById, fetchPendingAssignments, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
-import type { UserProfile, TrainerSummaryData, ApprovalStatusType } from '@/types';
+import { fetchAllTrainerStudents, updateUserAttendance, fetchUserById, updateAssignmentStatusByTrainer, fetchTrainerFeedback } from '@/lib/mock-data';
+import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, P
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
+import { isFuture, parse } from 'date-fns';
 
 const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -73,16 +74,33 @@ export default function TrainerDashboard() {
     if (!user) return;
     setLoading(true);
     try {
-      const [summaryData, studentData, profileData, assignmentsData] = await Promise.all([
-        fetchTrainerSummary(user.uid),
-        fetchAssignedCustomers(user.uid),
+      const [allAssignedStudents, profileData, feedbackData] = await Promise.all([
+        fetchAllTrainerStudents(user.uid),
         fetchUserById(user.uid),
-        fetchPendingAssignments(user.uid)
+        fetchTrainerFeedback(user.uid),
       ]);
+
+      // Calculate summary data on the client
+      const approvedStudents = allAssignedStudents.filter(s => s.approvalStatus === 'Approved');
+      
+      let avgRating = 4.8;
+      if (feedbackData.length > 0) {
+        const totalRating = feedbackData.reduce((acc, doc) => acc + doc.rating, 0);
+        avgRating = parseFloat((totalRating / feedbackData.length).toFixed(1));
+      }
+
+      const summaryData: TrainerSummaryData = {
+        totalStudents: approvedStudents.length,
+        totalEarnings: approvedStudents.length * 2000,
+        upcomingLessons: approvedStudents.filter(doc => doc.upcomingLesson && isFuture(parse(doc.upcomingLesson, 'MMM dd, yyyy, h:mm a', new Date()))).length,
+        rating: avgRating,
+      };
+      
       setSummary(summaryData);
-      setStudents(studentData);
+      setStudents(approvedStudents);
+      setPendingAssignments(allAssignedStudents.filter(s => s.approvalStatus === 'In Progress'));
       setTrainerProfile(profileData);
-      setPendingAssignments(assignmentsData);
+
     } catch (error) {
       console.error("Failed to fetch trainer dashboard data", error);
       toast({ title: "Error", description: "Could not load dashboard data.", variant: "destructive" });

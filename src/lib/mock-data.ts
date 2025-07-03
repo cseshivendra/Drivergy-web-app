@@ -429,29 +429,17 @@ export const fetchAssignedCustomers = async (trainerId: string): Promise<UserPro
   return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
-export const fetchTrainerSummary = async (trainerId: string): Promise<TrainerSummaryData> => {
-    const assignedCustomersQuery = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "Approved"));
+export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
+  const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => doc.data() as UserProfile);
+};
+
+export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
     const feedbackQuery = query(collection(db, "feedback"), where("trainerId", "==", trainerId));
-    
-    const [assignedCustomersSnap, feedbackSnap] = await Promise.all([
-      getDocs(assignedCustomersQuery),
-      getDocs(feedbackQuery)
-    ]);
-    
-    let avgRating = 4.8;
-    if (!feedbackSnap.empty) {
-        const totalRating = feedbackSnap.docs.reduce((acc, doc) => acc + doc.data().rating, 0);
-        avgRating = parseFloat((totalRating / feedbackSnap.size).toFixed(1));
-    }
-    
-    const summary: TrainerSummaryData = {
-        totalStudents: assignedCustomersSnap.size,
-        totalEarnings: assignedCustomersSnap.size * 2000,
-        upcomingLessons: assignedCustomersSnap.docs.filter(doc => doc.data().upcomingLesson && new Date(doc.data().upcomingLesson) > new Date()).length,
-        rating: avgRating
-    };
-    return summary;
-}
+    const querySnapshot = await getDocs(feedbackQuery);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback));
+};
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
     const studentRef = doc(db, "users", studentId);
