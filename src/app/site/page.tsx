@@ -131,7 +131,7 @@ const testimonialsData = [
   
 const heroSlides = [
   { 
-    src: '/driving-school-banner.png', 
+    src: 'https://firebasestorage.googleapis.com/v0/b/ai-stud-f9699.appspot.com/o/driving-school-banner.png?alt=media&token=e93f3b73-c8d3-4638-a15d-3578a05c754d', 
     hint: 'driving school',
     title: 'Learn to Drive, Master the Road',
     description: 'Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.'
@@ -161,7 +161,7 @@ export default function PortfolioSitePage() {
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(slideInterval);
-  }, [heroSlides.length]);
+  }, []);
 
   useEffect(() => {
     // Show popup only on first visit per session
