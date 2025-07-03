@@ -1,14 +1,14 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchCustomers, fetchInstructors, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchExistingInstructors, fetchCustomerLessonProgress } from '@/lib/mock-data';
+import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData } from '@/types';
 import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -18,18 +18,14 @@ import LessonProgressTable from './lesson-progress-table';
 
 export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
-  const [customers, setCustomers] = useState<UserProfile[]>([]);
-  const [instructors, setInstructors] = useState<UserProfile[]>([]);
-  const [existingInstructors, setExistingInstructors] = useState<UserProfile[]>([]);
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingCustomers, setLoadingCustomers] = useState(true);
-  const [loadingInstructors, setLoadingInstructors] = useState(true);
-  const [loadingExistingInstructors, setLoadingExistingInstructors] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
   const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
@@ -37,68 +33,74 @@ export default function AdminDashboard() {
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
-  const [tempSearchTerm, setTempSearchTerm] = useState(''); 
+  const [tempSearchTerm, setTempSearchTerm] = useState('');
 
-  const loadInitialDataAndRequests = useCallback(async (currentSearchTerm: string) => {
+  const loadAllData = useCallback(async () => {
     setLoadingSummary(true);
-    fetchSummaryData().then(data => {
-      setSummaryData(data);
-      setLoadingSummary(false);
-    });
-
+    setLoadingUsers(true);
     setLoadingAllLessonRequests(true);
-    fetchAllLessonRequests(currentSearchTerm).then(data => {
-      setAllLessonRequests(data);
-      setLoadingAllLessonRequests(false);
-    });
-
     setLoadingRescheduleRequests(true);
-    fetchRescheduleRequests(currentSearchTerm).then(data => {
-      setRescheduleRequests(data);
-      setLoadingRescheduleRequests(false);
-    });
-
     setLoadingFeedback(true);
-    fetchAllFeedback().then(data => {
-      setFeedback(data);
-      setLoadingFeedback(false);
-    });
-
     setLoadingLessonProgress(true);
-    fetchCustomerLessonProgress().then(data => {
-      setLessonProgress(data);
-      setLoadingLessonProgress(false);
-    });
+
+    try {
+      const [
+        summary,
+        users,
+        lessonRequests,
+        reschedules,
+        feedbackData,
+        progressData,
+      ] = await Promise.all([
+        fetchSummaryData(),
+        fetchAllUsers(),
+        fetchAllLessonRequests(),
+        fetchRescheduleRequests(),
+        fetchAllFeedback(),
+        fetchCustomerLessonProgress(),
+      ]);
+      
+      setSummaryData(summary);
+      setAllUsers(users);
+      setAllLessonRequests(lessonRequests);
+      setRescheduleRequests(reschedules);
+      setFeedback(feedbackData);
+      setLessonProgress(progressData);
+
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
+    } finally {
+        setLoadingSummary(false);
+        setLoadingUsers(false);
+        setLoadingAllLessonRequests(false);
+        setLoadingRescheduleRequests(false);
+        setLoadingFeedback(false);
+        setLoadingLessonProgress(false);
+    }
   }, []);
-
-  const loadFilteredUserData = useCallback(async (
-    currentFilters: { location?: string; subscriptionPlan?: string },
-    currentSearchTerm: string
-  ) => {
-    setLoadingCustomers(true);
-    fetchCustomers(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
-      setCustomers(data);
-      setLoadingCustomers(false);
-    });
-
-    setLoadingInstructors(true);
-    fetchInstructors(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
-      setInstructors(data);
-      setLoadingInstructors(false);
-    });
-
-    setLoadingExistingInstructors(true);
-    fetchExistingInstructors(currentFilters.location, currentFilters.subscriptionPlan, currentSearchTerm).then(data => {
-      setExistingInstructors(data);
-      setLoadingExistingInstructors(false);
-    });
-  }, []);
-
 
   useEffect(() => {
-    loadInitialDataAndRequests(searchTerm);
-    loadFilteredUserData(filters, searchTerm);
-  }, [loadInitialDataAndRequests, loadFilteredUserData, filters, searchTerm]);
+    loadAllData();
+  }, [loadAllData]);
+  
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(user => {
+        const locationMatch = !filters.location || user.location === filters.location;
+        const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
+        
+        const searchTermMatch = !searchTerm || (
+            user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.contact.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return locationMatch && subscriptionMatch && searchTermMatch;
+    });
+  }, [allUsers, filters, searchTerm]);
+
+  const customers = useMemo(() => filteredUsers.filter(u => u.uniqueId.startsWith('CU') && u.approvalStatus === 'Pending'), [filteredUsers]);
+  const instructors = useMemo(() => filteredUsers.filter(u => u.uniqueId.startsWith('TR') && ['Pending', 'In Progress'].includes(u.approvalStatus)), [filteredUsers]);
+  const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId.startsWith('TR') && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
 
 
   const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
@@ -110,8 +112,7 @@ export default function AdminDashboard() {
   };
 
   const handleActioned = () => {
-    loadInitialDataAndRequests(searchTerm);
-    loadFilteredUserData(filters, searchTerm);
+    loadAllData();
   };
 
 
@@ -163,13 +164,13 @@ export default function AdminDashboard() {
             <UserTable 
               title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
               users={customers} 
-              isLoading={loadingCustomers} 
+              isLoading={loadingUsers} 
               onUserActioned={handleActioned}
             />
             <UserTable 
               title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
               users={instructors} 
-              isLoading={loadingInstructors} 
+              isLoading={loadingUsers} 
               onUserActioned={handleActioned}
             />
           </TabsContent>
@@ -197,7 +198,7 @@ export default function AdminDashboard() {
             <UserTable 
               title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
               users={existingInstructors} 
-              isLoading={loadingExistingInstructors} 
+              isLoading={loadingUsers} 
               onUserActioned={handleActioned}
             />
             <FeedbackTable

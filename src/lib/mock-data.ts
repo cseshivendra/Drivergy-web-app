@@ -177,47 +177,11 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
   return true;
 };
 
-const fetchUsersByRole = async (
-    rolePrefix: 'CU' | 'TR', 
-    filters: { location?: string, subscriptionPlan?: string, searchTerm?: string },
-    statuses: ApprovalStatusType[]
-): Promise<UserProfile[]> => {
-    
-    let q = query(collection(db, "users"), where("uniqueId", ">=", rolePrefix), where("uniqueId", "<", `${rolePrefix}\uffff`), where("approvalStatus", "in", statuses));
-
-    if (filters.location && filters.location !== 'all') {
-        q = query(q, where("location", "==", filters.location));
-    }
-    if (rolePrefix === 'CU' && filters.subscriptionPlan && filters.subscriptionPlan !== 'all') {
-        q = query(q, where("subscriptionPlan", "==", filters.subscriptionPlan));
-    }
-
+export const fetchAllUsers = async (): Promise<UserProfile[]> => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, orderBy("registrationTimestamp", "desc"));
     const querySnapshot = await getDocs(q);
-    let results = querySnapshot.docs.map(doc => doc.data() as UserProfile);
-
-    if (filters.searchTerm) {
-        const lowerSearchTerm = filters.searchTerm.toLowerCase().trim();
-        results = results.filter(u =>
-            u.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
-            u.name.toLowerCase().includes(lowerSearchTerm) ||
-            u.contact.toLowerCase().includes(lowerSearchTerm)
-        );
-    }
-    
-    results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
-    return results;
-}
-
-export const fetchCustomers = (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
-    return fetchUsersByRole('CU', { location, subscriptionPlan: subscription, searchTerm }, ['Pending']);
-};
-
-export const fetchInstructors = (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
-    return fetchUsersByRole('TR', { location, subscriptionPlan: subscription, searchTerm }, ['Pending', 'In Progress']);
-};
-
-export const fetchExistingInstructors = (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
-    return fetchUsersByRole('TR', { location, subscriptionPlan: subscription, searchTerm }, ['Approved', 'Rejected']);
+    return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
