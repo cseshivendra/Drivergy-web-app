@@ -30,42 +30,53 @@ const faqData = [
     {
       id: "faq-1",
       question: "What documents do I need to enroll?",
-      answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
+      answer: <p>For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.</p>,
     },
     {
       id: "faq-2",
       question: "Can I choose my instructor?",
-      answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
+      answer: <p>Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.</p>,
     },
     {
       id: "faq-3",
       question: "How do I book a driving lesson slot?",
-      answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
+      answer: <p>Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.</p>,
     },
     {
       id: "faq-4",
       question: "What types of vehicles are available for training?",
-      answer: "We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.",
+      answer: <p>We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.</p>,
     },
     {
       id: "faq-5",
       question: "What if I need to cancel or reschedule a lesson?",
-      answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
+      answer: <p>You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.</p>,
     },
     {
       id: "faq-6",
       question: "How do I redeem a coupon code?",
-      answer: "You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount."
+      answer: <p>You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount.</p>
     },
     {
       id: "faq-7",
       question: "How can I use the points earned from referrals?",
-      answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey."
+      answer: <p>Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey.</p>
     },
     {
       id: "faq-8",
       question: "Is our driving school completion certificate valid at the RTO?",
-      answer: "While our completion certificate is a testament to your training with us and is valued by many, the official driving license is issued only by the Regional Transport Office (RTO) after you pass their official test. Our courses are designed to thoroughly prepare you for this test, and we provide assistance in the process, but our certificate is not a substitute for a government-issued license.",
+      answer: (
+        <>
+          <p>No, private driving schools in India, even those authorized by the government, cannot directly issue driving licenses. While they can conduct driving tests and issue certificates of eligibility, the actual driving license is still provided by the Regional Transport Office (RTO).</p>
+          <p className="font-semibold mt-4">Here's a breakdown of the process:</p>
+          <ul className="list-disc list-inside mt-2 space-y-2">
+            <li><strong>Driving Test at Private Schools:</strong> From June 1, 2024, individuals can choose to take their driving tests at authorized private driving training centers instead of the RTO.</li>
+            <li><strong>Certificate of Eligibility:</strong> These centers conduct the tests and issue a certificate of eligibility to those who pass.</li>
+            <li><strong>License Issuance by RTO:</strong> This certificate is then submitted to the RTO as part of the application for the driving license. The RTO is still the final authority for issuing the license.</li>
+            <li><strong>RTO remains the Issuing Authority:</strong> Despite the option to test at private schools, the RTO retains its role in the final issuance of the driving license.</li>
+          </ul>
+        </>
+      ),
     }
 ];
 
