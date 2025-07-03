@@ -19,6 +19,12 @@ import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, Cour
 import { addDays, format, isPast } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 
+const checkDb = () => {
+    if (!db) {
+        throw new Error("Database not configured. Please check your .env.local file and ensure Firebase is set up correctly.");
+    }
+};
+
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   return coursesToHydrate.map(course => {
     const needsReassignment = !course.icon || typeof course.icon !== 'function' || (typeof course.icon === 'object' && Object.keys(course.icon).length === 0) ;
@@ -34,7 +40,8 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
 
 // --- User Management ---
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
-    const usersRef = collection(db, "users");
+    checkDb();
+    const usersRef = collection(db!, "users");
     const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
     const querySnapshot = await getDocs(q);
 
@@ -49,7 +56,8 @@ export const authenticateUserByCredentials = async (username: string, password: 
 }
 
 export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
-  const userRef = doc(db, "users", userId);
+  checkDb();
+  const userRef = doc(db!, "users", userId);
   
   const updateData: Partial<UserProfile> = {
     name: data.name,
@@ -69,7 +77,8 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
 };
 
 export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
-    const userRef = doc(db, "users", userId);
+    checkDb();
+    const userRef = doc(db!, "users", userId);
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists() && userSnap.data().password === currentPassword) {
@@ -81,7 +90,8 @@ export const changeUserPassword = async (userId: string, currentPassword: string
 }
 
 export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile> => {
-  const newUserRef = doc(collection(db, "users"));
+  checkDb();
+  const newUserRef = doc(collection(db!, "users"));
   const newIdSuffix = newUserRef.id.slice(-6);
 
   const getLessonsForPlan = (plan: string): number => {
@@ -125,10 +135,10 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     completedLessons: 0,
   };
 
-  const batch = writeBatch(db);
+  const batch = writeBatch(db!);
   batch.set(newUserRef, newUser);
 
-  const newRequestRef = doc(collection(db, "lessonRequests"));
+  const newRequestRef = doc(collection(db!, "lessonRequests"));
   const newRequest: Omit<LessonRequest, 'id'> = {
     customerId: newUser.id,
     customerName: newUser.name,
@@ -144,7 +154,8 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
 };
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile> => {
-  const newTrainerRef = doc(collection(db, "users"));
+  checkDb();
+  const newTrainerRef = doc(collection(db!, "users"));
   const newIdSuffix = newTrainerRef.id.slice(-6);
   
   const newTrainer: UserProfile = {
@@ -172,26 +183,29 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 };
 
 export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
-  const userRef = doc(db, "users", userId);
+  checkDb();
+  const userRef = doc(db!, "users", userId);
   await updateDoc(userRef, { approvalStatus: newStatus });
   return true;
 };
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
-    const usersRef = collection(db, "users");
+    checkDb();
+    const usersRef = collection(db!, "users");
     const q = query(usersRef, orderBy("registrationTimestamp", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
-  const userRef = doc(db, "users", userId);
+  checkDb();
+  const userRef = doc(db!, "users", userId);
   const docSnap = await getDoc(userRef);
 
   if (docSnap.exists()) {
     const user = docSnap.data() as UserProfile;
     if (user.uniqueId.startsWith('CU') && user.assignedTrainerId && !user.assignedTrainerName) {
-      const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
+      const trainerSnap = await getDoc(doc(db!, "users", user.assignedTrainerId));
       if (trainerSnap.exists()) {
         user.assignedTrainerName = trainerSnap.data().name;
       }
@@ -204,7 +218,8 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
 };
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
-  let q = query(collection(db, "users"), where("approvalStatus", "==", "Approved"), where("uniqueId", ">=", "TR"), where("uniqueId", "<", "TR\uffff"));
+  checkDb();
+  let q = query(collection(db!, "users"), where("approvalStatus", "==", "Approved"), where("uniqueId", ">=", "TR"), where("uniqueId", "<", "TR\uffff"));
 
   if (filters.location && filters.location !== 'all') {
     q = query(q, where("location", "==", filters.location));
@@ -218,8 +233,9 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
 };
 
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
-    const customerRef = doc(db, "users", customerId);
-    const trainerSnap = await getDoc(doc(db, "users", trainerId));
+    checkDb();
+    const customerRef = doc(db!, "users", customerId);
+    const trainerSnap = await getDoc(doc(db!, "users", trainerId));
 
     if (trainerSnap.exists()) {
         const trainer = trainerSnap.data();
@@ -235,7 +251,8 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 
 // --- Lesson Request Management ---
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
-    let q = query(collection(db, "lessonRequests"), orderBy("requestTimestamp", "desc"));
+    checkDb();
+    let q = query(collection(db!, "lessonRequests"), orderBy("requestTimestamp", "desc"));
     const querySnapshot = await getDocs(q);
     let allRequests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonRequest));
     
@@ -248,7 +265,8 @@ export const fetchAllLessonRequests = async (searchTerm?: string): Promise<Lesso
 
 // --- Reschedule Request Management ---
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
-    const newRequestRef = doc(collection(db, "rescheduleRequests"));
+    checkDb();
+    const newRequestRef = doc(collection(db!, "rescheduleRequests"));
     const newRequest: Omit<RescheduleRequest, 'id'> = {
         userId,
         customerName,
@@ -262,7 +280,8 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
 };
 
 export const fetchRescheduleRequests = async (searchTerm?: string): Promise<RescheduleRequest[]> => {
-    let q = query(collection(db, "rescheduleRequests"), orderBy("requestTimestamp", "desc"));
+    checkDb();
+    let q = query(collection(db!, "rescheduleRequests"), orderBy("requestTimestamp", "desc"));
     const querySnapshot = await getDocs(q);
     let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RescheduleRequest));
 
@@ -277,16 +296,17 @@ export const fetchRescheduleRequests = async (searchTerm?: string): Promise<Resc
 };
 
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
-    const requestRef = doc(db, "rescheduleRequests", requestId);
+    checkDb();
+    const requestRef = doc(db!, "rescheduleRequests", requestId);
     const requestSnap = await getDoc(requestRef);
     if (!requestSnap.exists()) return false;
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(db!);
     batch.update(requestRef, { status: newStatus });
 
     if (newStatus === 'Approved') {
         const requestData = requestSnap.data() as RescheduleRequest;
-        const customerRef = doc(db, "users", requestData.userId);
+        const customerRef = doc(db!, "users", requestData.userId);
         batch.update(customerRef, { upcomingLesson: requestData.requestedRescheduleDate });
     }
     
@@ -297,13 +317,14 @@ export const updateRescheduleRequestStatus = async (requestId: string, newStatus
 
 // --- Summary & Courses ---
 export const fetchSummaryData = async (): Promise<SummaryData> => {
-    const usersRef = collection(db, "users");
+    checkDb();
+    const usersRef = collection(db!, "users");
     
     const customerQuery = query(usersRef, where("uniqueId", ">=", "CU"), where("uniqueId", "<", "CU\uffff"));
     const instructorQuery = query(usersRef, where("uniqueId", ">=", "TR"), where("uniqueId", "<", "TR\uffff"));
     const activeSubsQuery = query(usersRef, where("approvalStatus", "==", "Approved"));
-    const pendingLessonRequestsQuery = query(collection(db, "lessonRequests"), where("status", "==", "Pending"));
-    const pendingRescheduleQuery = query(collection(db, "rescheduleRequests"), where("status", "==", "Pending"));
+    const pendingLessonRequestsQuery = query(collection(db!, "lessonRequests"), where("status", "==", "Pending"));
+    const pendingRescheduleQuery = query(collection(db!, "rescheduleRequests"), where("status", "==", "Pending"));
 
     const [
       customerSnap, 
@@ -383,14 +404,16 @@ export const fetchCourses = async (): Promise<Course[]> => {
 // --- Trainer Specific Functions ---
 
 export const fetchPendingAssignments = async (trainerId: string): Promise<UserProfile[]> => {
-    const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "In Progress"));
+    checkDb();
+    const q = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "In Progress"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
-    const customerRef = doc(db, "users", customerId);
-    const batch = writeBatch(db);
+    checkDb();
+    const customerRef = doc(db!, "users", customerId);
+    const batch = writeBatch(db!);
 
     if (newStatus === 'Approved') {
         const firstLessonDate = addDays(new Date(), Math.floor(Math.random() * 5) + 2);
@@ -404,7 +427,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
         const customerSnap = await getDoc(customerRef);
         const customerData = customerSnap.data();
 
-        const reqQuery = query(collection(db, "lessonRequests"), where("customerId", "==", customerId), where("status", "==", "Pending"), limit(1));
+        const reqQuery = query(collection(db!, "lessonRequests"), where("customerId", "==", customerId), where("status", "==", "Pending"), limit(1));
         const reqSnap = await getDocs(reqQuery);
         if (!reqSnap.empty) {
             const reqRef = reqSnap.docs[0].ref;
@@ -424,25 +447,29 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
 };
 
 export const fetchAssignedCustomers = async (trainerId: string): Promise<UserProfile[]> => {
-  const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "Approved"));
+  checkDb();
+  const q = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "Approved"));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
-  const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
+  checkDb();
+  const q = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-    const feedbackQuery = query(collection(db, "feedback"), where("trainerId", "==", trainerId));
+    checkDb();
+    const feedbackQuery = query(collection(db!, "feedback"), where("trainerId", "==", trainerId));
     const querySnapshot = await getDocs(feedbackQuery);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback));
 };
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
-    const studentRef = doc(db, "users", studentId);
+    checkDb();
+    const studentRef = doc(db!, "users", studentId);
     const studentSnap = await getDoc(studentRef);
 
     if (studentSnap.exists()) {
@@ -462,7 +489,8 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 // --- Feedback Management ---
 
 export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
-  const newFeedbackRef = doc(collection(db, "feedback"));
+  checkDb();
+  const newFeedbackRef = doc(collection(db!, "feedback"));
   const newFeedback: Omit<Feedback, 'id'> = {
     customerId,
     customerName,
@@ -473,8 +501,8 @@ export const addFeedback = async (customerId: string, customerName: string, trai
     submissionDate: new Date().toISOString(),
   };
 
-  const customerRef = doc(db, "users", customerId);
-  const batch = writeBatch(db);
+  const customerRef = doc(db!, "users", customerId);
+  const batch = writeBatch(db!);
   batch.set(newFeedbackRef, newFeedback);
   batch.update(customerRef, { feedbackSubmitted: true });
   await batch.commit();
@@ -483,13 +511,15 @@ export const addFeedback = async (customerId: string, customerName: string, trai
 };
 
 export const fetchAllFeedback = async (): Promise<Feedback[]> => {
-    const q = query(collection(db, "feedback"), orderBy("submissionDate", "desc"));
+    checkDb();
+    const q = query(collection(db!, "feedback"), orderBy("submissionDate", "desc"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback));
 };
 
 export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
-  const q = query(collection(db, "users"), where("approvalStatus", "==", "Approved"), where("assignedTrainerName", "!=", null));
+  checkDb();
+  const q = query(collection(db!, "users"), where("approvalStatus", "==", "Approved"), where("assignedTrainerName", "!=", null));
   const querySnapshot = await getDocs(q);
 
   const progressData: LessonProgressData[] = querySnapshot.docs.map(doc => {
@@ -508,7 +538,8 @@ export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[
 };
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
-  const customerRef = doc(db, "users", customerId);
+  checkDb();
+  const customerRef = doc(db!, "users", customerId);
   const firstLessonDate = addDays(newDate, 2);
   firstLessonDate.setHours(9, 0, 0, 0);
 

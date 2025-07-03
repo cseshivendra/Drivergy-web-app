@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,9 +12,26 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Centralized check for essential configuration
+function isFirebaseConfigured(config: typeof firebaseConfig): boolean {
+    return !!(config.apiKey && config.authDomain && config.projectId);
+}
+
+let app;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
+
+if (isFirebaseConfigured(firebaseConfig)) {
+    try {
+        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+        db = getFirestore(app);
+        auth = getAuth(app);
+        console.log("[firebase] Firebase initialized successfully.");
+    } catch (error) {
+        console.error("[firebase] Error initializing Firebase:", error);
+    }
+} else {
+    console.error("[firebase] Firebase configuration is missing. Please check your .env.local file. Required keys: NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, NEXT_PUBLIC_FIREBASE_PROJECT_ID.");
+}
 
 export { app, db, auth };
