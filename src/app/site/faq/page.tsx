@@ -65,18 +65,7 @@ const faqData = [
     {
       id: "faq-8",
       question: "Is our driving school completion certificate valid at the RTO?",
-      answer: (
-        <>
-          <p>No, private driving schools in India, even those authorized by the government, cannot directly issue driving licenses. While they can conduct driving tests and issue certificates of eligibility, the actual driving license is still provided by the Regional Transport Office (RTO).</p>
-          <p className="font-semibold mt-4">Here's a breakdown of the process:</p>
-          <ul className="list-disc list-inside mt-2 space-y-2">
-            <li><strong>Driving Test at Private Schools:</strong> From June 1, 2024, individuals can choose to take their driving tests at authorized private driving training centers instead of the RTO.</li>
-            <li><strong>Certificate of Eligibility:</strong> These centers conduct the tests and issue a certificate of eligibility to those who pass.</li>
-            <li><strong>License Issuance by RTO:</strong> This certificate is then submitted to the RTO as part of the application for the driving license. The RTO is still the final authority for issuing the license.</li>
-            <li><strong>RTO remains the Issuing Authority:</strong> Despite the option to test at private schools, the RTO retains its role in the final issuance of the driving license.</li>
-          </ul>
-        </>
-      ),
+      answer: <p>Drivergy Certificates are valid at RTO office as we are authorized partner.</p>,
     }
 ];
 
