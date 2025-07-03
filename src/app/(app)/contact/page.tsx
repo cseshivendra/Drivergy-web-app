@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ComplaintFormSchema, type ComplaintFormValues } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { Paperclip, MessageSquareText } from 'lucide-react'; 
+import { MessageSquareText } from 'lucide-react'; 
 import Image from 'next/image';
 
 export default function ContactPage() {
@@ -46,25 +46,25 @@ export default function ContactPage() {
   return (
     <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-lg overflow-hidden">
-        <div className="relative h-48 w-full">
-          <Image
-            src="https://placehold.co/800x300.png"
-            alt="Contact us banner"
-            layout="fill"
-            objectFit="cover"
-            data-ai-hint="support customer service"
-          />
+        <div className="relative h-56 w-full bg-primary/10">
+            <Image
+                src="https://placehold.co/800x300/E53E3E/ffffff.png"
+                alt="Contact us banner"
+                layout="fill"
+                objectFit="cover"
+                data-ai-hint="support customer service"
+            />
+            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+                <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
+                    <MessageSquareText className="h-10 w-10 text-primary" />
+                </div>
+                <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Contact Us</h1>
+                <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
+                    Have an issue or a suggestion? Let us know by filling out the form below.
+                </p>
+            </div>
         </div>
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
-            <MessageSquareText className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle className="font-headline text-3xl font-bold">Contact Us</CardTitle>
-          <CardDescription>
-            Have an issue or a suggestion? Let us know by filling out the form below.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

@@ -75,21 +75,25 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
 
   return (
     <Card className="shadow-lg overflow-hidden">
-      <div className="relative h-48 w-full">
-        <Image
-          src="https://placehold.co/1200x400.png"
-          alt="User profile banner"
-          layout="fill"
-          objectFit="cover"
-          data-ai-hint="desk paperwork documents"
-        />
-        <div className="absolute inset-0 bg-black/30" />
+      <div className="relative h-56 w-full bg-primary/10">
+          <Image
+              src="https://placehold.co/1200x400/E53E3E/ffffff.png"
+              alt="User profile banner"
+              layout="fill"
+              objectFit="cover"
+              data-ai-hint="desk paperwork documents"
+          />
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+              <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
+                  <User className="h-10 w-10 text-primary" />
+              </div>
+              <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Personal Information</h1>
+              <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
+                  Update your personal details and profile picture here.
+              </p>
+          </div>
       </div>
-      <CardHeader>
-        <CardTitle className="flex items-center"><User className="mr-2 h-5 w-5 text-primary" /> Personal Information</CardTitle>
-        <CardDescription>Update your personal details and profile picture here.</CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex flex-col items-center justify-center space-y-4">

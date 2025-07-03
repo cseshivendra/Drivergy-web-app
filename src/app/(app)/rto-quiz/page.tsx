@@ -199,7 +199,7 @@ const baseQuestions: Omit<Question, 'id'>[] = [
   {
     question: {
       en: 'While driving, using a mobile phone is:',
-      hi: 'ड्राइविंग करते समय, मोबाइल फोन का उपयोग करना:',
+      hi: 'ड्राइवING करते समय, मोबाइल फोन का उपयोग करना:',
       mr: 'ड्रायव्हिंग करताना मोबाईल फोन वापरणे:',
     },
     options: {
@@ -533,15 +533,8 @@ export default function AppRtoQuizPage() {
 
   const QuizCardContent = () => (
     <>
-      <CardHeader className="text-center">
-        <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
-          <ClipboardCheck className="h-8 w-8 text-primary" />
-        </div>
-        <CardTitle className="font-headline text-3xl font-bold">RTO Test Quiz</CardTitle>
-        <CardDescription>
-          Prepare for your RTO screening test. Select a set and start the quiz.
-        </CardDescription>
-        <div className="mx-auto mt-4 w-full max-w-xs">
+      <CardContent className="p-6">
+        <div className="mx-auto mb-6 w-full max-w-xs">
           <Label htmlFor="language-select" className="mb-2 flex items-center justify-center text-sm font-medium text-muted-foreground">
             <Globe className="mr-2 h-4 w-4" />
             Select Language
@@ -557,8 +550,6 @@ export default function AppRtoQuizPage() {
             </SelectContent>
           </Select>
         </div>
-      </CardHeader>
-      <CardContent>
         {user ? (
           <Tabs defaultValue="set1" className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
@@ -594,14 +585,23 @@ export default function AppRtoQuizPage() {
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-xl overflow-hidden">
-        <div className="relative h-48 w-full">
-          <Image
-            src="https://placehold.co/800x300.png"
-            alt="RTO Quiz Banner"
-            layout="fill"
-            objectFit="cover"
-            data-ai-hint="exam paper test"
-          />
+        <div className="relative h-56 w-full bg-primary/10">
+            <Image
+                src="https://placehold.co/800x300/E53E3E/ffffff.png"
+                alt="RTO Quiz Banner"
+                layout="fill"
+                objectFit="cover"
+                data-ai-hint="exam paper test"
+            />
+            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+                <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
+                    <ClipboardCheck className="h-10 w-10 text-primary" />
+                </div>
+                <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">RTO Test Quiz</h1>
+                <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
+                    Prepare for your RTO screening test. Select a set and start the quiz.
+                </p>
+            </div>
         </div>
         <QuizCardContent />
       </Card>
