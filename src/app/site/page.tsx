@@ -131,8 +131,8 @@ const testimonialsData = [
   
 const heroSlides = [
   { 
-    src: 'https://placehold.co/1920x1080.png', 
-    hint: 'road learning earning',
+    src: '/driving-school-banner.png', 
+    hint: 'driving school',
     title: 'Learn to Drive, Master the Road',
     description: 'Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.'
   },
