@@ -9,9 +9,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { fetchUserById } from '@/lib/mock-data';
+import type { UserProfile } from '@/types';
 
 const ChatInputSchema = z.object({
   query: z.string().describe("The user's question for the chatbot."),
+  userId: z.string().optional().describe("The ID of the logged-in user, if available."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -26,7 +29,12 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 
 const prompt = ai.definePrompt({
   name: 'drivergyChatPrompt',
-  input: {schema: ChatInputSchema},
+  input: {
+    schema: z.object({
+      query: z.string(),
+      user: z.custom<UserProfile>().optional(),
+    }),
+  },
   output: {schema: ChatOutputSchema},
   prompt: `You are a friendly and helpful chatbot for "Drivergy", a modern platform for driving education. Your goal is to answer user questions about our services, courses, and pricing. Be conversational, concise, and clear.
 
@@ -73,6 +81,16 @@ Instructors can register on our platform to manage their schedule, track student
 - **Q: Is our driving school completion certificate valid at the RTO?**
   A: Drivergy Certificates are valid at RTO office as we are authorized partner.
 
+{{#if user}}
+You are currently speaking with {{user.name}}. If they ask a question about their own account, use the following information to answer them.
+- **User ID:** {{user.uniqueId}}
+- **Subscription Plan:** {{user.subscriptionPlan}}
+- **Account Status:** {{user.approvalStatus}}
+- **Assigned Trainer:** {{#if user.assignedTrainerName}}{{user.assignedTrainerName}}{{else}}Not yet assigned{{/if}}
+- **Next Lesson:** {{#if user.upcomingLesson}}{{user.upcomingLesson}}{{else}}Not yet scheduled{{/if}}
+- **Completed Lessons:** {{user.completedLessons}} out of {{user.totalLessons}}
+{{/if}}
+
 When asked about things outside of Drivergy, politely state that you can only answer questions about the driving school.
 
 Now, please answer the user's question.
@@ -87,7 +105,15 @@ const drivergyChatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
+    let userProfile: UserProfile | null = null;
+    if (input.userId) {
+      userProfile = await fetchUserById(input.userId);
+    }
+    
+    const {output} = await prompt({
+        query: input.query,
+        user: userProfile || undefined,
+    });
     return output!;
   }
 );

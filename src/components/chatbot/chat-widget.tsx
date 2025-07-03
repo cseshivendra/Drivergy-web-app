@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect, type FormEvent } from 'react';
@@ -9,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Send, X, Bot, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { chat, type ChatInput } from '@/ai/flows/drivergy-chat-flow';
+import { useAuth } from '@/context/auth-context';
 
 interface Message {
   text: string;
@@ -23,6 +23,7 @@ export default function ChatWidget() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   const toggleOpen = () => setIsOpen(!isOpen);
 
@@ -42,7 +43,10 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
-      const input: ChatInput = { query: userMessage };
+      const input: ChatInput = { 
+        query: userMessage,
+        userId: user?.uid 
+      };
       const result = await chat(input);
       if (result?.response) {
         setMessages(prev => [...prev, { sender: 'bot', text: result.response }]);
