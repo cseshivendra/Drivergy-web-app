@@ -51,13 +51,50 @@ const LOCAL_STORAGE_KEYS = {
 };
 
 // Initialize from localStorage or with defaults (empty arrays)
-export let mockCustomers: UserProfile[] = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.CUSTOMERS, []);
-export let mockInstructors: UserProfile[] = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.INSTRUCTORS, []);
-export let mockTwoWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []);
-export let mockFourWheelerRequests: LessonRequest[] = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
-export let mockRescheduleRequests: RescheduleRequest[] = getItemFromLocalStorage<RescheduleRequest[]>(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, []);
-export let mockCourses: Course[] = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, []);
-export let mockFeedback: Feedback[] = getItemFromLocalStorage<Feedback[]>(LOCAL_STORAGE_KEYS.FEEDBACK, []);
+export let mockCustomers: UserProfile[] = [];
+export let mockInstructors: UserProfile[] = [];
+export let mockTwoWheelerRequests: LessonRequest[] = [];
+export let mockFourWheelerRequests: LessonRequest[] = [];
+export let mockRescheduleRequests: RescheduleRequest[] = [];
+export let mockCourses: Course[] = [];
+export let mockFeedback: Feedback[] = [];
+export let mockSummaryData: SummaryData;
+
+const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
+  return coursesToHydrate.map(course => {
+    const needsReassignment = !course.icon || typeof course.icon !== 'function' || (typeof course.icon === 'object' && Object.keys(course.icon).length === 0) ;
+    let newIcon = course.icon;
+
+    if (course.id === 'course1' && needsReassignment) newIcon = Car;
+    else if (course.id === 'course2' && needsReassignment) newIcon = Bike;
+    else if (course.id === 'course3' && needsReassignment) newIcon = FileText;
+    
+    return { ...course, icon: newIcon };
+  });
+};
+
+const loadDataFromLocalStorage = () => {
+  mockCustomers = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.CUSTOMERS, []);
+  mockInstructors = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.INSTRUCTORS, []);
+  mockTwoWheelerRequests = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []);
+  mockFourWheelerRequests = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
+  mockRescheduleRequests = getItemFromLocalStorage<RescheduleRequest[]>(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, []);
+  mockCourses = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, []);
+  mockFeedback = getItemFromLocalStorage<Feedback[]>(LOCAL_STORAGE_KEYS.FEEDBACK, []);
+
+  const calculatedInitialSummary: SummaryData = {
+    totalCustomers: mockCustomers.length,
+    totalInstructors: mockInstructors.length,
+    activeSubscriptions: mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length,
+    pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
+    pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
+    totalEarnings: (mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length) * 500, 
+    totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
+  };
+  mockSummaryData = getItemFromLocalStorage<SummaryData>(LOCAL_STORAGE_KEYS.SUMMARY_DATA, calculatedInitialSummary);
+  
+  mockCourses = reAssignCourseIcons(mockCourses);
+};
 
 const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
   const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
@@ -118,6 +155,9 @@ const sampleTrainer: UserProfile = {
 
 // --- Initial Data Seeding (if localStorage is empty) ---
 if (typeof window !== 'undefined') {
+  // Load existing data first
+  loadDataFromLocalStorage();
+
   // Ensure the sample customer always exists
   const sampleCustomerExists = mockCustomers.some(c => c.id === 'sample-customer-uid');
   if (!sampleCustomerExists) {
@@ -145,7 +185,7 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.COURSES) && mockCourses.length === 0) {
+  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.COURSES) || mockCourses.length === 0) {
     mockCourses = [
         {
             id: 'course1',
@@ -191,39 +231,6 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const calculatedInitialSummary: SummaryData = {
-  totalCustomers: mockCustomers.length,
-  totalInstructors: mockInstructors.length,
-  activeSubscriptions: mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length,
-  pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
-  pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
-  totalEarnings: (mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length) * 500, 
-  totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
-};
-
-export let mockSummaryData: SummaryData = getItemFromLocalStorage<SummaryData>(LOCAL_STORAGE_KEYS.SUMMARY_DATA, calculatedInitialSummary);
-mockSummaryData.totalCustomers = mockCustomers.length;
-mockSummaryData.totalInstructors = mockInstructors.length;
-mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
-mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
-
-
-const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
-  return coursesToHydrate.map(course => {
-    const needsReassignment = !course.icon || typeof course.icon !== 'function' || (typeof course.icon === 'object' && Object.keys(course.icon).length === 0) ;
-    let newIcon = course.icon;
-
-    if (course.id === 'course1' && needsReassignment) newIcon = Car;
-    else if (course.id === 'course2' && needsReassignment) newIcon = Bike;
-    else if (course.id === 'course3' && needsReassignment) newIcon = FileText;
-    
-    return { ...course, icon: newIcon };
-  });
-};
-
-mockCourses = reAssignCourseIcons(mockCourses);
-
-
 const saveDataToLocalStorage = () => {
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.CUSTOMERS, mockCustomers);
   setItemInLocalStorage(LOCAL_STORAGE_KEYS.INSTRUCTORS, mockInstructors);
@@ -239,6 +246,7 @@ const saveDataToLocalStorage = () => {
 
 // --- User Management ---
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     const allUsers = [...mockCustomers, ...mockInstructors];
     const user = allUsers.find(u => u.username === username && u.password === password);
@@ -251,6 +259,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
 }
 
 export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
   const customerIndex = mockCustomers.findIndex(c => c.id === userId);
@@ -286,6 +295,7 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
 };
 
 export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     
     const customerIndex = mockCustomers.findIndex(c => c.id === userId);
@@ -306,6 +316,7 @@ export const changeUserPassword = async (userId: string, currentPassword: string
 }
 
 export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
+  loadDataFromLocalStorage();
   const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now(); 
   const newId = `u${newIdSuffix}`;
   const getLessonsForPlan = (plan: string): number => {
@@ -380,6 +391,7 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
 };
 
 export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => {
+  loadDataFromLocalStorage();
   const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now();
   const newId = `u${newIdSuffix}`;
   const newTrainer: UserProfile = {
@@ -406,6 +418,7 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
 };
 
 export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
   let userFound = false;
   
@@ -438,6 +451,7 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
 };
 
 export const fetchCustomers = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
   let results = mockCustomers.filter(c => c.approvalStatus === 'Pending');
@@ -462,6 +476,7 @@ export const fetchCustomers = async (location?: string, subscription?: string, s
 };
 
 export const fetchInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
   let results = mockInstructors.filter(i => i.approvalStatus === 'Pending' || i.approvalStatus === 'In Progress');
@@ -486,6 +501,7 @@ export const fetchInstructors = async (location?: string, subscription?: string,
 };
 
 export const fetchExistingInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
   let results = mockInstructors.filter(i => i.approvalStatus === 'Approved' || i.approvalStatus === 'Rejected');
@@ -511,6 +527,7 @@ export const fetchExistingInstructors = async (location?: string, subscription?:
 
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 3));
   const allUsers = [...mockCustomers, ...mockInstructors];
   const user = allUsers.find(u => u.id === userId);
@@ -531,6 +548,7 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
 };
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
   let results = mockInstructors.filter(i => i.approvalStatus === 'Approved');
 
@@ -546,6 +564,7 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
 };
 
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
   const trainer = mockInstructors.find(t => t.id === trainerId);
@@ -567,6 +586,7 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 
 // --- Lesson Request Management ---
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests].sort((a, b) => {
     return new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime();
@@ -583,6 +603,7 @@ export const fetchAllLessonRequests = async (searchTerm?: string): Promise<Lesso
 
 // --- Reschedule Request Management ---
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     const newRequest: RescheduleRequest = {
         id: `resched-${Date.now()}`,
@@ -600,6 +621,7 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
 };
 
 export const fetchRescheduleRequests = async (searchTerm?: string): Promise<RescheduleRequest[]> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     let results = [...mockRescheduleRequests];
     if (searchTerm && searchTerm.trim() !== '') {
@@ -614,6 +636,7 @@ export const fetchRescheduleRequests = async (searchTerm?: string): Promise<Resc
 };
 
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
     const requestIndex = mockRescheduleRequests.findIndex(req => req.id === requestId);
     if (requestIndex !== -1) {
@@ -637,6 +660,7 @@ export const updateRescheduleRequestStatus = async (requestId: string, newStatus
 
 // --- Summary & Courses ---
 export const fetchSummaryData = async (): Promise<SummaryData> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
   const currentPendingLessonRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
@@ -662,6 +686,7 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 
 
 export const fetchCourses = async (): Promise<Course[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   
   const hydratedCourses = reAssignCourseIcons(mockCourses);
@@ -693,6 +718,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
 // --- Trainer Specific Functions ---
 
 export const fetchPendingAssignments = async (trainerId: string): Promise<UserProfile[]> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     const assigned = mockCustomers.filter(
         c => c.assignedTrainerId === trainerId && c.approvalStatus === 'In Progress'
@@ -701,6 +727,7 @@ export const fetchPendingAssignments = async (trainerId: string): Promise<UserPr
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
     const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
 
@@ -738,6 +765,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
 
 
 export const fetchAssignedCustomers = async (trainerId: string): Promise<UserProfile[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   const assigned = mockCustomers.filter(
     c => c.assignedTrainerId === trainerId && c.approvalStatus === 'Approved'
@@ -746,6 +774,7 @@ export const fetchAssignedCustomers = async (trainerId: string): Promise<UserPro
 };
 
 export const fetchTrainerSummary = async (trainerId: string): Promise<TrainerSummaryData> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     const assignedCustomers = mockCustomers.filter(c => c.assignedTrainerId === trainerId && c.approvalStatus === 'Approved');
     
@@ -769,6 +798,7 @@ export const fetchTrainerSummary = async (trainerId: string): Promise<TrainerSum
 }
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
   const studentIndex = mockCustomers.findIndex(c => c.id === studentId);
   if (studentIndex !== -1) {
@@ -791,6 +821,7 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 // --- Feedback Management ---
 
 export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   const newFeedback: Feedback = {
     id: `fb-${Date.now()}`,
@@ -814,11 +845,13 @@ export const addFeedback = async (customerId: string, customerName: string, trai
 };
 
 export const fetchAllFeedback = async (): Promise<Feedback[]> => {
+    loadDataFromLocalStorage();
     await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
     return [...mockFeedback].sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.requestTimestamp).getTime());
 };
 
 export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
   const progressData: LessonProgressData[] = mockCustomers
     .filter(c => c.approvalStatus === 'Approved' && c.assignedTrainerName)
@@ -835,6 +868,7 @@ export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[
 };
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
+  loadDataFromLocalStorage();
   await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
   const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
   if (customerIndex !== -1) {
@@ -853,5 +887,9 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
   return null;
 }
 
-
-saveDataToLocalStorage();
+// Ensure data is saved on first load if localStorage was empty
+if (typeof window !== 'undefined') {
+  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS)) {
+    saveDataToLocalStorage();
+  }
+}
