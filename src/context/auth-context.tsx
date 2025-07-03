@@ -5,7 +5,7 @@ import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type comp
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types'; // Import UserProfile
-import { mockCustomers, mockInstructors, authenticateUserByCredentials } from '@/lib/mock-data';
+import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 
 // Define a User type that can be a simulated regular user or a GuestUser
@@ -122,37 +122,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInAsSampleCustomer = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const sampleCustomer = mockCustomers.find(c => c.id === 'sample-customer-uid');
-
-    if (sampleCustomer) {
-      logInUser(sampleCustomer, true);
-    } else {
-      setLoading(false);
-      console.error("Sample customer could not be found.");
-      toast({
-        title: 'Login Error',
-        description: 'Sample customer data not found. Please try another login method.',
-        variant: 'destructive',
-      });
+    // In a real DB setup, you'd fetch a user with a known email or ID.
+    // For this demo, we'll try to log in with the sample user's credentials.
+    const loggedIn = await signInWithCredentials('shivendra', 'password123');
+    if (!loggedIn) {
+        setLoading(false);
+        toast({
+            title: 'Login Error',
+            description: 'Sample customer not found. Please register the sample customer first.',
+            variant: 'destructive',
+        });
     }
   };
   
   const signInAsSampleTrainer = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const sampleTrainer = mockInstructors.find(i => i.id === 'sample-trainer-uid');
-    if (sampleTrainer) {
-      logInUser(sampleTrainer, true);
-    } else {
-      setLoading(false);
-      console.error("Sample trainer could not be found.");
-      toast({
-        title: 'Login Error',
-        description: 'Sample trainer data not found. Please try another login method.',
-        variant: 'destructive',
-      });
+    // In a real DB setup, you'd fetch a user with a known email or ID.
+    const loggedIn = await signInWithCredentials('rajesh.trainer', 'password123');
+    if (!loggedIn) {
+        setLoading(false);
+        toast({
+            title: 'Login Error',
+            description: 'Sample trainer not found. Please register the sample trainer first.',
+            variant: 'destructive',
+        });
     }
   };
 

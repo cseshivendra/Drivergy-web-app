@@ -1,64 +1,23 @@
 
+import { 
+  collection, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  setDoc, 
+  updateDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  Timestamp,
+  increment,
+  writeBatch
+} from "firebase/firestore";
+import { db } from '@/lib/firebase';
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData } from '@/types';
-import { addDays, format, subDays, isPast } from 'date-fns';
-import { Car, Bike, FileText } from 'lucide-react'; // For course icons
-import { Locations, TrainerPreferenceOptions } from '@/types'; // Import Locations for consistent use
-
-const ARTIFICIAL_DELAY = 300; 
-
-// --- LocalStorage Persistence ---
-
-const getItemFromLocalStorage = <T>(key: string, defaultValue: T): T => {
-  if (typeof window !== 'undefined') {
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item) {
-        const parsedItem = JSON.parse(item);
-        if (Array.isArray(defaultValue) && !Array.isArray(parsedItem)) {
-          console.warn(`localStorage item for key "${key}" was not an array, returning default.`);
-          return defaultValue;
-        }
-        return parsedItem;
-      }
-      return defaultValue;
-    } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
-      return defaultValue;
-    }
-  }
-  return defaultValue;
-};
-
-const setItemInLocalStorage = <T>(key: string, value: T): void => {
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-      console.error(`Error setting localStorage key "${key}":`, error);
-    }
-  }
-};
-
-const LOCAL_STORAGE_KEYS = {
-  CUSTOMERS: 'drivergyMockCustomers_v1', 
-  INSTRUCTORS: 'drivergyMockInstructors_v1',
-  TWO_WHEELER_REQUESTS: 'drivergyMockTwoWheelerRequests_v1',
-  FOUR_WHEELER_REQUESTS: 'drivergyMockFourWheelerRequests_v1',
-  RESCHEDULE_REQUESTS: 'drivergyMockRescheduleRequests_v1',
-  SUMMARY_DATA: 'drivergyMockSummaryData_v1',
-  COURSES: 'drivergyMockCourses_v1',
-  FEEDBACK: 'drivergyMockFeedback_v1',
-};
-
-// Initialize from localStorage or with defaults (empty arrays)
-export let mockCustomers: UserProfile[] = [];
-export let mockInstructors: UserProfile[] = [];
-export let mockTwoWheelerRequests: LessonRequest[] = [];
-export let mockFourWheelerRequests: LessonRequest[] = [];
-export let mockRescheduleRequests: RescheduleRequest[] = [];
-export let mockCourses: Course[] = [];
-export let mockFeedback: Feedback[] = [];
-export let mockSummaryData: SummaryData;
+import { addDays, format, isPast } from 'date-fns';
+import { Car, Bike, FileText } from 'lucide-react';
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   return coursesToHydrate.map(course => {
@@ -73,252 +32,58 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   });
 };
 
-const loadDataFromLocalStorage = () => {
-  mockCustomers = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.CUSTOMERS, []);
-  mockInstructors = getItemFromLocalStorage<UserProfile[]>(LOCAL_STORAGE_KEYS.INSTRUCTORS, []);
-  mockTwoWheelerRequests = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, []);
-  mockFourWheelerRequests = getItemFromLocalStorage<LessonRequest[]>(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, []);
-  mockRescheduleRequests = getItemFromLocalStorage<RescheduleRequest[]>(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, []);
-  mockCourses = getItemFromLocalStorage<Course[]>(LOCAL_STORAGE_KEYS.COURSES, []);
-  mockFeedback = getItemFromLocalStorage<Feedback[]>(LOCAL_STORAGE_KEYS.FEEDBACK, []);
-
-  const calculatedInitialSummary: SummaryData = {
-    totalCustomers: mockCustomers.length,
-    totalInstructors: mockInstructors.length,
-    activeSubscriptions: mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length,
-    pendingRequests: mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length,
-    pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
-    totalEarnings: (mockCustomers.filter(c => c.approvalStatus === 'Approved').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length) * 500, 
-    totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
-  };
-  mockSummaryData = getItemFromLocalStorage<SummaryData>(LOCAL_STORAGE_KEYS.SUMMARY_DATA, calculatedInitialSummary);
-  
-  mockCourses = reAssignCourseIcons(mockCourses);
-};
-
-const generateRandomDate = (startOffsetDays: number, endOffsetDays: number): string => {
-  const days = Math.floor(Math.random() * (endOffsetDays - startOffsetDays + 1)) + startOffsetDays;
-  return format(addDays(new Date(), -days), 'MMM dd, yyyy HH:mm');
-};
-
-const sampleCustomer: UserProfile = {
-  id: 'sample-customer-uid',
-  uniqueId: 'CU987654',
-  name: 'Shivendra Singh',
-  username: 'shivendra',
-  password: 'password123',
-  contact: 'shivendra.singh@example.com',
-  phone: '9123456789',
-  location: 'Delhi',
-  gender: 'Male',
-  subscriptionPlan: 'Premium',
-  registrationTimestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy HH:mm'),
-  vehicleInfo: 'Four-Wheeler',
-  approvalStatus: 'Approved',
-  flatHouseNumber: 'B-42',
-  street: 'Main Street',
-  district: 'New Delhi',
-  state: 'Delhi',
-  pincode: '110001',
-  dlStatus: 'Already Have DL',
-  dlNumber: 'DL01A1234567',
-  photoIdType: 'Aadhaar Card',
-  photoIdNumber: '123456789012',
-  trainerPreference: 'Any',
-  myReferralCode: 'SHIVENDRA2024',
-  attendance: 'Pending',
-  photoURL: 'https://placehold.co/100x100.png?text=SS',
-  subscriptionStartDate: format(addDays(new Date(), 3), 'MMM dd, yyyy'),
-  totalLessons: 20,
-  completedLessons: 5,
-};
-
-const sampleTrainer: UserProfile = {
-  id: 'sample-trainer-uid',
-  uniqueId: 'TR123456',
-  name: 'Rajesh Kumar',
-  username: 'rajesh.trainer',
-  password: 'password123',
-  contact: 'rajesh.k@example.com',
-  phone: '9876543210',
-  location: 'Mumbai',
-  gender: 'Male',
-  subscriptionPlan: 'Trainer',
-  registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy HH:mm'),
-  vehicleInfo: 'Car (Manual)',
-  approvalStatus: 'Approved',
-  myReferralCode: 'RAJESHPRO',
-  specialization: 'Car',
-  yearsOfExperience: 8,
-  photoURL: 'https://placehold.co/100x100.png?text=RK',
-};
-
-// --- Initial Data Seeding (if localStorage is empty) ---
-if (typeof window !== 'undefined') {
-  // Load existing data first
-  loadDataFromLocalStorage();
-
-  // Ensure the sample customer always exists
-  const sampleCustomerExists = mockCustomers.some(c => c.id === 'sample-customer-uid');
-  if (!sampleCustomerExists) {
-    mockCustomers.push(sampleCustomer);
-  } else {
-    const index = mockCustomers.findIndex(c => c.id === 'sample-customer-uid');
-    mockCustomers[index] = { ...mockCustomers[index], ...sampleCustomer };
-  }
-
-  // Ensure the sample trainer always exists
-  const sampleTrainerExists = mockInstructors.some(i => i.id === 'sample-trainer-uid');
-  if (!sampleTrainerExists) {
-      mockInstructors.push(sampleTrainer);
-  } else {
-    const index = mockInstructors.findIndex(i => i.id === 'sample-trainer-uid');
-    mockInstructors[index] = { ...mockInstructors[index], ...sampleTrainer };
-  }
-
-  // Assign sample trainer to sample customer
-  const sampleCustomerIndex = mockCustomers.findIndex(c => c.id === 'sample-customer-uid');
-  if (sampleCustomerIndex !== -1) {
-    if (!mockCustomers[sampleCustomerIndex].assignedTrainerId) {
-      mockCustomers[sampleCustomerIndex].assignedTrainerId = sampleTrainer.id;
-      mockCustomers[sampleCustomerIndex].assignedTrainerName = sampleTrainer.name;
-    }
-  }
-
-  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.COURSES) || mockCourses.length === 0) {
-    mockCourses = [
-        {
-            id: 'course1',
-            title: 'Comprehensive Car Program',
-            description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
-            icon: Car,
-            totalEnrolled: 125,
-            totalCertified: 98,
-            image: 'https://placehold.co/600x400.png',
-            modules: [
-            { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
-            { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
-            { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
-            ],
-        },
-        {
-            id: 'course2',
-            title: 'Motorcycle Rider Course',
-            description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
-            icon: Bike,
-            totalEnrolled: 88,
-            totalCertified: 71,
-            image: 'https://placehold.co/600x400.png',
-            modules: [
-            { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
-            { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
-            ],
-        },
-        {
-            id: 'course3',
-            title: 'RTO Test Preparation',
-            description: 'A specialized course to help you ace the official RTO driving test and get your license.',
-            icon: FileText,
-            totalEnrolled: 210,
-            totalCertified: 195,
-            image: 'https://placehold.co/600x400.png',
-            modules: [
-            { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
-            { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
-            ],
-        },
-    ];
-  }
-}
-
-const saveDataToLocalStorage = () => {
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.CUSTOMERS, mockCustomers);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.INSTRUCTORS, mockInstructors);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.TWO_WHEELER_REQUESTS, mockTwoWheelerRequests);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.FOUR_WHEELER_REQUESTS, mockFourWheelerRequests);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.RESCHEDULE_REQUESTS, mockRescheduleRequests);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.SUMMARY_DATA, mockSummaryData);
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.FEEDBACK, mockFeedback);
-  const coursesToSave = mockCourses.map(c => ({ ...c, icon: undefined }));
-  setItemInLocalStorage(LOCAL_STORAGE_KEYS.COURSES, coursesToSave); 
-};
-
-
 // --- User Management ---
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    const allUsers = [...mockCustomers, ...mockInstructors];
-    const user = allUsers.find(u => u.username === username && u.password === password);
-    if (user) {
-        console.log(`[mock-data] Authenticated user: ${user.name}`);
-        return user;
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+        console.log(`[firestore] Authentication failed for username: ${username}`);
+        return null;
     }
-    console.log(`[mock-data] Authentication failed for username: ${username}`);
-    return null;
+    
+    const userDoc = querySnapshot.docs[0];
+    console.log(`[firestore] Authenticated user: ${userDoc.data().name}`);
+    return userDoc.data() as UserProfile;
 }
 
 export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
+  const userRef = doc(db, "users", userId);
   
-  const customerIndex = mockCustomers.findIndex(c => c.id === userId);
-  if (customerIndex !== -1) {
-    mockCustomers[customerIndex] = {
-      ...mockCustomers[customerIndex],
-      name: data.name,
-      contact: data.email,
-      phone: data.phone,
-      location: data.location,
-      // Simulate photo update with a new placeholder to show change
-      photoURL: data.photo ? `https://placehold.co/100x100.png?text=${data.name.charAt(0)}&v=${Date.now()}` : mockCustomers[customerIndex].photoURL,
-    };
-    saveDataToLocalStorage();
-    return mockCustomers[customerIndex];
-  }
+  const updateData: Partial<UserProfile> = {
+    name: data.name,
+    contact: data.email,
+    phone: data.phone,
+    location: data.location,
+  };
 
-  const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
-  if (instructorIndex !== -1) {
-     mockInstructors[instructorIndex] = {
-      ...mockInstructors[instructorIndex],
-      name: data.name,
-      contact: data.email,
-      phone: data.phone,
-      location: data.location,
-      photoURL: data.photo ? `https://placehold.co/100x100.png?text=${data.name.charAt(0)}&v=${Date.now()}` : mockInstructors[instructorIndex].photoURL,
-    };
-    saveDataToLocalStorage();
-    return mockInstructors[instructorIndex];
+  if (data.photo) {
+    updateData.photoURL = `https://placehold.co/100x100.png?text=${data.name.charAt(0)}&v=${Date.now()}`;
   }
-
-  return null;
+  
+  await updateDoc(userRef, updateData);
+  
+  const updatedDoc = await getDoc(userRef);
+  return updatedDoc.exists() ? updatedDoc.data() as UserProfile : null;
 };
 
 export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    
-    const customerIndex = mockCustomers.findIndex(c => c.id === userId);
-    if (customerIndex !== -1 && mockCustomers[customerIndex].password === currentPassword) {
-        mockCustomers[customerIndex].password = newPassword;
-        saveDataToLocalStorage();
-        return true;
-    }
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
 
-    const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
-    if (instructorIndex !== -1 && mockInstructors[instructorIndex].password === currentPassword) {
-        mockInstructors[instructorIndex].password = newPassword;
-        saveDataToLocalStorage();
+    if (userSnap.exists() && userSnap.data().password === currentPassword) {
+        await updateDoc(userRef, { password: newPassword });
         return true;
     }
 
     return false;
 }
 
-export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile => {
-  loadDataFromLocalStorage();
-  const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now(); 
-  const newId = `u${newIdSuffix}`;
+export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile> => {
+  const newUserRef = doc(collection(db, "users"));
+  const newIdSuffix = newUserRef.id.slice(-6);
+
   const getLessonsForPlan = (plan: string): number => {
     switch (plan) {
       case 'Premium': return 20;
@@ -329,12 +94,12 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
   };
 
   const newUser: UserProfile = {
-    id: newId,
-    uniqueId: `CU${202500 + newIdSuffix}`,
+    id: newUserRef.id,
+    uniqueId: `CU${newIdSuffix.toUpperCase()}`,
     name: data.name,
     username: data.username,
     password: data.password,
-    contact: data.email, 
+    contact: data.email,
     phone: data.phone,
     location: data.location,
     gender: data.gender,
@@ -344,59 +109,47 @@ export const addCustomer = (data: CustomerRegistrationFormValues): UserProfile =
     state: data.state,
     pincode: data.pincode,
     subscriptionPlan: data.subscriptionPlan,
-    registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+    registrationTimestamp: new Date().toISOString(),
     vehicleInfo: data.vehiclePreference,
-    approvalStatus: 'Pending', 
+    approvalStatus: 'Pending',
     dlStatus: data.dlStatus,
     dlNumber: data.dlNumber,
     photoIdType: data.photoIdType,
     photoIdNumber: data.photoIdNumber,
     trainerPreference: data.trainerPreference,
-    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
+    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newIdSuffix}`,
     attendance: 'Pending',
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
     subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
     totalLessons: getLessonsForPlan(data.subscriptionPlan),
     completedLessons: 0,
   };
-  mockCustomers.push(newUser);
-  
-  mockSummaryData.totalCustomers = mockCustomers.length; 
-  
-  const vehicleTypeForRequest = data.vehiclePreference === 'Both' 
-    ? (Math.random() < 0.5 ? 'Two-Wheeler' : 'Four-Wheeler') 
-    : data.vehiclePreference;
-  
-  const newRequestIdSuffix = mockTwoWheelerRequests.length + mockFourWheelerRequests.length + 1 + Date.now();
-  const newRequest: LessonRequest = {
-    id: `r_auto_${newRequestIdSuffix}`,
+
+  const batch = writeBatch(db);
+  batch.set(newUserRef, newUser);
+
+  const newRequestRef = doc(collection(db, "lessonRequests"));
+  const newRequest: Omit<LessonRequest, 'id'> = {
+    customerId: newUser.id,
     customerName: newUser.name,
-    vehicleType: vehicleTypeForRequest as 'Two-Wheeler' | 'Four-Wheeler',
+    vehicleType: data.vehiclePreference as VehicleType,
     status: 'Pending',
-    requestTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+    requestTimestamp: new Date().toISOString(),
   };
-
-  if (newRequest.vehicleType === 'Two-Wheeler') {
-    mockTwoWheelerRequests.push(newRequest);
-  } else {
-    mockFourWheelerRequests.push(newRequest);
-  }
-  mockTwoWheelerRequests.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
-  mockFourWheelerRequests.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
-
-  mockSummaryData.pendingRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
+  batch.set(newRequestRef, newRequest);
   
-  saveDataToLocalStorage();
+  await batch.commit();
+  
   return newUser;
 };
 
-export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => {
-  loadDataFromLocalStorage();
-  const newIdSuffix = mockCustomers.length + mockInstructors.length + 1 + Date.now();
-  const newId = `u${newIdSuffix}`;
+export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile> => {
+  const newTrainerRef = doc(collection(db, "users"));
+  const newIdSuffix = newTrainerRef.id.slice(-6);
+  
   const newTrainer: UserProfile = {
-    id: newId,
-    uniqueId: `TR${202500 + newIdSuffix}`,
+    id: newTrainerRef.id,
+    uniqueId: `TR${newIdSuffix.toUpperCase()}`,
     name: data.name,
     username: data.username,
     password: data.password,
@@ -405,457 +158,391 @@ export const addTrainer = (data: TrainerRegistrationFormValues): UserProfile => 
     location: data.location,
     gender: data.gender,
     subscriptionPlan: "Trainer", 
-    registrationTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+    registrationTimestamp: new Date().toISOString(),
     vehicleInfo: data.trainerVehicleType,
     approvalStatus: 'Pending',
-    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newId.slice(-4)}`,
+    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${newIdSuffix}`,
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
+    specialization: data.specialization,
+    yearsOfExperience: data.yearsOfExperience
   };
-  mockInstructors.push(newTrainer);
-  mockSummaryData.totalInstructors = mockInstructors.length; 
-  saveDataToLocalStorage();
+  
+  await setDoc(newTrainerRef, newTrainer);
   return newTrainer;
 };
 
 export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-  let userFound = false;
-  
-  const customerIndex = mockCustomers.findIndex(c => c.id === userId);
-  if (customerIndex !== -1) {
-    mockCustomers[customerIndex].approvalStatus = newStatus;
-    userFound = true;
-    if (newStatus === 'Approved' && !mockCustomers[customerIndex].assignedTrainerId) {
-        const approvedTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved');
-        if (approvedTrainers.length > 0) {
-            const randomTrainer = approvedTrainers[Math.floor(Math.random() * approvedTrainers.length)];
-            mockCustomers[customerIndex].assignedTrainerId = randomTrainer.id;
-            mockCustomers[customerIndex].assignedTrainerName = randomTrainer.name;
-        }
+  const userRef = doc(db, "users", userId);
+  await updateDoc(userRef, { approvalStatus: newStatus });
+  return true;
+};
+
+const fetchUsersByRole = async (
+    rolePrefix: 'CU' | 'TR', 
+    filters: { location?: string, subscriptionPlan?: string, searchTerm?: string },
+    statuses: ApprovalStatusType[]
+): Promise<UserProfile[]> => {
+    
+    let q = query(collection(db, "users"), where("uniqueId", ">=", rolePrefix), where("uniqueId", "<", `${rolePrefix}\uffff`), where("approvalStatus", "in", statuses));
+
+    if (filters.location && filters.location !== 'all') {
+        q = query(q, where("location", "==", filters.location));
     }
-  } else {
-    const instructorIndex = mockInstructors.findIndex(i => i.id === userId);
-    if (instructorIndex !== -1) {
-      mockInstructors[instructorIndex].approvalStatus = newStatus;
-      userFound = true;
+    if (rolePrefix === 'CU' && filters.subscriptionPlan && filters.subscriptionPlan !== 'all') {
+        q = query(q, where("subscriptionPlan", "==", filters.subscriptionPlan));
     }
-  }
-  
-  if (userFound) {
-    mockSummaryData.activeSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length + mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
-    mockSummaryData.totalCertifiedTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length;
-    saveDataToLocalStorage();
-  }
-  return userFound;
+
+    const querySnapshot = await getDocs(q);
+    let results = querySnapshot.docs.map(doc => doc.data() as UserProfile);
+
+    if (filters.searchTerm) {
+        const lowerSearchTerm = filters.searchTerm.toLowerCase().trim();
+        results = results.filter(u =>
+            u.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
+            u.name.toLowerCase().includes(lowerSearchTerm) ||
+            u.contact.toLowerCase().includes(lowerSearchTerm)
+        );
+    }
+    
+    results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
+    return results;
+}
+
+export const fetchCustomers = (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+    return fetchUsersByRole('CU', { location, subscriptionPlan: subscription, searchTerm }, ['Pending']);
 };
 
-export const fetchCustomers = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  
-  let results = mockCustomers.filter(c => c.approvalStatus === 'Pending');
-
-  if (location && location.trim() !== '' && location !== 'all') {
-    results = results.filter(c => c.location.toLowerCase() === location.toLowerCase().trim());
-  }
-  if (subscription && subscription !== 'all') {
-    results = results.filter(c => c.subscriptionPlan === subscription);
-  }
-  
-  if (searchTerm && searchTerm.trim() !== '') {
-    const lowerSearchTerm = searchTerm.toLowerCase().trim();
-    results = results.filter(c =>
-      c.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
-      c.name.toLowerCase().includes(lowerSearchTerm) ||
-      c.contact.toLowerCase().includes(lowerSearchTerm) 
-    );
-  }
-  results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
-  return results;
+export const fetchInstructors = (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+    return fetchUsersByRole('TR', { location, subscriptionPlan: subscription, searchTerm }, ['Pending', 'In Progress']);
 };
 
-export const fetchInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  
-  let results = mockInstructors.filter(i => i.approvalStatus === 'Pending' || i.approvalStatus === 'In Progress');
-
-  if (location && location.trim() !== '' && location !== 'all') {
-    results = results.filter(i => i.location.toLowerCase() === location.toLowerCase().trim());
-  }
-  if (subscription && subscription !== 'all' && subscription !== 'Trainer') { 
-    results = []; 
-  }
-
-  if (searchTerm && searchTerm.trim() !== '') {
-    const lowerSearchTerm = searchTerm.toLowerCase().trim();
-    results = results.filter(i =>
-      i.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
-      i.name.toLowerCase().includes(lowerSearchTerm) ||
-      i.contact.toLowerCase().includes(lowerSearchTerm)
-    );
-  }
-  results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
-  return results;
+export const fetchExistingInstructors = (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
+    return fetchUsersByRole('TR', { location, subscriptionPlan: subscription, searchTerm }, ['Approved', 'Rejected']);
 };
-
-export const fetchExistingInstructors = async (location?: string, subscription?: string, searchTerm?: string): Promise<UserProfile[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  
-  let results = mockInstructors.filter(i => i.approvalStatus === 'Approved' || i.approvalStatus === 'Rejected');
-
-  if (location && location.trim() !== '' && location !== 'all') {
-    results = results.filter(i => i.location.toLowerCase() === location.toLowerCase().trim());
-  }
-  if (subscription && subscription !== 'all' && subscription !== 'Trainer') { 
-    results = []; 
-  }
-
-  if (searchTerm && searchTerm.trim() !== '') {
-    const lowerSearchTerm = searchTerm.toLowerCase().trim();
-    results = results.filter(i =>
-      i.uniqueId.toLowerCase().includes(lowerSearchTerm) ||
-      i.name.toLowerCase().includes(lowerSearchTerm) ||
-      i.contact.toLowerCase().includes(lowerSearchTerm)
-    );
-  }
-  results.sort((a, b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
-  return results;
-};
-
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 3));
-  const allUsers = [...mockCustomers, ...mockInstructors];
-  const user = allUsers.find(u => u.id === userId);
-  
-  if (user) {
+  const userRef = doc(db, "users", userId);
+  const docSnap = await getDoc(userRef);
+
+  if (docSnap.exists()) {
+    const user = docSnap.data() as UserProfile;
     if (user.uniqueId.startsWith('CU') && user.assignedTrainerId && !user.assignedTrainerName) {
-      const trainer = mockInstructors.find(i => i.id === user.assignedTrainerId);
-      if (trainer) {
-          user.assignedTrainerName = trainer.name;
+      const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
+      if (trainerSnap.exists()) {
+        user.assignedTrainerName = trainerSnap.data().name;
       }
     }
-    console.log(`[mock-data] fetchUserById for ID '${userId}':`, JSON.parse(JSON.stringify(user)));
+    return user;
   } else {
-    console.log(`[mock-data] fetchUserById for ID '${userId}': User not found.`);
+    console.log(`[firestore] No user found with ID: ${userId}`);
+    return null;
   }
-
-  return user || null;
 };
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-  let results = mockInstructors.filter(i => i.approvalStatus === 'Approved');
+  let q = query(collection(db, "users"), where("approvalStatus", "==", "Approved"), where("uniqueId", ">=", "TR"), where("uniqueId", "<", "TR\uffff"));
 
   if (filters.location && filters.location !== 'all') {
-    results = results.filter(i => i.location === filters.location);
+    q = query(q, where("location", "==", filters.location));
   }
-
   if (filters.gender && filters.gender !== 'all') {
-    results = results.filter(i => i.gender === filters.gender);
+    q = query(q, where("gender", "==", filters.gender));
   }
 
-  return results;
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
-  const trainer = mockInstructors.find(t => t.id === trainerId);
+    const customerRef = doc(db, "users", customerId);
+    const trainerSnap = await getDoc(doc(db, "users", trainerId));
 
-  if (customerIndex !== -1 && trainer) {
-    const customer = mockCustomers[customerIndex];
-    // Change status to 'In Progress' for trainer approval, not 'Approved'
-    customer.approvalStatus = 'In Progress';
-    customer.assignedTrainerId = trainer.id;
-    customer.assignedTrainerName = trainer.name;
-    
-    // Do not set upcoming lesson yet, wait for trainer approval
-    
-    saveDataToLocalStorage();
-    return true;
-  }
-  return false;
+    if (trainerSnap.exists()) {
+        const trainer = trainerSnap.data();
+        await updateDoc(customerRef, {
+            approvalStatus: 'In Progress',
+            assignedTrainerId: trainer.id,
+            assignedTrainerName: trainer.name,
+        });
+        return true;
+    }
+    return false;
 };
 
 // --- Lesson Request Management ---
 export const fetchAllLessonRequests = async (searchTerm?: string): Promise<LessonRequest[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  let allRequests = [...mockTwoWheelerRequests, ...mockFourWheelerRequests].sort((a, b) => {
-    return new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime();
-  });
-  
-  if (searchTerm && searchTerm.trim() !== '') {
-    const lowerSearchTerm = searchTerm.toLowerCase().trim();
-    allRequests = allRequests.filter(request =>
-      request.customerName.toLowerCase().includes(lowerSearchTerm)
-    );
-  }
-  return allRequests;
+    let q = query(collection(db, "lessonRequests"), orderBy("requestTimestamp", "desc"));
+    const querySnapshot = await getDocs(q);
+    let allRequests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonRequest));
+    
+    if (searchTerm) {
+        const lowerSearchTerm = searchTerm.toLowerCase().trim();
+        allRequests = allRequests.filter(request => request.customerName.toLowerCase().includes(lowerSearchTerm));
+    }
+    return allRequests;
 };
 
 // --- Reschedule Request Management ---
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    const newRequest: RescheduleRequest = {
-        id: `resched-${Date.now()}`,
+    const newRequestRef = doc(collection(db, "rescheduleRequests"));
+    const newRequest: Omit<RescheduleRequest, 'id'> = {
         userId,
         customerName,
         originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
         requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
         status: 'Pending',
-        requestTimestamp: format(new Date(), 'MMM dd, yyyy HH:mm'),
+        requestTimestamp: new Date().toISOString(),
     };
-    mockRescheduleRequests.unshift(newRequest);
-    mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
-    saveDataToLocalStorage();
-    return newRequest;
+    await setDoc(newRequestRef, newRequest);
+    return { id: newRequestRef.id, ...newRequest };
 };
 
 export const fetchRescheduleRequests = async (searchTerm?: string): Promise<RescheduleRequest[]> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    let results = [...mockRescheduleRequests];
-    if (searchTerm && searchTerm.trim() !== '') {
+    let q = query(collection(db, "rescheduleRequests"), orderBy("requestTimestamp", "desc"));
+    const querySnapshot = await getDocs(q);
+    let results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RescheduleRequest));
+
+    if (searchTerm) {
         const lowerSearchTerm = searchTerm.toLowerCase().trim();
         results = results.filter(req =>
             req.customerName.toLowerCase().includes(lowerSearchTerm) ||
             req.id.toLowerCase().includes(lowerSearchTerm)
         );
     }
-    results.sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
     return results;
 };
 
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-    const requestIndex = mockRescheduleRequests.findIndex(req => req.id === requestId);
-    if (requestIndex !== -1) {
-        mockRescheduleRequests[requestIndex].status = newStatus;
-        
-        if (newStatus === 'Approved') {
-            const customerId = mockRescheduleRequests[requestIndex].userId;
-            const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
-            if (customerIndex !== -1) {
-                mockCustomers[customerIndex].upcomingLesson = mockRescheduleRequests[requestIndex].requestedRescheduleDate;
-            }
-        }
-        
-        mockSummaryData.pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
-        saveDataToLocalStorage();
-        return true;
+    const requestRef = doc(db, "rescheduleRequests", requestId);
+    const requestSnap = await getDoc(requestRef);
+    if (!requestSnap.exists()) return false;
+
+    const batch = writeBatch(db);
+    batch.update(requestRef, { status: newStatus });
+
+    if (newStatus === 'Approved') {
+        const requestData = requestSnap.data() as RescheduleRequest;
+        const customerRef = doc(db, "users", requestData.userId);
+        batch.update(customerRef, { upcomingLesson: requestData.requestedRescheduleDate });
     }
-    return false;
+    
+    await batch.commit();
+    return true;
 };
 
 
 // --- Summary & Courses ---
 export const fetchSummaryData = async (): Promise<SummaryData> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  
-  const currentPendingLessonRequests = mockTwoWheelerRequests.filter(r => r.status === 'Pending').length + 
-                                 mockFourWheelerRequests.filter(r => r.status === 'Pending').length;
-  
-  const currentActiveCustomerSubscriptions = mockCustomers.filter(c => c.approvalStatus === 'Approved' && c.subscriptionPlan !== 'N/A' && c.subscriptionPlan !== 'Trainer').length;
-  const activeApprovedTrainers = mockInstructors.filter(i => i.approvalStatus === 'Approved').length;
+    const usersRef = collection(db, "users");
+    
+    const customerQuery = query(usersRef, where("uniqueId", ">=", "CU"), where("uniqueId", "<", "CU\uffff"));
+    const instructorQuery = query(usersRef, where("uniqueId", ">=", "TR"), where("uniqueId", "<", "TR\uffff"));
+    const activeSubsQuery = query(usersRef, where("approvalStatus", "==", "Approved"));
+    const pendingLessonRequestsQuery = query(collection(db, "lessonRequests"), where("status", "==", "Pending"));
+    const pendingRescheduleQuery = query(collection(db, "rescheduleRequests"), where("status", "==", "Pending"));
 
-  const updatedSummaryData: SummaryData = {
-    totalCustomers: mockCustomers.length, 
-    totalInstructors: mockInstructors.length, 
-    activeSubscriptions: currentActiveCustomerSubscriptions + activeApprovedTrainers, 
-    pendingRequests: currentPendingLessonRequests,
-    pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
-    totalCertifiedTrainers: mockInstructors.filter(i => i.approvalStatus === 'Approved').length + mockCustomers.filter(c => c.approvalStatus === 'Approved').length,
-    totalEarnings: (currentActiveCustomerSubscriptions + activeApprovedTrainers) * 500, 
-  };
-  
-  Object.assign(mockSummaryData, updatedSummaryData); 
-  saveDataToLocalStorage(); 
-  return mockSummaryData;
+    const [
+      customerSnap, 
+      instructorSnap, 
+      activeSubsSnap, 
+      pendingLessonRequestsSnap,
+      pendingRescheduleSnap
+    ] = await Promise.all([
+      getDocs(customerQuery),
+      getDocs(instructorQuery),
+      getDocs(activeSubsQuery),
+      getDocs(pendingLessonRequestsQuery),
+      getDocs(pendingRescheduleQuery)
+    ]);
+    
+    const totalEarnings = activeSubsSnap.size * 500;
+
+    return {
+        totalCustomers: customerSnap.size,
+        totalInstructors: instructorSnap.size,
+        activeSubscriptions: activeSubsSnap.size,
+        pendingRequests: pendingLessonRequestsSnap.size,
+        pendingRescheduleRequests: pendingRescheduleSnap.size,
+        totalCertifiedTrainers: activeSubsSnap.size,
+        totalEarnings: totalEarnings,
+    };
 };
 
+// Course data can remain static for now as it's not managed in the DB yet
+export let mockCourses: Course[] = [
+    {
+        id: 'course1',
+        title: 'Comprehensive Car Program',
+        description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
+        icon: Car,
+        totalEnrolled: 125,
+        totalCertified: 98,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+          { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
+          { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
+          { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
+        ],
+    },
+    {
+        id: 'course2',
+        title: 'Motorcycle Rider Course',
+        description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
+        icon: Bike,
+        totalEnrolled: 88,
+        totalCertified: 71,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+          { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
+          { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
+        ],
+    },
+    {
+        id: 'course3',
+        title: 'RTO Test Preparation',
+        description: 'A specialized course to help you ace the official RTO driving test and get your license.',
+        icon: FileText,
+        totalEnrolled: 210,
+        totalCertified: 195,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+          { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
+          { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
+        ],
+    },
+];
 
 export const fetchCourses = async (): Promise<Course[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  
-  const hydratedCourses = reAssignCourseIcons(mockCourses);
-  
-  const approvedCustomers = mockCustomers.filter(c => c.approvalStatus === 'Approved').length;
-  
-  const updatedCourses = hydratedCourses.map(course => {
-    let newTotalEnrolled = course.totalEnrolled;
-    let newTotalCertified = course.totalCertified;
-
-    if (course.id === 'course1') { 
-      newTotalEnrolled = Math.floor(approvedCustomers * 0.6); 
-      newTotalCertified = Math.floor(newTotalEnrolled * 0.8); 
-    } else if (course.id === 'course2') { 
-      newTotalEnrolled = Math.floor(approvedCustomers * 0.4); 
-      newTotalCertified = Math.floor(newTotalEnrolled * 0.7);
-    } else if (course.id === 'course3') { 
-      newTotalEnrolled = approvedCustomers; 
-      newTotalCertified = Math.floor(newTotalEnrolled * 0.9);
-    }
-    return { ...course, totalEnrolled: newTotalEnrolled, totalCertified: newTotalCertified };
-  });
-  
-  mockCourses = updatedCourses; 
-  saveDataToLocalStorage(); 
-  return [...mockCourses]; 
+  return reAssignCourseIcons(mockCourses);
 };
 
 // --- Trainer Specific Functions ---
 
 export const fetchPendingAssignments = async (trainerId: string): Promise<UserProfile[]> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    const assigned = mockCustomers.filter(
-        c => c.assignedTrainerId === trainerId && c.approvalStatus === 'In Progress'
-    );
-    return assigned;
+    const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "In Progress"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-    const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
+    const customerRef = doc(db, "users", customerId);
+    const batch = writeBatch(db);
 
-    if (customerIndex !== -1) {
-        const customer = mockCustomers[customerIndex];
-        if (newStatus === 'Approved') {
-            customer.approvalStatus = 'Approved';
-            // Set mock upcoming lesson date upon approval
-            customer.upcomingLesson = format(addDays(new Date(), Math.floor(Math.random() * 5) + 2), 'MMM dd, yyyy, h:mm a');
-            
-            // Update lesson request status from Pending to Active
-            const vehicleType = customer.vehicleInfo === 'Two-Wheeler' ? 'Two-Wheeler' : 'Four-Wheeler';
-            const requestList = vehicleType === 'Two-Wheeler' ? mockTwoWheelerRequests : mockFourWheelerRequests;
-            const requestIndex = requestList.findIndex(r => r.customerName === customer.name && r.status === 'Pending');
-            if (requestIndex !== -1) {
-                requestList[requestIndex].status = 'Active';
-            }
-            
-            // Update summary data
-            mockSummaryData.activeSubscriptions++;
-            mockSummaryData.pendingRequests = Math.max(0, mockSummaryData.pendingRequests - 1);
-            mockSummaryData.totalCertifiedTrainers++;
+    if (newStatus === 'Approved') {
+        const firstLessonDate = addDays(new Date(), Math.floor(Math.random() * 5) + 2);
+        firstLessonDate.setHours(9, 0, 0, 0);
 
-        } else if (newStatus === 'Rejected') {
-            customer.approvalStatus = 'Pending'; // Back to admin queue
-            customer.assignedTrainerId = undefined;
-            customer.assignedTrainerName = undefined;
+        batch.update(customerRef, {
+            approvalStatus: 'Approved',
+            upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+        });
+        
+        const customerSnap = await getDoc(customerRef);
+        const customerData = customerSnap.data();
+
+        const reqQuery = query(collection(db, "lessonRequests"), where("customerId", "==", customerId), where("status", "==", "Pending"), limit(1));
+        const reqSnap = await getDocs(reqQuery);
+        if (!reqSnap.empty) {
+            const reqRef = reqSnap.docs[0].ref;
+            batch.update(reqRef, { status: 'Active' });
         }
 
-        saveDataToLocalStorage();
-        return true;
+    } else { // Rejected
+        batch.update(customerRef, {
+            approvalStatus: 'Pending', // Back to admin queue
+            assignedTrainerId: "", // Use empty string to clear field
+            assignedTrainerName: "",
+        });
     }
-    return false;
+
+    await batch.commit();
+    return true;
 };
 
-
 export const fetchAssignedCustomers = async (trainerId: string): Promise<UserProfile[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  const assigned = mockCustomers.filter(
-    c => c.assignedTrainerId === trainerId && c.approvalStatus === 'Approved'
-  );
-  return assigned;
+  const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "Approved"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => doc.data() as UserProfile);
 };
 
 export const fetchTrainerSummary = async (trainerId: string): Promise<TrainerSummaryData> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    const assignedCustomers = mockCustomers.filter(c => c.assignedTrainerId === trainerId && c.approvalStatus === 'Approved');
+    const assignedCustomersQuery = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId), where("approvalStatus", "==", "Approved"));
+    const feedbackQuery = query(collection(db, "feedback"), where("trainerId", "==", trainerId));
     
-    // Calculate average rating for the trainer
-    const trainerFeedback = mockFeedback.filter(f => f.trainerId === trainerId);
-    let avgRating = 4.8; // Default mock rating
-    if (trainerFeedback.length > 0) {
-        const totalRating = trainerFeedback.reduce((acc, curr) => acc + curr.rating, 0);
-        avgRating = parseFloat((totalRating / trainerFeedback.length).toFixed(1));
+    const [assignedCustomersSnap, feedbackSnap] = await Promise.all([
+      getDocs(assignedCustomersQuery),
+      getDocs(feedbackQuery)
+    ]);
+    
+    let avgRating = 4.8;
+    if (!feedbackSnap.empty) {
+        const totalRating = feedbackSnap.docs.reduce((acc, doc) => acc + doc.data().rating, 0);
+        avgRating = parseFloat((totalRating / feedbackSnap.size).toFixed(1));
     }
     
-    const totalEarnings = assignedCustomers.length * 2000; // Mock earning per student
-    
     const summary: TrainerSummaryData = {
-        totalStudents: assignedCustomers.length,
-        totalEarnings: totalEarnings,
-        upcomingLessons: assignedCustomers.filter(c => c.upcomingLesson && new Date(c.upcomingLesson) > new Date()).length,
+        totalStudents: assignedCustomersSnap.size,
+        totalEarnings: assignedCustomersSnap.size * 2000,
+        upcomingLessons: assignedCustomersSnap.docs.filter(doc => doc.data().upcomingLesson && new Date(doc.data().upcomingLesson) > new Date()).length,
         rating: avgRating
     };
     return summary;
 }
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-  const studentIndex = mockCustomers.findIndex(c => c.id === studentId);
-  if (studentIndex !== -1) {
-    const student = mockCustomers[studentIndex];
-    // Only increment lessons if marking as 'Present' and it wasn't already 'Present'
-    if (status === 'Present' && student.attendance !== 'Present' && student.completedLessons !== undefined && student.totalLessons !== undefined) {
-      if (student.completedLessons < student.totalLessons) {
-        student.completedLessons += 1;
-      }
+    const studentRef = doc(db, "users", studentId);
+    const studentSnap = await getDoc(studentRef);
+
+    if (studentSnap.exists()) {
+        const student = studentSnap.data() as UserProfile;
+        const updates: Partial<UserProfile> = { attendance: status };
+        
+        if (status === 'Present' && student.attendance !== 'Present' && (student.completedLessons ?? 0) < (student.totalLessons ?? 0)) {
+            updates.completedLessons = increment(1);
+        }
+        
+        await updateDoc(studentRef, updates);
+        return true;
     }
-    student.attendance = status;
-    // Logic to clear upcoming lesson and set a new one could go here. For now, we keep it simple.
-    
-    saveDataToLocalStorage();
-    return true;
-  }
-  return false;
+    return false;
 };
 
 // --- Feedback Management ---
 
 export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  const newFeedback: Feedback = {
-    id: `fb-${Date.now()}`,
+  const newFeedbackRef = doc(collection(db, "feedback"));
+  const newFeedback: Omit<Feedback, 'id'> = {
     customerId,
     customerName,
     trainerId,
     trainerName,
     rating,
     comment,
-    submissionDate: format(new Date(), 'MMM dd, yyyy HH:mm'),
+    submissionDate: new Date().toISOString(),
   };
-  mockFeedback.unshift(newFeedback);
-  
-  const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
-  if (customerIndex !== -1) {
-    mockCustomers[customerIndex].feedbackSubmitted = true;
-  }
 
-  saveDataToLocalStorage();
+  const customerRef = doc(db, "users", customerId);
+  const batch = writeBatch(db);
+  batch.set(newFeedbackRef, newFeedback);
+  batch.update(customerRef, { feedbackSubmitted: true });
+  await batch.commit();
+  
   return true;
 };
 
 export const fetchAllFeedback = async (): Promise<Feedback[]> => {
-    loadDataFromLocalStorage();
-    await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-    return [...mockFeedback].sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.requestTimestamp).getTime());
+    const q = query(collection(db, "feedback"), orderBy("submissionDate", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback));
 };
 
 export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY));
-  const progressData: LessonProgressData[] = mockCustomers
-    .filter(c => c.approvalStatus === 'Approved' && c.assignedTrainerName)
-    .map(c => ({
+  const q = query(collection(db, "users"), where("approvalStatus", "==", "Approved"), where("assignedTrainerName", "!=", null));
+  const querySnapshot = await getDocs(q);
+
+  const progressData: LessonProgressData[] = querySnapshot.docs.map(doc => {
+    const c = doc.data() as UserProfile;
+    return {
       studentId: c.uniqueId,
       studentName: c.name,
       trainerName: c.assignedTrainerName!,
@@ -863,33 +550,21 @@ export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[
       totalLessons: c.totalLessons || 0,
       completedLessons: c.completedLessons || 0,
       remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
-    }));
+    };
+  });
   return progressData.sort((a, b) => a.remainingLessons - b.remainingLessons);
 };
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
-  loadDataFromLocalStorage();
-  await new Promise(resolve => setTimeout(resolve, ARTIFICIAL_DELAY / 2));
-  const customerIndex = mockCustomers.findIndex(c => c.id === customerId);
-  if (customerIndex !== -1) {
-    const customer = mockCustomers[customerIndex];
-    customer.subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
+  const customerRef = doc(db, "users", customerId);
+  const firstLessonDate = addDays(newDate, 2);
+  firstLessonDate.setHours(9, 0, 0, 0);
 
-    // Also update the upcoming lesson to be relative to the new start date
-    // Let's set it 2 days after the start date at 9 AM for demonstration.
-    const firstLessonDate = addDays(newDate, 2);
-    firstLessonDate.setHours(9, 0, 0, 0);
-    customer.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+  await updateDoc(customerRef, {
+    subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
+    upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+  });
 
-    saveDataToLocalStorage();
-    return { ...customer };
-  }
-  return null;
-}
-
-// Ensure data is saved on first load if localStorage was empty
-if (typeof window !== 'undefined') {
-  if (!window.localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOMERS)) {
-    saveDataToLocalStorage();
-  }
+  const updatedDoc = await getDoc(customerRef);
+  return updatedDoc.exists() ? updatedDoc.data() as UserProfile : null;
 }

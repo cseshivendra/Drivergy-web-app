@@ -130,15 +130,15 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     form.setValue('district', '');
   }, [selectedState, form]);
 
-  function onSubmit(data: RegistrationFormValues) {
+  async function onSubmit(data: RegistrationFormValues) {
     console.log('Registration Data:', data);
 
     let newUser: UserProfile | undefined;
 
     if (data.userRole === 'customer') {
-      newUser = addCustomer(data);
+      newUser = await addCustomer(data);
     } else if (data.userRole === 'trainer') {
-      newUser = addTrainer(data);
+      newUser = await addTrainer(data);
     }
 
     if (newUser) {
