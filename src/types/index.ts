@@ -48,6 +48,7 @@ export interface UserProfile {
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
 export interface LessonRequest {
   id:string;
+  customerId: string;
   customerName: string;
   vehicleType: 'Two-Wheeler' | 'Four-Wheeler';
   status: typeof LessonRequestStatusOptions[number];
@@ -297,6 +298,7 @@ const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   dlTypeHeld: z.string().optional(),
   photoIdType: z.enum(PhotoIdTypeOptions, { required_error: "Please select a Photo ID type." }),
   photoIdNumber: z.string().min(1, { message: "Photo ID number is required." }),
+  photoIdFile: z.any().refine(files => files?.length == 1, "Photo ID upload is required."),
   subscriptionStartDate: z.date({
     required_error: "A subscription start date is required.",
   }),
@@ -315,6 +317,9 @@ const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
     .max(12, { message: "Aadhaar number must be 12 digits." })
     .regex(/^\d{12}$/, { message: "Invalid Aadhaar number format (must be 12 digits)." }),
   drivingLicenseNumber: z.string().min(1, { message: "Driving license number is required." }).max(50),
+  trainerCertificateFile: z.any().refine(files => files?.length == 1, "Certificate upload is required."),
+  drivingLicenseFile: z.any().refine(files => files?.length == 1, "Driving license upload is required."),
+  aadhaarCardFile: z.any().refine(files => files?.length == 1, "Aadhaar card upload is required."),
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion("userRole", [
