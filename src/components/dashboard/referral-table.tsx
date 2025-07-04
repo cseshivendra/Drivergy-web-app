@@ -173,7 +173,7 @@ const RefereeDetailsTable = ({
                     </Table>
                 </div>
             </CardContent>
-            {referrals.length > 0 && (
+            {referrals.length > 0 && !isLoading && (
                  <CardFooter className="flex items-center justify-between pt-4 border-t">
                     <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
                     <div className="flex space-x-2">
@@ -234,7 +234,7 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
                             <Table>
                                 <TableHeader className="sticky top-0 bg-card z-10">
                                     <TableRow>
-                                        <TableHead>Referrer</TableHead>
+                                        <TableHead>Referred By</TableHead>
                                         <TableHead>Count</TableHead>
                                         <TableHead>Total Points</TableHead>
                                     </TableRow>
