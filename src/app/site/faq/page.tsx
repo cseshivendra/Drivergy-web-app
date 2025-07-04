@@ -1,19 +1,22 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Car, HelpCircle, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Car, HelpCircle, Facebook, Twitter, Instagram, Linkedin, Youtube, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
+import { fetchFaqs } from '@/lib/mock-data';
+import type { FaqItem } from '@/types';
 
 const SiteLogo = () => (
     <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
@@ -26,50 +29,26 @@ const SiteLogo = () => (
     </Link>
 );
 
-const faqData = [
-    {
-      id: "faq-1",
-      question: "What documents do I need to enroll?",
-      answer: <p>For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.</p>,
-    },
-    {
-      id: "faq-2",
-      question: "Can I choose my instructor?",
-      answer: <p>Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.</p>,
-    },
-    {
-      id: "faq-3",
-      question: "How do I book a driving lesson slot?",
-      answer: <p>Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.</p>,
-    },
-    {
-      id: "faq-4",
-      question: "What types of vehicles are available for training?",
-      answer: <p>We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.</p>,
-    },
-    {
-      id: "faq-5",
-      question: "What if I need to cancel or reschedule a lesson?",
-      answer: <p>You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.</p>,
-    },
-    {
-      id: "faq-6",
-      question: "How do I redeem a coupon code?",
-      answer: <p>You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount.</p>
-    },
-    {
-      id: "faq-7",
-      question: "How can I use the points earned from referrals?",
-      answer: <p>Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey.</p>
-    },
-    {
-      id: "faq-8",
-      question: "Is our driving school completion certificate valid at the RTO?",
-      answer: <p>Drivergy Certificates are valid at RTO office as we are authorized partner.</p>,
-    }
-];
-
 export default function FaqPage() {
+  const [faqData, setFaqData] = useState<FaqItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchFaqs().then(data => {
+      setFaqData(data);
+      setLoading(false);
+    });
+  }, []);
+
+  const renderSkeletons = () => (
+    <div className="space-y-2">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-16 w-full" />
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
         <SiteHeader />
@@ -97,18 +76,27 @@ export default function FaqPage() {
                     </div>
                 </Card>
 
-                <Accordion type="single" collapsible className="w-full">
-                  {faqData.map((faq) => (
-                    <AccordionItem value={faq.id} key={faq.id} className="border-b border-border/50">
-                      <AccordionTrigger className="text-left font-semibold text-lg hover:no-underline py-4">
-                        {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground text-base pb-4">
-                        {faq.answer}
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
+                {loading ? (
+                    renderSkeletons()
+                ) : faqData.length > 0 ? (
+                    <Accordion type="single" collapsible className="w-full">
+                    {faqData.map((faq) => (
+                        <AccordionItem value={faq.id} key={faq.id} className="border-b border-border/50">
+                        <AccordionTrigger className="text-left font-semibold text-lg hover:no-underline py-4">
+                            {faq.question}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-muted-foreground text-base pb-4">
+                            <p>{faq.answer}</p>
+                        </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                    </Accordion>
+                ) : (
+                    <div className="text-center py-16">
+                      <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <p className="mt-4 text-lg text-muted-foreground">No FAQs available at the moment.</p>
+                    </div>
+                )}
             </div>
         </main>
 

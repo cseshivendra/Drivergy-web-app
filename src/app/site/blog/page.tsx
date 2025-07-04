@@ -6,11 +6,13 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
-import { useState } from 'react';
+import { Car, User, Calendar, BookText, ChevronLeft, ChevronRight, Facebook, Twitter, Instagram, Linkedin, Youtube, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
-import { blogPosts } from '@/lib/blog-data';
+import { fetchBlogPosts } from '@/lib/mock-data';
+import type { BlogPost } from '@/types';
 
 
 const SiteLogo = () => (
@@ -27,8 +29,18 @@ const SiteLogo = () => (
 const POSTS_PER_PAGE = 6;
 
 export default function BlogPage() {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   
+  useEffect(() => {
+    setLoading(true);
+    fetchBlogPosts().then(data => {
+      setBlogPosts(data);
+      setLoading(false);
+    });
+  }, []);
+
   const totalPages = Math.ceil(blogPosts.length / POSTS_PER_PAGE);
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
   const endIndex = startIndex + POSTS_PER_PAGE;
@@ -41,6 +53,26 @@ export default function BlogPage() {
   const handleNext = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
+
+  const renderSkeletons = () => (
+    Array.from({ length: POSTS_PER_PAGE }).map((_, i) => (
+      <Card key={`skeleton-${i}`} className="shadow-lg flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
+        <Skeleton className="h-56 w-full" />
+        <CardHeader>
+          <Skeleton className="h-5 w-24 mb-2" />
+          <Skeleton className="h-6 w-full" />
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full mt-2" />
+          <Skeleton className="h-4 w-1/2 mt-2" />
+        </CardContent>
+        <CardFooter className="mt-auto pt-4 border-t border-border/50">
+           <Skeleton className="h-5 w-32" />
+        </CardFooter>
+      </Card>
+    ))
+  );
 
 
   return (
@@ -69,48 +101,60 @@ export default function BlogPage() {
                         </div>
                     </div>
                 </Card>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {currentPosts.map((post) => (
-                       <Link key={post.slug} href={`/site/blog/${post.slug}`} className="group block">
-                        <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
-                            <div className="relative h-56 w-full">
-                                <Image
-                                    src={post.image}
-                                    alt={post.title}
-                                    layout="fill"
-                                    objectFit="cover"
-                                    data-ai-hint={post.imageHint}
-                                />
-                            </div>
-                            <CardHeader>
-                                <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
-                                <CardTitle className="font-headline text-xl font-semibold text-primary group-hover:underline">{post.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                                <p className="text-muted-foreground text-sm">{post.excerpt}</p>
-                            </CardContent>
-                            <CardFooter className="mt-auto pt-4 border-t border-border/50 flex flex-col items-start gap-4">
-                                <div className="flex items-center text-xs text-muted-foreground w-full justify-between">
-                                    <div className="flex items-center">
-                                        <User className="h-4 w-4 mr-1.5" />
-                                        <span>{post.author}</span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Calendar className="h-4 w-4 mr-1.5" />
-                                        <span>{post.date}</span>
-                                    </div>
+                
+                {loading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {renderSkeletons()}
+                    </div>
+                ) : currentPosts.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {currentPosts.map((post) => (
+                          <Link key={post.slug} href={`/site/blog/${post.slug}`} className="group block">
+                            <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
+                                <div className="relative h-56 w-full">
+                                    <Image
+                                        src={post.image}
+                                        alt={post.title}
+                                        layout="fill"
+                                        objectFit="cover"
+                                        data-ai-hint={post.imageHint}
+                                    />
                                 </div>
-                                <p className="text-sm font-semibold text-primary group-hover:underline mt-2">
-                                  Read More &rarr;
-                                </p>
-                            </CardFooter>
-                        </Card>
-                       </Link>
-                    ))}
-                </div>
+                                <CardHeader>
+                                    <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
+                                    <CardTitle className="font-headline text-xl font-semibold text-primary group-hover:underline">{post.title}</CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                    <p className="text-muted-foreground text-sm">{post.excerpt}</p>
+                                </CardContent>
+                                <CardFooter className="mt-auto pt-4 border-t border-border/50 flex flex-col items-start gap-4">
+                                    <div className="flex items-center text-xs text-muted-foreground w-full justify-between">
+                                        <div className="flex items-center">
+                                            <User className="h-4 w-4 mr-1.5" />
+                                            <span>{post.author}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <Calendar className="h-4 w-4 mr-1.5" />
+                                            <span>{post.date}</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm font-semibold text-primary group-hover:underline mt-2">
+                                      Read More &rarr;
+                                    </p>
+                                </CardFooter>
+                            </Card>
+                          </Link>
+                        ))}
+                    </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-muted-foreground h-64">
+                    <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                    <p className="text-lg">No blog posts found.</p>
+                  </div>
+                )}
 
-                 {totalPages > 1 && (
+
+                 {totalPages > 1 && !loading && (
                     <div className="flex items-center justify-center mt-12 space-x-4">
                         <Button onClick={handlePrevious} disabled={currentPage === 1} variant="outline">
                             <ChevronLeft className="h-4 w-4 mr-2" />

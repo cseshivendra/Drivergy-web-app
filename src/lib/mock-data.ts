@@ -1,9 +1,172 @@
 
 'use client';
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
+
+const initialFaqs: FaqItem[] = [
+    {
+      id: "faq-1",
+      question: "What documents do I need to enroll?",
+      answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
+    },
+    {
+      id: "faq-2",
+      question: "Can I choose my instructor?",
+      answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
+    },
+    {
+      id: "faq-3",
+      question: "How do I book a driving lesson slot?",
+      answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
+    },
+    {
+      id: "faq-4",
+      question: "What types of vehicles are available for training?",
+      answer: "We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.",
+    },
+    {
+      id: "faq-5",
+      question: "What if I need to cancel or reschedule a lesson?",
+      answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
+    },
+    {
+      id: "faq-6",
+      question: "How do I redeem a coupon code?",
+      answer: "You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount."
+    },
+    {
+      id: "faq-7",
+      question: "How can I use the points earned from referrals?",
+      answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey."
+    },
+    {
+      id: "faq-8",
+      question: "Is our driving school completion certificate valid at the RTO?",
+      answer: "Drivergy Certificates are valid at RTO office as we are authorized partner.",
+    }
+];
+
+const initialBlogPosts: BlogPost[] = [
+  {
+    slug: "10-essential-rto-tips-to-pass-your-driving-test-first-try",
+    title: "10 Essential RTO Tips to Pass Your Driving Test First Try",
+    category: "RTO Tips",
+    excerpt: "Nervous about your driving test? We've compiled the top 10 tips, from pre-test checks to on-road etiquette, to help you ace your RTO exam with confidence.",
+    content: "Nervous about your driving test? We've compiled the top 10 tips, from pre-test checks to on-road etiquette, to help you ace your RTO exam with confidence. This guide covers everything from the 'mirror-signal-manoeuvre' routine to handling tricky junctions and what examiners are really looking for. Preparation is key, and with our advice, you'll walk into the test center feeling prepared and calm. We'll also cover common pitfalls and how to avoid them, ensuring you make the best impression on your test day.",
+    author: "Rohan Sharma",
+    date: "July 26, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "driving test exam"
+  },
+  {
+    slug: "mastering-parallel-parking-a-step-by-step-guide",
+    title: "Mastering Parallel Parking: A Step-by-Step Guide",
+    category: "Driving Skills",
+    excerpt: "Parallel parking can be intimidating, but it doesn't have to be. Follow our simple, step-by-step guide to master this essential driving maneuver and park like a pro every time.",
+    content: "Parallel parking can be intimidating, but it doesn't have to be. Follow our simple, step-by-step guide to master this essential driving maneuver and park like a pro every time. We break it down into easy-to-follow steps, complete with diagrams and reference points you can use in any car. With a little practice, you'll be able to confidently parallel park in even the tightest of spaces.",
+    author: "Priya Mehta",
+    date: "July 22, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "parallel parking car"
+  },
+  {
+    slug: "understanding-indian-road-signs-a-visual-guide",
+    title: "Understanding Indian Road Signs: A Visual Guide",
+    category: "RTO Knowledge",
+    excerpt: "From mandatory signs to cautionary warnings, understanding road signs is crucial for safety. This visual guide will help you decode the most common signs you'll encounter on Indian roads.",
+    content: "From mandatory signs to cautionary warnings, understanding road signs is crucial for safety. This visual guide will help you decode the most common signs you'll encounter on Indian roads. We categorize signs into mandatory, cautionary, and informatory groups, explaining the meaning behind the shapes, colors, and symbols. This knowledge is not only vital for passing your RTO test but also for being a safe and responsible driver.",
+    author: "Anjali Verma",
+    date: "July 18, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "road signs traffic"
+  },
+  {
+    slug: "defensive-driving-101-how-to-stay-safe-in-city-traffic",
+    title: "Defensive Driving 101: How to Stay Safe in City Traffic",
+    category: "Driving Skills",
+    excerpt: "City driving presents unique challenges. Learn the core principles of defensive driving to anticipate hazards, avoid accidents, and navigate busy urban environments safely.",
+    content: "City driving presents unique challenges. Learn the core principles of defensive driving to anticipate hazards, avoid accidents, and navigate busy urban environments safely. This article covers techniques like maintaining a safe following distance, being aware of your surroundings (the '360-degree check'), managing blind spots, and communicating effectively with other road users. Defensive driving is about being proactive, not reactive.",
+    author: "Vikram Singh",
+    date: "July 15, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "city traffic car"
+  },
+  {
+    slug: "choosing-your-first-car-a-beginners-guide",
+    title: "Choosing Your First Car: A Beginner's Guide",
+    category: "Car Maintenance",
+    excerpt: "Buying your first car is a huge milestone. This guide covers everything from budget to insurance to help you make a smart choice.",
+    content: "Buying your first car is a huge milestone. This guide covers everything from setting a realistic budget (including running costs) to understanding insurance options and performing basic pre-purchase inspections. We'll help you decide between new and used, petrol and diesel, and manual and automatic, so you can make an informed decision that you'll be happy with for years to come.",
+    author: "Rohan Sharma",
+    date: "July 12, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "new car dealership"
+  },
+  {
+    slug: "night-driving-tips-for-staying-safe-after-dark",
+    title: "Night Driving: Tips for Staying Safe After Dark",
+    category: "Driving Skills",
+    excerpt: "Driving at night comes with its own set of risks. Learn how to improve visibility and stay alert on the road after sunset.",
+    content: "Driving at night comes with its own set of risks due to reduced visibility and glare from oncoming traffic. This guide provides essential tips for staying safe, including how to properly use your headlights, manage glare, increase your following distance, and stay alert. We also cover how to keep your windscreen and mirrors clean for maximum clarity after dark.",
+    author: "Priya Mehta",
+    date: "July 08, 2024",
+    image: "https://placehold.co/600x400.png",
+    imageHint: "night road car lights"
+  },
+];
+
+const initialBanners: SiteBanner[] = [
+  { 
+    id: 'hero-1',
+    title: 'Learn to Drive, Master the Road',
+    description: 'Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.',
+    imageSrc: 'https://firebasestorage.googleapis.com/v0/b/ai-stud-f9699.appspot.com/o/driving-school-banner.png?alt=media&token=e93f3b73-c8d3-4638-a15d-3578a05c754d', 
+    imageHint: 'driving school',
+  },
+  { 
+    id: 'hero-2',
+    title: 'Your Journey to Safe Driving Starts Here',
+    description: 'Our certified instructors are dedicated to building your skills and confidence on the road.',
+    imageSrc: 'https://placehold.co/1920x1080.png', 
+    imageHint: 'driving lesson student',
+  },
+  { 
+    id: 'hero-3',
+    title: 'Unlock Your Freedom. Get Your License.',
+    description: "From RTO test prep to advanced driving techniques, we've got you covered.",
+    imageSrc: 'https://placehold.co/1920x1080.png', 
+    imageHint: 'safe driving shield road',
+  }
+];
+
+const initialPromotionalPosters: PromotionalPoster[] = [
+  {
+    id: 'promo-1',
+    href: "/site/register",
+    imageSrc: "https://placehold.co/600x800.png",
+    imageHint: "driving school promotion",
+    title: "Student Discount",
+    description: "Get 15% off on your first Premium plan.",
+  },
+  {
+    id: 'promo-2',
+    href: "/site/rto-services",
+    imageSrc: "https://placehold.co/600x800.png",
+    imageHint: "rto license poster",
+    title: "Hassle-Free RTO",
+    description: "We help you with all your license needs.",
+  },
+  {
+    id: 'promo-3',
+    href: "/site/register",
+    imageSrc: "https://placehold.co/600x800.png",
+    imageHint: "refer friend bonus",
+    title: "Refer & Earn",
+    description: "Invite friends and get rewards.",
+  }
+];
 
 const initialCourses: Omit<Course, 'icon'>[] = [
     {
@@ -281,6 +444,10 @@ interface MockDatabase {
   referrals: Referral[];
   courses: Course[];
   quizSets: QuizSet[];
+  faqs: FaqItem[];
+  blogPosts: BlogPost[];
+  siteBanners: SiteBanner[];
+  promotionalPosters: PromotionalPoster[];
 }
 
 let MOCK_DB: MockDatabase = {
@@ -291,12 +458,13 @@ let MOCK_DB: MockDatabase = {
   referrals: [],
   courses: [],
   quizSets: [],
+  faqs: [],
+  blogPosts: [],
+  siteBanners: [],
+  promotionalPosters: [],
 };
 
-// =================================================================
-// INITIAL DATA (if not in localStorage)
-// =================================================================
-
+const generateId = () => `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   return coursesToHydrate.map(course => {
@@ -327,21 +495,29 @@ const loadData = () => {
       // After loading, we re-assign the icon functions based on ID
       parsedDb.courses = reAssignCourseIcons(parsedDb.courses || []);
       MOCK_DB = { ...MOCK_DB, ...parsedDb };
-       // Robustness check: If quizSets are missing from saved data, initialize them.
-      if (!MOCK_DB.quizSets || MOCK_DB.quizSets.length === 0) {
-        MOCK_DB.quizSets = initialQuizSets;
-        saveData();
-      }
+      
+      // Robustness checks for newly added content types
+      if (!MOCK_DB.faqs || MOCK_DB.faqs.length === 0) MOCK_DB.faqs = initialFaqs;
+      if (!MOCK_DB.blogPosts || MOCK_DB.blogPosts.length === 0) MOCK_DB.blogPosts = initialBlogPosts;
+      if (!MOCK_DB.siteBanners || MOCK_DB.siteBanners.length === 0) MOCK_DB.siteBanners = initialBanners;
+      if (!MOCK_DB.promotionalPosters || MOCK_DB.promotionalPosters.length === 0) MOCK_DB.promotionalPosters = initialPromotionalPosters;
+      if (!MOCK_DB.quizSets || MOCK_DB.quizSets.length === 0) MOCK_DB.quizSets = initialQuizSets;
+      if (!MOCK_DB.courses || MOCK_DB.courses.length === 0) MOCK_DB.courses = reAssignCourseIcons(initialCourses);
+      
+      saveData();
     } else {
-      // If no data in local storage, initialize with hardcoded data
+      // If no data in local storage, initialize with all hardcoded data
       MOCK_DB.courses = reAssignCourseIcons(initialCourses);
       MOCK_DB.quizSets = initialQuizSets;
-      saveData(); // Save initial data to local storage
+      MOCK_DB.faqs = initialFaqs;
+      MOCK_DB.blogPosts = initialBlogPosts;
+      MOCK_DB.siteBanners = initialBanners;
+      MOCK_DB.promotionalPosters = initialPromotionalPosters;
+      saveData();
     }
   }
 };
 
-// Load data from localStorage when the app starts
 loadData();
 
 
@@ -380,8 +556,6 @@ export const changeUserPassword = async (userId: string, currentPassword: string
   }
   return false;
 };
-
-const generateId = () => `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile> => {
   const newId = generateId();
@@ -731,12 +905,10 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 
 
 // =================================================================
-// CONTENT MANAGEMENT (COURSES & QUIZZES)
+// CONTENT MANAGEMENT
 // =================================================================
 
-export const fetchCourses = async (): Promise<Course[]> => {
-    return [...MOCK_DB.courses];
-};
+export const fetchCourses = async (): Promise<Course[]> => [...MOCK_DB.courses];
 
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
     const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
@@ -776,9 +948,7 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
     return true;
 };
 
-export const fetchQuizSets = async (): Promise<QuizSet[]> => {
-    return [...MOCK_DB.quizSets];
-};
+export const fetchQuizSets = async (): Promise<QuizSet[]> => [...MOCK_DB.quizSets];
 
 export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
   const setIndex = MOCK_DB.quizSets.findIndex(s => s.id === quizSetId);
@@ -807,3 +977,64 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
   saveData();
   return MOCK_DB.quizSets[setIndex];
 };
+
+export const fetchFaqs = async (): Promise<FaqItem[]> => [...MOCK_DB.faqs];
+export const addFaq = async (data: FaqFormValues): Promise<FaqItem> => {
+  const newFaq: FaqItem = { id: generateId(), ...data };
+  MOCK_DB.faqs.push(newFaq);
+  saveData();
+  return newFaq;
+}
+export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolean> => {
+  const index = MOCK_DB.faqs.findIndex(f => f.id === id);
+  if (index === -1) return false;
+  MOCK_DB.faqs[index] = { ...MOCK_DB.faqs[index], ...data };
+  saveData();
+  return true;
+}
+export const deleteFaq = async (id: string): Promise<boolean> => {
+  const initialLength = MOCK_DB.faqs.length;
+  MOCK_DB.faqs = MOCK_DB.faqs.filter(f => f.id !== id);
+  saveData();
+  return MOCK_DB.faqs.length < initialLength;
+}
+
+export const fetchBlogPosts = async (): Promise<BlogPost[]> => [...MOCK_DB.blogPosts];
+export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
+export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
+  const newPost: BlogPost = { ...data, date: format(new Date(), 'LLL d, yyyy') }; // Use current date for new posts
+  MOCK_DB.blogPosts.unshift(newPost); // Add to beginning
+  saveData();
+  return newPost;
+}
+export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
+  const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
+  if (index === -1) return false;
+  MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...data };
+  saveData();
+  return true;
+}
+export const deleteBlogPost = async (slug: string): Promise<boolean> => {
+  const initialLength = MOCK_DB.blogPosts.length;
+  MOCK_DB.blogPosts = MOCK_DB.blogPosts.filter(p => p.slug !== slug);
+  saveData();
+  return MOCK_DB.blogPosts.length < initialLength;
+}
+
+export const fetchSiteBanners = async (): Promise<SiteBanner[]> => [...MOCK_DB.siteBanners];
+export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+  const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
+  if (index === -1) return false;
+  MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...data };
+  saveData();
+  return true;
+}
+
+export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => [...MOCK_DB.promotionalPosters];
+export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+  const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
+  if (index === -1) return false;
+  MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...data, href: data.href || '#' };
+  saveData();
+  return true;
+}

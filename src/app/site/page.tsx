@@ -7,13 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, Facebook, Twitter, Instagram, Linkedin, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn, Youtube } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-
+import { fetchSiteBanners } from '@/lib/mock-data';
+import type { SiteBanner } from '@/types';
 import {
   Tooltip,
   TooltipContent,
@@ -128,43 +123,19 @@ const testimonialsData = [
       rating: 4,
     },
   ];
-  
-const heroSlides = [
-  { 
-    src: 'https://firebasestorage.googleapis.com/v0/b/ai-stud-f9699.appspot.com/o/driving-school-banner.png?alt=media&token=e93f3b73-c8d3-4638-a15d-3578a05c754d', 
-    hint: 'driving school',
-    title: 'Learn to Drive, Master the Road',
-    description: 'Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.'
-  },
-  { 
-    src: 'https://placehold.co/1920x1080.png', 
-    hint: 'driving lesson student',
-    title: 'Your Journey to Safe Driving Starts Here',
-    description: 'Our certified instructors are dedicated to building your skills and confidence on the road.'
-  },
-  { 
-    src: 'https://placehold.co/1920x1080.png', 
-    hint: 'safe driving shield road',
-    title: 'Unlock Your Freedom. Get Your License.',
-    description: "From RTO test prep to advanced driving techniques, we've got you covered."
-  }
-];
-
 
 export default function PortfolioSitePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroSlides, setHeroSlides] = useState<SiteBanner[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const slideInterval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-    }, 5000); // Change slide every 5 seconds
+    fetchSiteBanners().then(data => {
+      setHeroSlides(data);
+      setLoading(false);
+    })
 
-    return () => clearInterval(slideInterval);
-  }, []);
-
-  useEffect(() => {
-    // Show popup only on first visit per session
     const popupShown = sessionStorage.getItem('promotionalPopupShown');
     if (!popupShown) {
       const popupTimer = setTimeout(() => {
@@ -175,6 +146,15 @@ export default function PortfolioSitePage() {
       return () => clearTimeout(popupTimer);
     }
   }, []);
+
+  useEffect(() => {
+    if (heroSlides.length === 0) return;
+    const slideInterval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(slideInterval);
+  }, [heroSlides]);
 
 
   return (
@@ -187,49 +167,53 @@ export default function PortfolioSitePage() {
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
           {/* Image Slideshow Background */}
-          <div className="absolute top-0 left-0 w-full h-full z-[1]">
-            {heroSlides.map((slide, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "hero-bg-slide",
-                  index === currentSlide && "active"
-                )}
-              >
-                <Image
-                  src={slide.src}
-                  alt="Scenic road for driving"
-                  layout="fill"
-                  objectFit="cover"
-                  priority={index === 0}
-                  data-ai-hint={slide.hint}
-                />
-              </div>
-            ))}
-          </div>
+          {!loading && heroSlides.length > 0 && (
+            <div className="absolute top-0 left-0 w-full h-full z-[1]">
+              {heroSlides.map((slide, index) => (
+                <div
+                  key={slide.id}
+                  className={cn(
+                    "hero-bg-slide",
+                    index === currentSlide && "active"
+                  )}
+                >
+                  <Image
+                    src={slide.imageSrc}
+                    alt={slide.title}
+                    layout="fill"
+                    objectFit="cover"
+                    priority={index === 0}
+                    data-ai-hint={slide.imageHint}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
           
           <div className="absolute inset-0 bg-black/60 z-[5]"></div>
           
           <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
             {/* Text content slideshow */}
-            <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center">
-              {heroSlides.map((slide, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "absolute inset-0 flex flex-col items-center justify-center p-4 transition-opacity duration-1000 ease-in-out",
-                    currentSlide === index ? "opacity-100" : "opacity-0"
-                  )}
-                >
-                    <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
-                      {slide.title}
-                    </h1>
-                    <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
-                      {slide.description}
-                    </p>
-                </div>
-              ))}
-            </div>
+             {!loading && heroSlides.length > 0 && (
+              <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center">
+                {heroSlides.map((slide, index) => (
+                  <div
+                    key={slide.id}
+                    className={cn(
+                      "absolute inset-0 flex flex-col items-center justify-center p-4 transition-opacity duration-1000 ease-in-out",
+                      currentSlide === index ? "opacity-100" : "opacity-0"
+                    )}
+                  >
+                      <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
+                        {slide.title}
+                      </h1>
+                      <p className="mt-6 max-w-2xl mx-auto text-lg sm:text-xl text-white/90 drop-shadow-sm">
+                        {slide.description}
+                      </p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Buttons (static) */}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 z-10 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>

@@ -8,8 +8,8 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals, fetchCourses, fetchQuizSets } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral, Course, QuizSet } from '@/types';
+import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals, fetchCourses, fetchQuizSets, fetchFaqs, fetchBlogPosts, fetchSiteBanners, fetchPromotionalPosters } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
 import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2, Gift, Library } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,9 @@ import LessonProgressTable from './lesson-progress-table';
 import ReferralTable from './referral-table';
 import CourseManagement from './course-management';
 import QuizManagement from './quiz-management';
+import FaqManagement from './faq-management';
+import BlogManagement from './blog-management';
+import VisualContentManagement from './visual-content-management';
 
 export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -27,8 +30,14 @@ export default function AdminDashboard() {
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  
+  // New state for content management
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
+  const [faqs, setFaqs] = useState<FaqItem[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [siteBanners, setSiteBanners] = useState<SiteBanner[]>([]);
+  const [promotionalPosters, setPromotionalPosters] = useState<PromotionalPoster[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +51,8 @@ export default function AdminDashboard() {
     try {
       const [
         summary, users, lessonRequests, reschedules, feedbackData,
-        progressData, referralData, courseData, quizData
+        progressData, referralData, courseData, quizData, faqData,
+        blogData, bannerData, posterData
       ] = await Promise.all([
         fetchSummaryData(),
         fetchAllUsers(),
@@ -53,6 +63,10 @@ export default function AdminDashboard() {
         fetchAllReferrals(),
         fetchCourses(),
         fetchQuizSets(),
+        fetchFaqs(),
+        fetchBlogPosts(),
+        fetchSiteBanners(),
+        fetchPromotionalPosters(),
       ]);
       
       setSummaryData(summary);
@@ -64,6 +78,10 @@ export default function AdminDashboard() {
       setReferrals(referralData);
       setCourses(courseData);
       setQuizSets(quizData);
+      setFaqs(faqData);
+      setBlogPosts(blogData);
+      setSiteBanners(bannerData);
+      setPromotionalPosters(posterData);
 
     } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -212,14 +230,33 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="content" className="mt-6 space-y-8">
+            <BlogManagement
+              title="Blog Post Management"
+              posts={blogPosts}
+              isLoading={loading}
+              onAction={handleActioned}
+            />
+            <FaqManagement
+              title="FAQ Management"
+              faqs={faqs}
+              isLoading={loading}
+              onAction={handleActioned}
+            />
+            <VisualContentManagement
+              title="Banners & Posters Management"
+              banners={siteBanners}
+              posters={promotionalPosters}
+              isLoading={loading}
+              onAction={handleActioned}
+            />
             <CourseManagement
-              title={<>Course Content Management</>}
+              title="Course Content Management"
               courses={courses}
               isLoading={loading}
               onAction={handleActioned}
             />
             <QuizManagement
-              title={<>RTO Quiz Management</>}
+              title="RTO Quiz Management"
               quizSets={quizSets}
               isLoading={loading}
               onAction={handleActioned}

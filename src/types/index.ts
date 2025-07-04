@@ -295,7 +295,72 @@ export const JobOpenings: JobOpening[] = [
   },
 ];
 
+// --- Content Management Types ---
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface BlogPost {
+  slug: string;
+  title: string;
+  category: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  date: string; // Stored as string for simplicity
+  image: string;
+  imageHint: string;
+}
+
+export interface SiteBanner {
+  id: string;
+  title: string;
+  description: string;
+  imageSrc: string;
+  imageHint: string;
+}
+
+export interface PromotionalPoster {
+    id: string;
+    href: string;
+    imageSrc: string;
+    imageHint: string;
+    title: string;
+    description: string;
+}
+
 // --- Zod Schemas ---
+
+export const FaqSchema = z.object({
+  question: z.string().min(10, { message: "Question must be at least 10 characters." }),
+  answer: z.string().min(10, { message: "Answer must be at least 10 characters." }),
+});
+export type FaqFormValues = z.infer<typeof FaqSchema>;
+
+export const BlogPostSchema = z.object({
+  slug: z.string().min(3, { message: "Slug must be at least 3 characters." }).regex(/^[a-z0-9-]+$/, { message: "Slug can only contain lowercase letters, numbers, and hyphens." }),
+  title: z.string().min(5, { message: "Title must be at least 5 characters." }),
+  category: z.string().min(1, { message: "Category is required." }),
+  excerpt: z.string().min(20, { message: "Excerpt must be at least 20 characters." }),
+  content: z.string().min(50, { message: "Content must be at least 50 characters." }),
+  author: z.string().min(1, { message: "Author is required." }),
+  date: z.string().min(1, { message: "Date is required." }), // Simple string for now
+  image: z.string().url({ message: "Please enter a valid image URL." }),
+  imageHint: z.string().min(1, { message: "Image hint is required." }),
+});
+export type BlogPostFormValues = z.infer<typeof BlogPostSchema>;
+
+export const VisualContentSchema = z.object({
+  title: z.string().min(5, { message: "Title is required." }),
+  description: z.string().min(10, { message: "Description is required." }),
+  imageSrc: z.string().url({ message: "Please enter a valid image URL." }),
+  imageHint: z.string().min(1, { message: "Image hint is required." }),
+  href: z.string().optional(),
+});
+export type VisualContentFormValues = z.infer<typeof VisualContentSchema>;
+
 
 export const CourseModuleSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),

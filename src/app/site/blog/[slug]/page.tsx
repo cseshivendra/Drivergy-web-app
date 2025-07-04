@@ -1,15 +1,18 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-import { blogPosts } from '@/lib/blog-data';
+import { fetchBlogPostBySlug } from '@/lib/mock-data';
+import type { BlogPost } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, Facebook, Twitter, Instagram, Linkedin, ArrowLeft, Youtube } from 'lucide-react';
+import { Car, User, Calendar, Facebook, Twitter, Instagram, Linkedin, ArrowLeft, Youtube, AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
 
@@ -28,11 +31,64 @@ const SiteLogo = () => (
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
+  const [post, setPost] = useState<BlogPost | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const post = blogPosts.find((p) => p.slug === params.slug);
+  useEffect(() => {
+    if (params.slug) {
+      setLoading(true);
+      fetchBlogPostBySlug(params.slug).then(data => {
+        setPost(data);
+        setLoading(false);
+      });
+    }
+  }, [params.slug]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <SiteHeader />
+        <main className="flex-grow">
+          <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
+            <Skeleton className="h-10 w-36 mb-8" />
+            <Card className="shadow-2xl overflow-hidden">
+              <Skeleton className="h-64 md:h-80 w-full" />
+              <CardHeader className="relative -mt-16 z-10 p-6 md:p-8">
+                <Skeleton className="h-6 w-24 mb-3" />
+                <Skeleton className="h-10 w-3/4" />
+                <div className="flex gap-6 mt-4">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 md:p-8 space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (!post) {
-    notFound();
+    return (
+       <div className="flex flex-col min-h-screen bg-background text-foreground">
+        <SiteHeader />
+        <main className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+             <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
+            <h1 className="text-3xl font-bold">Post Not Found</h1>
+            <p className="text-muted-foreground mt-2">The blog post you're looking for doesn't exist.</p>
+            <Button asChild className="mt-6">
+              <Link href="/site/blog">Back to Blog</Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
   }
   
   return (
