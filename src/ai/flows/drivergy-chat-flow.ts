@@ -32,6 +32,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 // which makes the prompt template simpler and more reliable.
 const UserContextSchema = z.object({
   name: z.string(),
+  username: z.string(),
   uniqueId: z.string(),
   subscriptionPlan: z.string(),
   approvalStatus: z.string(),
@@ -98,6 +99,7 @@ Instructors can register on our platform to manage their schedule, track student
 {{#if user}}
 You are currently speaking with {{user.name}}. If they ask a question about their own account, use the following information to answer them.
 - **User ID:** {{user.uniqueId}}
+- **Username:** {{user.username}}
 - **Subscription Plan:** {{user.subscriptionPlan}}
 - **Account Status:** {{user.approvalStatus}}
 - **Assigned Trainer:** {{user.assignedTrainerName}}
@@ -128,6 +130,7 @@ const drivergyChatFlow = ai.defineFlow(
     // This makes the prompt template much simpler and more robust.
     const userContext = userProfile ? {
         name: userProfile.name,
+        username: userProfile.username || 'N/A',
         uniqueId: userProfile.uniqueId,
         subscriptionPlan: userProfile.subscriptionPlan,
         approvalStatus: userProfile.approvalStatus,
