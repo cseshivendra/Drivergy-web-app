@@ -18,6 +18,7 @@ export interface Referral {
   refereeName: string;
   refereeUniqueId?: string;
   refereeSubscriptionPlan?: string;
+  refereeApprovalStatus?: ApprovalStatusType;
   status: 'Successful';
   pointsEarned: number;
   payoutStatus: PayoutStatusType;

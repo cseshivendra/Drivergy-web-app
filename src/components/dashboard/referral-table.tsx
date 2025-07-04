@@ -6,9 +6,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Referral, PayoutStatusType } from '@/types';
+import type { Referral, PayoutStatusType, ApprovalStatusType } from '@/types';
 import { PayoutStatusOptions } from '@/types';
-import { User, Gift, Star, DollarSign, Calendar, AlertCircle, Settings2, Check, Fingerprint, IndianRupee, Users, BarChart3, ChevronRight } from 'lucide-react';
+import { User, Gift, Star, DollarSign, Calendar, AlertCircle, Settings2, Check, Fingerprint, IndianRupee, Users, BarChart3, ChevronRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { updateReferralPayoutStatus } from '@/lib/mock-data';
@@ -25,12 +25,22 @@ interface ReferralTableProps {
   onActioned: () => void;
 }
 
-const getStatusColor = (status: PayoutStatusType) => {
+const getPayoutStatusColor = (status: PayoutStatusType) => {
     switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
       case 'Paid': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
       case 'Withdraw to UPI': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
+    }
+};
+
+const getRefereeStatusColor = (status?: ApprovalStatusType) => {
+    switch (status) {
+      case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300 border-yellow-200';
+      case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300 border-green-200';
+      case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300 border-blue-200';
+      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300 border-red-200';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300 border-gray-200';
     }
 };
 
@@ -111,6 +121,7 @@ const RefereeDetailsTable = ({
           <TableRow key={`skeleton-referee-${index}`}>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
             <TableCell><Skeleton className="h-9 w-24" /></TableCell>
@@ -130,9 +141,10 @@ const RefereeDetailsTable = ({
                         <TableHeader>
                             <TableRow>
                                 <TableHead><User className="inline-block mr-2 h-4 w-4" />New Customer</TableHead>
+                                <TableHead><ShieldCheck className="inline-block mr-2 h-4 w-4" />Referee Status</TableHead>
                                 <TableHead><IndianRupee className="inline-block mr-2 h-4 w-4" />Sub. Amount</TableHead>
                                 <TableHead><Star className="inline-block mr-2 h-4 w-4" />Points</TableHead>
-                                <TableHead><DollarSign className="inline-block mr-2 h-4 w-4" />Status</TableHead>
+                                <TableHead><DollarSign className="inline-block mr-2 h-4 w-4" />Payout Status</TableHead>
                                 <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Action</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -144,9 +156,18 @@ const RefereeDetailsTable = ({
                                             <div className="font-medium">{ref.refereeName}</div>
                                             <div className="text-xs text-muted-foreground">{ref.refereeUniqueId}</div>
                                         </TableCell>
+                                        <TableCell>
+                                          {ref.refereeApprovalStatus ? (
+                                            <Badge variant="outline" className={cn(getRefereeStatusColor(ref.refereeApprovalStatus))}>
+                                              {ref.refereeApprovalStatus}
+                                            </Badge>
+                                          ) : (
+                                            <Badge variant="outline">Unknown</Badge>
+                                          )}
+                                        </TableCell>
                                         <TableCell>₹{getPlanPrice(ref.refereeSubscriptionPlan).toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="font-semibold text-primary">{ref.pointsEarned}</TableCell>
-                                        <TableCell><Badge className={getStatusColor(ref.payoutStatus)}>{ref.payoutStatus}</Badge></TableCell>
+                                        <TableCell><Badge className={getPayoutStatusColor(ref.payoutStatus)}>{ref.payoutStatus}</Badge></TableCell>
                                         <TableCell className="text-center">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -167,7 +188,7 @@ const RefereeDetailsTable = ({
                                     </TableRow>
                                 ))
                             ) : (
-                                <TableRow><TableCell colSpan={5} className="h-24 text-center">No referral details found for this user.</TableCell></TableRow>
+                                <TableRow><TableCell colSpan={6} className="h-24 text-center">No referral details found for this user.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>

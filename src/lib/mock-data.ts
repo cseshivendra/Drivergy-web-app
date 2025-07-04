@@ -469,6 +469,7 @@ export const fetchAllReferrals = async (): Promise<Referral[]> => {
         ...ref,
         refereeUniqueId: referee?.uniqueId,
         refereeSubscriptionPlan: referee?.subscriptionPlan,
+        refereeApprovalStatus: referee?.approvalStatus,
       };
     })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
