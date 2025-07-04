@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -82,7 +83,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen w-full">
       <Image
-        src="https://placehold.co/1920x1080.png"
+        src="https://placehold.co/1920x1080/1f2937/ffffff.png"
         alt="Scenic driving route"
         layout="fill"
         objectFit="cover"

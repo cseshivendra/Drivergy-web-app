@@ -210,7 +210,7 @@ function PaymentGateway() {
                             <p className="text-sm font-medium text-muted-foreground">Scan QR Code to Pay</p>
                             <div className="p-2 bg-white rounded-md">
                                 <Image 
-                                    src="https://placehold.co/150x150.png"
+                                    src="https://placehold.co/150x150/000000/ffffff.png"
                                     alt="UPI QR Code"
                                     width={150}
                                     height={150}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -81,7 +82,7 @@ export default function RtoServicesPage() {
                 <Card className="shadow-lg overflow-hidden mb-12">
                     <div className="relative h-56 w-full bg-primary/10">
                         <Image 
-                            src="https://placehold.co/1200x300.png" 
+                            src="https://placehold.co/1200x300/16a34a/ffffff.png" 
                             alt="Banner for RTO services" 
                             layout="fill" 
                             objectFit="cover"

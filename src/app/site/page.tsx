@@ -76,7 +76,7 @@ const coursesData = [
     icon: Car,
     title: "Comprehensive Car Program",
     description: "Our flagship car driving program takes you from zero to hero. Learn essential car controls, traffic navigation, parking, and on-road practice with expert instructors.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400/f87171/ffffff.png",
     imageHint: "car driving lesson student"
   },
   {
@@ -84,7 +84,7 @@ const coursesData = [
     icon: Bike,
     title: "Motorcycle Rider Course",
     description: "Become a skilled and safe motorcycle rider. Our course covers bike handling, balance, safety gear importance, and real-world riding scenarios.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400/60a5fa/ffffff.png",
     imageHint: "motorcycle training bike rider"
   },
   {
@@ -92,7 +92,7 @@ const coursesData = [
     icon: ClipboardCheck,
     title: "RTO License Assistance",
     description: "Successfully navigate the RTO licensing process. We provide guidance for learners' and permanent licenses, including documentation support and test preparation.",
-    imageSrc: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400/fbbf24/ffffff.png",
     imageHint: "license test exam RTO"
   }
 ];
@@ -101,7 +101,7 @@ const testimonialsData = [
     {
       name: "Priya Sharma",
       role: "Customer, Bangalore",
-      avatar: "https://placehold.co/100x100.png",
+      avatar: "https://placehold.co/100x100/f472b6/ffffff.png",
       avatarHint: "woman portrait",
       testimonial: "Drivergy made learning to drive so easy! My instructor was patient and professional. The scheduling system is fantastic. I passed my test on the first try. Highly recommended!",
       rating: 5,
@@ -109,7 +109,7 @@ const testimonialsData = [
     {
       name: "Rohan Verma",
       role: "Trainer, Mumbai",
-      avatar: "https://placehold.co/100x100.png",
+      avatar: "https://placehold.co/100x100/818cf8/ffffff.png",
       avatarHint: "man portrait",
       testimonial: "As an instructor, Drivergy's platform has streamlined my business. I can manage my bookings, track student progress, and receive payments all in one place. It lets me focus on what I do best - teaching.",
       rating: 5,
@@ -117,7 +117,7 @@ const testimonialsData = [
     {
       name: "Anjali Mehta",
       role: "Customer, Delhi",
-      avatar: "https://placehold.co/100x100.png",
+      avatar: "https://placehold.co/100x100/a78bfa/ffffff.png",
       avatarHint: "female driver",
       testimonial: "I was nervous about driving in a big city, but the defensive driving course gave me the confidence I needed. The app is user-friendly and the support team is very responsive.",
       rating: 4,
@@ -251,21 +251,21 @@ export default function PortfolioSitePage() {
                 icon={Navigation}
                 title="Personalized Driving Lessons"
                 description="Tailored one-on-one training sessions with certified instructors for both two-wheelers and four-wheelers. Learn at your own pace, focusing on your specific needs and building confidence behind the wheel."
-                imageSrc="https://placehold.co/600x400.png"
+                imageSrc="https://placehold.co/600x400/f87171/ffffff.png"
                 imageHint="driving lesson car instructor"
               />
               <ServiceCard
                 icon={BookOpen}
                 title="RTO Exam Preparation"
                 description="Ace your RTO exam with our comprehensive preparation module. We cover theory, traffic rules, and provide mock tests to ensure you're fully prepared for your driving license."
-                imageSrc="https://placehold.co/600x400.png"
+                imageSrc="https://placehold.co/600x400/60a5fa/ffffff.png"
                 imageHint="exam preparation book test"
               />
               <ServiceCard
                 icon={ShieldCheck}
                 title="Defensive Driving Courses"
                 description="Master advanced driving techniques to navigate challenging road conditions and anticipate hazards. Our defensive driving course enhances your safety and awareness on the road."
-                imageSrc="https://placehold.co/600x400.png"
+                imageSrc="https://placehold.co/600x400/34d399/ffffff.png"
                 imageHint="safe driving shield road"
               />
             </div>

@@ -9,7 +9,7 @@ export default function AboutPage() {
       <Card className="shadow-lg overflow-hidden">
         <div className="relative h-48 w-full sm:h-64">
           <Image 
-            src="https://placehold.co/1200x400.png" 
+            src="https://placehold.co/1200x400/dc2626/ffffff.png" 
             alt="Driving school banner" 
             layout="fill" 
             objectFit="cover"

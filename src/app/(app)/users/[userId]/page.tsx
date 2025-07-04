@@ -172,7 +172,7 @@ export default function UserDetailsPage() {
         <CardHeader className="bg-muted/30 p-6 border-b">
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             <Image 
-              src={isCustomer ? "https://placehold.co/100x100.png" : "https://placehold.co/100x100.png"} 
+              src={user.photoURL || (isCustomer ? "https://placehold.co/100x100/60a5fa/ffffff.png" : "https://placehold.co/100x100/facc15/44403c.png")} 
               alt={user.name} 
               width={100} 
               height={100} 

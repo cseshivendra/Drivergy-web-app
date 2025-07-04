@@ -84,7 +84,7 @@ export default function BlogPage() {
                 <Card className="shadow-lg overflow-hidden mb-12">
                     <div className="relative h-56 w-full bg-primary/10">
                         <Image 
-                            src="https://placehold.co/1200x300.png" 
+                            src="https://placehold.co/1200x300/dc2626/ffffff.png" 
                             alt="Banner for blog page with driving theme" 
                             layout="fill" 
                             objectFit="cover"
@@ -113,7 +113,7 @@ export default function BlogPage() {
                             <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
                                 <div className="relative h-56 w-full">
                                     <Image
-                                        src={post.image}
+                                        src={post.imageSrc}
                                         alt={post.title}
                                         layout="fill"
                                         objectFit="cover"

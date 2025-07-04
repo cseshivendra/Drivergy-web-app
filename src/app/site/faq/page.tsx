@@ -58,7 +58,7 @@ export default function FaqPage() {
                 <Card className="shadow-lg overflow-hidden mb-12">
                     <div className="relative h-56 w-full bg-primary/10">
                         <Image 
-                            src="https://placehold.co/1200x300.png" 
+                            src="https://placehold.co/1200x300/f97316/ffffff.png" 
                             alt="Banner for FAQ page" 
                             layout="fill" 
                             objectFit="cover"

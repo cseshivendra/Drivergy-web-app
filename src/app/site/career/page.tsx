@@ -68,7 +68,7 @@ export default function CareerPage() {
                 <Card className="shadow-lg overflow-hidden mb-12">
                     <div className="relative h-56 w-full bg-primary/10">
                         <Image 
-                            src="https://placehold.co/1200x300.png" 
+                            src="https://placehold.co/1200x300/3b82f6/ffffff.png" 
                             alt="Banner for career page" 
                             layout="fill" 
                             objectFit="cover"
@@ -263,4 +263,3 @@ export default function CareerPage() {
     </div>
   );
 }
-
