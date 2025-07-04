@@ -125,24 +125,24 @@ const initialBlogPosts: BlogPost[] = [
 const initialBanners: SiteBanner[] = [
   { 
     id: 'hero-1',
-    title: 'Expert Guidance on Your Driving Journey',
-    description: 'Our certified instructors provide personalized coaching to help you navigate the road with skill and confidence. Start your lesson today.',
-    imageSrc: 'https://placehold.co/1920x1080.png', 
-    imageHint: 'driving instructor lesson',
+    title: 'Join the Drivergy Team of Experts',
+    description: 'Our certified instructors are the backbone of our success, providing top-tier driving education across the country.',
+    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg', 
+    imageHint: 'driving instructors team',
   },
   { 
     id: 'hero-2',
-    title: 'Master Every Turn, Enjoy the View',
-    description: 'Learn to drive in real-world conditions, from city streets to scenic routes. Drivergy makes learning an adventure.',
-    imageSrc: 'https://placehold.co/1920x1080.png', 
-    imageHint: 'scenic road driving',
+    title: 'A Fleet Ready for Your Success',
+    description: 'Learn to drive in modern, safe, and comfortable vehicles. Your journey to getting a license starts here.',
+    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg', 
+    imageHint: 'driving school cars',
   },
   { 
     id: 'hero-3',
-    title: 'Unlock Your Potential Behind the Wheel',
-    description: "With state-of-the-art vehicles and professional support, getting your driver's license has never been easier or more enjoyable.",
-    imageSrc: 'https://placehold.co/1920x1080.png', 
-    imageHint: 'modern car driving',
+    title: 'Drive with Confidence. Teach with Pride.',
+    description: 'Whether you are a student learning to drive or an instructor looking to grow your business, Drivergy is your partner on the road.',
+    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg', 
+    imageHint: 'professional driving team',
   }
 ];
 
