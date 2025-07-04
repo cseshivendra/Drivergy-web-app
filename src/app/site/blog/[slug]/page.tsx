@@ -105,7 +105,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                 <Card className="shadow-2xl overflow-hidden">
                     <div className="relative h-64 md:h-80 w-full">
                         <Image
-                            src={post.image}
+                            src={post.imageSrc}
                             alt={post.title}
                             layout="fill"
                             objectFit="cover"
