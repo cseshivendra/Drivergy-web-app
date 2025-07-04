@@ -27,16 +27,18 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   return drivergyChatFlow(input);
 }
 
-// Define a specific Zod schema for the user context passed to the prompt
+// Define a specific Zod schema for the user context passed to the prompt.
+// By preparing the data beforehand, we can make all fields required here,
+// which makes the prompt template simpler and more reliable.
 const UserContextSchema = z.object({
   name: z.string(),
   uniqueId: z.string(),
   subscriptionPlan: z.string(),
   approvalStatus: z.string(),
-  assignedTrainerName: z.string().optional(),
-  upcomingLesson: z.string().optional(),
-  completedLessons: z.number().optional(),
-  totalLessons: z.number().optional(),
+  assignedTrainerName: z.string(),
+  upcomingLesson: z.string(),
+  completedLessons: z.number(),
+  totalLessons: z.number(),
 }).optional();
 
 const prompt = ai.definePrompt({
@@ -44,7 +46,7 @@ const prompt = ai.definePrompt({
   input: {
     schema: z.object({
       query: z.string(),
-      user: UserContextSchema, // Use the new, more specific schema
+      user: UserContextSchema,
     }),
   },
   output: {schema: ChatOutputSchema},
@@ -98,8 +100,8 @@ You are currently speaking with {{user.name}}. If they ask a question about thei
 - **User ID:** {{user.uniqueId}}
 - **Subscription Plan:** {{user.subscriptionPlan}}
 - **Account Status:** {{user.approvalStatus}}
-- **Assigned Trainer:** {{#if user.assignedTrainerName}}{{user.assignedTrainerName}}{{else}}Not yet assigned{{/if}}
-- **Next Lesson:** {{#if user.upcomingLesson}}{{user.upcomingLesson}}{{else}}Not yet scheduled{{/if}}
+- **Assigned Trainer:** {{user.assignedTrainerName}}
+- **Next Lesson:** {{user.upcomingLesson}}
 - **Completed Lessons:** {{user.completedLessons}} out of {{user.totalLessons}}
 {{/if}}
 
@@ -122,17 +124,17 @@ const drivergyChatFlow = ai.defineFlow(
       userProfile = await fetchUserById(input.userId);
     }
     
-    // Map the full user profile to the specific context the prompt needs.
-    // This is safer than passing a complex object with z.custom().
+    // Prepare a clean user context for the prompt, providing default values.
+    // This makes the prompt template much simpler and more robust.
     const userContext = userProfile ? {
         name: userProfile.name,
         uniqueId: userProfile.uniqueId,
         subscriptionPlan: userProfile.subscriptionPlan,
         approvalStatus: userProfile.approvalStatus,
-        assignedTrainerName: userProfile.assignedTrainerName,
-        upcomingLesson: userProfile.upcomingLesson,
-        completedLessons: userProfile.completedLessons,
-        totalLessons: userProfile.totalLessons,
+        assignedTrainerName: userProfile.assignedTrainerName ?? 'Not yet assigned',
+        upcomingLesson: userProfile.upcomingLesson ?? 'Not yet scheduled',
+        completedLessons: userProfile.completedLessons ?? 0,
+        totalLessons: userProfile.totalLessons ?? 0,
     } : undefined;
 
     try {
