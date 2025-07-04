@@ -67,14 +67,13 @@ const navLinks: NavLink[] = [
   {
     label: 'Insights',
     children: [
-      { href: '/site/blog', label: 'Customer Stories' },
+      { href: '/site/faq', label: 'FAQ' },
       { href: '/site#testimonials', label: 'Testimonials' },
       { href: '/site/blog', label: 'Blogs' },
     ],
   },
   { href: '/site#subscriptions', label: 'Plans' },
   { href: '/site/career', label: 'Careers' },
-  { href: '/site/faq', label: 'FAQ' },
   { href: '/site#contact', label: 'Support' },
 ];
 
