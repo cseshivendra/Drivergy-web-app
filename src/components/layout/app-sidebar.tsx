@@ -154,6 +154,18 @@ export default function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/referrals'}
+                  tooltip={{ children: "Referrals", side: "right", align: "center" }}
+                >
+                  <Link href="/referrals">
+                    <Gift />
+                    <span>Referrals</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </>
           )}
 

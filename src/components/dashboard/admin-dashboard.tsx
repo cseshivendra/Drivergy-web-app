@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -9,14 +8,13 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals, fetchCourses, fetchQuizSets, fetchFaqs, fetchBlogPosts, fetchSiteBanners, fetchPromotionalPosters } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
-import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Gift, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen } from 'lucide-react';
+import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchCourses, fetchQuizSets, fetchFaqs, fetchBlogPosts, fetchSiteBanners, fetchPromotionalPosters } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
+import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LessonProgressTable from './lesson-progress-table';
-import ReferralTable from './referral-table';
 import CourseManagement from './course-management';
 import QuizManagement from './quiz-management';
 import FaqManagement from './faq-management';
@@ -33,7 +31,6 @@ export default function AdminDashboard() {
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
-  const [referrals, setReferrals] = useState<Referral[]>([]);
   
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
@@ -54,7 +51,7 @@ export default function AdminDashboard() {
     try {
       const [
         summary, users, lessonRequests, reschedules, feedbackData,
-        progressData, referralData, courseData, quizData, faqData,
+        progressData, courseData, quizData, faqData,
         blogData, bannerData, posterData
       ] = await Promise.all([
         fetchSummaryData(),
@@ -63,7 +60,6 @@ export default function AdminDashboard() {
         fetchRescheduleRequests(),
         fetchAllFeedback(),
         fetchCustomerLessonProgress(),
-        fetchAllReferrals(),
         fetchCourses(),
         fetchQuizSets(),
         fetchFaqs(),
@@ -78,7 +74,6 @@ export default function AdminDashboard() {
       setRescheduleRequests(reschedules);
       setFeedback(feedbackData);
       setLessonProgress(progressData);
-      setReferrals(referralData);
       setCourses(courseData);
       setQuizSets(quizData);
       setFaqs(faqData);
@@ -134,10 +129,9 @@ export default function AdminDashboard() {
       <SummaryMetrics data={summaryData} isLoading={loading} />
       <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
       <Tabs defaultValue="verifications" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
           <TabsTrigger value="verifications">Verifications</TabsTrigger>
           <TabsTrigger value="requests">Requests</TabsTrigger>
-          <TabsTrigger value="management">Management</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
@@ -173,14 +167,6 @@ export default function AdminDashboard() {
             isLoading={loading}
             onActioned={handleActioned}
           />
-        </TabsContent>
-         <TabsContent value="management" className="space-y-8">
-            <ReferralTable
-                title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Management</>}
-                referrals={referrals}
-                isLoading={loading}
-                onActioned={handleActioned}
-            />
         </TabsContent>
         <TabsContent value="progress" className="space-y-8">
             <LessonProgressTable
