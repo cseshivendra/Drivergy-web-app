@@ -167,20 +167,17 @@ export default function PortfolioSitePage() {
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
           {/* Background container for images and overlay */}
-          <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0">
             {/* Image Slideshow */}
             {!loading && heroSlides.length > 0 && heroSlides.map((slide, index) => (
                 <Image
                     key={slide.id}
                     src={slide.imageSrc}
                     alt={slide.title}
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    sizes="100vw"
                     priority={index === 0}
-                    className={cn(
-                        "transition-opacity duration-1000 ease-in-out",
-                        index === currentSlide ? "opacity-100" : "opacity-0"
-                    )}
+                    className={`object-cover transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
                     data-ai-hint={slide.imageHint}
                 />
             ))}
@@ -196,8 +193,8 @@ export default function PortfolioSitePage() {
                   <div
                     key={slide.id}
                     className={cn(
-                      "absolute inset-0 flex flex-col items-center justify-center p-4 transition-opacity duration-1000 ease-in-out",
-                      currentSlide === index ? "opacity-100" : "opacity-0"
+                      "absolute inset-0 flex flex-col items-center justify-center p-4 transition-all duration-1000 ease-in-out",
+                      currentSlide === index ? "opacity-100 scale-100" : "opacity-0 scale-95"
                     )}
                   >
                       <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl drop-shadow-2xl font-headline">
