@@ -585,24 +585,17 @@ export default function AppRtoQuizPage() {
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-xl overflow-hidden">
-        <div className="relative h-56 w-full bg-primary/10">
-            <Image
-                src="https://placehold.co/800x300/E53E3E/ffffff.png"
-                alt="RTO Quiz Banner"
-                layout="fill"
-                objectFit="cover"
-                data-ai-hint="exam paper test"
-            />
-            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                    <ClipboardCheck className="h-10 w-10 text-primary" />
+        <CardHeader>
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                    <ClipboardCheck className="h-7 w-7 text-primary" />
                 </div>
-                <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">RTO Test Quiz</h1>
-                <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                    Prepare for your RTO screening test. Select a set and start the quiz.
-                </p>
+                <div>
+                    <CardTitle className="font-headline text-2xl">RTO Test Quiz</CardTitle>
+                    <CardDescription>Prepare for your RTO screening test. Select a set and start the quiz.</CardDescription>
+                </div>
             </div>
-        </div>
+        </CardHeader>
         <QuizCardContent />
       </Card>
     </div>
