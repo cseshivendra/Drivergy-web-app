@@ -5,34 +5,6 @@ import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, Cour
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 
-// =================================================================
-// MOCK DATABASE & LOCAL STORAGE PERSISTENCE
-// =================================================================
-
-interface MockDatabase {
-  users: UserProfile[];
-  lessonRequests: LessonRequest[];
-  rescheduleRequests: RescheduleRequest[];
-  feedback: Feedback[];
-  referrals: Referral[];
-  courses: Course[];
-  quizSets: QuizSet[];
-}
-
-let MOCK_DB: MockDatabase = {
-  users: [],
-  lessonRequests: [],
-  rescheduleRequests: [],
-  feedback: [],
-  referrals: [],
-  courses: [],
-  quizSets: [],
-};
-
-// =================================================================
-// INITIAL DATA (if not in localStorage)
-// =================================================================
-
 const initialCourses: Omit<Course, 'icon'>[] = [
     {
         id: 'course1',
@@ -296,6 +268,35 @@ const initialQuizSets: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
     correctAnswer: q.correctAnswer,
   })),
 }));
+
+// =================================================================
+// MOCK DATABASE & LOCAL STORAGE PERSISTENCE
+// =================================================================
+
+interface MockDatabase {
+  users: UserProfile[];
+  lessonRequests: LessonRequest[];
+  rescheduleRequests: RescheduleRequest[];
+  feedback: Feedback[];
+  referrals: Referral[];
+  courses: Course[];
+  quizSets: QuizSet[];
+}
+
+let MOCK_DB: MockDatabase = {
+  users: [],
+  lessonRequests: [],
+  rescheduleRequests: [],
+  feedback: [],
+  referrals: [],
+  courses: [],
+  quizSets: [],
+};
+
+// =================================================================
+// INITIAL DATA (if not in localStorage)
+// =================================================================
+
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   return coursesToHydrate.map(course => {
