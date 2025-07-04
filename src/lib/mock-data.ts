@@ -327,6 +327,11 @@ const loadData = () => {
       // After loading, we re-assign the icon functions based on ID
       parsedDb.courses = reAssignCourseIcons(parsedDb.courses || []);
       MOCK_DB = { ...MOCK_DB, ...parsedDb };
+       // Robustness check: If quizSets are missing from saved data, initialize them.
+      if (!MOCK_DB.quizSets || MOCK_DB.quizSets.length === 0) {
+        MOCK_DB.quizSets = initialQuizSets;
+        saveData();
+      }
     } else {
       // If no data in local storage, initialize with hardcoded data
       MOCK_DB.courses = reAssignCourseIcons(initialCourses);
