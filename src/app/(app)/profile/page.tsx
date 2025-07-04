@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { fetchUserById, updateUserProfile, changeUserPassword } from '@/lib/mock-data';
 import type { UserProfile, UserProfileUpdateValues, ChangePasswordValues } from '@/types';
-import { UserProfileUpdateSchema, ChangePasswordSchema } from '@/types';
+import { UserProfileUpdateSchema, ChangePasswordSchema, IndianStates, DistrictsByState } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
-import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera } from 'lucide-react';
+import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera, Home } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Locations } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,8 +39,29 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
       phone: profile.phone || '',
       location: profile.location || '',
       photo: undefined,
+      flatHouseNumber: profile.flatHouseNumber || '',
+      street: profile.street || '',
+      state: profile.state || '',
+      district: profile.district || '',
+      pincode: profile.pincode || '',
     },
   });
+
+  const selectedState = form.watch('state');
+
+  const availableDistricts = useMemo(() => {
+    if (selectedState && DistrictsByState[selectedState as keyof typeof DistrictsByState]) {
+      return DistrictsByState[selectedState as keyof typeof DistrictsByState];
+    }
+    return [];
+  }, [selectedState]);
+
+  useEffect(() => {
+    const currentDistrict = form.getValues('district');
+    if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
+      form.setValue('district', '');
+    }
+  }, [selectedState, form, availableDistricts]);
 
   async function onSubmit(data: UserProfileUpdateValues) {
     const updatedProfile = await updateUserProfile(profile.id, data);
@@ -72,6 +93,7 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
     }
   };
 
+  const isCustomer = profile.uniqueId.startsWith('CU');
 
   return (
     <Card className="shadow-lg">
@@ -174,7 +196,108 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
                 </FormItem>
               )}
             />
-            <div className="flex justify-end">
+            
+            {isCustomer && (
+              <>
+                <div className="border-t my-6"></div>
+                <h3 className="text-lg font-medium leading-6 text-foreground mb-4 flex items-center"><Home className="mr-2 h-5 w-5 text-primary" /> Address Details</h3>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="flatHouseNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4" />Flat / House No.</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., A-101" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="street"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4" />Street / Road</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Main Road" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                     <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4" />State</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select state" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {IndianStates.map(state => (
+                                  <SelectItem key={state} value={state}>{state}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="district"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4" />District</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!selectedState || availableDistricts.length === 0}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select district" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {availableDistricts.length > 0 ? (
+                                  availableDistricts.map(district => (
+                                      <SelectItem key={district} value={district}>{district}</SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="disabled" disabled>Select a state first</SelectItem>
+                                )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="pincode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4" />Pincode</FormLabel>
+                          <FormControl>
+                            <Input placeholder="6-digit pincode" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex justify-end pt-4 border-t">
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes

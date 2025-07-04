@@ -628,6 +628,11 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
     phone: data.phone,
     location: data.location,
     photoURL: data.photo ? `https://placehold.co/100x100.png?text=${data.name.charAt(0)}&v=${Date.now()}` : MOCK_DB.users[userIndex].photoURL,
+    flatHouseNumber: data.flatHouseNumber,
+    street: data.street,
+    state: data.state,
+    district: data.district,
+    pincode: data.pincode,
   };
   MOCK_DB.users[userIndex] = updatedUser;
   saveData();

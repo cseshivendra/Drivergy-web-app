@@ -499,6 +499,13 @@ export const UserProfileUpdateSchema = z.object({
   }),
   location: z.string().min(1, { message: "Please select a location." }),
   photo: z.any().optional(),
+  flatHouseNumber: z.string().optional(),
+  street: z.string().optional(),
+  state: z.string().optional(),
+  district: z.string().optional(),
+  pincode: z.string().optional().refine(val => !val || /^\d{6}$/.test(val), {
+    message: "Pincode must be 6 digits if provided.",
+  }),
 });
 
 export type UserProfileUpdateValues = z.infer<typeof UserProfileUpdateSchema>;
