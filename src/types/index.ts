@@ -349,7 +349,7 @@ export const BlogPostSchema = z.object({
   content: z.string().min(50, { message: "Content must be at least 50 characters." }),
   author: z.string().min(1, { message: "Author is required." }),
   date: z.string().min(1, { message: "Date is required." }),
-  imageSrc: z.string().url({ message: "Please enter a valid image URL." }).optional().or(z.literal('')),
+  imageSrc: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')).optional().transform(val => val === "" ? undefined : val),
   imageFile: z.any().optional(),
   imageHint: z.string().min(1, { message: "Image hint is required." }),
   tags: z.string().optional(),
@@ -368,7 +368,7 @@ export type BlogPostFormValues = z.infer<typeof BlogPostSchema>;
 export const VisualContentSchema = z.object({
   title: z.string().min(5, { message: "Title is required." }),
   description: z.string().min(10, { message: "Description is required." }),
-  imageSrc: z.string().url({ message: "Please enter a valid image URL." }).optional().or(z.literal('')),
+  imageSrc: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')).optional().transform(val => val === "" ? undefined : val),
   imageFile: z.any().optional(),
   imageHint: z.string().min(1, { message: "Image hint is required." }),
   href: z.string().optional(),

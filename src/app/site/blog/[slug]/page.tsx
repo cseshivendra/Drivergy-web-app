@@ -103,16 +103,20 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                 </Button>
 
                 <Card className="shadow-2xl overflow-hidden">
-                    <div className="relative h-64 md:h-80 w-full">
-                        <Image
-                            src={post.imageSrc}
-                            alt={post.title}
-                            layout="fill"
-                            objectFit="cover"
-                            priority
-                            data-ai-hint={post.imageHint}
-                        />
-                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="relative h-64 md:h-80 w-full bg-muted">
+                        {post.imageSrc && (
+                            <>
+                                <Image
+                                    src={post.imageSrc}
+                                    alt={post.title}
+                                    layout="fill"
+                                    objectFit="cover"
+                                    priority
+                                    data-ai-hint={post.imageHint}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                            </>
+                        )}
                     </div>
                     <CardHeader className="relative -mt-16 z-10 p-6 md:p-8">
                         <Badge variant="secondary" className="w-fit mb-3 text-sm">{post.category}</Badge>
