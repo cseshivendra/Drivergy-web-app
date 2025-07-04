@@ -123,25 +123,25 @@ const initialBlogPosts: BlogPost[] = [
 ];
 
 const initialBanners: SiteBanner[] = [
-  { 
+  {
     id: 'hero-1',
-    title: 'Join the Drivergy Team of Experts',
-    description: 'Our certified instructors are the backbone of our success, providing top-tier driving education across the country.',
-    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg', 
+    title: 'Expert Instructors, Confident Drivers',
+    description: 'Our certified instructors are dedicated to providing top-tier driving education, ensuring you hit the road with skill and confidence.',
+    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg',
     imageHint: 'driving instructors team',
   },
-  { 
+  {
     id: 'hero-2',
-    title: 'A Fleet Ready for Your Success',
-    description: 'Learn to drive in modern, safe, and comfortable vehicles. Your journey to getting a license starts here.',
-    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg', 
+    title: "Your Journey to a Driver's License Starts Here",
+    description: 'Learn to drive in modern, safe, and dual-control equipped vehicles. We make learning a comfortable and secure experience.',
+    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720114917409_diivergy.jpeg',
     imageHint: 'driving school cars',
   },
-  { 
+  {
     id: 'hero-3',
-    title: 'Drive with Confidence. Teach with Pride.',
-    description: 'Whether you are a student learning to drive or an instructor looking to grow your business, Drivergy is your partner on the road.',
-    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg', 
+    title: 'A Community Built on Safety and Success',
+    description: 'Join thousands of successful students and instructors. Drivergy is your partner on the road to becoming a safe and licensed driver.',
+    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720114947936_diivergy.jpeg',
     imageHint: 'professional driving team',
   }
 ];
