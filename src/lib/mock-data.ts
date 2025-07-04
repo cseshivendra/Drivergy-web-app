@@ -456,6 +456,79 @@ interface MockDatabase {
   promotionalPosters: PromotionalPoster[];
 }
 
+const SAMPLE_TRAINER_ID = 'sample-trainer-id-01';
+const SAMPLE_CUSTOMER_ID = 'sample-customer-id-01';
+
+const sampleTrainer: UserProfile = {
+  id: SAMPLE_TRAINER_ID,
+  uniqueId: 'TR-SAMPLE',
+  name: 'Rajesh Kumar',
+  username: 'rajesh.trainer',
+  password: 'password123',
+  contact: 'rajesh.k@example.com',
+  phone: '9876543211',
+  location: 'Delhi',
+  subscriptionPlan: 'Trainer',
+  registrationTimestamp: new Date('2023-10-15T09:00:00Z').toISOString(),
+  vehicleInfo: 'Car (Manual)',
+  approvalStatus: 'Approved',
+  myReferralCode: 'RAJESH4321',
+  photoURL: 'https://placehold.co/100x100.png?text=RK',
+  specialization: 'Car',
+  yearsOfExperience: 8,
+  gender: 'Male',
+  totalReferralPoints: 100, // Give him one successful referral for demo data
+};
+
+const sampleCustomer: UserProfile = {
+  id: SAMPLE_CUSTOMER_ID,
+  uniqueId: 'CU-SAMPLE',
+  name: 'Shivendra Singh',
+  username: 'shivendra',
+  password: 'password123',
+  contact: 'shivendra.s@example.com',
+  phone: '9876543210',
+  location: 'Delhi',
+  subscriptionPlan: 'Premium',
+  registrationTimestamp: new Date('2024-05-20T14:30:00Z').toISOString(),
+  vehicleInfo: 'Four-Wheeler',
+  approvalStatus: 'Approved',
+  dlStatus: 'New Learner',
+  photoIdType: 'Aadhaar Card',
+  photoIdNumber: '123456789012',
+  trainerPreference: 'Any',
+  myReferralCode: 'SHIV4567',
+  photoURL: 'https://placehold.co/100x100.png?text=SS',
+  gender: 'Male',
+  flatHouseNumber: 'B-123',
+  street: 'Main Road',
+  district: 'New Delhi',
+  state: 'Delhi',
+  pincode: '110001',
+  subscriptionStartDate: format(new Date(), 'MMM dd, yyyy'),
+  assignedTrainerId: SAMPLE_TRAINER_ID,
+  assignedTrainerName: 'Rajesh Kumar',
+  upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'),
+  totalLessons: 20,
+  completedLessons: 5,
+  attendance: 'Pending',
+  feedbackSubmitted: false,
+};
+
+const sampleReferral: Referral = {
+    id: 'sample-ref-1',
+    referrerId: SAMPLE_TRAINER_ID,
+    referrerName: 'Rajesh Kumar',
+    refereeId: 'another-customer-id',
+    refereeName: 'Priya Sharma',
+    status: 'Successful',
+    pointsEarned: 100,
+    payoutStatus: 'Pending',
+    timestamp: new Date('2024-06-10T11:00:00Z').toISOString(),
+};
+
+const initialUsers = [sampleCustomer, sampleTrainer];
+
 let MOCK_DB: MockDatabase = {
   users: [],
   lessonRequests: [],
@@ -498,11 +571,17 @@ const loadData = () => {
     const data = localStorage.getItem('drivergyMockDb');
     if (data) {
       const parsedDb = JSON.parse(data);
-      // After loading, we re-assign the icon functions based on ID
       parsedDb.courses = reAssignCourseIcons(parsedDb.courses || []);
       MOCK_DB = { ...MOCK_DB, ...parsedDb };
       
-      // Robustness checks for newly added content types
+      // Robustness checks - add initial data if missing
+      const userExists = (uniqueId: string) => MOCK_DB.users.some(u => u.uniqueId === uniqueId);
+      if (!userExists('CU-SAMPLE')) MOCK_DB.users.push(sampleCustomer);
+      if (!userExists('TR-SAMPLE')) MOCK_DB.users.push(sampleTrainer);
+      
+      const referralExists = (id: string) => MOCK_DB.referrals.some(r => r.id === id);
+      if (!referralExists('sample-ref-1')) MOCK_DB.referrals.push(sampleReferral);
+
       if (!MOCK_DB.faqs || MOCK_DB.faqs.length === 0) MOCK_DB.faqs = initialFaqs;
       if (!MOCK_DB.blogPosts || MOCK_DB.blogPosts.length === 0) MOCK_DB.blogPosts = initialBlogPosts;
       if (!MOCK_DB.siteBanners || MOCK_DB.siteBanners.length === 0) MOCK_DB.siteBanners = initialBanners;
@@ -513,6 +592,8 @@ const loadData = () => {
       saveData();
     } else {
       // If no data in local storage, initialize with all hardcoded data
+      MOCK_DB.users = initialUsers;
+      MOCK_DB.referrals = [sampleReferral];
       MOCK_DB.courses = reAssignCourseIcons(initialCourses);
       MOCK_DB.quizSets = initialQuizSets;
       MOCK_DB.faqs = initialFaqs;
