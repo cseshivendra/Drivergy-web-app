@@ -127,24 +127,24 @@ const initialBlogPosts: BlogPost[] = [
 const initialBanners: SiteBanner[] = [
   { 
     id: 'hero-1',
-    title: 'Learn to Drive, Master the Road',
-    description: 'Join Drivergy for expert instruction, flexible scheduling, and the freedom to drive with confidence.',
-    imageSrc: 'https://firebasestorage.googleapis.com/v0/b/ai-stud-f9699.appspot.com/o/driving-school-banner.png?alt=media&token=e93f3b73-c8d3-4638-a15d-3578a05c754d', 
-    imageHint: 'driving school',
+    title: 'Expert Guidance on Your Driving Journey',
+    description: 'Our certified instructors provide personalized coaching to help you navigate the road with skill and confidence. Start your lesson today.',
+    imageSrc: 'https://storage.googleapis.com/project-1-122550974025134795/175024479383681428/dalle_2024-08-01_13-05-40_-_a_professional_photo_of_a_female_driving_instructor_wearing_a_red_polo_shirt_with_a_subtle_logo_Drivergy_on_it__standing_next_to_a_modern_white.webp', 
+    imageHint: 'driving instructor lesson',
   },
   { 
     id: 'hero-2',
-    title: 'Your Journey to Safe Driving Starts Here',
-    description: 'Our certified instructors are dedicated to building your skills and confidence on the road.',
-    imageSrc: 'https://placehold.co/1920x1080/3b82f6/ffffff.png', 
-    imageHint: 'driving lesson student',
+    title: 'Master Every Turn, Enjoy the View',
+    description: 'Learn to drive in real-world conditions, from city streets to scenic routes. Drivergy makes learning an adventure.',
+    imageSrc: 'https://storage.googleapis.com/project-1-122550974025134795/175024479383681428/dalle_2024-08-01_13-05-40_-_a_professional_photo_of_a_female_driving_instructor_wearing_a_red_polo_shirt_with_a_subtle_logo_Drivergy_on_it__standing_next_to_a_modern_white.webp', 
+    imageHint: 'scenic road driving',
   },
   { 
     id: 'hero-3',
-    title: 'Unlock Your Freedom. Get Your License.',
-    description: "From RTO test prep to advanced driving techniques, we've got you covered.",
-    imageSrc: 'https://placehold.co/1920x1080/16a34a/ffffff.png', 
-    imageHint: 'safe driving shield road',
+    title: 'Unlock Your Potential Behind the Wheel',
+    description: "With state-of-the-art vehicles and professional support, getting your driver's license has never been easier or more enjoyable.",
+    imageSrc: 'https://storage.googleapis.com/project-1-122550974025134795/175024479383681428/dalle_2024-08-01_13-05-40_-_a_professional_photo_of_a_female_driving_instructor_wearing_a_red_polo_shirt_with_a_subtle_logo_Drivergy_on_it__standing_next_to_a_modern_white.webp', 
+    imageHint: 'modern car driving',
   }
 ];
 
@@ -1001,7 +1001,7 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 // CONTENT MANAGEMENT
 // =================================================================
 
-const getSimulatedUploadedUrl = () => `https://firebasestorage.googleapis.com/v0/b/ai-stud-f9699.appspot.com/o/driving-school-banner.png?alt=media&token=e93f3b73-c8d3-4638-a15d-3578a05c754d&v=${Date.now()}`;
+const getSimulatedUploadedUrl = () => `https://storage.googleapis.com/project-1-122550974025134795/175024479383681428/dalle_2024-08-01_13-05-40_-_a_professional_photo_of_a_female_driving_instructor_wearing_a_red_polo_shirt_with_a_subtle_logo_Drivergy_on_it__standing_next_to_a_modern_white.webp`;
 
 export const fetchCourses = async (): Promise<Course[]> => [...MOCK_DB.courses];
 
