@@ -12,18 +12,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookText, Trash2, Edit, PlusCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { BookText, Trash2, Edit, PlusCircle, AlertCircle, Loader2, FileUp, Image as ImageIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { BlogPostSchema, type BlogPostFormValues, type BlogPost } from '@/types';
 import { addBlogPost, updateBlogPost, deleteBlogPost } from '@/lib/mock-data';
 import { format } from 'date-fns';
+import NextImage from 'next/image';
 
 function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () => void }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const isEditing = !!post;
+  const [preview, setPreview] = useState<string | null>(post?.imageSrc || null);
 
   const form = useForm<BlogPostFormValues>({
     resolver: zodResolver(BlogPostSchema),
@@ -35,13 +37,26 @@ function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () =>
       content: post?.content || '',
       author: post?.author || '',
       date: post?.date || format(new Date(), 'LLL d, yyyy'),
-      image: post?.image || '',
+      imageSrc: post?.imageSrc || '',
       imageHint: post?.imageHint || '',
       tags: post?.tags || '',
+      imageFile: undefined,
     },
   });
 
   const { isSubmitting } = form.formState;
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      form.setValue('imageFile', file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (data: BlogPostFormValues) => {
     try {
@@ -54,7 +69,10 @@ function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () =>
       }
       onFormSubmit();
       setOpen(false);
-      if (!isEditing) form.reset();
+      if (!isEditing) {
+        form.reset();
+        setPreview(null);
+      }
     } catch (error) {
       toast({ title: "Error", description: `An error occurred: ${error instanceof Error ? error.message : String(error)}`, variant: "destructive" });
     }
@@ -84,12 +102,39 @@ function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () =>
             </div>
             <FormField control={form.control} name="excerpt" render={({ field }) => ( <FormItem><FormLabel>Excerpt</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="content" render={({ field }) => ( <FormItem><FormLabel>Content</FormLabel><FormControl><Textarea rows={8} {...field} /></FormControl><FormMessage /></FormItem> )} />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="image" render={({ field }) => ( <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input placeholder="https://placehold.co/..." {...field} /></FormControl><FormMessage /></FormItem> )} />
-              <FormField control={form.control} name="imageHint" render={({ field }) => ( <FormItem><FormLabel>Image Hint</FormLabel><FormControl><Input placeholder="e.g., driving test" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="imageFile"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4" /> Upload Image</FormLabel>
+                      <FormControl>
+                          <Input 
+                              type="file" 
+                              accept="image/png, image/jpeg, image/gif"
+                              onChange={handleFileChange}
+                          />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField control={form.control} name="imageSrc" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4" />Or Enter Image URL</FormLabel><FormControl><Input placeholder="https://placehold.co/..." {...field} onChange={(e) => { field.onChange(e); setPreview(e.target.value); }} /></FormControl><FormMessage /></FormItem> )} />
+              </div>
+              {preview && (
+                  <div className="flex flex-col items-center justify-center">
+                      <FormLabel>Image Preview</FormLabel>
+                      <NextImage src={preview} alt="Blog post preview" width={200} height={120} className="mt-2 rounded-md object-cover aspect-video" />
+                  </div>
+              )}
             </div>
+            
+            <FormField control={form.control} name="imageHint" render={({ field }) => ( <FormItem><FormLabel>Image Hint</FormLabel><FormControl><Input placeholder="e.g., driving test" {...field} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="tags" render={({ field }) => ( <FormItem><FormLabel>Tags (comma separated)</FormLabel><FormControl><Input placeholder="e.g., rto, tips, driving" {...field} /></FormControl><FormMessage /></FormItem> )} />
-             <DialogFooter className="pt-4 sticky bottom-0 bg-background">
+            <DialogFooter className="pt-4 sticky bottom-0 bg-background">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

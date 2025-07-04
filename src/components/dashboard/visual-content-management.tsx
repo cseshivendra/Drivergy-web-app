@@ -10,20 +10,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Image as ImageIcon, Edit, Loader2, Link as LinkIcon, ExternalLink, ImagePlay } from 'lucide-react';
-import Image from 'next/image';
+import { Image as ImageIcon, Edit, Loader2, Link as LinkIcon, ImagePlay, FileUp } from 'lucide-react';
+import NextImage from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { VisualContentSchema, type VisualContentFormValues, type SiteBanner, type PromotionalPoster } from '@/types';
 import { updateSiteBanner, updatePromotionalPoster } from '@/lib/mock-data';
-import Link from 'next/link';
 
 type ContentItem = (SiteBanner | PromotionalPoster) & { type: 'banner' | 'poster' };
 
 function VisualContentForm({ item, onFormSubmit }: { item: ContentItem; onFormSubmit: () => void }) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
+  const [preview, setPreview] = useState<string | null>(item.imageSrc);
 
   const form = useForm<VisualContentFormValues>({
     resolver: zodResolver(VisualContentSchema),
@@ -33,10 +33,23 @@ function VisualContentForm({ item, onFormSubmit }: { item: ContentItem; onFormSu
       imageSrc: item.imageSrc,
       imageHint: item.imageHint,
       href: 'href' in item ? item.href : undefined,
+      imageFile: undefined,
     },
   });
 
   const { isSubmitting } = form.formState;
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      form.setValue('imageFile', file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (data: VisualContentFormValues) => {
     try {
@@ -64,10 +77,37 @@ function VisualContentForm({ item, onFormSubmit }: { item: ContentItem; onFormSu
           <DialogDescription>Update the details for this visual element.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
             <FormField control={form.control} name="title" render={({ field }) => ( <FormItem><FormLabel>Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
-            <FormField control={form.control} name="imageSrc" render={({ field }) => ( <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="imageFile"
+                        render={() => (
+                            <FormItem>
+                            <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4" /> Upload Image</FormLabel>
+                            <FormControl>
+                                <Input 
+                                    type="file" 
+                                    accept="image/png, image/jpeg, image/gif"
+                                    onChange={handleFileChange}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField control={form.control} name="imageSrc" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ImageIcon className="mr-2 h-4 w-4" /> Or Enter Image URL</FormLabel><FormControl><Input {...field} onChange={(e) => { field.onChange(e); setPreview(e.target.value); }} /></FormControl><FormMessage /></FormItem> )} />
+                </div>
+                {preview && (
+                    <div className="flex flex-col items-center justify-center">
+                        <FormLabel>Image Preview</FormLabel>
+                        <NextImage src={preview} alt="Content preview" width={200} height={150} className="mt-2 rounded-md object-cover aspect-[4/3]" />
+                    </div>
+                )}
+            </div>
             <FormField control={form.control} name="imageHint" render={({ field }) => ( <FormItem><FormLabel>Image Hint</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             {item.type === 'poster' && (
               <FormField control={form.control} name="href" render={({ field }) => ( <FormItem><FormLabel>Link URL (e.g., /site/register)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -119,12 +159,12 @@ export default function VisualContentManagement({ title, banners, posters, isLoa
                 <CardHeader className="p-4 bg-muted/50">
                     <CardTitle className="text-base flex items-center gap-2">
                         {item.type === 'banner' ? <ImageIcon className="h-4 w-4" /> : <LinkIcon className="h-4 w-4" />}
-                        {item.type === 'banner' ? `Hero Banner #${banners.indexOf(item as SiteBanner) + 1}` : `Promo Poster #${posters.indexOf(item as PromotionalPoster) + 1}`}
+                        {item.type === 'banner' ? `Hero Banner #${banners.findIndex(b => b.id === item.id) + 1}` : `Promo Poster #${posters.findIndex(p => p.id === item.id) + 1}`}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 flex-grow flex flex-col">
                   <div className="relative w-full aspect-[3/4] rounded-md overflow-hidden mb-4">
-                    <Image src={item.imageSrc} alt={item.title} layout="fill" objectFit="cover" />
+                    <NextImage src={item.imageSrc} alt={item.title} layout="fill" objectFit="cover" />
                   </div>
                   <div className="space-y-2 flex-grow">
                     <h4 className="font-semibold">{item.title}</h4>

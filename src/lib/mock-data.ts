@@ -57,7 +57,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Nervous about your driving test? We've compiled the top 10 tips, from pre-test checks to on-road etiquette, to help you ace your RTO exam with confidence. This guide covers everything from the 'mirror-signal-manoeuvre' routine to handling tricky junctions and what examiners are really looking for. Preparation is key, and with our advice, you'll walk into the test center feeling prepared and calm. We'll also cover common pitfalls and how to avoid them, ensuring you make the best impression on your test day.",
     author: "Rohan Sharma",
     date: "July 26, 2024",
-    image: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400.png",
     imageHint: "driving test exam",
     tags: "rto, driving test, tips",
   },
@@ -69,7 +69,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Parallel parking can be intimidating, but it doesn't have to be. Follow our simple, step-by-step guide to master this essential driving maneuver and park like a pro every time. We break it down into easy-to-follow steps, complete with diagrams and reference points you can use in any car. With a little practice, you'll be able to confidently parallel park in even the tightest of spaces.",
     author: "Priya Mehta",
     date: "July 22, 2024",
-    image: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400.png",
     imageHint: "parallel parking car",
     tags: "parking, skills, guide",
   },
@@ -81,7 +81,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "From mandatory signs to cautionary warnings, understanding road signs is crucial for safety. This visual guide will help you decode the most common signs you'll encounter on Indian roads. We categorize signs into mandatory, cautionary, and informatory groups, explaining the meaning behind the shapes, colors, and symbols. This knowledge is not only vital for passing your RTO test but also for being a safe and responsible driver.",
     author: "Anjali Verma",
     date: "July 18, 2024",
-    image: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400.png",
     imageHint: "road signs traffic",
     tags: "road signs, rto, safety",
   },
@@ -93,7 +93,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "City driving presents unique challenges. Learn the core principles of defensive driving to anticipate hazards, avoid accidents, and navigate busy urban environments safely. This article covers techniques like maintaining a safe following distance, being aware of your surroundings (the '360-degree check'), managing blind spots, and communicating effectively with other road users. Defensive driving is about being proactive, not reactive.",
     author: "Vikram Singh",
     date: "July 15, 2024",
-    image: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400.png",
     imageHint: "city traffic car",
     tags: "defensive driving, safety, city driving",
   },
@@ -105,7 +105,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Buying your first car is a huge milestone. This guide covers everything from setting a realistic budget (including running costs) to understanding insurance options and performing basic pre-purchase inspections. We'll help you decide between new and used, petrol and diesel, and manual and automatic, so you can make an informed decision that you'll be happy with for years to come.",
     author: "Rohan Sharma",
     date: "July 12, 2024",
-    image: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400.png",
     imageHint: "new car dealership",
     tags: "buying car, guide, beginners",
   },
@@ -117,7 +117,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Driving at night comes with its own set of risks due to reduced visibility and glare from oncoming traffic. This guide provides essential tips for staying safe, including how to properly use your headlights, manage glare, increase your following distance, and stay alert. We also cover how to keep your windscreen and mirrors clean for maximum clarity after dark.",
     author: "Priya Mehta",
     date: "July 08, 2024",
-    image: "https://placehold.co/600x400.png",
+    imageSrc: "https://placehold.co/600x400.png",
     imageHint: "night road car lights",
     tags: "night driving, safety, tips",
   },
@@ -914,6 +914,8 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 // CONTENT MANAGEMENT
 // =================================================================
 
+const getSimulatedUploadedUrl = () => `https://placehold.co/600x400.png?v=${Date.now()}`;
+
 export const fetchCourses = async (): Promise<Course[]> => [...MOCK_DB.courses];
 
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
@@ -1007,16 +1009,30 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => [...MOCK_DB.blogPosts];
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
+
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
-  const newPost: BlogPost = { ...data, date: format(new Date(), 'LLL d, yyyy') }; // Use current date for new posts
-  MOCK_DB.blogPosts.unshift(newPost); // Add to beginning
+  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  const newPost: BlogPost = { 
+    ...data, 
+    date: format(new Date(), 'LLL d, yyyy'),
+    imageSrc: newImageSrc!,
+  };
+  MOCK_DB.blogPosts.unshift(newPost);
   saveData();
   return newPost;
 }
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
   const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
   if (index === -1) return false;
-  MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...data, slug: data.slug }; // ensure slug is updated if changed
+
+  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  
+  MOCK_DB.blogPosts[index] = { 
+    ...MOCK_DB.blogPosts[index], 
+    ...data,
+    imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc,
+    slug: data.slug,
+  };
   saveData();
   return true;
 }
@@ -1031,7 +1047,12 @@ export const fetchSiteBanners = async (): Promise<SiteBanner[]> => [...MOCK_DB.s
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
   const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
   if (index === -1) return false;
-  MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...data };
+  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  MOCK_DB.siteBanners[index] = { 
+      ...MOCK_DB.siteBanners[index], 
+      ...data,
+      imageSrc: newImageSrc || MOCK_DB.siteBanners[index].imageSrc
+  };
   saveData();
   return true;
 }
@@ -1040,7 +1061,13 @@ export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> =>
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
   const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
   if (index === -1) return false;
-  MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...data, href: data.href || '#' };
+  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  MOCK_DB.promotionalPosters[index] = { 
+      ...MOCK_DB.promotionalPosters[index],
+      ...data,
+      imageSrc: newImageSrc || MOCK_DB.promotionalPosters[index].imageSrc,
+      href: data.href || '#'
+  };
   saveData();
   return true;
 }
