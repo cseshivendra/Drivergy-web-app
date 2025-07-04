@@ -168,7 +168,7 @@ export default function PortfolioSitePage() {
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
           {/* Image Slideshow Background */}
           {!loading && heroSlides.length > 0 && (
-            <div className="absolute top-0 left-0 w-full h-full z-[1]">
+            <div className="absolute top-0 left-0 w-full h-full z-0">
               {heroSlides.map((slide, index) => (
                 <div
                   key={slide.id}
@@ -190,9 +190,9 @@ export default function PortfolioSitePage() {
             </div>
           )}
           
-          <div className="absolute inset-0 bg-black/50 z-[5]"></div>
+          <div className="absolute inset-0 bg-black/60 z-10"></div>
           
-          <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
+          <div className="relative z-20 p-4 container mx-auto flex flex-col justify-center items-center h-full">
             {/* Text content slideshow */}
              {!loading && heroSlides.length > 0 && (
               <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center">
@@ -216,7 +216,7 @@ export default function PortfolioSitePage() {
             )}
 
             {/* Buttons (static) */}
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 z-10 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-auto pb-8 z-20 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <Button 
                 size="lg" 
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
