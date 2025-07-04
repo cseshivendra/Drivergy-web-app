@@ -126,23 +126,23 @@ const initialBanners: SiteBanner[] = [
   {
     id: 'hero-1',
     title: 'Expert Instructors, Confident Drivers',
-    description: 'Our certified instructors are dedicated to providing top-tier driving education, ensuring you hit the road with skill and confidence.',
-    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720113840742_diivergy.jpeg',
+    description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
+    imageSrc: 'https://placehold.co/1200x800/dc2626/ffffff.png',
     imageHint: 'driving instructors team',
   },
   {
     id: 'hero-2',
-    title: "Your Journey to a Driver's License Starts Here",
-    description: 'Learn to drive in modern, safe, and dual-control equipped vehicles. We make learning a comfortable and secure experience.',
-    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720114917409_diivergy.jpeg',
-    imageHint: 'driving school cars',
+    title: 'Learn in Modern, Safe Vehicles',
+    description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
+    imageSrc: 'https://placehold.co/1200x800/2563eb/ffffff.png',
+    imageHint: 'driving lesson car interior',
   },
   {
     id: 'hero-3',
-    title: 'A Community Built on Safety and Success',
-    description: 'Join thousands of successful students and instructors. Drivergy is your partner on the road to becoming a safe and licensed driver.',
-    imageSrc: 'https://storage.googleapis.com/project-12345-files/1720114947936_diivergy.jpeg',
-    imageHint: 'professional driving team',
+    title: 'Your Success Is Our Mission',
+    description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
+    imageSrc: 'https://placehold.co/1200x800/16a34a/ffffff.png',
+    imageHint: 'happy driver license',
   }
 ];
 
