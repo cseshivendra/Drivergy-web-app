@@ -166,34 +166,30 @@ export default function PortfolioSitePage() {
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
-          {/* Image Slideshow Background */}
-          {!loading && heroSlides.length > 0 && (
-            <div className="absolute top-0 left-0 w-full h-full z-0">
-              {heroSlides.map((slide, index) => (
-                <div
-                  key={slide.id}
-                  className={cn(
-                    "hero-bg-slide",
-                    index === currentSlide && "active"
-                  )}
-                >
-                  <Image
+          {/* Background container for images and overlay */}
+          <div className="absolute inset-0 z-0">
+            {/* Image Slideshow */}
+            {!loading && heroSlides.length > 0 && heroSlides.map((slide, index) => (
+                <Image
+                    key={slide.id}
                     src={slide.imageSrc}
                     alt={slide.title}
                     layout="fill"
                     objectFit="cover"
                     priority={index === 0}
+                    className={cn(
+                        "transition-opacity duration-1000 ease-in-out",
+                        index === currentSlide ? "opacity-100" : "opacity-0"
+                    )}
                     data-ai-hint={slide.imageHint}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+                />
+            ))}
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
           
-          <div className="absolute inset-0 bg-black/60 z-10"></div>
-          
-          <div className="relative z-20 p-4 container mx-auto flex flex-col justify-center items-center h-full">
-            {/* Text content slideshow */}
+          {/* Text Content */}
+          <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
              {!loading && heroSlides.length > 0 && (
               <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center">
                 {heroSlides.map((slide, index) => (
