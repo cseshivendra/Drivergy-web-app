@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Referral, PayoutStatusType } from '@/types';
 import { PayoutStatusOptions } from '@/types';
-import { User, Gift, Star, DollarSign, Calendar, AlertCircle, Settings2, Check } from 'lucide-react';
+import { User, Gift, Star, DollarSign, Calendar, AlertCircle, Settings2, Check, Fingerprint, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { updateReferralPayoutStatus } from '@/lib/mock-data';
@@ -64,8 +64,20 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
       case 'Paid': 
         return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
+      case 'Withdraw to UPI':
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
       default: 
         return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
+    }
+  };
+
+  const getPlanPrice = (plan?: string): number => {
+    if (!plan) return 0;
+    switch (plan) {
+        case 'Premium': return 9999;
+        case 'Gold': return 7499;
+        case 'Basic': return 3999;
+        default: return 0;
     }
   };
 
@@ -73,6 +85,8 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
   const renderSkeletons = () => (
     Array(ITEMS_PER_PAGE).fill(0).map((_, index) => (
       <TableRow key={`skeleton-${index}`}>
+        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
@@ -95,6 +109,8 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
               <TableRow>
                 <TableHead><Gift className="inline-block mr-2 h-4 w-4" />Referrer</TableHead>
                 <TableHead><User className="inline-block mr-2 h-4 w-4" />Referee</TableHead>
+                <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />Referee ID</TableHead>
+                <TableHead><IndianRupee className="inline-block mr-2 h-4 w-4" />Sub. Amount</TableHead>
                 <TableHead><Star className="inline-block mr-2 h-4 w-4" />Points Earned</TableHead>
                 <TableHead><DollarSign className="inline-block mr-2 h-4 w-4" />Payout Status</TableHead>
                 <TableHead><Calendar className="inline-block mr-2 h-4 w-4" />Date</TableHead>
@@ -107,6 +123,8 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
                   <TableRow key={ref.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell className="font-medium">{ref.referrerName}</TableCell>
                     <TableCell>{ref.refereeName}</TableCell>
+                    <TableCell>{ref.refereeUniqueId || 'N/A'}</TableCell>
+                    <TableCell>₹{getPlanPrice(ref.refereeSubscriptionPlan).toLocaleString('en-IN')}</TableCell>
                     <TableCell className="font-semibold text-primary">{ref.pointsEarned}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(ref.payoutStatus)}>
@@ -117,8 +135,8 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
                     <TableCell className="text-center">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                           <Button variant="outline" size="sm" disabled={ref.payoutStatus === 'Paid'}>
-                            {ref.payoutStatus === 'Paid' ? 'Paid' : 'Update'}
+                           <Button variant="outline" size="sm" disabled={ref.payoutStatus !== 'Pending'}>
+                            {ref.payoutStatus === 'Pending' ? 'Update' : ref.payoutStatus}
                            </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
@@ -139,7 +157,7 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                       <p className="text-lg">No referrals found.</p>

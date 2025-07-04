@@ -5,7 +5,7 @@ import type React from 'react';
 export const ApprovalStatusOptions = ["Pending", "Approved", "In Progress", "Rejected"] as const;
 export type ApprovalStatusType = typeof ApprovalStatusOptions[number];
 
-export const PayoutStatusOptions = ["Pending", "Paid"] as const;
+export const PayoutStatusOptions = ["Pending", "Paid", "Withdraw to UPI"] as const;
 export type PayoutStatusType = typeof PayoutStatusOptions[number];
 
 export const TrainerPreferenceOptions = ["Male", "Female", "Any"] as const;
@@ -16,6 +16,8 @@ export interface Referral {
   referrerName: string;
   refereeId: string;
   refereeName: string;
+  refereeUniqueId?: string;
+  refereeSubscriptionPlan?: string;
   status: 'Successful';
   pointsEarned: number;
   payoutStatus: PayoutStatusType;

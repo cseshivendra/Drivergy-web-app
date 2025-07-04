@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, Star, BarChart3, Gift, AlertCircle, CalendarDays, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { fetchReferralsByUserId, fetchUserById } from '@/lib/mock-data';
-import type { Referral, UserProfile } from '@/types';
+import type { Referral, UserProfile, PayoutStatusType } from '@/types';
 import Loading from '@/app/loading';
 import { format, parseISO } from 'date-fns';
 
@@ -72,12 +72,14 @@ export default function TrackReferralsPage() {
     return <Loading />;
   }
   
-  const getStatusColor = (status: 'Pending' | 'Paid') => {
+  const getStatusColor = (status: PayoutStatusType) => {
     switch (status) {
       case 'Pending': 
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
       case 'Paid': 
         return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
+      case 'Withdraw to UPI':
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
       default: 
         return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
     }

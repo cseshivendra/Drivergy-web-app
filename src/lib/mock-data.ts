@@ -462,7 +462,16 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // =================================================================
 
 export const fetchAllReferrals = async (): Promise<Referral[]> => {
-  return [...MOCK_DB.referrals].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  return MOCK_DB.referrals
+    .map(ref => {
+      const referee = MOCK_DB.users.find(u => u.id === ref.refereeId);
+      return {
+        ...ref,
+        refereeUniqueId: referee?.uniqueId,
+        refereeSubscriptionPlan: referee?.subscriptionPlan,
+      };
+    })
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
 
 export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
