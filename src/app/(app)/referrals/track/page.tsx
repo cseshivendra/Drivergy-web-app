@@ -85,17 +85,19 @@ export default function TrackReferralsPage() {
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
-      <Card className="shadow-xl overflow-hidden">
-        <CardHeader className="text-center bg-card pattern-dots pattern-primary/10 pattern-bg-transparent pattern-opacity-20 pattern-size-6">
-          <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit border-2 border-primary/20 shadow-md">
-            <BarChart3 className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="font-headline text-3xl font-bold text-primary">Track Your Referrals</CardTitle>
-          <CardDescription className="text-lg text-foreground/90">
-            See how your referral efforts are paying off and the rewards you've earned!
-          </CardDescription>
+      <Card className="shadow-xl">
+        <CardHeader>
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                    <BarChart3 className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                    <CardTitle className="font-headline text-2xl">Track Your Referrals</CardTitle>
+                    <CardDescription>See how your referral efforts are paying off.</CardDescription>
+                </div>
+            </div>
         </CardHeader>
-        <CardContent className="space-y-8 pt-8 p-6">
+        <CardContent className="space-y-8 pt-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <ReferralStatCard
               title="Total Sign-ups"

@@ -74,26 +74,12 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
 
 
   return (
-    <Card className="shadow-lg overflow-hidden">
-      <div className="relative h-56 w-full bg-primary/10">
-          <Image
-              src="https://placehold.co/1200x400/E53E3E/ffffff.png"
-              alt="User profile banner"
-              layout="fill"
-              objectFit="cover"
-              data-ai-hint="desk paperwork documents"
-          />
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-              <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                  <User className="h-10 w-10 text-primary" />
-              </div>
-              <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Personal Information</h1>
-              <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                  Update your personal details and profile picture here.
-              </p>
-          </div>
-      </div>
-      <CardContent className="p-6">
+    <Card className="shadow-lg">
+       <CardHeader>
+        <CardTitle className="flex items-center"><User className="mr-2 h-5 w-5 text-primary" /> Personal Information</CardTitle>
+        <CardDescription>Update your personal details and profile picture here.</CardDescription>
+      </CardHeader>
+      <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="flex flex-col items-center justify-center space-y-4">
@@ -320,13 +306,6 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-       <header className="mb-4">
-        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-          My Profile
-        </h1>
-        <p className="text-muted-foreground">Manage your account settings and personal information.</p>
-      </header>
-      
       <ProfileUpdateForm profile={profile} />
       <PasswordChangeForm userId={profile.id} />
     </div>

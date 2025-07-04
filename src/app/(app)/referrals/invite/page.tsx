@@ -110,26 +110,19 @@ export default function InviteReferralsPage() {
 
   return (
     <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
-      <Card className="shadow-xl overflow-hidden">
-        <div className="relative h-56 w-full bg-primary/10">
-            <Image
-                src="https://placehold.co/800x300/E53E3E/ffffff.png"
-                alt="Referral program banner"
-                layout="fill"
-                objectFit="cover"
-                data-ai-hint="friends high five"
-            />
-            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                    <Gift className="h-10 w-10 text-primary" />
+      <Card className="shadow-xl">
+        <CardHeader>
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                    <Gift className="h-7 w-7 text-primary" />
                 </div>
-                <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Invite Friends & Earn Rewards</h1>
-                <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                   Share Drivergy with your friends and let them know about the best platform for driving education!
-                </p>
+                <div>
+                    <CardTitle className="font-headline text-2xl">Invite Friends & Earn Rewards</CardTitle>
+                    <CardDescription>Share your unique code to get rewards when your friends sign up.</CardDescription>
+                </div>
             </div>
-        </div>
-        <CardContent className="p-6 space-y-6">
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
           <div className="space-y-3 rounded-lg border bg-card p-4 shadow-sm">
              {loading ? (
                 <>
