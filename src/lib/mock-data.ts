@@ -1,7 +1,5 @@
 
 
-'use client';
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -58,7 +56,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Nervous about your driving test? We've compiled the top 10 tips, from pre-test checks to on-road etiquette, to help you ace your RTO exam with confidence. This guide covers everything from the 'mirror-signal-manoeuvre' routine to handling tricky junctions and what examiners are really looking for. Preparation is key, and with our advice, you'll walk into the test center feeling prepared and calm. We'll also cover common pitfalls and how to avoid them, ensuring you make the best impression on your test day.",
     author: "Rohan Sharma",
     date: "July 26, 2024",
-    imageSrc: "https://placehold.co/600x400/f87171/ffffff.png",
+    imageSrc: "https://placehold.co/1200x800.png",
     imageHint: "driving test exam",
     tags: "rto, driving test, tips",
   },
@@ -70,7 +68,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Parallel parking can be intimidating, but it doesn't have to be. Follow our simple, step-by-step guide to master this essential driving maneuver and park like a pro every time. We break it down into easy-to-follow steps, complete with diagrams and reference points you can use in any car. With a little practice, you'll be able to confidently parallel park in even the tightest of spaces.",
     author: "Priya Mehta",
     date: "July 22, 2024",
-    imageSrc: "https://placehold.co/600x400/60a5fa/ffffff.png",
+    imageSrc: "https://placehold.co/1200x800.png",
     imageHint: "parallel parking car",
     tags: "parking, skills, guide",
   },
@@ -82,7 +80,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "From mandatory signs to cautionary warnings, understanding road signs is crucial for safety. This visual guide will help you decode the most common signs you'll encounter on Indian roads. We categorize signs into mandatory, cautionary, and informatory groups, explaining the meaning behind the shapes, colors, and symbols. This knowledge is not only vital for passing your RTO test but also for being a safe and responsible driver.",
     author: "Anjali Verma",
     date: "July 18, 2024",
-    imageSrc: "https://placehold.co/600x400/fbbf24/ffffff.png",
+    imageSrc: "https://placehold.co/1200x800.png",
     imageHint: "road signs traffic",
     tags: "road signs, rto, safety",
   },
@@ -94,7 +92,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "City driving presents unique challenges. Learn the core principles of defensive driving to anticipate hazards, avoid accidents, and navigate busy urban environments safely. This article covers techniques like maintaining a safe following distance, being aware of your surroundings (the '360-degree check'), managing blind spots, and communicating effectively with other road users. Defensive driving is about being proactive, not reactive.",
     author: "Vikram Singh",
     date: "July 15, 2024",
-    imageSrc: "https://placehold.co/600x400/34d399/ffffff.png",
+    imageSrc: "https://placehold.co/1200x800.png",
     imageHint: "city traffic car",
     tags: "defensive driving, safety, city driving",
   },
@@ -106,7 +104,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Buying your first car is a huge milestone. This guide covers everything from setting a realistic budget (including running costs) to understanding insurance options and performing basic pre-purchase inspections. We'll help you decide between new and used, petrol and diesel, and manual and automatic, so you can make an informed decision that you'll be happy with for years to come.",
     author: "Rohan Sharma",
     date: "July 12, 2024",
-    imageSrc: "https://placehold.co/600x400/93c5fd/ffffff.png",
+    imageSrc: "https://placehold.co/1200x800.png",
     imageHint: "new car dealership",
     tags: "buying car, guide, beginners",
   },
@@ -118,7 +116,7 @@ const initialBlogPosts: BlogPost[] = [
     content: "Driving at night comes with its own set of risks due to reduced visibility and glare from oncoming traffic. This guide provides essential tips for staying safe, including how to properly use your headlights, manage glare, increase your following distance, and stay alert. We also cover how to keep your windscreen and mirrors clean for maximum clarity after dark.",
     author: "Priya Mehta",
     date: "July 08, 2024",
-    imageSrc: "https://placehold.co/600x400/4c1d95/ffffff.png",
+    imageSrc: "https://placehold.co/1200x800.png",
     imageHint: "night road car lights",
     tags: "night driving, safety, tips",
   },
@@ -129,21 +127,21 @@ const initialBanners: SiteBanner[] = [
     id: 'hero-1',
     title: 'Expert Guidance on Your Driving Journey',
     description: 'Our certified instructors provide personalized coaching to help you navigate the road with skill and confidence. Start your lesson today.',
-    imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png', 
+    imageSrc: 'https://placehold.co/1920x1080.png', 
     imageHint: 'driving instructor lesson',
   },
   { 
     id: 'hero-2',
     title: 'Master Every Turn, Enjoy the View',
     description: 'Learn to drive in real-world conditions, from city streets to scenic routes. Drivergy makes learning an adventure.',
-    imageSrc: 'https://placehold.co/1920x1080/3b82f6/ffffff.png', 
+    imageSrc: 'https://placehold.co/1920x1080.png', 
     imageHint: 'scenic road driving',
   },
   { 
     id: 'hero-3',
     title: 'Unlock Your Potential Behind the Wheel',
     description: "With state-of-the-art vehicles and professional support, getting your driver's license has never been easier or more enjoyable.",
-    imageSrc: 'https://placehold.co/1920x1080/f97316/ffffff.png', 
+    imageSrc: 'https://placehold.co/1920x1080.png', 
     imageHint: 'modern car driving',
   }
 ];
@@ -152,7 +150,7 @@ const initialPromotionalPosters: PromotionalPoster[] = [
   {
     id: 'promo-1',
     href: "/site/register",
-    imageSrc: "https://placehold.co/600x800/ef4444/ffffff.png",
+    imageSrc: "https://placehold.co/600x800.png",
     imageHint: "driving school promotion",
     title: "Student Discount",
     description: "Get 15% off on your first Premium plan.",
@@ -160,7 +158,7 @@ const initialPromotionalPosters: PromotionalPoster[] = [
   {
     id: 'promo-2',
     href: "/site/rto-services",
-    imageSrc: "https://placehold.co/600x800/3b82f6/ffffff.png",
+    imageSrc: "https://placehold.co/600x800.png",
     imageHint: "rto license poster",
     title: "Hassle-Free RTO",
     description: "We help you with all your license needs.",
@@ -168,7 +166,7 @@ const initialPromotionalPosters: PromotionalPoster[] = [
   {
     id: 'promo-3',
     href: "/site/register",
-    imageSrc: "https://placehold.co/600x800/f97316/ffffff.png",
+    imageSrc: "https://placehold.co/600x800.png",
     imageHint: "refer friend bonus",
     title: "Refer & Earn",
     description: "Invite friends and get rewards.",
@@ -182,7 +180,7 @@ const initialCourses: Omit<Course, 'icon'>[] = [
         description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
         totalEnrolled: 125,
         totalCertified: 98,
-        image: 'https://placehold.co/600x400/f87171/ffffff.png',
+        image: 'https://placehold.co/600x400.png',
         modules: [
         { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
         { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
@@ -195,7 +193,7 @@ const initialCourses: Omit<Course, 'icon'>[] = [
         description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
         totalEnrolled: 88,
         totalCertified: 71,
-        image: 'https://placehold.co/600x400/60a5fa/ffffff.png',
+        image: 'https://placehold.co/600x400.png',
         modules: [
         { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
         { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
@@ -207,7 +205,7 @@ const initialCourses: Omit<Course, 'icon'>[] = [
         description: 'A specialized course to help you ace the official RTO driving test and get your license.',
         totalEnrolled: 210,
         totalCertified: 195,
-        image: 'https://placehold.co/600x400/fbbf24/ffffff.png',
+        image: 'https://placehold.co/600x400.png',
         modules: [
         { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
         { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
@@ -474,7 +472,7 @@ const sampleTrainer: UserProfile = {
   vehicleInfo: 'Car (Manual)',
   approvalStatus: 'Approved',
   myReferralCode: 'RAJESH4321',
-  photoURL: 'https://placehold.co/100x100/facc15/44403c.png',
+  photoURL: 'https://placehold.co/100x100.png',
   specialization: 'Car',
   yearsOfExperience: 8,
   gender: 'Male',
@@ -499,7 +497,7 @@ const sampleCustomer: UserProfile = {
   photoIdNumber: '123456789012',
   trainerPreference: 'Any',
   myReferralCode: 'SHIV4567',
-  photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png',
+  photoURL: 'https://placehold.co/100x100.png',
   gender: 'Male',
   flatHouseNumber: 'B-123',
   street: 'Main Road',
@@ -628,7 +626,7 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
     contact: data.email,
     phone: data.phone,
     location: data.district || MOCK_DB.users[userIndex].location,
-    photoURL: data.photo ? `https://placehold.co/100x100/60a5fa/ffffff.png` : MOCK_DB.users[userIndex].photoURL,
+    photoURL: data.photo ? `https://placehold.co/100x100.png` : MOCK_DB.users[userIndex].photoURL,
     flatHouseNumber: data.flatHouseNumber,
     street: data.street,
     state: data.state,
