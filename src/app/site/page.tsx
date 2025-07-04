@@ -170,15 +170,12 @@ export default function PortfolioSitePage() {
           <div className="absolute inset-0">
             {/* Image Slideshow */}
             {!loading && heroSlides.length > 0 && heroSlides.map((slide, index) => (
-                <Image
+                <div
                     key={slide.id}
-                    src={slide.imageSrc}
-                    alt={slide.title}
-                    fill
-                    sizes="100vw"
-                    priority={index === 0}
-                    className={`object-cover transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
-                    data-ai-hint={slide.imageHint}
+                    className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
+                    style={{ backgroundImage: `url(${slide.imageSrc})` }}
+                    role="img"
+                    aria-label={slide.title}
                 />
             ))}
             {/* Overlay */}
