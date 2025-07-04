@@ -107,8 +107,8 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead><Gift className="inline-block mr-2 h-4 w-4" />Referrer</TableHead>
-                <TableHead><User className="inline-block mr-2 h-4 w-4" />Referee</TableHead>
+                <TableHead><Gift className="inline-block mr-2 h-4 w-4" />Referred By</TableHead>
+                <TableHead><User className="inline-block mr-2 h-4 w-4" />New Customer (Referee)</TableHead>
                 <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />Referee ID</TableHead>
                 <TableHead><IndianRupee className="inline-block mr-2 h-4 w-4" />Sub. Amount</TableHead>
                 <TableHead><Star className="inline-block mr-2 h-4 w-4" />Points Earned</TableHead>
