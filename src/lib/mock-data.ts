@@ -1000,7 +1000,7 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 // CONTENT MANAGEMENT
 // =================================================================
 
-const getSimulatedUploadedUrl = () => `https://placehold.co/600x400.png?v=${Date.now()}`;
+const getSimulatedUploadedUrl = () => `https://firebasestorage.googleapis.com/v0/b/ai-stud-f9699.appspot.com/o/driving-school-banner.png?alt=media&token=e93f3b73-c8d3-4638-a15d-3578a05c754d&v=${Date.now()}`;
 
 export const fetchCourses = async (): Promise<Course[]> => [...MOCK_DB.courses];
 
