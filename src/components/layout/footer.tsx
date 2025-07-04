@@ -2,12 +2,33 @@
 'use client';
 
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, Car } from 'lucide-react';
+import { cn } from "@/lib/utils";
+
+// A simplified logo component for the footer.
+const FooterLogo = () => (
+    <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
+      <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
+        <Car className="h-7 w-7 text-primary shrink-0" />
+      </div>
+      <span className={cn(
+        "font-headline text-2xl font-extrabold text-primary tracking-tighter"
+      )}>
+        Drivergy
+      </span>
+    </Link>
+);
+
 
 export default function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background py-6 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 text-center text-sm text-muted-foreground">
+        
+        <div className="flex justify-center mb-4">
+            <FooterLogo />
+        </div>
+
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full">
             <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 sm:gap-6 order-2 sm:order-1">
               <Link href="/contact" className="hover:text-primary transition-colors">
