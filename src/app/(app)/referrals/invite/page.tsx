@@ -26,13 +26,21 @@ export default function InviteReferralsPage() {
     if (user?.uid) {
       setLoading(true);
       fetchUserById(user.uid).then(userProfile => {
-        const code = userProfile?.myReferralCode || `REF-${user.uid.substring(0, 6).toUpperCase()}`;
-        setReferralCode(code);
-        setInitialReferralCode(code);
+        if (userProfile) {
+            const code = userProfile.myReferralCode || `${userProfile.name.split(' ')[0].toUpperCase()}${userProfile.id.slice(-4)}`;
+            setReferralCode(code);
+            setInitialReferralCode(code);
+        } else {
+            // Fallback for an edge case where user exists but profile fetch fails.
+            const namePart = user.displayName ? user.displayName.split(' ')[0].toUpperCase() : 'USER';
+            const code = `${namePart}${user.uid.slice(-4)}`;
+            setReferralCode(code);
+            setInitialReferralCode(code);
+        }
         setLoading(false);
       });
     } else {
-        const guestCode = 'REF-GUEST123';
+        const guestCode = 'JOHN1234';
         setReferralCode(guestCode);
         setInitialReferralCode(guestCode);
         setLoading(false);
