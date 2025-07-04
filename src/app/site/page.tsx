@@ -190,7 +190,7 @@ export default function PortfolioSitePage() {
             </div>
           )}
           
-          <div className="absolute inset-0 bg-black/60 z-[5]"></div>
+          <div className="absolute inset-0 bg-black/50 z-[5]"></div>
           
           <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
             {/* Text content slideshow */}
