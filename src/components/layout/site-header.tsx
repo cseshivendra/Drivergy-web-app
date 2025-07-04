@@ -63,6 +63,7 @@ interface NavLink {
 const navLinks: NavLink[] = [
   { href: '/site#services', label: 'Services' },
   { href: '/site#courses', label: 'Courses' },
+  { href: '/site#subscriptions', label: 'Plans' },
   { href: '/site/rto-services', label: 'RTO Services' },
   {
     label: 'Insights',
@@ -72,7 +73,6 @@ const navLinks: NavLink[] = [
       { href: '/site/blog', label: 'Blogs' },
     ],
   },
-  { href: '/site#subscriptions', label: 'Plans' },
   { href: '/site/career', label: 'Careers' },
   { href: '/site#contact', label: 'Support' },
 ];
