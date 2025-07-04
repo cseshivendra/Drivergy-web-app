@@ -27,12 +27,24 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   return drivergyChatFlow(input);
 }
 
+// Define a specific Zod schema for the user context passed to the prompt
+const UserContextSchema = z.object({
+  name: z.string(),
+  uniqueId: z.string(),
+  subscriptionPlan: z.string(),
+  approvalStatus: z.string(),
+  assignedTrainerName: z.string().optional(),
+  upcomingLesson: z.string().optional(),
+  completedLessons: z.number().optional(),
+  totalLessons: z.number().optional(),
+}).optional();
+
 const prompt = ai.definePrompt({
   name: 'drivergyChatPrompt',
   input: {
     schema: z.object({
       query: z.string(),
-      user: z.custom<UserProfile>().optional(),
+      user: UserContextSchema, // Use the new, more specific schema
     }),
   },
   output: {schema: ChatOutputSchema},
@@ -110,10 +122,23 @@ const drivergyChatFlow = ai.defineFlow(
       userProfile = await fetchUserById(input.userId);
     }
     
+    // Map the full user profile to the specific context the prompt needs.
+    // This is safer than passing a complex object with z.custom().
+    const userContext = userProfile ? {
+        name: userProfile.name,
+        uniqueId: userProfile.uniqueId,
+        subscriptionPlan: userProfile.subscriptionPlan,
+        approvalStatus: userProfile.approvalStatus,
+        assignedTrainerName: userProfile.assignedTrainerName,
+        upcomingLesson: userProfile.upcomingLesson,
+        completedLessons: userProfile.completedLessons,
+        totalLessons: userProfile.totalLessons,
+    } : undefined;
+
     try {
       const {output} = await prompt({
           query: input.query,
-          user: userProfile || undefined,
+          user: userContext,
       });
       if (!output) {
         return { response: "I'm sorry, I had trouble generating a response. Please try again." };
