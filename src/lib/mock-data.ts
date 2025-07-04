@@ -1097,9 +1097,10 @@ export const fetchBlogPosts = async (): Promise<BlogPost[]> => [...MOCK_DB.blogP
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
 
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
-  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  const { imageFile, ...restOfData } = data;
+  const newImageSrc = imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
   const newPost: BlogPost = { 
-    ...data, 
+    ...restOfData,
     date: format(new Date(), 'LLL d, yyyy'),
     imageSrc: newImageSrc!,
   };
@@ -1111,11 +1112,12 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
   const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
   if (index === -1) return false;
 
-  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  const { imageFile, ...restOfData } = data;
+  const newImageSrc = imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
   
   MOCK_DB.blogPosts[index] = { 
     ...MOCK_DB.blogPosts[index], 
-    ...data,
+    ...restOfData,
     imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc,
     slug: data.slug,
   };
@@ -1133,10 +1135,11 @@ export const fetchSiteBanners = async (): Promise<SiteBanner[]> => [...MOCK_DB.s
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
   const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
   if (index === -1) return false;
-  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  const { imageFile, ...restOfData } = data;
+  const newImageSrc = imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
   MOCK_DB.siteBanners[index] = { 
       ...MOCK_DB.siteBanners[index], 
-      ...data,
+      ...restOfData,
       imageSrc: newImageSrc || MOCK_DB.siteBanners[index].imageSrc
   };
   saveData();
@@ -1147,13 +1150,16 @@ export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> =>
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
   const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
   if (index === -1) return false;
-  const newImageSrc = data.imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
+  const { imageFile, ...restOfData } = data;
+  const newImageSrc = imageFile ? getSimulatedUploadedUrl() : data.imageSrc;
   MOCK_DB.promotionalPosters[index] = { 
       ...MOCK_DB.promotionalPosters[index],
-      ...data,
+      ...restOfData,
       imageSrc: newImageSrc || MOCK_DB.promotionalPosters[index].imageSrc,
       href: data.href || '#'
   };
   saveData();
   return true;
 }
+
+    
