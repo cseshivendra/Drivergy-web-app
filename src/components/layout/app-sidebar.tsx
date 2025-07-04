@@ -162,6 +162,7 @@ export default function AppSidebar() {
             </>
           )}
 
+          {/* Section for both Admins and Customers, but not Trainers */}
           {!isTrainer && (
             <>
               <SidebarMenuItem>
@@ -189,7 +190,11 @@ export default function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </>
+          )}
 
+          {/* Section for Customers ONLY */}
+          {isCustomer && (
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setReferralsOpen(!referralsOpen)}
@@ -230,7 +235,6 @@ export default function AppSidebar() {
                   </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
-            </>
           )}
 
           <SidebarMenuItem>
