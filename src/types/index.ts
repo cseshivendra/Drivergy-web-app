@@ -312,6 +312,7 @@ export interface BlogPost {
   date: string; // Stored as string for simplicity
   image: string;
   imageHint: string;
+  tags?: string;
 }
 
 export interface SiteBanner {
@@ -349,6 +350,7 @@ export const BlogPostSchema = z.object({
   date: z.string().min(1, { message: "Date is required." }), // Simple string for now
   image: z.string().url({ message: "Please enter a valid image URL." }),
   imageHint: z.string().min(1, { message: "Image hint is required." }),
+  tags: z.string().optional(),
 });
 export type BlogPostFormValues = z.infer<typeof BlogPostSchema>;
 

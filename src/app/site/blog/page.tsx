@@ -138,6 +138,15 @@ export default function BlogPage() {
                                             <span>{post.date}</span>
                                         </div>
                                     </div>
+                                    {post.tags && (
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            {post.tags.split(',').slice(0, 3).map(tag => (
+                                                <Badge key={tag.trim()} variant="outline" className="text-xs font-normal">
+                                                    {tag.trim()}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
                                     <p className="text-sm font-semibold text-primary group-hover:underline mt-2">
                                       Read More &rarr;
                                     </p>

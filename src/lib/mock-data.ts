@@ -58,7 +58,8 @@ const initialBlogPosts: BlogPost[] = [
     author: "Rohan Sharma",
     date: "July 26, 2024",
     image: "https://placehold.co/600x400.png",
-    imageHint: "driving test exam"
+    imageHint: "driving test exam",
+    tags: "rto, driving test, tips",
   },
   {
     slug: "mastering-parallel-parking-a-step-by-step-guide",
@@ -69,7 +70,8 @@ const initialBlogPosts: BlogPost[] = [
     author: "Priya Mehta",
     date: "July 22, 2024",
     image: "https://placehold.co/600x400.png",
-    imageHint: "parallel parking car"
+    imageHint: "parallel parking car",
+    tags: "parking, skills, guide",
   },
   {
     slug: "understanding-indian-road-signs-a-visual-guide",
@@ -80,7 +82,8 @@ const initialBlogPosts: BlogPost[] = [
     author: "Anjali Verma",
     date: "July 18, 2024",
     image: "https://placehold.co/600x400.png",
-    imageHint: "road signs traffic"
+    imageHint: "road signs traffic",
+    tags: "road signs, rto, safety",
   },
   {
     slug: "defensive-driving-101-how-to-stay-safe-in-city-traffic",
@@ -91,7 +94,8 @@ const initialBlogPosts: BlogPost[] = [
     author: "Vikram Singh",
     date: "July 15, 2024",
     image: "https://placehold.co/600x400.png",
-    imageHint: "city traffic car"
+    imageHint: "city traffic car",
+    tags: "defensive driving, safety, city driving",
   },
   {
     slug: "choosing-your-first-car-a-beginners-guide",
@@ -102,7 +106,8 @@ const initialBlogPosts: BlogPost[] = [
     author: "Rohan Sharma",
     date: "July 12, 2024",
     image: "https://placehold.co/600x400.png",
-    imageHint: "new car dealership"
+    imageHint: "new car dealership",
+    tags: "buying car, guide, beginners",
   },
   {
     slug: "night-driving-tips-for-staying-safe-after-dark",
@@ -113,7 +118,8 @@ const initialBlogPosts: BlogPost[] = [
     author: "Priya Mehta",
     date: "July 08, 2024",
     image: "https://placehold.co/600x400.png",
-    imageHint: "night road car lights"
+    imageHint: "night road car lights",
+    tags: "night driving, safety, tips",
   },
 ];
 
@@ -1010,7 +1016,7 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> =
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
   const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
   if (index === -1) return false;
-  MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...data };
+  MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...data, slug: data.slug }; // ensure slug is updated if changed
   saveData();
   return true;
 }

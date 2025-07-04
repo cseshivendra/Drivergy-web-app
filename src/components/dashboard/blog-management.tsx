@@ -37,6 +37,7 @@ function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () =>
       date: post?.date || format(new Date(), 'LLL d, yyyy'),
       image: post?.image || '',
       imageHint: post?.imageHint || '',
+      tags: post?.tags || '',
     },
   });
 
@@ -87,6 +88,7 @@ function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () =>
               <FormField control={form.control} name="image" render={({ field }) => ( <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input placeholder="https://placehold.co/..." {...field} /></FormControl><FormMessage /></FormItem> )} />
               <FormField control={form.control} name="imageHint" render={({ field }) => ( <FormItem><FormLabel>Image Hint</FormLabel><FormControl><Input placeholder="e.g., driving test" {...field} /></FormControl><FormMessage /></FormItem> )} />
             </div>
+            <FormField control={form.control} name="tags" render={({ field }) => ( <FormItem><FormLabel>Tags (comma separated)</FormLabel><FormControl><Input placeholder="e.g., rto, tips, driving" {...field} /></FormControl><FormMessage /></FormItem> )} />
              <DialogFooter className="pt-4 sticky bottom-0 bg-background">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>

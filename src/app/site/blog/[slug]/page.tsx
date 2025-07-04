@@ -9,9 +9,9 @@ import { useRouter } from 'next/navigation';
 import { fetchBlogPostBySlug } from '@/lib/mock-data';
 import type { BlogPost } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Car, User, Calendar, Facebook, Twitter, Instagram, Linkedin, ArrowLeft, Youtube, AlertCircle } from 'lucide-react';
+import { Car, User, Calendar, Facebook, Twitter, Instagram, Linkedin, ArrowLeft, Youtube, AlertCircle, Tag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import SiteHeader from '@/components/layout/site-header';
@@ -131,6 +131,18 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                     <CardContent className="p-6 md:p-8 prose dark:prose-invert max-w-none text-base md:text-lg leading-relaxed">
                         {post.content}
                     </CardContent>
+                    {post.tags && (
+                        <CardFooter className="p-6 md:p-8 pt-4 border-t">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Tag className="h-5 w-5 text-muted-foreground" />
+                                {post.tags.split(',').map(tag => (
+                                    <Badge key={tag.trim()} variant="secondary" className="text-sm">
+                                        {tag.trim()}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </CardFooter>
+                    )}
                 </Card>
             </div>
         </main>
