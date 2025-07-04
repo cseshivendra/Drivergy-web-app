@@ -422,7 +422,6 @@ const BaseRegistrationObjectSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }).max(100),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string().optional(),
-  location: z.string().min(1, { message: "Please select a location." }),
   gender: z.enum(GenderOptions, { required_error: "Please select a gender." }),
 });
 
@@ -450,6 +449,7 @@ const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
 
 const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   userRole: z.literal('trainer'),
+  location: z.string().min(1, { message: "Please select a location." }),
   yearsOfExperience: z.coerce.number().int().min(0, "Years of experience cannot be negative.").max(50, "Years of experience seems too high.").optional(),
   specialization: z.enum(SpecializationOptions, { required_error: "Please select a specialization." }),
   trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Please select vehicle type." }),

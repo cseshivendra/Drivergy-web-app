@@ -68,7 +68,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       name: '',
       email: '',
       phone: '',
-      location: '',
       gender: '', 
     };
     if (userRole === 'customer') {
@@ -94,6 +93,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     } else { // trainer
       return {
         ...base,
+        location: '',
         yearsOfExperience: undefined, 
         specialization: undefined, 
         trainerVehicleType: undefined, 
@@ -119,8 +119,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const selectedState = form.watch('state');
 
   const availableDistricts = useMemo(() => {
-    if (selectedState && DistrictsByState[selectedState]) {
-      return DistrictsByState[selectedState];
+    if (selectedState && DistrictsByState[selectedState as keyof typeof DistrictsByState]) {
+      return DistrictsByState[selectedState as keyof typeof DistrictsByState];
     }
     return [];
   }, [selectedState]);
@@ -296,28 +296,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Locations.map(loc => (
-                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="gender"
@@ -697,6 +675,28 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           <>
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                 <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select location" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {Locations.map(loc => (
+                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 <FormField
                 control={form.control}
                 name="yearsOfExperience"
@@ -710,6 +710,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     </FormItem>
                 )}
                 />
+            </div>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
                 control={form.control}
                 name="specialization"
@@ -732,9 +734,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     </FormItem>
                 )}
                 />
-            </div>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
+                 <FormField
                     control={form.control}
                     name="trainerVehicleType"
                     render={({ field }) => (
@@ -756,6 +756,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         </FormItem>
                     )}
                 />
+            </div>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
                     control={form.control}
                     name="vehicleNumber"
@@ -769,29 +771,30 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         </FormItem>
                     )}
                 />
+                <FormField
+                    control={form.control}
+                    name="fuelType"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select fuel type" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {FuelTypeOptions.map(type => (
+                                <SelectItem key={type} value={type}>{type}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
-             <FormField
-                control={form.control}
-                name="fuelType"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select fuel type" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {FuelTypeOptions.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+            
 
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
             <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
