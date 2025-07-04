@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
@@ -23,6 +24,9 @@ import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 
 export default function AdminDashboard() {
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'verifications';
+
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
@@ -155,7 +159,7 @@ export default function AdminDashboard() {
           currentFilters={filters}
         />
         
-        <Tabs defaultValue="verifications" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="verifications">
               <ShieldCheck className="mr-2 h-4 w-4" />
