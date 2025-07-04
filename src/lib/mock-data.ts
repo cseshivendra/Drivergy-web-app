@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 
@@ -14,6 +14,7 @@ interface MockDatabase {
   lessonRequests: LessonRequest[];
   rescheduleRequests: RescheduleRequest[];
   feedback: Feedback[];
+  referrals: Referral[];
   courses: Course[];
 }
 
@@ -22,6 +23,7 @@ let MOCK_DB: MockDatabase = {
   lessonRequests: [],
   rescheduleRequests: [],
   feedback: [],
+  referrals: [],
   courses: [
       {
         id: 'course1',
@@ -175,6 +177,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
     totalLessons: getLessonsForPlan(data.subscriptionPlan),
     completedLessons: 0,
+    totalReferralPoints: 0,
   };
   MOCK_DB.users.push(newUser);
   
@@ -187,6 +190,30 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     requestTimestamp: new Date().toISOString(),
   };
   MOCK_DB.lessonRequests.push(newRequest);
+
+  if (data.referralCode) {
+    const referrer = MOCK_DB.users.find(u => u.myReferralCode === data.referralCode.trim());
+    if (referrer) {
+      const points = 100; // Hardcoded points for a successful referral
+      const newReferral: Referral = {
+        id: generateId(),
+        referrerId: referrer.id,
+        referrerName: referrer.name,
+        refereeId: newId,
+        refereeName: data.name,
+        status: 'Successful',
+        pointsEarned: points,
+        payoutStatus: 'Pending',
+        timestamp: new Date().toISOString(),
+      };
+      MOCK_DB.referrals.push(newReferral);
+
+      const referrerIndex = MOCK_DB.users.findIndex(u => u.id === referrer.id);
+      if (referrerIndex !== -1) {
+        MOCK_DB.users[referrerIndex].totalReferralPoints = (MOCK_DB.users[referrerIndex].totalReferralPoints || 0) + points;
+      }
+    }
+  }
   
   saveData();
   return { ...newUser };
@@ -429,3 +456,27 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
   saveData();
   return { ...MOCK_DB.users[customerIndex] };
 }
+
+// =================================================================
+// REFERRALS
+// =================================================================
+
+export const fetchAllReferrals = async (): Promise<Referral[]> => {
+  return [...MOCK_DB.referrals].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+};
+
+export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
+  return MOCK_DB.referrals
+    .filter(r => r.referrerId === userId)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+};
+
+export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
+  const referralIndex = MOCK_DB.referrals.findIndex(r => r.id === referralId);
+  if (referralIndex !== -1) {
+    MOCK_DB.referrals[referralIndex].payoutStatus = status;
+    saveData();
+    return true;
+  }
+  return false;
+};

@@ -5,7 +5,22 @@ import type React from 'react';
 export const ApprovalStatusOptions = ["Pending", "Approved", "In Progress", "Rejected"] as const;
 export type ApprovalStatusType = typeof ApprovalStatusOptions[number];
 
+export const PayoutStatusOptions = ["Pending", "Paid"] as const;
+export type PayoutStatusType = typeof PayoutStatusOptions[number];
+
 export const TrainerPreferenceOptions = ["Male", "Female", "Any"] as const;
+
+export interface Referral {
+  id: string;
+  referrerId: string;
+  referrerName: string;
+  refereeId: string;
+  refereeName: string;
+  status: 'Successful';
+  pointsEarned: number;
+  payoutStatus: PayoutStatusType;
+  timestamp: string;
+}
 
 export interface UserProfile {
   id: string;
@@ -43,6 +58,7 @@ export interface UserProfile {
   subscriptionStartDate?: string;
   totalLessons?: number;
   completedLessons?: number;
+  totalReferralPoints?: number;
 }
 
 export const LessonRequestStatusOptions = ["Pending", "Active", "Completed"] as const;
@@ -302,6 +318,7 @@ const CustomerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({
   subscriptionStartDate: z.date({
     required_error: "A subscription start date is required.",
   }),
+  referralCode: z.string().optional(),
 });
 
 const TrainerRegistrationObjectSchema = BaseRegistrationObjectSchema.extend({

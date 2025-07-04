@@ -8,13 +8,14 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2 } from 'lucide-react';
+import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral } from '@/types';
+import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2, Gift } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LessonProgressTable from './lesson-progress-table';
+import ReferralTable from './referral-table';
 
 export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -23,6 +24,7 @@ export default function AdminDashboard() {
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -30,6 +32,7 @@ export default function AdminDashboard() {
   const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
   const [loadingLessonProgress, setLoadingLessonProgress] = useState(true);
+  const [loadingReferrals, setLoadingReferrals] = useState(true);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +45,7 @@ export default function AdminDashboard() {
     setLoadingRescheduleRequests(true);
     setLoadingFeedback(true);
     setLoadingLessonProgress(true);
+    setLoadingReferrals(true);
 
     try {
       const [
@@ -51,6 +55,7 @@ export default function AdminDashboard() {
         reschedules,
         feedbackData,
         progressData,
+        referralData,
       ] = await Promise.all([
         fetchSummaryData(),
         fetchAllUsers(),
@@ -58,6 +63,7 @@ export default function AdminDashboard() {
         fetchRescheduleRequests(),
         fetchAllFeedback(),
         fetchCustomerLessonProgress(),
+        fetchAllReferrals(),
       ]);
       
       setSummaryData(summary);
@@ -66,6 +72,7 @@ export default function AdminDashboard() {
       setRescheduleRequests(reschedules);
       setFeedback(feedbackData);
       setLessonProgress(progressData);
+      setReferrals(referralData);
 
     } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -76,6 +83,7 @@ export default function AdminDashboard() {
         setLoadingRescheduleRequests(false);
         setLoadingFeedback(false);
         setLoadingLessonProgress(false);
+        setLoadingReferrals(false);
     }
   }, []);
 
@@ -190,6 +198,12 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="management" className="mt-6 space-y-8">
+            <ReferralTable
+              title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Management</>}
+              referrals={referrals}
+              isLoading={loadingReferrals}
+              onActioned={handleActioned}
+            />
             <LessonProgressTable
               title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
               data={lessonProgress}

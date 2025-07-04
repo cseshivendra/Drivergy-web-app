@@ -37,7 +37,7 @@ import {
   type UserProfile,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff, CalendarIcon, Loader2 } from 'lucide-react'; 
+import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff, CalendarIcon, Loader2, Gift } from 'lucide-react'; 
 import { useMemo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -89,6 +89,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         photoIdNumber: '',
         photoIdFile: undefined,
         subscriptionStartDate: undefined,
+        referralCode: '',
       } as CustomerRegistrationFormValues;
     } else { // trainer
       return {
@@ -617,7 +618,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               </>
             )}
 
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Photo ID Verification</h3>
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Photo ID & Referral</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField
                     control={form.control}
@@ -672,6 +673,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     <FormDescription>
                         Upload a clear copy of your selected Photo ID (PDF, JPG, PNG).
                     </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="referralCode"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><Gift className="mr-2 h-4 w-4 text-primary" />Referral Code (Optional)</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter referral code if you have one" {...field} />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
