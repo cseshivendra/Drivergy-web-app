@@ -239,6 +239,26 @@ export const GenderOptions = ["Male", "Female", "Other", "Prefer not to say"] as
 export const DLStatusOptions = ["New Learner", "Already Have DL"] as const;
 export const PhotoIdTypeOptions = ["Aadhaar Card", "PAN Card", "Voter ID", "Passport", "Driving License"] as const;
 
+// --- RTO Quiz Types ---
+export interface Question {
+  id: string;
+  question: { [language: string]: string };
+  options: { [language: string]: string[] };
+  correctAnswer: { [language: string]: string };
+}
+
+export interface QuizSet {
+  id: string;
+  title: string;
+  questions: Question[];
+}
+
+export const availableLanguages = [
+  { code: 'en', name: 'English' },
+  { code: 'hi', name: 'हिंदी (Hindi)' },
+];
+
+
 // --- Career Page Types ---
 export interface JobOpening {
   id: string;
@@ -277,6 +297,24 @@ export const JobOpenings: JobOpening[] = [
 ];
 
 // --- Zod Schemas ---
+
+export const CourseModuleSchema = z.object({
+  title: z.string().min(3, { message: "Title must be at least 3 characters." }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  duration: z.string().min(1, { message: "Duration is required." }),
+});
+
+export type CourseModuleFormValues = z.infer<typeof CourseModuleSchema>;
+
+export const QuizQuestionSchema = z.object({
+  question_en: z.string().min(10, { message: "English question is required." }),
+  question_hi: z.string().min(10, { message: "Hindi question is required." }),
+  options_en: z.string().min(1, { message: "English options are required." }),
+  options_hi: z.string().min(1, { message: "Hindi options are required." }),
+  correctAnswer_en: z.string().min(1, { message: "English correct answer is required." }),
+  correctAnswer_hi: z.string().min(1, { message: "Hindi correct answer is required." }),
+});
+export type QuizQuestionFormValues = z.infer<typeof QuizQuestionSchema>;
 
 export const CareerFormSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters." }),

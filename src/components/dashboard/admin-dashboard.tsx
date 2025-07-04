@@ -8,14 +8,16 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2, Gift } from 'lucide-react';
+import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals, fetchCourses, fetchQuizSets } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral, Course, QuizSet } from '@/types';
+import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2, Gift, Library } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LessonProgressTable from './lesson-progress-table';
 import ReferralTable from './referral-table';
+import CourseManagement from './course-management';
+import QuizManagement from './quiz-management';
 
 export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
@@ -25,37 +27,22 @@ export default function AdminDashboard() {
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
 
-  const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [loadingAllLessonRequests, setLoadingAllLessonRequests] = useState(true);
-  const [loadingRescheduleRequests, setLoadingRescheduleRequests] = useState(true);
-  const [loadingFeedback, setLoadingFeedback] = useState(true);
-  const [loadingLessonProgress, setLoadingLessonProgress] = useState(true);
-  const [loadingReferrals, setLoadingReferrals] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState('');
 
   const loadAllData = useCallback(async () => {
-    setLoadingSummary(true);
-    setLoadingUsers(true);
-    setLoadingAllLessonRequests(true);
-    setLoadingRescheduleRequests(true);
-    setLoadingFeedback(true);
-    setLoadingLessonProgress(true);
-    setLoadingReferrals(true);
+    setLoading(true);
 
     try {
       const [
-        summary,
-        users,
-        lessonRequests,
-        reschedules,
-        feedbackData,
-        progressData,
-        referralData,
+        summary, users, lessonRequests, reschedules, feedbackData,
+        progressData, referralData, courseData, quizData
       ] = await Promise.all([
         fetchSummaryData(),
         fetchAllUsers(),
@@ -64,6 +51,8 @@ export default function AdminDashboard() {
         fetchAllFeedback(),
         fetchCustomerLessonProgress(),
         fetchAllReferrals(),
+        fetchCourses(),
+        fetchQuizSets(),
       ]);
       
       setSummaryData(summary);
@@ -73,17 +62,13 @@ export default function AdminDashboard() {
       setFeedback(feedbackData);
       setLessonProgress(progressData);
       setReferrals(referralData);
+      setCourses(courseData);
+      setQuizSets(quizData);
 
     } catch (error) {
         console.error("Error loading dashboard data:", error);
     } finally {
-        setLoadingSummary(false);
-        setLoadingUsers(false);
-        setLoadingAllLessonRequests(false);
-        setLoadingRescheduleRequests(false);
-        setLoadingFeedback(false);
-        setLoadingLessonProgress(false);
-        setLoadingReferrals(false);
+        setLoading(false);
     }
   }, []);
 
@@ -145,7 +130,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         
-        <SummaryMetrics data={summaryData} isLoading={loadingSummary} />
+        <SummaryMetrics data={summaryData} isLoading={loading} />
         
         <FilterControls 
           onFilterChange={handleFilterChange} 
@@ -153,7 +138,7 @@ export default function AdminDashboard() {
         />
         
         <Tabs defaultValue="verifications" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="verifications">
               <ShieldCheck className="mr-2 h-4 w-4" />
               Verifications
@@ -166,19 +151,23 @@ export default function AdminDashboard() {
               <ClipboardList className="mr-2 h-4 w-4" />
               Management
             </TabsTrigger>
+            <TabsTrigger value="content">
+              <Library className="mr-2 h-4 w-4" />
+              Content
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="verifications" className="mt-6 space-y-8">
             <UserTable 
               title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
               users={customers} 
-              isLoading={loadingUsers} 
+              isLoading={loading} 
               onUserActioned={handleActioned}
             />
             <UserTable 
               title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
               users={instructors} 
-              isLoading={loadingUsers} 
+              isLoading={loading} 
               onUserActioned={handleActioned}
             />
           </TabsContent>
@@ -187,12 +176,12 @@ export default function AdminDashboard() {
              <RequestTable 
               title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
               requests={allLessonRequests} 
-              isLoading={loadingAllLessonRequests} 
+              isLoading={loading} 
             />
             <RescheduleRequestTable
               title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
               requests={rescheduleRequests}
-              isLoading={loadingRescheduleRequests}
+              isLoading={loading}
               onActioned={handleActioned}
             />
           </TabsContent>
@@ -201,24 +190,39 @@ export default function AdminDashboard() {
             <ReferralTable
               title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Management</>}
               referrals={referrals}
-              isLoading={loadingReferrals}
+              isLoading={loading}
               onActioned={handleActioned}
             />
             <LessonProgressTable
               title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
               data={lessonProgress}
-              isLoading={loadingLessonProgress}
+              isLoading={loading}
             />
             <UserTable 
               title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
               users={existingInstructors} 
-              isLoading={loadingUsers} 
+              isLoading={loading} 
               onUserActioned={handleActioned}
             />
             <FeedbackTable
               title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
               feedback={feedback}
-              isLoading={loadingFeedback}
+              isLoading={loading}
+            />
+          </TabsContent>
+
+          <TabsContent value="content" className="mt-6 space-y-8">
+            <CourseManagement
+              title={<>Course Content Management</>}
+              courses={courses}
+              isLoading={loading}
+              onAction={handleActioned}
+            />
+            <QuizManagement
+              title={<>RTO Quiz Management</>}
+              quizSets={quizSets}
+              isLoading={loading}
+              onAction={handleActioned}
             />
           </TabsContent>
         </Tabs>

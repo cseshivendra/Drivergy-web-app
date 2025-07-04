@@ -6,51 +6,43 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Users, Award, Clock, PlayCircle, BookOpen, Car, Bike, FileText } from 'lucide-react';
-
-const courses = [
-    {
-        id: 'course1',
-        title: 'Comprehensive Car Program',
-        description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
-        icon: Car,
-        totalEnrolled: 125,
-        totalCertified: 98,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
-        { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
-        { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
-        ],
-    },
-    {
-        id: 'course2',
-        title: 'Motorcycle Rider Course',
-        description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
-        icon: Bike,
-        totalEnrolled: 88,
-        totalCertified: 71,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
-        { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
-        ],
-    },
-    {
-        id: 'course3',
-        title: 'RTO Test Preparation',
-        description: 'A specialized course to help you ace the official RTO driving test and get your license.',
-        icon: FileText,
-        totalEnrolled: 210,
-        totalCertified: 195,
-        image: 'https://placehold.co/600x400/d92525/ffffff.png',
-        modules: [
-        { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
-        { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
-        ],
-    },
-];
+import { useEffect, useState } from 'react';
+import { fetchCourses } from '@/lib/mock-data';
+import type { Course } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchCourses().then(data => {
+      setCourses(data);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const renderSkeletons = () => (
+    Array(3).fill(0).map((_, i) => (
+      <Card key={`skeleton-${i}`} className="shadow-xl flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
+        <Skeleton className="h-48 w-full" />
+        <CardHeader className="pb-3">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-full mt-2" />
+          <Skeleton className="h-4 w-1/2 mt-1" />
+        </CardHeader>
+        <CardContent className="space-y-5 flex-grow">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+        <CardFooter className="mt-auto bg-muted/30 p-4 border-t border-border/50">
+          <Skeleton className="h-10 w-full" />
+        </CardFooter>
+      </Card>
+    ))
+  );
+
   return (
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
       <header className="mb-12 text-center">
@@ -63,7 +55,11 @@ export default function CoursesPage() {
         </p>
       </header>
       
-      {courses.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+          {renderSkeletons()}
+        </div>
+      ) : courses.length === 0 ? (
         <p className="text-center text-muted-foreground text-xl">No courses available at the moment. Please check back later.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
