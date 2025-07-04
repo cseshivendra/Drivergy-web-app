@@ -11,10 +11,9 @@ import RescheduleRequestTable from '@/components/dashboard/reschedule-request-ta
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchAllReferrals, fetchCourses, fetchQuizSets, fetchFaqs, fetchBlogPosts, fetchSiteBanners, fetchPromotionalPosters } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Referral, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
-import { Users, UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BellRing, ClipboardList, BarChart2, Gift, Library } from 'lucide-react';
+import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Gift } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LessonProgressTable from './lesson-progress-table';
 import ReferralTable from './referral-table';
 import CourseManagement from './course-management';
@@ -25,7 +24,7 @@ import VisualContentManagement from './visual-content-management';
 
 export default function AdminDashboard() {
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get('tab') || 'verifications';
+  const activeTab = searchParams.get('tab');
 
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
@@ -159,81 +158,8 @@ export default function AdminDashboard() {
           currentFilters={filters}
         />
         
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-            <TabsTrigger value="verifications">
-              <ShieldCheck className="mr-2 h-4 w-4" />
-              Verifications
-            </TabsTrigger>
-            <TabsTrigger value="requests">
-              <BellRing className="mr-2 h-4 w-4" />
-              Requests
-            </TabsTrigger>
-            <TabsTrigger value="management">
-              <ClipboardList className="mr-2 h-4 w-4" />
-              Management
-            </TabsTrigger>
-            <TabsTrigger value="content">
-              <Library className="mr-2 h-4 w-4" />
-              Content
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="verifications" className="mt-6 space-y-8">
-            <UserTable 
-              title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />New Customers</>} 
-              users={customers} 
-              isLoading={loading} 
-              onUserActioned={handleActioned}
-            />
-            <UserTable 
-              title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructors</>} 
-              users={instructors} 
-              isLoading={loading} 
-              onUserActioned={handleActioned}
-            />
-          </TabsContent>
-          
-          <TabsContent value="requests" className="mt-6 space-y-8">
-             <RequestTable 
-              title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
-              requests={allLessonRequests} 
-              isLoading={loading} 
-            />
-            <RescheduleRequestTable
-              title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
-              requests={rescheduleRequests}
-              isLoading={loading}
-              onActioned={handleActioned}
-            />
-          </TabsContent>
-
-          <TabsContent value="management" className="mt-6 space-y-8">
-            <ReferralTable
-              title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Management</>}
-              referrals={referrals}
-              isLoading={loading}
-              onActioned={handleActioned}
-            />
-            <LessonProgressTable
-              title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
-              data={lessonProgress}
-              isLoading={loading}
-            />
-            <UserTable 
-              title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
-              users={existingInstructors} 
-              isLoading={loading} 
-              onUserActioned={handleActioned}
-            />
-            <FeedbackTable
-              title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
-              feedback={feedback}
-              isLoading={loading}
-            />
-          </TabsContent>
-
-          <TabsContent value="content" className="mt-6 space-y-8">
+        {activeTab === 'content' ? (
+          <div className="space-y-8">
             <BlogManagement
               title="Blog Post Management"
               posts={blogPosts}
@@ -265,8 +191,56 @@ export default function AdminDashboard() {
               isLoading={loading}
               onAction={handleActioned}
             />
-          </TabsContent>
-        </Tabs>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <UserTable 
+              title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>} 
+              users={customers} 
+              isLoading={loading} 
+              onUserActioned={handleActioned}
+            />
+            <UserTable 
+              title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>} 
+              users={instructors} 
+              isLoading={loading} 
+              onUserActioned={handleActioned}
+            />
+            <RequestTable 
+              title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
+              requests={allLessonRequests} 
+              isLoading={loading} 
+            />
+            <RescheduleRequestTable
+              title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
+              requests={rescheduleRequests}
+              isLoading={loading}
+              onActioned={handleActioned}
+            />
+            <ReferralTable
+              title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Management</>}
+              referrals={referrals}
+              isLoading={loading}
+              onActioned={handleActioned}
+            />
+            <LessonProgressTable
+              title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
+              data={lessonProgress}
+              isLoading={loading}
+            />
+            <UserTable 
+              title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
+              users={existingInstructors} 
+              isLoading={loading} 
+              onUserActioned={handleActioned}
+            />
+            <FeedbackTable
+              title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
+              feedback={feedback}
+              isLoading={loading}
+            />
+          </div>
+        )}
       </main>
     </div>
   );
