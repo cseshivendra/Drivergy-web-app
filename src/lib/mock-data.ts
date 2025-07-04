@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues } from '@/types';
@@ -27,6 +28,274 @@ let MOCK_DB: MockDatabase = {
   courses: [],
   quizSets: [],
 };
+
+// =================================================================
+// INITIAL DATA (if not in localStorage)
+// =================================================================
+
+const initialCourses: Omit<Course, 'icon'>[] = [
+    {
+        id: 'course1',
+        title: 'Comprehensive Car Program',
+        description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
+        totalEnrolled: 125,
+        totalCertified: 98,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+        { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
+        { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
+        { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
+        ],
+    },
+    {
+        id: 'course2',
+        title: 'Motorcycle Rider Course',
+        description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
+        totalEnrolled: 88,
+        totalCertified: 71,
+        image: 'https://placehold.co/600x400.png',
+        modules: [
+        { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
+        { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
+        ],
+    },
+    {
+        id: 'course3',
+        title: 'RTO Test Preparation',
+        description: 'A specialized course to help you ace the official RTO driving test and get your license.',
+        totalEnrolled: 210,
+        totalCertified: 195,
+        image: 'https://placehold.co/600x400/d92525/ffffff.png',
+        modules: [
+        { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
+        { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
+        ],
+    },
+];
+
+const baseQuestions = [
+  {
+    question: {
+      en: 'A red traffic light indicates that you must:',
+      hi: 'एक लाल ट्रैफिक लाइट इंगित करती है कि आपको:',
+    },
+    options: {
+      en: ['Stop behind the line', 'Slow down', 'Proceed with caution', 'Go if the way is clear'],
+      hi: ['रेखा के पीछे रुकें', 'धीमे हो जाएं', 'सावधानी से आगे बढ़ें', 'रास्ता साफ हो तो जाएं'],
+    },
+    correctAnswer: {
+      en: 'Stop behind the line',
+      hi: 'रेखा के पीछे रुकें',
+    },
+  },
+  {
+    question: {
+      en: 'A triangular sign with a red border is a:',
+      hi: 'लाल बॉर्डर वाला एक त्रिकोणीय संकेत है:',
+    },
+    options: {
+      en: ['Mandatory sign', 'Warning sign', 'Informatory sign', 'Regulatory sign'],
+      hi: ['अनिवार्य संकेत', 'चेतावनी संकेत', 'सूचनात्मक संकेत', 'नियामक संकेत'],
+    },
+    correctAnswer: {
+      en: 'Warning sign',
+      hi: 'चेतावनी संकेत',
+    },
+  },
+  {
+    question: {
+      en: 'When is overtaking prohibited?',
+      hi: 'ओवरटेक करना कब प्रतिबंधित है?',
+    },
+    options: {
+      en: ['On a wide road', 'When the road ahead is not clearly visible', 'During the daytime', 'On a one-way street'],
+      hi: ['चौड़ी सड़क पर', 'जब आगे का रास्ता साफ दिखाई न दे', 'दिन के समय', 'एक तरफा सड़क पर'],
+    },
+    correctAnswer: {
+      en: 'When the road ahead is not clearly visible',
+      hi: 'जब आगे का रास्ता साफ दिखाई न दे',
+    },
+  },
+  {
+    question: {
+      en: 'A blue circular sign with a white bicycle symbol indicates:',
+      hi: 'एक सफेद साइकिल प्रतीक वाला नीला गोलाकार संकेत इंगित करता है:',
+    },
+    options: {
+      en: ['Bicycles are not allowed', 'Parking for bicycles', 'Compulsory pedal cycle track', 'Bicycle repair shop ahead'],
+      hi: ['साइकिल की अनुमति नहीं है', 'साइकिल के लिए पार्किंग', 'अनिवार्य पेडल साइकिल ट्रैक', 'आगे साइकिल मरम्मत की दुकान'],
+    },
+    correctAnswer: {
+      en: 'Compulsory pedal cycle track',
+      hi: 'अनिवार्य पेडल साइकिल ट्रैक',
+    },
+  },
+  {
+    question: {
+      en: 'What is the minimum age for obtaining a license for a motorcycle with gears?',
+      hi: 'गियर वाली मोटरसाइकिल के लिए लाइसेंस प्राप्त करने की न्यूनतम आयु क्या है?',
+    },
+    options: {
+      en: ['16 years', '18 years', '20 years', '21 years'],
+      hi: ['16 साल', '18 साल', '20 साल', '21 साल'],
+    },
+    correctAnswer: {
+      en: '18 years',
+      hi: '18 साल',
+    },
+  },
+  {
+    question: {
+      en: 'What does a flashing yellow traffic light mean?',
+      hi: 'एक चमकती पीली ट्रैफिक लाइट का क्या मतलब है?',
+    },
+    options: {
+      en: ['Stop completely', 'Speed up', 'Slow down and proceed with caution', 'The light is about to turn red'],
+      hi: ['पूरी तरह से रुकें', 'गति बढ़ाएं', 'धीमे चलें और सावधानी से आगे बढ़ें', 'लाइट लाल होने वाली है'],
+    },
+    correctAnswer: {
+      en: 'Slow down and proceed with caution',
+      hi: 'धीमे चलें और सावधानी से आगे बढ़ें',
+    },
+  },
+  {
+    question: {
+      en: 'If you are approached by an ambulance with its siren on, you should:',
+      hi: 'यदि आपके पास सायरन बजाती हुई एम्बुलेंस आती है, तो आपको:',
+    },
+    options: {
+      en: ['Increase your speed', 'Allow passage by moving to the left', 'Continue at the same speed', 'Stop in the middle of the road'],
+      hi: ['अपनी गति बढ़ाएं', 'बाईं ओर हटकर रास्ता दें', 'उसी गति से चलते रहें', 'सड़क के बीच में रुक जाएं'],
+    },
+    correctAnswer: {
+      en: 'Allow passage by moving to the left',
+      hi: 'बाईं ओर हटकर रास्ता दें',
+    },
+  },
+  {
+    question: {
+      en: 'What does the sign showing a horn with a red slash across it mean?',
+      hi: 'जिस संकेत में हॉर्न पर लाल स्लैश होता है, उसका क्या मतलब है?',
+    },
+    options: {
+      en: ['Honking is compulsory', 'You may honk softly', 'Horn prohibited', 'Hospital nearby'],
+      hi: ['हॉर्न बजाना अनिवार्य है', 'आप धीरे से हॉर्न बजा सकते हैं', 'हॉर्न प्रतिबंधित है', 'पास में अस्पताल है'],
+    },
+    correctAnswer: {
+      en: 'Horn prohibited',
+      hi: 'हॉर्न प्रतिबंधित है',
+    },
+  },
+  {
+    question: {
+      en: 'While driving, using a mobile phone is:',
+      hi: 'ड्राइवING करते समय, मोबाइल फोन का उपयोग करना:',
+    },
+    options: {
+      en: ['Allowed if using a hands-free device', 'Allowed for short calls', 'Prohibited', 'Allowed only when stopped'],
+      hi: ['हैंड्स-फ्री डिवाइस का उपयोग करने पर अनुमति है', 'छोटी कॉल के लिए अनुमति है', 'प्रतिबंधित है', 'केवल रुकने पर अनुमति है'],
+    },
+    correctAnswer: {
+      en: 'Prohibited',
+      hi: 'प्रतिबंधित है',
+    },
+  },
+  {
+    question: {
+      en: "The validity of a Learner's License is:",
+      hi: "एक लर्नर लाइसेंस की वैधता है:",
+    },
+    options: {
+      en: ['3 months', '6 months', '1 year', 'Until you get a permanent license'],
+      hi: ['3 महीने', '6 महीने', '1 साल', 'जब तक आपको स्थायी लाइसेंस नहीं मिल जाता'],
+    },
+    correctAnswer: {
+      en: '6 months',
+      hi: '6 महीने',
+    },
+  },
+  {
+    question: {
+      en: 'When parking a vehicle facing downhill, the front wheels should be turned:',
+      hi: 'ढलान पर वाहन पार्क करते समय, आगे के पहियों को मोड़ना चाहिए:',
+    },
+    options: {
+      en: ['Towards the right', 'Straight ahead', 'Towards the kerb or side of the road', 'It does not matter'],
+      hi: ['दाईं ओर', 'सीधे आगे', 'फुटपाथ या सड़क के किनारे की ओर', 'इससे कोई फर्क नहीं पड़ता'],
+    },
+    correctAnswer: {
+      en: 'Towards the kerb or side of the road',
+      hi: 'फुटपाथ या सड़क के किनारे की ओर',
+    },
+  },
+  {
+    question: {
+      en: 'Which of these documents must be carried while driving a vehicle?',
+      hi: 'वाहन चलाते समय इनमें से कौन से दस्तावेज ले जाने चाहिए?',
+    },
+    options: {
+      en: ['Driving license, registration, insurance, PUC', 'Aadhaar card and PAN card', 'Vehicle purchase invoice', 'Your birth certificate'],
+      hi: ['ड्राइविंग लाइसेंस, पंजीकरण, बीमा, पीयूसी', 'आधार कार्ड और पैन कार्ड', 'वाहन खरीद चालान', 'आपका जन्म प्रमाण पत्र'],
+    },
+    correctAnswer: {
+      en: 'Driving license, registration, insurance, PUC',
+      hi: 'ड्राइविंग लाइसेंस, पंजीकरण, बीमा, पीयूसी',
+    },
+  },
+  {
+    question: {
+      en: "What does the term 'tailgating' mean in driving?",
+      hi: "ड्राइविंग में 'टेलगेटिंग' शब्द का क्या अर्थ है?",
+    },
+    options: {
+      en: ['Following another vehicle too closely', 'Checking your tail lights', 'Driving with the trunk open', 'Overtaking from the left'],
+      hi: ['दूसरे वाहन का बहुत करीब से पीछा करना', 'अपनी टेल लाइट की जाँच करना', 'ट्रंक खुला रखकर गाड़ी चलाना', 'बाईं ओर से ओवरटेक करना'],
+    },
+    correctAnswer: {
+      en: 'Following another vehicle too closely',
+      hi: 'दूसरे वाहन का बहुत करीब से पीछा करना',
+    },
+  },
+  {
+    question: {
+      en: 'The hand signal for turning right is:',
+      hi: 'दाईं ओर मुड़ने का हाथ का संकेत है:',
+    },
+    options: {
+      en: ['Extend the right arm straight out, palm facing forward', 'Rotate the arm in a clockwise circle', 'Extend the right arm and move it up and down', 'Point the arm downwards'],
+      hi: ['दाहिना हाथ सीधा बाहर फैलाएं, हथेली आगे की ओर', 'हाथ को दक्षिणावर्त वृत्त में घुमाएं', 'दाहिना हाथ फैलाकर ऊपर-नीचे करें', 'हाथ को नीचे की ओर इंगित करें'],
+    },
+    correctAnswer: {
+      en: 'Extend the right arm straight out, palm facing forward',
+      hi: 'दाहिना हाथ सीधा बाहर फैलाएं, हथेली आगे की ओर',
+    },
+  },
+  {
+    question: {
+      en: 'What is the purpose of a pedestrian crossing (Zebra crossing)?',
+      hi: 'पैदल यात्री क्रॉसिंग (ज़ेबरा क्रॉसिंग) का उद्देश्य क्या है?',
+    },
+    options: {
+      en: ['For vehicles to stop', 'For pedestrians to safely cross the road', 'To mark the end of a speed limit', 'For parking'],
+      hi: ['वाहनों को रोकने के लिए', 'पैदल चलने वालों को सुरक्षित रूप से सड़क पार करने के लिए', 'गति सीमा के अंत को चिह्नित करने के लिए', 'पार्किंग के लिए'],
+    },
+    correctAnswer: {
+      en: 'For pedestrians to safely cross the road',
+      hi: 'पैदल चलने वालों को सुरक्षित रूप से सड़क पार करने के लिए',
+    },
+  },
+];
+
+const initialQuizSets: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
+  id: `set${i + 1}`,
+  title: `Set ${i + 1}`,
+  questions: baseQuestions.map((q, j) => ({
+    id: `q${i + 1}-${j + 1}`,
+    question: q.question,
+    options: q.options,
+    correctAnswer: q.correctAnswer,
+  })),
+}));
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
   return coursesToHydrate.map(course => {
@@ -532,272 +801,3 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
   saveData();
   return MOCK_DB.quizSets[setIndex];
 };
-
-
-// =================================================================
-// INITIAL DATA (if not in localStorage)
-// =================================================================
-
-const initialCourses: Omit<Course, 'icon'>[] = [
-    {
-        id: 'course1',
-        title: 'Comprehensive Car Program',
-        description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
-        totalEnrolled: 125,
-        totalCertified: 98,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
-        { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
-        { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
-        ],
-    },
-    {
-        id: 'course2',
-        title: 'Motorcycle Rider Course',
-        description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
-        totalEnrolled: 88,
-        totalCertified: 71,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
-        { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
-        ],
-    },
-    {
-        id: 'course3',
-        title: 'RTO Test Preparation',
-        description: 'A specialized course to help you ace the official RTO driving test and get your license.',
-        totalEnrolled: 210,
-        totalCertified: 195,
-        image: 'https://placehold.co/600x400/d92525/ffffff.png',
-        modules: [
-        { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
-        { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
-        ],
-    },
-];
-
-const baseQuestions = [
-  {
-    question: {
-      en: 'A red traffic light indicates that you must:',
-      hi: 'एक लाल ट्रैफिक लाइट इंगित करती है कि आपको:',
-    },
-    options: {
-      en: ['Stop behind the line', 'Slow down', 'Proceed with caution', 'Go if the way is clear'],
-      hi: ['रेखा के पीछे रुकें', 'धीमे हो जाएं', 'सावधानी से आगे बढ़ें', 'रास्ता साफ हो तो जाएं'],
-    },
-    correctAnswer: {
-      en: 'Stop behind the line',
-      hi: 'रेखा के पीछे रुकें',
-    },
-  },
-  {
-    question: {
-      en: 'A triangular sign with a red border is a:',
-      hi: 'लाल बॉर्डर वाला एक त्रिकोणीय संकेत है:',
-    },
-    options: {
-      en: ['Mandatory sign', 'Warning sign', 'Informatory sign', 'Regulatory sign'],
-      hi: ['अनिवार्य संकेत', 'चेतावनी संकेत', 'सूचनात्मक संकेत', 'नियामक संकेत'],
-    },
-    correctAnswer: {
-      en: 'Warning sign',
-      hi: 'चेतावनी संकेत',
-    },
-  },
-  {
-    question: {
-      en: 'When is overtaking prohibited?',
-      hi: 'ओवरटेक करना कब प्रतिबंधित है?',
-    },
-    options: {
-      en: ['On a wide road', 'When the road ahead is not clearly visible', 'During the daytime', 'On a one-way street'],
-      hi: ['चौड़ी सड़क पर', 'जब आगे का रास्ता साफ दिखाई न दे', 'दिन के समय', 'एक तरफा सड़क पर'],
-    },
-    correctAnswer: {
-      en: 'When the road ahead is not clearly visible',
-      hi: 'जब आगे का रास्ता साफ दिखाई न दे',
-    },
-  },
-  {
-    question: {
-      en: 'A blue circular sign with a white bicycle symbol indicates:',
-      hi: 'एक सफेद साइकिल प्रतीक वाला नीला गोलाकार संकेत इंगित करता है:',
-    },
-    options: {
-      en: ['Bicycles are not allowed', 'Parking for bicycles', 'Compulsory pedal cycle track', 'Bicycle repair shop ahead'],
-      hi: ['साइकिल की अनुमति नहीं है', 'साइकिल के लिए पार्किंग', 'अनिवार्य पेडल साइकिल ट्रैक', 'आगे साइकिल मरम्मत की दुकान'],
-    },
-    correctAnswer: {
-      en: 'Compulsory pedal cycle track',
-      hi: 'अनिवार्य पेडल साइकिल ट्रैक',
-    },
-  },
-  {
-    question: {
-      en: 'What is the minimum age for obtaining a license for a motorcycle with gears?',
-      hi: 'गियर वाली मोटरसाइकिल के लिए लाइसेंस प्राप्त करने की न्यूनतम आयु क्या है?',
-    },
-    options: {
-      en: ['16 years', '18 years', '20 years', '21 years'],
-      hi: ['16 साल', '18 साल', '20 साल', '21 साल'],
-    },
-    correctAnswer: {
-      en: '18 years',
-      hi: '18 साल',
-    },
-  },
-  {
-    question: {
-      en: 'What does a flashing yellow traffic light mean?',
-      hi: 'एक चमकती पीली ट्रैफिक लाइट का क्या मतलब है?',
-    },
-    options: {
-      en: ['Stop completely', 'Speed up', 'Slow down and proceed with caution', 'The light is about to turn red'],
-      hi: ['पूरी तरह से रुकें', 'गति बढ़ाएं', 'धीमे चलें और सावधानी से आगे बढ़ें', 'लाइट लाल होने वाली है'],
-    },
-    correctAnswer: {
-      en: 'Slow down and proceed with caution',
-      hi: 'धीमे चलें और सावधानी से आगे बढ़ें',
-    },
-  },
-  {
-    question: {
-      en: 'If you are approached by an ambulance with its siren on, you should:',
-      hi: 'यदि आपके पास सायरन बजाती हुई एम्बुलेंस आती है, तो आपको:',
-    },
-    options: {
-      en: ['Increase your speed', 'Allow passage by moving to the left', 'Continue at the same speed', 'Stop in the middle of the road'],
-      hi: ['अपनी गति बढ़ाएं', 'बाईं ओर हटकर रास्ता दें', 'उसी गति से चलते रहें', 'सड़क के बीच में रुक जाएं'],
-    },
-    correctAnswer: {
-      en: 'Allow passage by moving to the left',
-      hi: 'बाईं ओर हटकर रास्ता दें',
-    },
-  },
-  {
-    question: {
-      en: 'What does the sign showing a horn with a red slash across it mean?',
-      hi: 'जिस संकेत में हॉर्न पर लाल स्लैश होता है, उसका क्या मतलब है?',
-    },
-    options: {
-      en: ['Honking is compulsory', 'You may honk softly', 'Horn prohibited', 'Hospital nearby'],
-      hi: ['हॉर्न बजाना अनिवार्य है', 'आप धीरे से हॉर्न बजा सकते हैं', 'हॉर्न प्रतिबंधित है', 'पास में अस्पताल है'],
-    },
-    correctAnswer: {
-      en: 'Horn prohibited',
-      hi: 'हॉर्न प्रतिबंधित है',
-    },
-  },
-  {
-    question: {
-      en: 'While driving, using a mobile phone is:',
-      hi: 'ड्राइवING करते समय, मोबाइल फोन का उपयोग करना:',
-    },
-    options: {
-      en: ['Allowed if using a hands-free device', 'Allowed for short calls', 'Prohibited', 'Allowed only when stopped'],
-      hi: ['हैंड्स-फ्री डिवाइस का उपयोग करने पर अनुमति है', 'छोटी कॉल के लिए अनुमति है', 'प्रतिबंधित है', 'केवल रुकने पर अनुमति है'],
-    },
-    correctAnswer: {
-      en: 'Prohibited',
-      hi: 'प्रतिबंधित है',
-    },
-  },
-  {
-    question: {
-      en: "The validity of a Learner's License is:",
-      hi: "एक लर्नर लाइसेंस की वैधता है:",
-    },
-    options: {
-      en: ['3 months', '6 months', '1 year', 'Until you get a permanent license'],
-      hi: ['3 महीने', '6 महीने', '1 साल', 'जब तक आपको स्थायी लाइसेंस नहीं मिल जाता'],
-    },
-    correctAnswer: {
-      en: '6 months',
-      hi: '6 महीने',
-    },
-  },
-  {
-    question: {
-      en: 'When parking a vehicle facing downhill, the front wheels should be turned:',
-      hi: 'ढलान पर वाहन पार्क करते समय, आगे के पहियों को मोड़ना चाहिए:',
-    },
-    options: {
-      en: ['Towards the right', 'Straight ahead', 'Towards the kerb or side of the road', 'It does not matter'],
-      hi: ['दाईं ओर', 'सीधे आगे', 'फुटपाथ या सड़क के किनारे की ओर', 'इससे कोई फर्क नहीं पड़ता'],
-    },
-    correctAnswer: {
-      en: 'Towards the kerb or side of the road',
-      hi: 'फुटपाथ या सड़क के किनारे की ओर',
-    },
-  },
-  {
-    question: {
-      en: 'Which of these documents must be carried while driving a vehicle?',
-      hi: 'वाहन चलाते समय इनमें से कौन से दस्तावेज ले जाने चाहिए?',
-    },
-    options: {
-      en: ['Driving license, registration, insurance, PUC', 'Aadhaar card and PAN card', 'Vehicle purchase invoice', 'Your birth certificate'],
-      hi: ['ड्राइविंग लाइसेंस, पंजीकरण, बीमा, पीयूसी', 'आधार कार्ड और पैन कार्ड', 'वाहन खरीद चालान', 'आपका जन्म प्रमाण पत्र'],
-    },
-    correctAnswer: {
-      en: 'Driving license, registration, insurance, PUC',
-      hi: 'ड्राइविंग लाइसेंस, पंजीकरण, बीमा, पीयूसी',
-    },
-  },
-  {
-    question: {
-      en: "What does the term 'tailgating' mean in driving?",
-      hi: "ड्राइविंग में 'टेलगेटिंग' शब्द का क्या अर्थ है?",
-    },
-    options: {
-      en: ['Following another vehicle too closely', 'Checking your tail lights', 'Driving with the trunk open', 'Overtaking from the left'],
-      hi: ['दूसरे वाहन का बहुत करीब से पीछा करना', 'अपनी टेल लाइट की जाँच करना', 'ट्रंक खुला रखकर गाड़ी चलाना', 'बाईं ओर से ओवरटेक करना'],
-    },
-    correctAnswer: {
-      en: 'Following another vehicle too closely',
-      hi: 'दूसरे वाहन का बहुत करीब से पीछा करना',
-    },
-  },
-  {
-    question: {
-      en: 'The hand signal for turning right is:',
-      hi: 'दाईं ओर मुड़ने का हाथ का संकेत है:',
-    },
-    options: {
-      en: ['Extend the right arm straight out, palm facing forward', 'Rotate the arm in a clockwise circle', 'Extend the right arm and move it up and down', 'Point the arm downwards'],
-      hi: ['दाहिना हाथ सीधा बाहर फैलाएं, हथेली आगे की ओर', 'हाथ को दक्षिणावर्त वृत्त में घुमाएं', 'दाहिना हाथ फैलाकर ऊपर-नीचे करें', 'हाथ को नीचे की ओर इंगित करें'],
-    },
-    correctAnswer: {
-      en: 'Extend the right arm straight out, palm facing forward',
-      hi: 'दाहिना हाथ सीधा बाहर फैलाएं, हथेली आगे की ओर',
-    },
-  },
-  {
-    question: {
-      en: 'What is the purpose of a pedestrian crossing (Zebra crossing)?',
-      hi: 'पैदल यात्री क्रॉसिंग (ज़ेबरा क्रॉसिंग) का उद्देश्य क्या है?',
-    },
-    options: {
-      en: ['For vehicles to stop', 'For pedestrians to safely cross the road', 'To mark the end of a speed limit', 'For parking'],
-      hi: ['वाहनों को रोकने के लिए', 'पैदल चलने वालों को सुरक्षित रूप से सड़क पार करने के लिए', 'गति सीमा के अंत को चिह्नित करने के लिए', 'पार्किंग के लिए'],
-    },
-    correctAnswer: {
-      en: 'For pedestrians to safely cross the road',
-      hi: 'पैदल चलने वालों को सुरक्षित रूप से सड़क पार करने के लिए',
-    },
-  },
-];
-
-const initialQuizSets: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `set${i + 1}`,
-  title: `Set ${i + 1}`,
-  questions: baseQuestions.map((q, j) => ({
-    id: `q${i + 1}-${j + 1}`,
-    question: q.question,
-    options: q.options,
-    correctAnswer: q.correctAnswer,
-  })),
-}));
