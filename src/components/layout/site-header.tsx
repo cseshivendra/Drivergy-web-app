@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -29,6 +30,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
@@ -47,11 +54,24 @@ const SiteLogo = () => (
   </Link>
 );
 
-const navLinks = [
+interface NavLink {
+  href?: string;
+  label: string;
+  children?: NavLink[];
+}
+
+const navLinks: NavLink[] = [
   { href: '/site#services', label: 'Services' },
   { href: '/site#courses', label: 'Courses' },
   { href: '/site/rto-services', label: 'RTO Services' },
-  { href: '/site/blog', label: 'Blog' },
+  {
+    label: 'Insights',
+    children: [
+      { href: '/site/blog', label: 'Customer Stories' },
+      { href: '/site#testimonials', label: 'Testimonials' },
+      { href: '/site/blog', label: 'Blogs' },
+    ],
+  },
   { href: '/site#subscriptions', label: 'Plans' },
   { href: '/site/career', label: 'Careers' },
   { href: '/site/faq', label: 'FAQ' },
@@ -138,11 +158,29 @@ export default function SiteHeader() {
         <div className="hidden lg:flex items-center gap-4">
             {/* Desktop Navigation */}
             <nav className="flex items-center gap-1">
-            {navLinks.map((link) => (
-                <Button variant="ghost" asChild key={link.href}>
-                <Link href={link.href}>{link.label}</Link>
-                </Button>
-            ))}
+              {navLinks.map((link) =>
+                link.children ? (
+                  <DropdownMenu key={link.label}>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        {link.label}
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {link.children.map((child) => (
+                        <DropdownMenuItem key={child.label} asChild>
+                          <Link href={child.href!}>{child.label}</Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button variant="ghost" asChild key={link.label}>
+                    <Link href={link.href!}>{link.label}</Link>
+                  </Button>
+                )
+              )}
             </nav>
 
             {renderAuthButtons()}
@@ -189,17 +227,41 @@ export default function SiteHeader() {
                 <SheetTitle className="sr-only">Site Navigation</SheetTitle>
               </SheetHeader>
               <div className="mt-8 flex flex-col gap-6">
-                <nav className="flex flex-col gap-4">
-                  {navLinks.map((link) => (
-                    <SheetClose asChild key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-lg font-medium text-foreground/80 hover:text-primary"
-                      >
-                        {link.label}
-                      </Link>
-                    </SheetClose>
-                  ))}
+                <nav className="flex flex-col gap-2">
+                  {navLinks.map((link) =>
+                    link.children ? (
+                      <Accordion type="single" collapsible key={link.label} className="w-full">
+                        <AccordionItem value={link.label} className="border-b-0">
+                          <AccordionTrigger className="flex w-full items-center justify-between py-2 text-lg font-medium text-foreground/80 hover:text-primary hover:no-underline">
+                            {link.label}
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="flex flex-col gap-4 pt-2 pl-6">
+                              {link.children.map((child) => (
+                                <SheetClose asChild key={child.label}>
+                                  <Link
+                                    href={child.href!}
+                                    className="text-base font-medium text-foreground/70 hover:text-primary"
+                                  >
+                                    {child.label}
+                                  </Link>
+                                </SheetClose>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    ) : (
+                      <SheetClose asChild key={link.label}>
+                        <Link
+                          href={link.href!}
+                          className="block py-2 text-lg font-medium text-foreground/80 hover:text-primary"
+                        >
+                          {link.label}
+                        </Link>
+                      </SheetClose>
+                    )
+                  )}
                 </nav>
                 <div className="border-t border-border pt-6">
                   {renderAuthButtons(true)}
