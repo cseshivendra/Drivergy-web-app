@@ -30,7 +30,7 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
   }, [isOpen]);
 
   const renderSkeletons = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       {Array.from({ length: 3 }).map((_, i) => (
         <Card key={i} className="shadow-lg overflow-hidden">
           <Skeleton className="h-96 w-full" />
@@ -41,8 +41,8 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-2">
+      <DialogContent className="max-w-4xl w-[calc(100%-2rem)] sm:w-full p-0 flex flex-col max-h-[85vh] rounded-lg">
+        <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
           <DialogTitle className="font-headline text-3xl font-bold text-primary text-center">
             Today's Special Offers!
           </DialogTitle>
@@ -50,11 +50,11 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
             Check out our latest offers and events. Click on a poster to learn more!
           </DialogDescription>
         </DialogHeader>
-        <div className="p-6 pt-2">
+        <div className="p-6 overflow-y-auto flex-grow">
           {loading ? (
             renderSkeletons()
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {posters.map((poster) => (
                 <Card key={poster.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
                   <Link href={poster.href} onClick={() => onOpenChange(false)}>
