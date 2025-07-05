@@ -239,7 +239,7 @@ export default function PortfolioSitePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <ServiceCard
                 icon={Navigation}
-                title="Personalized Driving Lessons"
+                title="Expert Driving Lessons"
                 description="Tailored one-on-one training sessions with certified instructors for both two-wheelers and four-wheelers. Learn at your own pace, focusing on your specific needs and building confidence behind the wheel."
                 imageSrc="https://placehold.co/600x400/f87171/ffffff.png"
                 imageHint="driving lesson car instructor"
