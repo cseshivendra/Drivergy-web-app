@@ -269,7 +269,7 @@ export default function AppRtoQuizPage() {
         </div>
         {user ? (
           <Tabs defaultValue="set1" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+            <TabsList className="flex h-auto flex-wrap justify-center gap-2">
               {quizSets.map((set) => (
                 <TabsTrigger key={set.id} value={set.id}>
                   {set.title}
