@@ -231,7 +231,7 @@ export default function PortfolioSitePage() {
         <section id="services" className="py-8 md:py-12 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
             <div className="text-center mb-12">
-              <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Services</h2>
+              <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Premier Services</h2>
               <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
                 We offer a range of services tailored to meet your driving needs, from beginner lessons to advanced techniques.
               </p>
