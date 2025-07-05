@@ -255,7 +255,7 @@ export default function CareerPage() {
                     </a>
                 </div>
                 <p className="text-sm pt-2">
-                    &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
+                    &copy; {new Date().getFullYear()} Drivergy. All rights reserved. <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
                 </p>
             </div>
         </footer>

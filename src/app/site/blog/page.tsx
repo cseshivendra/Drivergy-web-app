@@ -111,16 +111,14 @@ export default function BlogPage() {
                         {currentPosts.map((post) => (
                           <Link key={post.slug} href={`/site/blog/${post.slug}`} className="group block">
                             <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
-                                <div className="relative h-56 w-full bg-muted">
-                                    {post.imageSrc && (
-                                        <Image
-                                            src={post.imageSrc}
-                                            alt={post.title}
-                                            layout="fill"
-                                            objectFit="cover"
-                                            data-ai-hint={post.imageHint}
-                                        />
-                                    )}
+                                <div className="relative h-56 w-full">
+                                    <Image
+                                        src={post.imageSrc}
+                                        alt={post.title}
+                                        layout="fill"
+                                        objectFit="cover"
+                                        data-ai-hint={post.imageHint}
+                                    />
                                 </div>
                                 <CardHeader>
                                     <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
@@ -231,7 +229,7 @@ export default function BlogPage() {
                     </div>
                 </div>
                 <p className="text-sm pt-2">
-                    &copy; {new Date().getFullYear()} Drivergy. All rights reserved.
+                    &copy; {new Date().getFullYear()} Drivergy. All rights reserved. <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
                 </p>
             </div>
         </footer>

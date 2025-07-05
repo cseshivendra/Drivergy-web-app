@@ -37,6 +37,9 @@ export default function Footer() {
               <Link href="/site/faq" className="hover:text-primary transition-colors">
                 FAQ
               </Link>
+              <Link href="#" className="hover:text-primary transition-colors">
+                Privacy Policy
+              </Link>
             </nav>
             <div className="flex items-center gap-4 order-1 sm:order-2">
                 <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
