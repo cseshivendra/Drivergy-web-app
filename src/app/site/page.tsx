@@ -216,11 +216,11 @@ export default function PortfolioSitePage() {
               </Button>
               <Button 
                 size="lg" 
-                variant="outline" 
-                className="w-full sm:w-auto border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white font-semibold px-8 py-3 text-base transition-colors duration-300"
+                variant="secondary" 
+                className="w-full sm:w-auto font-semibold px-8 py-3 text-base transition-colors duration-300"
                 asChild
               >
-                <Link href="/site/register">Register as Trainer</Link>
+                <Link href="/site/register">Become a Trainer</Link>
               </Button>
             </div>
           </div>
