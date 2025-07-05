@@ -4,7 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
-.pnp.loader.mjs
+.pnpm-store
 
 # testing
 /coverage
@@ -28,6 +28,7 @@ pnpm-debug.log*
 
 # local env files
 .env*.local
+.env
 
 # vercel
 .vercel
