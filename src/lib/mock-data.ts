@@ -851,16 +851,12 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
   return true;
 };
 
-// ... a large number of functions would follow this pattern ...
-// For brevity, I'll only show a few more key conversions.
-
 // =================================================================
 // SUMMARY & DASHBOARD DATA
 // =================================================================
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
    if (!db) {
-      // Mock logic remains the same
       const totalCustomers = MOCK_DB.users.filter(u => u.uniqueId.startsWith('CU')).length;
       const totalInstructors = MOCK_DB.users.filter(u => u.uniqueId.startsWith('TR')).length;
       const activeSubscriptions = MOCK_DB.users.filter(u => u.approvalStatus === 'Approved').length;
@@ -877,17 +873,14 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
    }
 
   const usersSnapshot = await getDocs(collection(db, 'users'));
-  const lessonRequestsSnapshot = await getDocs(collection(db, 'lessonRequests'));
-  const rescheduleRequestsSnapshot = await getDocs(collection(db, 'rescheduleRequests'));
-
   const users = usersSnapshot.docs.map(doc => doc.data() as UserProfile);
 
-  const totalCustomers = users.filter(u => u.uniqueId.startsWith('CU')).length;
-  const totalInstructors = users.filter(u => u.uniqueId.startsWith('TR')).length;
+  const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
+  const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
   const activeSubscriptions = users.filter(u => u.approvalStatus === 'Approved').length;
   const pendingRequests = (await getDocs(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')))).size;
   const pendingRescheduleRequests = (await getDocs(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')))).size;
-  const totalCertifiedTrainers = users.filter(u => u.uniqueId.startsWith('TR') && u.approvalStatus === 'Approved').length;
+  const totalCertifiedTrainers = users.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved').length;
 
   const totalEarnings = users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
     if (user.subscriptionPlan === 'Premium') return acc + 9999;
@@ -911,21 +904,35 @@ export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserPr
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
+  const customerRef = doc(db, "users", customerId);
   if (!db) {
     const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
     if (customerIndex === -1) return false;
 
     MOCK_DB.users[customerIndex].approvalStatus = newStatus;
-    // ... Mock logic for scheduling first lesson ...
+
+    if (newStatus === 'Approved') {
+      const customer = MOCK_DB.users[customerIndex];
+      const startDate = parse(customer.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
+      const firstLessonDate = addDays(startDate, 2);
+      firstLessonDate.setHours(9, 0, 0, 0); // 9 AM
+      customer.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+      
+      const reqIndex = MOCK_DB.lessonRequests.findIndex(r => r.customerId === customerId && r.status === 'Pending');
+      if (reqIndex !== -1) MOCK_DB.lessonRequests[reqIndex].status = 'Active';
+
+    } else { // Rejected
+        MOCK_DB.users[customerIndex].assignedTrainerId = undefined;
+        MOCK_DB.users[customerIndex].assignedTrainerName = undefined;
+    }
     saveData();
     return true;
   }
   
-  const customerRef = doc(db, "users", customerId);
   await updateDoc(customerRef, { approvalStatus: newStatus });
-
   if (newStatus === 'Approved') {
     const customerSnap = await getDoc(customerRef);
+    if(!customerSnap.exists()) return false;
     const user = customerSnap.data() as UserProfile;
     const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
     const firstLessonDate = addDays(startDate, 2);
@@ -941,218 +948,492 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
     reqSnapshot.docs.forEach(doc => batch.update(doc.ref, { status: 'Active' }));
     await batch.commit();
   } else {
-    await updateDoc(customerRef, {
-      assignedTrainerId: null,
-      assignedTrainerName: null,
-    });
+    await updateDoc(customerRef, { assignedTrainerId: null, assignedTrainerName: null });
   }
   return true;
 };
 
-// =================================================================
-// CONTENT MANAGEMENT (Example)
-// =================================================================
-export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
-    if (!db) return [...MOCK_DB.blogPosts];
-    const postsCollection = collection(db, 'blogPosts');
-    const q = query(postsCollection, orderBy("date", "desc"));
+export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
+    if (!db) return MOCK_DB.feedback.filter(f => f.trainerId === trainerId);
+    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ ...doc.data() } as BlogPost));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
 };
 
-export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
-  const { imageFile, ...restOfData } = data;
-  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc; // Mock upload
-  const newPost: BlogPost = { 
-    ...restOfData,
-    date: format(new Date(), 'LLL d, yyyy'),
-    imageSrc: newImageSrc!,
-  };
-
-  if (!db) {
-      MOCK_DB.blogPosts.unshift(newPost);
+export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
+    const studentRef = doc(db, "users", studentId);
+    if (!db) {
+      const studentIndex = MOCK_DB.users.findIndex(u => u.id === studentId);
+      if (studentIndex === -1) return false;
+      const student = MOCK_DB.users[studentIndex];
+      const alreadyPresent = student.attendance === 'Present';
+      student.attendance = status;
+      if (status === 'Present' && !alreadyPresent) {
+        student.completedLessons = (student.completedLessons || 0) + 1;
+      }
+      MOCK_DB.users[studentIndex] = student;
       saveData();
-      return newPost;
-  }
+      return true;
+    }
 
-  await addDoc(collection(db, 'blogPosts'), newPost);
-  // In a real scenario, you might want to return the object with the Firestore ID
-  return newPost;
-}
+    const studentSnap = await getDoc(studentRef);
+    if (!studentSnap.exists()) return false;
 
-// NOTE: The rest of the functions (update, delete for content, other data types) would follow a similar pattern of
-// checking `if (!db)` and then implementing the corresponding Firestore logic. For the sake of this example,
-// the most critical user and summary functions have been converted.
+    const studentData = studentSnap.data() as UserProfile;
+    const updates: Partial<UserProfile> = { attendance: status };
 
-// The remaining functions will continue to use mock data until fully implemented.
+    if (status === 'Present' && studentData.attendance !== 'Present') {
+      updates.completedLessons = (studentData.completedLessons || 0) + 1;
+    }
 
-export const fetchAllLessonRequests = async (): Promise<LessonRequest[]> => [...MOCK_DB.lessonRequests].sort((a,b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+    await updateDoc(studentRef, updates);
+    return true;
+};
+
+// =================================================================
+// GENERIC CONTENT MANAGEMENT & OTHER FUNCTIONS
+// =================================================================
+
+const createMockOrDbFunction = <T extends any[], U>(collectionName: string, mockFunction: (...args: T) => U) => {
+  return async (...args: T): Promise<U> => {
+    if (!db) {
+      return mockFunction(...args);
+    }
+    // The actual DB logic would be more complex and specific per function.
+    // This is a placeholder for a more robust implementation. For now, it will
+    // read the entire collection, which is inefficient but works for this demo.
+    const snapshot = await getDocs(collection(db, collectionName));
+    MOCK_DB[collectionName as keyof MockDatabase] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any;
+    return mockFunction(...args);
+  };
+};
+
+export const fetchAllLessonRequests = async (): Promise<LessonRequest[]> => {
+  if (!db) return [...MOCK_DB.lessonRequests].sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+  const snapshot = await getDocs(query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LessonRequest[];
+};
+
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
-  const newRequest: RescheduleRequest = {
-    id: generateId(),
+  const newRequest = {
     userId,
     customerName,
     originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
     requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
-    status: 'Pending',
+    status: 'Pending' as RescheduleRequestStatusType,
     requestTimestamp: new Date().toISOString(),
   };
-  MOCK_DB.rescheduleRequests.push(newRequest);
-  saveData();
-  return newRequest;
+
+  if (!db) {
+    const requestWithId = { ...newRequest, id: generateId() };
+    MOCK_DB.rescheduleRequests.push(requestWithId);
+    saveData();
+    return requestWithId;
+  }
+  
+  const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
+  return { id: docRef.id, ...newRequest };
 };
-export const fetchRescheduleRequests = async (): Promise<RescheduleRequest[]> => [...MOCK_DB.rescheduleRequests].sort((a,b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+
+export const fetchRescheduleRequests = async (): Promise<RescheduleRequest[]> => {
+  if (!db) return [...MOCK_DB.rescheduleRequests].sort((a,b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+  const snapshot = await getDocs(query(collection(db, 'rescheduleRequests'), orderBy('requestTimestamp', 'desc')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RescheduleRequest[];
+};
+
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
-  const requestIndex = MOCK_DB.rescheduleRequests.findIndex(r => r.id === requestId);
-  if (requestIndex === -1) return false;
+  const requestRef = doc(db, 'rescheduleRequests', requestId);
+  if (!db) {
+    const requestIndex = MOCK_DB.rescheduleRequests.findIndex(r => r.id === requestId);
+    if (requestIndex === -1) return false;
+    MOCK_DB.rescheduleRequests[requestIndex].status = newStatus;
+    if (newStatus === 'Approved') {
+      const requestData = MOCK_DB.rescheduleRequests[requestIndex];
+      const customerIndex = MOCK_DB.users.findIndex(u => u.id === requestData.userId);
+      if (customerIndex !== -1) {
+        MOCK_DB.users[customerIndex].upcomingLesson = requestData.requestedRescheduleDate;
+      }
+    }
+    saveData();
+    return true;
+  }
 
-  MOCK_DB.rescheduleRequests[requestIndex].status = newStatus;
-
+  await updateDoc(requestRef, { status: newStatus });
   if (newStatus === 'Approved') {
-    const requestData = MOCK_DB.rescheduleRequests[requestIndex];
-    const customerIndex = MOCK_DB.users.findIndex(u => u.id === requestData.userId);
-    if (customerIndex !== -1) {
-      MOCK_DB.users[customerIndex].upcomingLesson = requestData.requestedRescheduleDate;
-    }
+    const requestSnap = await getDoc(requestRef);
+    if (!requestSnap.exists()) return false;
+    const requestData = requestSnap.data() as RescheduleRequest;
+    await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
   }
-  saveData();
   return true;
 };
-export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => MOCK_DB.feedback.filter(f => f.trainerId === trainerId);
-export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
-    const studentIndex = MOCK_DB.users.findIndex(u => u.id === studentId);
-    if (studentIndex === -1) return false;
-    const student = MOCK_DB.users[studentIndex];
-    const alreadyPresent = student.attendance === 'Present';
-    student.attendance = status;
-    if (status === 'Present' && !alreadyPresent) {
-      student.completedLessons = (student.completedLessons || 0) + 1;
-    }
-    MOCK_DB.users[studentIndex] = student;
-    saveData();
-    return true;
-};
+
 export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
-  const newFeedback: Feedback = { id: generateId(), customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
-  MOCK_DB.feedback.push(newFeedback);
-  const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
-  if (customerIndex !== -1) MOCK_DB.users[customerIndex].feedbackSubmitted = true;
-  saveData();
-  return true;
-};
-export const fetchAllFeedback = async (): Promise<Feedback[]> => [...MOCK_DB.feedback].sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => MOCK_DB.users.filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName).map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
-export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
-  const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
-  if (customerIndex === -1) return null;
-  const firstLessonDate = addDays(newDate, 2);
-  firstLessonDate.setHours(9, 0, 0, 0);
-  MOCK_DB.users[customerIndex].subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
-  MOCK_DB.users[customerIndex].upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
-  saveData();
-  return { ...MOCK_DB.users[customerIndex] };
-}
-export const fetchAllReferrals = async (): Promise<Referral[]> => MOCK_DB.referrals.map(ref => ({...ref,refereeUniqueId: MOCK_DB.users.find(u => u.id === ref.refereeId)?.uniqueId,refereeSubscriptionPlan: MOCK_DB.users.find(u => u.id === ref.refereeId)?.subscriptionPlan,refereeApprovalStatus: MOCK_DB.users.find(u => u.id === ref.refereeId)?.approvalStatus,})).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => MOCK_DB.referrals.filter(r => r.referrerId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
-  const referralIndex = MOCK_DB.referrals.findIndex(r => r.id === referralId);
-  if (referralIndex !== -1) {
-    MOCK_DB.referrals[referralIndex].payoutStatus = status;
+  const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
+  if (!db) {
+    MOCK_DB.feedback.push({ ...newFeedback, id: generateId() });
+    const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
+    if (customerIndex !== -1) MOCK_DB.users[customerIndex].feedbackSubmitted = true;
     saveData();
     return true;
   }
-  return false;
+  await addDoc(collection(db, 'feedback'), newFeedback);
+  await updateDoc(doc(db, 'users', customerId), { feedbackSubmitted: true });
+  return true;
 };
-export const fetchCourses = async (): Promise<Course[]> => [...MOCK_DB.courses];
+
+export const fetchAllFeedback = async (): Promise<Feedback[]> => {
+  if (!db) return [...MOCK_DB.feedback].sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+  const snapshot = await getDocs(query(collection(db, 'feedback'), orderBy('submissionDate', 'desc')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+};
+
+export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
+    if (!db) return MOCK_DB.users.filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName).map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+
+    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'), where('assignedTrainerName', '!=', null));
+    const snapshot = await getDocs(q);
+    const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+    return users.map(c => ({
+        studentId: c.uniqueId,
+        studentName: c.name,
+        trainerName: c.assignedTrainerName!,
+        subscriptionPlan: c.subscriptionPlan,
+        totalLessons: c.totalLessons || 0,
+        completedLessons: c.completedLessons || 0,
+        remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+    })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+}
+
+export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
+  const customerRef = doc(db, 'users', customerId);
+  const firstLessonDate = addDays(newDate, 2);
+  firstLessonDate.setHours(9, 0, 0, 0); // 9 AM
+  const updates = {
+    subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
+    upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+  };
+
+  if (!db) {
+    const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
+    if (customerIndex === -1) return null;
+    MOCK_DB.users[customerIndex] = { ...MOCK_DB.users[customerIndex], ...updates };
+    saveData();
+    return { ...MOCK_DB.users[customerIndex] };
+  }
+
+  await updateDoc(customerRef, updates);
+  const updatedSnap = await getDoc(customerRef);
+  return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
+}
+
+export const fetchAllReferrals = async (): Promise<Referral[]> => {
+  if (!db) {
+    // Mock logic already handles joins
+    return MOCK_DB.referrals.map(ref => ({...ref,refereeUniqueId: MOCK_DB.users.find(u => u.id === ref.refereeId)?.uniqueId,refereeSubscriptionPlan: MOCK_DB.users.find(u => u.id === ref.refereeId)?.subscriptionPlan,refereeApprovalStatus: MOCK_DB.users.find(u => u.id === ref.refereeId)?.approvalStatus,})).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }
+
+  const referralsSnapshot = await getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc')));
+  const referrals = referralsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Referral[]);
+  const refereeIds = [...new Set(referrals.map(r => r.refereeId).filter(Boolean))];
+
+  if (refereeIds.length === 0) return referrals;
+
+  const usersSnapshot = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', refereeIds)));
+  const usersById = new Map(usersSnapshot.docs.map(doc => [doc.id, doc.data() as UserProfile]));
+
+  return referrals.map(ref => {
+    const referee = usersById.get(ref.refereeId);
+    return {
+      ...ref,
+      refereeUniqueId: referee?.uniqueId,
+      refereeSubscriptionPlan: referee?.subscriptionPlan,
+      refereeApprovalStatus: referee?.approvalStatus,
+    };
+  });
+};
+
+export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
+  if (!db) return MOCK_DB.referrals.filter(r => r.referrerId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const q = query(collection(db, 'referrals'), where('referrerId', '==', userId), orderBy('timestamp', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Referral[];
+};
+
+export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
+  if (!db) {
+    const referralIndex = MOCK_DB.referrals.findIndex(r => r.id === referralId);
+    if (referralIndex !== -1) {
+      MOCK_DB.referrals[referralIndex].payoutStatus = status;
+      saveData();
+      return true;
+    }
+    return false;
+  }
+  await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
+  return true;
+};
+
+export const fetchCourses = async (): Promise<Course[]> => {
+  if (!db) return [...MOCK_DB.courses];
+  const snapshot = await getDocs(query(collection(db, 'courses')));
+  return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
+};
+
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
-    const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
-    if (courseIndex === -1) return null;
-    const newModule: CourseModule = { ...moduleData, id: generateId() };
-    MOCK_DB.courses[courseIndex].modules.push(newModule);
-    saveData();
-    return MOCK_DB.courses[courseIndex];
+    if (!db) {
+        const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
+        if (courseIndex === -1) return null;
+        const newModule: CourseModule = { ...moduleData, id: generateId() };
+        MOCK_DB.courses[courseIndex].modules.push(newModule);
+        saveData();
+        return MOCK_DB.courses[courseIndex];
+    }
+    const courseRef = doc(db, 'courses', courseId);
+    const courseSnap = await getDoc(courseRef);
+    if (!courseSnap.exists()) return null;
+    const course = courseSnap.data() as Course;
+    const newModule = { ...moduleData, id: generateId() };
+    const updatedModules = [...(course.modules || []), newModule];
+    await updateDoc(courseRef, { modules: updatedModules });
+    return { ...course, modules: updatedModules, id: courseId };
 };
+
 export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> => {
-    const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
-    if (courseIndex === -1) return null;
-    const moduleIndex = MOCK_DB.courses[courseIndex].modules.findIndex(m => m.id === moduleId);
-    if (moduleIndex === -1) return null;
-    MOCK_DB.courses[courseIndex].modules[moduleIndex] = { ...MOCK_DB.courses[courseIndex].modules[moduleIndex], ...moduleData };
-    saveData();
-    return MOCK_DB.courses[courseIndex];
+    if (!db) {
+        const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
+        if (courseIndex === -1) return null;
+        const moduleIndex = MOCK_DB.courses[courseIndex].modules.findIndex(m => m.id === moduleId);
+        if (moduleIndex === -1) return null;
+        MOCK_DB.courses[courseIndex].modules[moduleIndex] = { ...MOCK_DB.courses[courseIndex].modules[moduleIndex], ...moduleData };
+        saveData();
+        return MOCK_DB.courses[courseIndex];
+    }
+    const courseRef = doc(db, 'courses', courseId);
+    const courseSnap = await getDoc(courseRef);
+    if (!courseSnap.exists()) return null;
+    const course = courseSnap.data() as Course;
+    const updatedModules = course.modules.map(m => m.id === moduleId ? { ...m, ...moduleData } : m);
+    await updateDoc(courseRef, { modules: updatedModules });
+    return { ...course, modules: updatedModules, id: courseId };
 };
+
 export const deleteCourseModule = async (courseId: string, moduleId: string): Promise<boolean> => {
-    const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
-    if (courseIndex === -1) return false;
-    MOCK_DB.courses[courseIndex].modules = MOCK_DB.courses[courseIndex].modules.filter(m => m.id !== moduleId);
-    saveData();
+    if (!db) {
+        const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
+        if (courseIndex === -1) return false;
+        MOCK_DB.courses[courseIndex].modules = MOCK_DB.courses[courseIndex].modules.filter(m => m.id !== moduleId);
+        saveData();
+        return true;
+    }
+    const courseRef = doc(db, 'courses', courseId);
+    const courseSnap = await getDoc(courseRef);
+    if (!courseSnap.exists()) return false;
+    const course = courseSnap.data() as Course;
+    const updatedModules = course.modules.filter(m => m.id !== moduleId);
+    await updateDoc(courseRef, { modules: updatedModules });
     return true;
 };
-export const fetchQuizSets = async (): Promise<QuizSet[]> => [...MOCK_DB.quizSets];
-export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
-  const setIndex = MOCK_DB.quizSets.findIndex(s => s.id === quizSetId);
-  if (setIndex === -1) return null;
-  const questionIndex = MOCK_DB.quizSets[setIndex].questions.findIndex(q => q.id === questionId);
-  if (questionIndex === -1) return null;
-  const updatedQuestion: Question = { id: questionId, question: { en: data.question_en, hi: data.question_hi }, options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') }, correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi } };
-  MOCK_DB.quizSets[setIndex].questions[questionIndex] = updatedQuestion;
-  saveData();
-  return MOCK_DB.quizSets[setIndex];
+
+export const fetchQuizSets = async (): Promise<QuizSet[]> => {
+  if (!db) return [...MOCK_DB.quizSets];
+  const snapshot = await getDocs(query(collection(db, 'quizSets')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
 };
-export const fetchFaqs = async (): Promise<FaqItem[]> => [...MOCK_DB.faqs];
+
+export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
+  const setRef = doc(db, 'quizSets', quizSetId);
+  if (!db) {
+    const setIndex = MOCK_DB.quizSets.findIndex(s => s.id === quizSetId);
+    if (setIndex === -1) return null;
+    const questionIndex = MOCK_DB.quizSets[setIndex].questions.findIndex(q => q.id === questionId);
+    if (questionIndex === -1) return null;
+    const updatedQuestion: Question = { id: questionId, question: { en: data.question_en, hi: data.question_hi }, options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') }, correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi } };
+    MOCK_DB.quizSets[setIndex].questions[questionIndex] = updatedQuestion;
+    saveData();
+    return MOCK_DB.quizSets[setIndex];
+  }
+  
+  const setSnap = await getDoc(setRef);
+  if (!setSnap.exists()) return null;
+  const quizSet = setSnap.data() as QuizSet;
+  const updatedQuestions = quizSet.questions.map(q => {
+      if (q.id === questionId) {
+          return {
+              id: q.id,
+              question: { en: data.question_en, hi: data.question_hi },
+              options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') },
+              correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+          };
+      }
+      return q;
+  });
+  await updateDoc(setRef, { questions: updatedQuestions });
+  return { ...quizSet, questions: updatedQuestions, id: quizSetId };
+};
+
+export const fetchFaqs = async (): Promise<FaqItem[]> => {
+  if (!db) return [...MOCK_DB.faqs];
+  const snapshot = await getDocs(query(collection(db, 'faqs')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
+};
+
 export const addFaq = async (data: FaqFormValues): Promise<FaqItem> => {
-  const newFaq: FaqItem = { id: generateId(), ...data };
-  MOCK_DB.faqs.push(newFaq);
-  saveData();
-  return newFaq;
+  if (!db) {
+    const newFaq: FaqItem = { id: generateId(), ...data };
+    MOCK_DB.faqs.push(newFaq);
+    saveData();
+    return newFaq;
+  }
+  const docRef = await addDoc(collection(db, 'faqs'), data);
+  return { id: docRef.id, ...data };
 }
+
 export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolean> => {
-  const index = MOCK_DB.faqs.findIndex(f => f.id === id);
-  if (index === -1) return false;
-  MOCK_DB.faqs[index] = { ...MOCK_DB.faqs[index], ...data };
-  saveData();
+  if (!db) {
+    const index = MOCK_DB.faqs.findIndex(f => f.id === id);
+    if (index === -1) return false;
+    MOCK_DB.faqs[index] = { ...MOCK_DB.faqs[index], ...data };
+    saveData();
+    return true;
+  }
+  await updateDoc(doc(db, 'faqs', id), data);
   return true;
 }
+
 export const deleteFaq = async (id: string): Promise<boolean> => {
-  const initialLength = MOCK_DB.faqs.length;
-  MOCK_DB.faqs = MOCK_DB.faqs.filter(f => f.id !== id);
-  saveData();
-  return MOCK_DB.faqs.length < initialLength;
+  if (!db) {
+    const initialLength = MOCK_DB.faqs.length;
+    MOCK_DB.faqs = MOCK_DB.faqs.filter(f => f.id !== id);
+    saveData();
+    return MOCK_DB.faqs.length < initialLength;
+  }
+  await deleteDoc(doc(db, 'faqs', id));
+  return true;
 }
-export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
+
+export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
+  if (!db) {
+    // Sort by date descending to show newest first
+    return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+  const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
+  return snapshot.docs.map(doc => doc.data() as BlogPost);
+};
+
+export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
+  const { imageFile, ...restOfData } = data;
+  // This is a mock upload. In a real app, you'd upload the file and get a URL.
+  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
+
+  const newPost: BlogPost = {
+    ...restOfData,
+    imageSrc: newImageSrc || 'https://placehold.co/1200x800.png', // Provide a fallback
+  };
+
+  if (!db) {
+    // Check if slug already exists to prevent duplicates
+    if (MOCK_DB.blogPosts.some(p => p.slug === newPost.slug)) {
+      throw new Error("A blog post with this slug already exists.");
+    }
+    MOCK_DB.blogPosts.unshift(newPost);
+    saveData();
+    return newPost;
+  }
+  
+  // In Firestore, we should also check for slug uniqueness before adding
+  const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
+  const existing = await getDocs(q);
+  if (!existing.empty) {
+    throw new Error("A blog post with this slug already exists.");
+  }
+  
+  await addDoc(collection(db, 'blogPosts'), newPost);
+  return newPost;
+};
+
+export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
+  if (!db) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
+  const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return snapshot.docs[0].data() as BlogPost;
+};
+
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
-  const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
-  if (index === -1) return false;
-  const { imageFile, ...restOfData } = data;
-  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
-  MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc, slug: data.slug };
-  saveData();
-  return true;
+    const { imageFile, ...restOfData } = data;
+    const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc; // Mock upload
+    
+    if (!db) {
+        const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
+        if (index === -1) return false;
+        MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc, slug: data.slug };
+        saveData();
+        return true;
+    }
+    
+    const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return false;
+    const docRef = snapshot.docs[0].ref;
+    await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+    return true;
 }
+
 export const deleteBlogPost = async (slug: string): Promise<boolean> => {
-  const initialLength = MOCK_DB.blogPosts.length;
-  MOCK_DB.blogPosts = MOCK_DB.blogPosts.filter(p => p.slug !== slug);
-  saveData();
-  return MOCK_DB.blogPosts.length < initialLength;
-}
-export const fetchSiteBanners = async (): Promise<SiteBanner[]> => [...MOCK_DB.siteBanners];
-export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
-  const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
-  if (index === -1) return false;
-  const { imageFile, ...restOfData } = data;
-  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
-  MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.siteBanners[index].imageSrc };
-  saveData();
+  if (!db) {
+    const initialLength = MOCK_DB.blogPosts.length;
+    MOCK_DB.blogPosts = MOCK_DB.blogPosts.filter(p => p.slug !== slug);
+    saveData();
+    return MOCK_DB.blogPosts.length < initialLength;
+  }
+  const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return false;
+  await deleteDoc(snapshot.docs[0].ref);
   return true;
 }
-export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => [...MOCK_DB.promotionalPosters];
+
+export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
+  if (!db) return [...MOCK_DB.siteBanners];
+  const snapshot = await getDocs(query(collection(db, 'siteBanners')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
+};
+
+export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+  const { imageFile, ...restOfData } = data;
+  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
+  if (!db) {
+    const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
+    if (index === -1) return false;
+    MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.siteBanners[index].imageSrc };
+    saveData();
+    return true;
+  }
+  await updateDoc(doc(db, 'siteBanners', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+  return true;
+}
+
+export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
+  if (!db) return [...MOCK_DB.promotionalPosters];
+  const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
+};
+
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
-  const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
-  if (index === -1) return false;
   const { imageFile, ...restOfData } = data;
   const newImageSrc = imageFile ? 'https://placehold.co/600x800.png' : data.imageSrc;
-  MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.promotionalPosters[index].imageSrc, href: data.href || '#' };
-  saveData();
+  if (!db) {
+    const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
+    if (index === -1) return false;
+    MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.promotionalPosters[index].imageSrc, href: data.href || '#' };
+    saveData();
+    return true;
+  }
+  await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
     
+
+
