@@ -1435,5 +1435,3 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   return true;
 }
     
-
-
