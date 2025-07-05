@@ -1178,6 +1178,9 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 export const fetchCourses = async (): Promise<Course[]> => {
   if (!db) return [...MOCK_DB.courses];
   const snapshot = await getDocs(query(collection(db, 'courses')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.courses];
+  }
   return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
 };
 
@@ -1239,6 +1242,9 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
 export const fetchQuizSets = async (): Promise<QuizSet[]> => {
   if (!db) return [...MOCK_DB.quizSets];
   const snapshot = await getDocs(query(collection(db, 'quizSets')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.quizSets];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
 };
 
@@ -1276,6 +1282,9 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
 export const fetchFaqs = async (): Promise<FaqItem[]> => {
   if (!db) return [...MOCK_DB.faqs];
   const snapshot = await getDocs(query(collection(db, 'faqs')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.faqs];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
 };
 
@@ -1315,10 +1324,12 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
   if (!db) {
-    // Sort by date descending to show newest first
     return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
   const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
   return snapshot.docs.map(doc => doc.data() as BlogPost);
 };
 
@@ -1357,7 +1368,7 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
   if (!db) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
   const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
   const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
+  if (snapshot.empty) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
   return snapshot.docs[0].data() as BlogPost;
 };
 
@@ -1398,6 +1409,9 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
 export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
   if (!db) return [...MOCK_DB.siteBanners];
   const snapshot = await getDocs(query(collection(db, 'siteBanners')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.siteBanners];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
 };
 
@@ -1418,6 +1432,9 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
   if (!db) return [...MOCK_DB.promotionalPosters];
   const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.promotionalPosters];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
 };
 
@@ -1434,4 +1451,6 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+    
+
     
