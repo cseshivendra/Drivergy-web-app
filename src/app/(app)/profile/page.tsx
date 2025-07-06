@@ -58,12 +58,9 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   }, [selectedState]);
 
   useEffect(() => {
-    // This effect ensures that if a state is selected and it has districts,
-    // the form's district value is updated to the first available district
-    // if it's not already one of the available ones.
     const currentDistrict = form.getValues('district');
     if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
-      form.setValue('district', ''); // Reset district if it's no longer valid
+      form.setValue('district', ''); 
     }
   }, [selectedState, form, availableDistricts]);
 
@@ -74,7 +71,6 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
         title: "Profile Updated",
         description: "Your personal information has been successfully updated.",
       });
-      // Re-login user to update session/context data like displayName and photoURL
       logInUser(updatedProfile, false); 
     } else {
       toast({

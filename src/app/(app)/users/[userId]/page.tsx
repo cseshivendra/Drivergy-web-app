@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserById } from '@/lib/mock-data';
 import type { UserProfile } from '@/types';
-import { User, Mail, Phone, MapPin, FileText, CalendarDays, Fingerprint, Car, ShieldCheck, X, FileType, FileSpreadsheet, Users as GenderIcon, Home } from 'lucide-react'; // Added X, FileType, FileSpreadsheet, GenderIcon, Home, Pin
+import { User, Mail, Phone, MapPin, FileText, CalendarDays, Fingerprint, Car, ShieldCheck, X, FileType, FileSpreadsheet, Users as GenderIcon, Home } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -16,19 +17,19 @@ export default function UserDetailsPage() {
   const params = useParams();
   const userId = params.userId as string;
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     if (userId) {
-      setIsLoading(true); // Explicitly set loading before fetch
+      setIsLoading(true); 
       fetchUserById(userId)
         .then((data) => {
           setUser(data);
         })
         .catch(error => {
           console.error("Failed to fetch user details for ID:", userId, error);
-          setUser(null); // Ensure user is null on error
+          setUser(null); 
           toast({
             title: "Error Loading User",
             description: `Could not load details for user ${userId}. Please try again.`,
@@ -36,12 +37,9 @@ export default function UserDetailsPage() {
           });
         })
         .finally(() => {
-          setIsLoading(false); // Always set loading to false after attempt
+          setIsLoading(false); 
         });
     } else {
-      // If userId is null, undefined, or an empty string after params are resolved,
-      // it means there's no valid ID to fetch.
-      // This ensures the page doesn't stay in a loading state indefinitely.
       setUser(null);
       setIsLoading(false);
     }
@@ -55,7 +53,6 @@ export default function UserDetailsPage() {
     let blobType = "";
 
     if (type === 'PDF') {
-      // For PDF, create a simple text representation
       content = `User Details: ${user.name}\n\n`;
       content += `User ID: ${user.uniqueId}\n`;
       content += `Internal ID: ${user.id}\n`;
@@ -70,9 +67,7 @@ export default function UserDetailsPage() {
       content += `Subscription: ${user.subscriptionPlan}\n`;
       content += `Vehicle Info: ${user.vehicleInfo || 'N/A'}\n`;
       content += `Approval Status: ${user.approvalStatus}\n`;
-      // Add more fields as needed
-      blobType = 'application/pdf'; // Technically this isn't a PDF, but for simulation it's okay.
-                                  // Real PDF generation needs a library.
+      blobType = 'application/pdf'; 
     } else { // Excel (CSV for simplicity)
       const headers = "Field,Value\n";
       const rows = [
@@ -92,7 +87,7 @@ export default function UserDetailsPage() {
         `Approval Status,"${user.approvalStatus}"`,
       ];
       content = headers + rows.join("\n");
-      blobType = 'text/csv;charset=utf-8;'; // Correct MIME for CSV
+      blobType = 'text/csv;charset=utf-8;';
     }
     
     const blob = new Blob([content], { type: blobType });
@@ -200,7 +195,7 @@ export default function UserDetailsPage() {
             </div>
           </div>
           
-          {isCustomer && (
+          {isCustomer && (user.flatHouseNumber || user.street || user.district || user.state || user.pincode) && (
             <div>
               <h3 className="text-xl font-semibold text-foreground mt-4 mb-3 border-b pb-2 flex items-center">
                 <Home className="mr-2 h-5 w-5 text-primary" /> Address Details
@@ -233,22 +228,22 @@ export default function UserDetailsPage() {
               <InfoItem icon={FileText} label={isCustomer ? "Subscription Plan" : "Role"} value={user.subscriptionPlan} />
               <InfoItem icon={Car} label={isCustomer ? "Vehicle Preference" : "Training Vehicle"} value={user.vehicleInfo || 'N/A'} />
               
-              {isCustomer && (user as any).dlStatus && (
+              {isCustomer && user.dlStatus && (
                 <>
-                  <InfoItem icon={FileText} label="DL Status" value={(user as any).dlStatus} />
-                  {(user as any).dlStatus === 'Already Have DL' && (
+                  <InfoItem icon={FileText} label="DL Status" value={user.dlStatus} />
+                  {user.dlStatus === 'Already Have DL' && (
                     <>
-                      <InfoItem icon={Fingerprint} label="DL Number" value={(user as any).dlNumber || 'N/A'} />
+                      <InfoItem icon={Fingerprint} label="DL Number" value={user.dlNumber || 'N/A'} />
                     </>
                   )}
                 </>
               )}
 
-              {!isCustomer && (user as any).yearsOfExperience !== undefined && (
-                 <InfoItem icon={CalendarDays} label="Years of Experience" value={(user as any).yearsOfExperience} />
+              {!isCustomer && user.yearsOfExperience !== undefined && (
+                 <InfoItem icon={CalendarDays} label="Years of Experience" value={user.yearsOfExperience} />
               )}
-              {!isCustomer && (user as any).specialization && (
-                 <InfoItem icon={Car} label="Specialization" value={(user as any).specialization} />
+              {!isCustomer && user.specialization && (
+                 <InfoItem icon={Car} label="Specialization" value={user.specialization} />
               )}
             </div>
           </div>
@@ -288,3 +283,5 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
+
+    
