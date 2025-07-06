@@ -37,9 +37,6 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithCredentials: (username: string, password: string) => Promise<boolean>;
-  signInAsGuest: () => void;
-  signInAsSampleCustomer: () => Promise<void>;
-  signInAsSampleTrainer: () => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -147,45 +144,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
-  const signInAsGuest = () => {
-    setLoading(true);
-    const guestUser: GuestUser = {
-      uid: `guest-${new Date().getTime()}`,
-      uniqueId: 'ADMIN-GUEST',
-      displayName: 'Guest User',
-      email: null,
-      photoURL: 'https://placehold.co/100x100.png?text=GU',
-      isGuest: true,
-    };
-    handleSuccessfulSignIn(guestUser);
-  };
-
-  const signInAsSampleCustomer = async () => {
-    setLoading(true);
-    const loggedIn = await signInWithCredentials('shivendra', 'password123');
-    if (!loggedIn) {
-        setLoading(false);
-        toast({
-            title: 'Login Error',
-            description: 'Sample customer not found. Please register the sample customer first.',
-            variant: 'destructive',
-        });
-    }
-  };
-  
-  const signInAsSampleTrainer = async () => {
-    setLoading(true);
-    const loggedIn = await signInWithCredentials('rajesh.trainer', 'password123');
-    if (!loggedIn) {
-        setLoading(false);
-        toast({
-            title: 'Login Error',
-            description: 'Sample trainer not found. Please register the sample trainer first.',
-            variant: 'destructive',
-        });
-    }
-  };
-
   const signOut = async () => {
     setLoading(true);
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -223,7 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer, signInAsSampleTrainer, signInWithCredentials }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials }}>
       {children}
     </AuthContext.Provider>
   );
