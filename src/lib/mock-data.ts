@@ -458,8 +458,25 @@ interface MockDatabase {
   promotionalPosters: PromotionalPoster[];
 }
 
+const ADMIN_ID = 'admin-user-id-01';
 const SAMPLE_TRAINER_ID = 'sample-trainer-id-01';
 const SAMPLE_CUSTOMER_ID = 'sample-customer-id-01';
+
+const adminUser: UserProfile = {
+  id: ADMIN_ID,
+  uniqueId: 'ADMIN-001',
+  name: 'Admin User',
+  username: 'admin',
+  password: 'password123',
+  contact: 'admin@drivergy.com',
+  phone: '1234567890',
+  location: 'Gurugram',
+  subscriptionPlan: 'Admin',
+  registrationTimestamp: new Date('2023-01-01T09:00:00Z').toISOString(),
+  approvalStatus: 'Approved',
+  gender: 'Other',
+  photoURL: 'https://placehold.co/100x100.png?text=A',
+};
 
 const sampleTrainer: UserProfile = {
   id: SAMPLE_TRAINER_ID,
@@ -529,7 +546,7 @@ const sampleReferral: Referral = {
     timestamp: new Date('2024-06-10T11:00:00Z').toISOString(),
 };
 
-const initialUsers = [sampleCustomer, sampleTrainer];
+const initialUsers = [adminUser, sampleCustomer, sampleTrainer];
 
 let MOCK_DB: MockDatabase = {
   users: [],
@@ -578,6 +595,7 @@ const loadData = () => {
       
       // Robustness checks - add initial data if missing
       const userExists = (uniqueId: string) => MOCK_DB.users.some(u => u.uniqueId === uniqueId);
+      if (!userExists('ADMIN-001')) MOCK_DB.users.push(adminUser);
       if (!userExists('CU-SAMPLE')) MOCK_DB.users.push(sampleCustomer);
       if (!userExists('TR-SAMPLE')) MOCK_DB.users.push(sampleTrainer);
       
