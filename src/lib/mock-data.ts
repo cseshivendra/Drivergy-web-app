@@ -977,11 +977,10 @@ export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[
             .filter(f => f.trainerId === trainerId)
             .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
     }
-    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
+    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
     const snapshot = await getDocs(q);
     const feedbackData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
-    // Sort on client-side to avoid needing a composite index
-    return feedbackData.sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+    return feedbackData;
 };
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
