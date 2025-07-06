@@ -212,7 +212,7 @@ export default function PortfolioSitePage() {
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
                 asChild
               >
-                <Link href="#courses">Explore Our Courses &rarr;</Link>
+                <Link href="#courses">Explore Courses &rarr;</Link>
               </Button>
               <Button 
                 size="lg" 
