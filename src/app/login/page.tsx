@@ -164,11 +164,6 @@ export default function LoginPage() {
             >
               <GoogleIcon /> Sign in with Google
             </Button>
-            
-            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm flex items-start">
-              <ShieldAlert className="h-5 w-5 mr-2 shrink-0" />
-              <span>For demonstration purposes, you can use a pre-registered account or sign up.</span>
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
              <p className="text-sm text-muted-foreground">
