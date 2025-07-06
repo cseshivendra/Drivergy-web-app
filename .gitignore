@@ -1,30 +1,24 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # Dependencies
 /node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
 
-# Testing
-/coverage
-
-# Next.js
+# Build artifacts
 /.next/
 /out/
+/build/
 
-# Production
-/build
+# Local Environment Variables
+.env.local
 
-# Misc
-.DS_Store
-*.pem
-
-# Local .env files
-.env*.local
-.env
-
-# Log files
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# JetBrains IDE files
+.idea/
+*.iml
+http-client.env.json
+http-client.private.env.json
+
+# Misc
+.DS_Store
