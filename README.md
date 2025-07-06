@@ -18,6 +18,33 @@ The project is structured for a dual-purpose experience: a public-facing marketi
 - `src/context`: React context providers for managing state like authentication and theme.
 - `src/types`: TypeScript type definitions and Zod schemas for data validation.
 
+## Environment Configuration (`.env.local`)
+
+To connect the application to your own Firebase backend and enable AI features, you need to create a `.env.local` file in the root of your project.
+
+1.  **Create the file:**
+    ```bash
+    touch .env.local
+    ```
+2.  **Add your configuration keys:** Open the `.env.local` file and add the following variables, replacing the placeholder values with your actual keys.
+
+    ```
+    # Firebase Configuration
+    # You can get these from your Firebase project settings
+    NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_API_KEY
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=YOUR_AUTH_DOMAIN
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=YOUR_STORAGE_BUCKET
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
+    NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
+
+    # Google AI (for Genkit Chatbot)
+    # Get this from Google AI Studio: https://aistudio.google.com/app/apikey
+    GOOGLE_API_KEY=YOUR_GOOGLE_AI_API_KEY
+    ```
+
+**Important:** If these keys are not provided, the app will run in a local-only "mock" mode, which is useful for UI development but will not connect to a live database.
+
 ## Local Development
 
 To run the application on your local machine, follow these steps:
