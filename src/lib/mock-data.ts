@@ -532,6 +532,7 @@ const sampleCustomer: UserProfile = {
   completedLessons: 5,
   attendance: 'Pending',
   feedbackSubmitted: false,
+  totalReferralPoints: 0,
 };
 
 const sampleReferral: Referral = {
@@ -1141,11 +1142,27 @@ export const fetchAllFeedback = async (): Promise<Feedback[]> => {
 };
 
 export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
-    if (!db) return MOCK_DB.users.filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName).map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+    if (!db) {
+        return MOCK_DB.users
+            .filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName)
+            .map(c => ({
+                studentId: c.uniqueId,
+                studentName: c.name,
+                trainerName: c.assignedTrainerName!,
+                subscriptionPlan: c.subscriptionPlan,
+                totalLessons: c.totalLessons || 0,
+                completedLessons: c.completedLessons || 0,
+                remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+            }))
+            .sort((a, b) => a.remainingLessons - b.remainingLessons);
+    }
 
-    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'), where('assignedTrainerName', '!=', null));
+    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
     const snapshot = await getDocs(q);
-    const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+    const users = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+        .filter(u => u.assignedTrainerName); // Filter client-side
+
     return users.map(c => ({
         studentId: c.uniqueId,
         studentName: c.name,
@@ -1155,7 +1172,7 @@ export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[
         completedLessons: c.completedLessons || 0,
         remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
     })).sort((a, b) => a.remainingLessons - b.remainingLessons);
-}
+};
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
   const customerRef = doc(db, 'users', customerId);
@@ -1506,3 +1523,4 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
