@@ -195,6 +195,7 @@ export default function UserDetailsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
               <InfoItem icon={Fingerprint} label="Internal ID" value={user.id} />
               <InfoItem icon={Mail} label="Contact Email" value={user.contact} />
+              <InfoItem icon={Phone} label="Phone Number" value={user.phone} />
               <InfoItem icon={MapPin} label="Location" value={user.location} />
               <InfoItem icon={CalendarDays} label="Registration Date" value={user.registrationTimestamp} />
             </div>

@@ -126,8 +126,11 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   }, [selectedState]);
 
   useEffect(() => {
-    form.setValue('district', '');
-  }, [selectedState, form]);
+    const currentDistrict = form.getValues('district');
+    if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
+      form.setValue('district', '');
+    }
+  }, [selectedState, form, availableDistricts]);
 
   async function onSubmit(data: RegistrationFormValues) {
     try {
@@ -680,7 +683,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     name="location"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
+                        <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                             <SelectTrigger>

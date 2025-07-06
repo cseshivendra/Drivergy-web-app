@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -57,9 +58,12 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   }, [selectedState]);
 
   useEffect(() => {
+    // This effect ensures that if a state is selected and it has districts,
+    // the form's district value is updated to the first available district
+    // if it's not already one of the available ones.
     const currentDistrict = form.getValues('district');
     if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
-      form.setValue('district', '');
+      form.setValue('district', ''); // Reset district if it's no longer valid
     }
   }, [selectedState, form, availableDistricts]);
 
