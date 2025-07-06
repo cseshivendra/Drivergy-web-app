@@ -1,12 +1,15 @@
 
 'use client';
 
-import type { User as FirebaseUser } from 'firebase/auth'; // Keep for type compatibility if needed elsewhere, but not functionally used for Firebase auth
+import type { User as FirebaseUser } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import type { UserProfile } from '@/types'; // Import UserProfile
+import type { UserProfile } from '@/types';
 import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
+import { auth, db } from '@/lib/firebase';
 
 // Define a User type that can be a simulated regular user or a GuestUser
 export interface SimulatedUser {
@@ -34,9 +37,6 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithCredentials: (username: string, password: string) => Promise<boolean>;
-  signInAsGuest: () => void;
-  signInAsSampleCustomer: () => Promise<void>;
-  signInAsSampleTrainer: () => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -78,75 +78,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
+    if (!auth || !db) {
+      toast({
+        title: "Configuration Error",
+        description: "Firebase is not configured. Cannot sign in with Google.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const mockGoogleUser: SimulatedUser = {
-      uid: `mock-google-${new Date().getTime()}`,
-      uniqueId: 'ADMIN-GOOGLE',
-      displayName: 'Mock Google User',
-      email: 'googleuser@example.com',
-      photoURL: 'https://placehold.co/100x100.png?text=GU',
-      isGuest: false,
-    };
-    handleSuccessfulSignIn(mockGoogleUser);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const googleUser = result.user;
+
+      const userDocRef = doc(db, 'users', googleUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      let userProfile: UserProfile;
+
+      if (userDocSnap.exists()) {
+        userProfile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+      } else {
+        const newUserProfileData: Omit<UserProfile, 'id'> = {
+          uniqueId: `ADMIN-${googleUser.uid.slice(0, 6).toUpperCase()}`,
+          name: googleUser.displayName || 'Google User',
+          contact: googleUser.email!,
+          location: 'N/A',
+          subscriptionPlan: 'Admin',
+          registrationTimestamp: new Date().toISOString(),
+          approvalStatus: 'Approved',
+          gender: 'Other',
+          photoURL: googleUser.photoURL || `https://placehold.co/100x100.png?text=${googleUser.displayName?.charAt(0) || 'G'}`,
+        };
+        await setDoc(userDocRef, newUserProfileData);
+        userProfile = { id: googleUser.uid, ...newUserProfileData };
+      }
+
+      logInUser(userProfile, true);
+
+    } catch (error) {
+      console.error("Google Sign-In Error:", error);
+      toast({
+        title: "Sign-In Failed",
+        description: "Could not sign in with Google. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
-  
+
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
-        logInUser(userProfile, true); // true to redirect
-        return true;
+      logInUser(userProfile, true); // true to redirect
+      return true;
     }
     setLoading(false);
     toast({
-        title: 'Login Failed',
-        description: 'Invalid username or password.',
-        variant: 'destructive',
+      title: 'Login Failed',
+      description: 'Invalid username or password.',
+      variant: 'destructive',
     });
     return false;
-  };
-
-  const signInAsGuest = () => {
-    setLoading(true);
-    const guestUser: GuestUser = {
-      uid: `guest-${new Date().getTime()}`,
-      uniqueId: 'ADMIN-GUEST',
-      displayName: 'Guest User',
-      email: null,
-      photoURL: 'https://placehold.co/100x100.png?text=GU',
-      isGuest: true,
-    };
-    handleSuccessfulSignIn(guestUser);
-  };
-
-  const signInAsSampleCustomer = async () => {
-    setLoading(true);
-    // In a real DB setup, you'd fetch a user with a known email or ID.
-    // For this demo, we'll try to log in with the sample user's credentials.
-    const loggedIn = await signInWithCredentials('shivendra', 'password123');
-    if (!loggedIn) {
-        setLoading(false);
-        toast({
-            title: 'Login Error',
-            description: 'Sample customer not found. Please register the sample customer first.',
-            variant: 'destructive',
-        });
-    }
-  };
-  
-  const signInAsSampleTrainer = async () => {
-    setLoading(true);
-    // In a real DB setup, you'd fetch a user with a known email or ID.
-    const loggedIn = await signInWithCredentials('rajesh.trainer', 'password123');
-    if (!loggedIn) {
-        setLoading(false);
-        toast({
-            title: 'Login Error',
-            description: 'Sample trainer not found. Please register the sample trainer first.',
-            variant: 'destructive',
-        });
-    }
   };
 
   const signOut = async () => {
@@ -175,7 +170,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(newUser);
     storeUserInSession(newUser);
     setLoading(false);
-    
+
     if (isDirectLogin) {
       toast({
         title: `Welcome to Drivergy, ${newUser.displayName}!`,
@@ -186,9 +181,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInAsGuest, signOut, logInUser, signInAsSampleCustomer, signInAsSampleTrainer, signInWithCredentials }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
 
