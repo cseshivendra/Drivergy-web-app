@@ -46,6 +46,7 @@ export interface UserProfile {
   pincode?: string;
   dlStatus?: string;
   dlNumber?: string;
+  dlTypeHeld?: string;
   photoIdType?: string;
   photoIdNumber?: string;
   trainerPreference?: typeof TrainerPreferenceOptions[number];
@@ -526,3 +527,5 @@ export const FeedbackFormSchema = z.object({
   comment: z.string().min(10, "Comment must be at least 10 characters.").max(500, "Comment cannot exceed 500 characters."),
 });
 export type FeedbackFormValues = z.infer<typeof FeedbackFormSchema>;
+
+    

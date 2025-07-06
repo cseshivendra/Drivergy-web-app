@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -240,7 +239,6 @@ export default function UserDetailsPage() {
                   {(user as any).dlStatus === 'Already Have DL' && (
                     <>
                       <InfoItem icon={Fingerprint} label="DL Number" value={(user as any).dlNumber || 'N/A'} />
-                      <InfoItem icon={Car} label="DL Type Held" value={(user as any).dlTypeHeld || 'N/A'} />
                     </>
                   )}
                 </>
