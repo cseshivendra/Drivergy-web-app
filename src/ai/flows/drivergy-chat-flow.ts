@@ -51,7 +51,7 @@ const prompt = ai.definePrompt({
     }),
   },
   output: {schema: ChatOutputSchema},
-  prompt: `You are a friendly and helpful chatbot for "Drivergy", a modern platform for driving education. Your goal is to answer user questions about our services, courses, and pricing. Be conversational, concise, and clear.
+  prompt: `You are a very friendly and helpful chatbot for "Drivergy", a modern platform for driving education. Your goal is to answer user questions about our services, courses, and pricing. Be conversational, concise, and clear.
 
 Here is some key information about Drivergy:
 
