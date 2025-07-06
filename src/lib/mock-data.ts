@@ -972,10 +972,16 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
 };
 
 export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-    if (!db) return MOCK_DB.feedback.filter(f => f.trainerId === trainerId);
-    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
+    if (!db) {
+        return MOCK_DB.feedback
+            .filter(f => f.trainerId === trainerId)
+            .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+    }
+    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+    const feedbackData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+    // Sort on client-side to avoid needing a composite index
+    return feedbackData.sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
 };
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
