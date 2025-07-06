@@ -122,7 +122,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
       if (!isTrainer && newStatus === 'Approved') {
         toast({
           title: "Action Required",
-          description: "Please use the 'Assign' button to approve and assign a trainer to this customer.",
+          description: "Please use the 'Approve & Assign' button to approve and assign a trainer to this customer.",
           variant: 'destructive',
         });
         return;
@@ -291,7 +291,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                                 aria-label={`Assign trainer for ${user.name}`}
                               >
                                 <UserCheck className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">Assign</span>
+                                <span className="ml-1.5 hidden sm:inline">Approve &amp; Assign</span>
                               </Button>
                               <Button 
                                 variant="destructive" 
