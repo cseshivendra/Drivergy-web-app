@@ -769,7 +769,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     subscriptionPlan: "Trainer",
     registrationTimestamp: new Date().toISOString(),
     vehicleInfo: data.trainerVehicleType,
-    approvalStatus: 'Pending',
+    approvalStatus: 'Approved',
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
     specialization: data.specialization,
@@ -1523,4 +1523,5 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
