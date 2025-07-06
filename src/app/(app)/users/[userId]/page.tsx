@@ -283,5 +283,3 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
-
-    
