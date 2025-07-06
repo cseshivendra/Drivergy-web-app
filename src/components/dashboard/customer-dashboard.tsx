@@ -9,7 +9,7 @@ import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -371,6 +371,46 @@ export default function CustomerDashboard() {
             </Button>
           </CardFooter>
         </Card>
+
+        {/* My Trainer Card */}
+        {profile?.assignedTrainerName && (
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <UserCheck className="h-7 w-7 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="font-headline text-xl">My Trainer</CardTitle>
+                <CardDescription>Your assigned instructor.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-grow space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4"/> Name:</span>
+                <span className="font-bold text-foreground">{profile.assignedTrainerName}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground flex items-center"><Phone className="mr-2 h-4 w-4"/> Contact:</span>
+                <span className="font-bold text-foreground">{profile.assignedTrainerPhone || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4"/> Experience:</span>
+                <span className="font-bold text-foreground">{profile.assignedTrainerExperience ? `${profile.assignedTrainerExperience} years` : 'N/A'}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground flex items-center"><Car className="mr-2 h-4 w-4"/> Vehicle:</span>
+                <span className="font-bold text-foreground">{profile.assignedTrainerVehicleDetails || 'N/A'}</span>
+              </div>
+          </CardContent>
+          <CardFooter>
+            <p className="text-xs text-muted-foreground text-center w-full">
+              Contact your trainer for any lesson-specific questions.
+            </p>
+          </CardFooter>
+        </Card>
+        )}
 
         <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col xl:col-span-2">
           <CardHeader>

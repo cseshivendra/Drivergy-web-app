@@ -814,12 +814,41 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
   if (!db) {
-    return MOCK_DB.users.find(u => u.id === userId) || null;
+    const user = MOCK_DB.users.find(u => u.id === userId);
+    if (!user) return null;
+
+    // If user is a customer with an assigned trainer, fetch trainer details and attach them.
+    if (user.uniqueId.startsWith('CU') && user.assignedTrainerId) {
+      const trainer = MOCK_DB.users.find(t => t.id === user.assignedTrainerId);
+      if (trainer) {
+        user.assignedTrainerPhone = trainer.phone;
+        user.assignedTrainerExperience = trainer.yearsOfExperience;
+        user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+      }
+    }
+    return { ...user };
   }
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
-  return userSnap.exists() ? { id: userSnap.id, ...userSnap.data() } as UserProfile : null;
+  if (!userSnap.exists()) return null;
+
+  const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+
+  // If user is a customer with an assigned trainer, fetch trainer details and attach them.
+  if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+    const trainerRef = doc(db, "users", user.assignedTrainerId);
+    const trainerSnap = await getDoc(trainerRef);
+    if (trainerSnap.exists()) {
+      const trainer = trainerSnap.data() as UserProfile;
+      user.assignedTrainerPhone = trainer.phone;
+      user.assignedTrainerExperience = trainer.yearsOfExperience;
+      user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+    }
+  }
+
+  return user;
 };
+
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
   if (!db) {
