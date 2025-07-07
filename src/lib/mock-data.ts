@@ -629,6 +629,22 @@ loadData();
 
 
 // =================================================================
+// HELPER FUNCTIONS
+// =================================================================
+
+const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
+  if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('usingMockDataFallback', 'true');
+    }
+    console.warn(`[Mock Data Fallback] Firebase permission denied in ${functionName}. Falling back to mock data.`);
+    return fallback();
+  }
+  console.error(`[Live Data Error] in ${functionName}:`, error);
+  throw error;
+};
+
+// =================================================================
 // USER MANAGEMENT
 // =================================================================
 
@@ -807,25 +823,35 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 
 export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
   const userId = userToUpdate.id;
-
   if (!db) {
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-      // This case handles when live data is shown but update fails, so we add the user to mock data
-      MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
-    } else {
+    if (userIndex !== -1) {
       MOCK_DB.users[userIndex].approvalStatus = newStatus;
+    } else {
+      // If the user doesn't exist in mock data (e.g., from a failed live fetch), add them.
+      MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
     }
     saveData();
     return true;
   }
 
-  // Always attempt the live update. If it fails, the error will be caught by the calling component.
-  const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, { approvalStatus: newStatus });
-  return true;
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { approvalStatus: newStatus });
+    return true;
+  } catch (error) {
+    console.error(`Error updating status for user ${userId}:`, error);
+    // Fallback for any live update error
+    const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      MOCK_DB.users[userIndex].approvalStatus = newStatus;
+    } else {
+      MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
+    }
+    saveData();
+    return true;
+  }
 };
-
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
   const mockFetch = () => [...MOCK_DB.users].sort((a,b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
@@ -842,11 +868,9 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
 };
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
-  if (!db) {
+  const mockFetch = () => {
     const user = MOCK_DB.users.find(u => u.id === userId);
     if (!user) return null;
-
-    // If user is a customer with an assigned trainer, fetch trainer details and attach them.
     if (user.uniqueId.startsWith('CU') && user.assignedTrainerId) {
       const trainer = MOCK_DB.users.find(t => t.id === user.assignedTrainerId);
       if (trainer) {
@@ -857,49 +881,57 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
     }
     return { ...user };
   }
-  const userRef = doc(db, "users", userId);
-  const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) return null;
+  if (!db) return mockFetch();
 
-  const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return null;
 
-  // If user is a customer with an assigned trainer, fetch trainer details and attach them.
-  if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-    const trainerRef = doc(db, "users", user.assignedTrainerId);
-    const trainerSnap = await getDoc(trainerRef);
-    if (trainerSnap.exists()) {
-      const trainer = trainerSnap.data() as UserProfile;
-      user.assignedTrainerPhone = trainer.phone;
-      user.assignedTrainerExperience = trainer.yearsOfExperience;
-      user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+    const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+
+    if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+      const trainerRef = doc(db, "users", user.assignedTrainerId);
+      const trainerSnap = await getDoc(trainerRef);
+      if (trainerSnap.exists()) {
+        const trainer = trainerSnap.data() as UserProfile;
+        user.assignedTrainerPhone = trainer.phone;
+        user.assignedTrainerExperience = trainer.yearsOfExperience;
+        user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+      }
     }
+    return user;
+  } catch(error) {
+    return handlePermissionError(error, mockFetch, 'fetchUserById');
   }
-
-  return user;
 };
 
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
-  if (!db) {
-    return MOCK_DB.users.filter(u =>
-        u.uniqueId.startsWith('TR') &&
-        u.approvalStatus === 'Approved' &&
-        (!filters.location || u.location === filters.location) &&
-        (!filters.gender || u.gender === filters.gender)
-    );
+  const mockFetch = () => MOCK_DB.users.filter(u =>
+      u.uniqueId.startsWith('TR') &&
+      u.approvalStatus === 'Approved' &&
+      (!filters.location || u.location === filters.location) &&
+      (!filters.gender || u.gender === filters.gender)
+  );
+
+  if (!db) return mockFetch();
+
+  try {
+    let queries = [
+      where("uniqueId", ">=", "TR-"),
+      where("uniqueId", "<", "TR." ), // A trick to query by prefix
+      where("approvalStatus", "==", "Approved")
+    ];
+    if(filters.location) queries.push(where("location", "==", filters.location));
+    if(filters.gender) queries.push(where("gender", "==", filters.gender));
+
+    const q = query(collection(db, "users"), ...queries);
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchApprovedInstructors');
   }
-
-  let queries = [
-    where("uniqueId", ">=", "TR-"),
-    where("uniqueId", "<", "TR." ), // A trick to query by prefix
-    where("approvalStatus", "==", "Approved")
-  ];
-  if(filters.location) queries.push(where("location", "==", filters.location));
-  if(filters.gender) queries.push(where("gender", "==", filters.gender));
-
-  const q = query(collection(db, "users"), ...queries);
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
 };
 
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
@@ -978,15 +1010,14 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 // TRAINER SPECIFIC FUNCTIONS
 // =================================================================
 export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
-  if (!db) {
-    return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
-  }
+  const mockFetch = () => MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
+  if (!db) return mockFetch();
   try {
     const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
   } catch (error: any) {
-    return handlePermissionError(error, () => MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId), 'fetchAllTrainerStudents');
+    return handlePermissionError(error, mockFetch, 'fetchAllTrainerStudents');
   }
 };
 
@@ -1089,16 +1120,6 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 // =================================================================
 // GENERIC CONTENT MANAGEMENT & OTHER FUNCTIONS
 // =================================================================
-const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-  if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('usingMockDataFallback', 'true');
-    }
-    console.warn(`Firebase permission denied in ${functionName}. Falling back to mock data.`);
-    return fallback();
-  }
-  throw error;
-};
 
 export const fetchAllLessonRequests = async (): Promise<LessonRequest[]> => {
   const mockFetch = () => [...MOCK_DB.lessonRequests].sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
@@ -1595,6 +1616,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+
 
 
 
