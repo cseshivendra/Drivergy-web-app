@@ -640,13 +640,13 @@ const handleReadPermissionError = <T>(error: any, fallback: () => T, functionNam
     if (typeof window !== 'undefined' && sessionStorage.getItem('usingMockDataFallback') !== 'true') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
         toast({
-            title: "Live Database Permission Error",
-            description: `The application will now use local data for this session. Your changes will be saved locally. Reason: ${error.message}`,
+            title: "Live Database Permission Notice",
+            description: `Could not fetch live data. The application will use local data for this session.`,
             variant: "destructive",
             duration: 9000,
         });
     }
-    console.warn(`[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error (e.g., missing permissions or indexes). Falling back to local mock data. Original Error:`, error);
+    console.warn(`[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error. Falling back to local mock data. Original Error:`, error.message);
     return fallback();
 };
 
@@ -654,13 +654,13 @@ const handleWritePermissionError = <T>(error: any, fallback: () => T, functionNa
     if (typeof window !== 'undefined' && sessionStorage.getItem('usingMockDataFallback') !== 'true') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
         toast({
-            title: "Live Database Permission Error",
-            description: `The application will now use local data for this session. Your changes will be saved locally. Reason: ${error.message}`,
+            title: "Live Database Permission Notice",
+            description: `Could not save to the live database. Changes will be saved locally for this session.`,
             variant: "destructive",
             duration: 9000,
         });
     }
-    console.warn(`[Data Write Notice] Could not write to live Firestore for '${functionName}'. Falling back to local update. Error:`, error);
+    console.warn(`[Data Write Notice] Could not write to live Firestore for '${functionName}'. Falling back to local update. Error:`, error.message);
     return fallback();
 };
 
@@ -857,15 +857,23 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
         }
         saveData();
         return true;
-    }
+    };
 
-    if (!db || hasFallenBack()) return mockUpdate();
+    if (!db || hasFallenBack()) {
+        // If hasFallenBack is true, it means a previous write failed.
+        // We should now only operate on the local data.
+        mockUpdate();
+        // Since we are in fallback mode, we assume the local update is the "success"
+        return true;
+    }
 
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, { approvalStatus: newStatus });
+        mockUpdate(); // Also update local state to keep it in sync
         return true;
-    } catch (error) {
+    } catch (error: any) {
+        // If any error occurs, including permissions, fall back to local update
         return handleWritePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
     }
 };
@@ -937,6 +945,7 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
     const allApprovedQuery = query(collection(db, "users"), where("approvalStatus", "==", "Approved"));
     const querySnapshot = await getDocs(allApprovedQuery);
     
+    // Perform subsequent filtering on the client side to avoid composite indexes
     const instructors = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
         .filter(u =>
@@ -961,7 +970,6 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
             MOCK_DB.users[customerIndex].assignedTrainerId = trainer.id;
             MOCK_DB.users[customerIndex].assignedTrainerName = trainer.name;
             
-            // Also update the corresponding lesson request
             const requestIndex = MOCK_DB.lessonRequests.findIndex(r => r.customerId === customerId && r.status === 'Pending');
             if (requestIndex !== -1) {
                 MOCK_DB.lessonRequests[requestIndex].status = 'Active';
@@ -973,7 +981,9 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
         return false;
     };
     
-    if (!db || hasFallenBack()) return mockAssign();
+    if (!db || hasFallenBack()) {
+        return mockAssign();
+    }
 
     try {
         const customerRef = doc(db, "users", customerId);
@@ -984,26 +994,21 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
         }
 
         const batch = writeBatch(db);
-
-        // 1. Update the customer document
         batch.update(customerRef, {
             approvalStatus: 'In Progress',
             assignedTrainerId: trainerId,
             assignedTrainerName: trainerDoc.data().name
         });
 
-        // 2. Update the corresponding lesson request
         const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
         const requestSnapshot = await getDocs(requestQuery);
-        
         if (!requestSnapshot.empty) {
             const requestDocRef = requestSnapshot.docs[0].ref;
             batch.update(requestDocRef, { status: 'Active' });
-        } else {
-            console.warn(`Could not find a pending lesson request for customer ID: ${customerId} to update.`);
         }
 
         await batch.commit();
+        mockAssign(); // Keep local data in sync on success
         return true;
     } catch (error) {
         return handleWritePermissionError(error, mockAssign, 'assignTrainerToCustomer');
@@ -1665,6 +1670,7 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
         if (snapshot.empty) return false;
         const docRef = snapshot.docs[0].ref;
         await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+        mockUpdate();
         return true;
     } catch(error) {
         return handleWritePermissionError(error, mockUpdate, 'updateBlogPost');
@@ -1762,6 +1768,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
