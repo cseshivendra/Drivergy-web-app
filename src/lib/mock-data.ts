@@ -637,24 +637,30 @@ loadData();
 const hasFallenBack = () => typeof window !== 'undefined' && sessionStorage.getItem('usingMockDataFallback') === 'true';
 
 const handleReadPermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('usingMockDataFallback') !== 'true') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
+        toast({
+            title: "Live Database Permission Notice",
+            description: `Could not fetch live data. The application will use local data for this session.`,
+            variant: "destructive",
+            duration: 9000,
+        });
     }
-    console.warn(`[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error (e.g., missing permissions or indexes). Falling back to local mock data. Original Error:`, error);
+    console.warn(`[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error. Falling back to local mock data. Original Error:`, error.message);
     return fallback();
 };
 
 const handleWritePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && sessionStorage.getItem('usingMockDataFallback') !== 'true') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
+        toast({
+            title: "Live Database Permission Notice",
+            description: `Could not save to the live database. Changes will be saved locally for this session.`,
+            variant: "destructive",
+            duration: 9000,
+        });
     }
-    console.error(`[Data Write Notice] Could not write to live Firestore for '${functionName}'. Falling back to local update. Error:`, error);
-    toast({
-        title: "Live Update Failed",
-        description: "The change has been saved to your local session due to a database error. Please check your Firestore security rules for write permissions.",
-        variant: "destructive",
-        duration: 9000,
-    });
+    console.warn(`[Data Write Notice] Could not write to live Firestore for '${functionName}'. Falling back to local update. Error:`, error.message);
     return fallback();
 };
 
@@ -717,7 +723,7 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         return { ...updatedUser };
     };
 
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const userRef = doc(db, "users", userId);
@@ -792,7 +798,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
         totalReferralPoints: 0,
     };
 
-    if (!db) {
+    if (!db || hasFallenBack()) {
         const userWithId = { ...newUser, id: generateId() };
         MOCK_DB.users.push(userWithId);
 
@@ -828,7 +834,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
         yearsOfExperience: data.yearsOfExperience,
     };
 
-    if (!db) {
+    if (!db || hasFallenBack()) {
         const trainerWithId = { ...newTrainer, id: generateId() };
         MOCK_DB.users.push(trainerWithId);
         saveData();
@@ -844,7 +850,6 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
 
     const mockUpdate = () => {
         const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-        // If user not in mock db, add them. This can happen if they were fetched from live but update fails.
         if (userIndex === -1) {
             MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
         } else {
@@ -852,15 +857,23 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
         }
         saveData();
         return true;
-    }
+    };
 
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) {
+        // If hasFallenBack is true, it means a previous write failed.
+        // We should now only operate on the local data.
+        mockUpdate();
+        // Since we are in fallback mode, we assume the local update is the "success"
+        return true;
+    }
 
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, { approvalStatus: newStatus });
+        mockUpdate(); // Also update local state to keep it in sync
         return true;
-    } catch (error) {
+    } catch (error: any) {
+        // If any error occurs, including permissions, fall back to local update
         return handleWritePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
     }
 };
@@ -929,14 +942,10 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
     if (!db || hasFallenBack()) return mockFetch();
 
     try {
-        let constraints = [where("approvalStatus", "==", "Approved")];
-        if (filters.location) constraints.push(where("location", "==", filters.location));
-        if (filters.gender) constraints.push(where("gender", "==", filters.gender));
-
-        // This query now requires a composite index. The simplified fetch-then-filter is more robust for this app.
         const allApprovedQuery = query(collection(db, "users"), where("approvalStatus", "==", "Approved"));
         const querySnapshot = await getDocs(allApprovedQuery);
 
+        // Perform subsequent filtering on the client side to avoid composite indexes
         const instructors = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
             .filter(u =>
@@ -955,28 +964,51 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
     const mockAssign = () => {
         const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
         const trainer = MOCK_DB.users.find(u => u.id === trainerId);
+
         if (customerIndex !== -1 && trainer) {
             MOCK_DB.users[customerIndex].approvalStatus = 'In Progress';
             MOCK_DB.users[customerIndex].assignedTrainerId = trainer.id;
             MOCK_DB.users[customerIndex].assignedTrainerName = trainer.name;
+
+            const requestIndex = MOCK_DB.lessonRequests.findIndex(r => r.customerId === customerId && r.status === 'Pending');
+            if (requestIndex !== -1) {
+                MOCK_DB.lessonRequests[requestIndex].status = 'Active';
+            }
+
             saveData();
             return true;
         }
         return false;
     };
 
-    if (!db) return mockAssign();
+    if (!db || hasFallenBack()) {
+        return mockAssign();
+    }
 
     try {
         const customerRef = doc(db, "users", customerId);
         const trainerDoc = await getDoc(doc(db, "users", trainerId));
-        if (!trainerDoc.exists()) return false;
+        if (!trainerDoc.exists()) {
+            console.error("Assign Trainer Error: Trainer document not found.");
+            return false;
+        }
 
-        await updateDoc(customerRef, {
+        const batch = writeBatch(db);
+        batch.update(customerRef, {
             approvalStatus: 'In Progress',
             assignedTrainerId: trainerId,
             assignedTrainerName: trainerDoc.data().name
         });
+
+        const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
+        const requestSnapshot = await getDocs(requestQuery);
+        if (!requestSnapshot.empty) {
+            const requestDocRef = requestSnapshot.docs[0].ref;
+            batch.update(requestDocRef, { status: 'Active' });
+        }
+
+        await batch.commit();
+        mockAssign(); // Keep local data in sync on success
         return true;
     } catch (error) {
         return handleWritePermissionError(error, mockAssign, 'assignTrainerToCustomer');
@@ -1059,7 +1091,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
             firstLessonDate.setHours(9, 0, 0, 0); // 9 AM
             customer.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
 
-            const reqIndex = MOCK_DB.lessonRequests.findIndex(r => r.customerId === customerId && r.status === 'Pending');
+            const reqIndex = MOCK_DB.lessonRequests.findIndex(r => r.customerId === customerId && r.status === 'Active');
             if (reqIndex !== -1) MOCK_DB.lessonRequests[reqIndex].status = 'Active';
 
         } else { // Rejected
@@ -1087,7 +1119,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
                 upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
             });
 
-            const reqQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
+            const reqQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Active'));
             const reqSnapshot = await getDocs(reqQuery);
             const batch = writeBatch(db);
             reqSnapshot.docs.forEach(doc => batch.update(doc.ref, { status: 'Active' }));
@@ -1128,7 +1160,7 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
         saveData();
         return true;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const studentRef = doc(db, "users", studentId);
@@ -1181,7 +1213,7 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
         return requestWithId;
     };
 
-    if (!db) return mockAdd();
+    if (!db || hasFallenBack()) return mockAdd();
 
     try {
         const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
@@ -1218,7 +1250,7 @@ export const updateRescheduleRequestStatus = async (requestId: string, newStatus
         saveData();
         return true;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const requestRef = doc(db, 'rescheduleRequests', requestId);
@@ -1244,7 +1276,7 @@ export const addFeedback = async (customerId: string, customerName: string, trai
         saveData();
         return true;
     };
-    if (!db) return mockAdd();
+    if (!db || hasFallenBack()) return mockAdd();
 
     try {
         await addDoc(collection(db, 'feedback'), newFeedback);
@@ -1301,7 +1333,7 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
         saveData();
         return { ...MOCK_DB.users[customerIndex] };
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const customerRef = doc(db, 'users', customerId);
@@ -1359,7 +1391,7 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
         }
         return false;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
@@ -1391,7 +1423,7 @@ export const addCourseModule = async (courseId: string, moduleData: Omit<CourseM
         saveData();
         return MOCK_DB.courses[courseIndex];
     };
-    if (!db) return mockAdd();
+    if (!db || hasFallenBack()) return mockAdd();
 
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -1417,7 +1449,7 @@ export const updateCourseModule = async (courseId: string, moduleId: string, mod
         saveData();
         return MOCK_DB.courses[courseIndex];
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -1440,7 +1472,7 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
         saveData();
         return true;
     };
-    if (!db) return mockDelete();
+    if (!db || hasFallenBack()) return mockDelete();
 
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -1479,7 +1511,7 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
         saveData();
         return MOCK_DB.quizSets[setIndex];
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const setRef = doc(db, 'quizSets', quizSetId);
@@ -1524,7 +1556,7 @@ export const addFaq = async (data: FaqFormValues): Promise<FaqItem> => {
         saveData();
         return newFaq;
     };
-    if (!db) return mockAdd();
+    if (!db || hasFallenBack()) return mockAdd();
 
     try {
         const docRef = await addDoc(collection(db, 'faqs'), data);
@@ -1542,7 +1574,7 @@ export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolea
         saveData();
         return true;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         await updateDoc(doc(db, 'faqs', id), data);
@@ -1559,7 +1591,7 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
         saveData();
         return MOCK_DB.faqs.length < initialLength;
     };
-    if (!db) return mockDelete();
+    if (!db || hasFallenBack()) return mockDelete();
 
     try {
         await deleteDoc(doc(db, 'faqs', id));
@@ -1593,7 +1625,7 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> =
         saveData();
         return newPost;
     };
-    if (!db) return mockAdd();
+    if (!db || hasFallenBack()) return mockAdd();
 
     try {
         const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
@@ -1630,7 +1662,7 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
         saveData();
         return true;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
@@ -1638,6 +1670,7 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
         if (snapshot.empty) return false;
         const docRef = snapshot.docs[0].ref;
         await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+        mockUpdate();
         return true;
     } catch(error) {
         return handleWritePermissionError(error, mockUpdate, 'updateBlogPost');
@@ -1651,7 +1684,7 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
         saveData();
         return MOCK_DB.blogPosts.length < initialLength;
     };
-    if (!db) return mockDelete();
+    if (!db || hasFallenBack()) return mockDelete();
 
     try {
         const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
@@ -1687,7 +1720,7 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
         saveData();
         return true;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         await updateDoc(doc(db, 'siteBanners', id), updateData);
@@ -1722,7 +1755,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
         saveData();
         return true;
     };
-    if (!db) return mockUpdate();
+    if (!db || hasFallenBack()) return mockUpdate();
 
     try {
         await updateDoc(doc(db, 'promotionalPosters', id), updateData);
@@ -1732,6 +1765,8 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
         return handleWritePermissionError(error, mockUpdate, 'updatePromotionalPoster');
     }
 }
+
+
 
 
 
