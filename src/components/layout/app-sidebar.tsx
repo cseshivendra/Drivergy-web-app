@@ -24,6 +24,7 @@ export default function AppSidebar() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
+  const [referralsOpen, setReferralsOpen] = useState(false);
 
   const AppLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
@@ -44,6 +45,9 @@ export default function AppSidebar() {
       setCreateOpen(true);
     } else {
       setCreateOpen(false);
+    }
+    if (pathname.startsWith('/referrals/invite') || pathname.startsWith('/referrals/track')) {
+      setReferralsOpen(true);
     }
   }, [pathname]);
 
@@ -74,6 +78,7 @@ export default function AppSidebar() {
           </SidebarMenuItem>
 
           {(isCustomer || isTrainer) && (
+            <>
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -86,6 +91,48 @@ export default function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+             <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setReferralsOpen(!referralsOpen)}
+                  isActive={pathname.startsWith('/referrals/invite') || pathname.startsWith('/referrals/track')}
+                  tooltip={{ children: "Referrals", side: "right", align: "center" }}
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Gift />
+                    <span>Referrals</span>
+                  </div>
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", referralsOpen && "rotate-180")} />
+                </SidebarMenuButton>
+                {referralsOpen && (
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        asChild
+                        isActive={pathname === '/referrals/invite'}
+                      >
+                        <Link href="/referrals/invite">
+                          <Send className="mr-2 h-4 w-4" />
+                          Invite Friends
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        asChild
+                        isActive={pathname === '/referrals/track'}
+                      >
+                        <Link href="/referrals/track">
+                          <BarChart3 className="mr-2 h-4 w-4" />
+                          Track Referrals
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                )}
+              </SidebarMenuItem>
+            </>
           )}
           
            <SidebarMenuItem>

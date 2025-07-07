@@ -10,11 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car } from 'lucide-react';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car, Gift } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
 import { isFuture, parse } from 'date-fns';
+import Link from 'next/link';
 
 const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -345,6 +346,25 @@ export default function TrainerDashboard() {
             </CardFooter>
           )}
       </Card>
+
+        <Card className="shadow-lg border-primary">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl font-semibold flex items-center">
+                <Gift className="inline-block mr-3 h-6 w-6 align-middle" />
+                Referral Program
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground">
+                Invite new customers or trainers to Drivergy and earn points for every successful referral. Use your points for rewards and discounts.
+                </p>
+            </CardContent>
+            <CardFooter>
+                <Button asChild>
+                    <Link href="/referrals/invite">View Referral Program</Link>
+                </Button>
+            </CardFooter>
+        </Card>
 
     </div>
   );

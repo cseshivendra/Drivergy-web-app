@@ -9,7 +9,7 @@ import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -490,6 +490,31 @@ export default function CustomerDashboard() {
           <CardFooter>
             <Button asChild className="w-full">
               <Link href="/rto-quiz">Start Quiz</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Referral Program Card */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <Gift className="h-7 w-7 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="font-headline text-xl">Referral Program</CardTitle>
+                <CardDescription>Invite friends and earn rewards.</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-grow">
+            <p className="text-sm text-muted-foreground mb-4">
+              Share your unique referral code with friends. You'll earn points when they sign up and subscribe!
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button asChild className="w-full">
+              <Link href="/referrals/invite">Go to Referrals</Link>
             </Button>
           </CardFooter>
         </Card>
