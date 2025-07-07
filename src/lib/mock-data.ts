@@ -129,21 +129,21 @@ const initialBanners: SiteBanner[] = [
       id: 'hero-1',
       title: 'Join a Team of Professionals',
       description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-      imageSrc: 'https://placehold.co/1920x1080.png',
+      imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
       imageHint: 'driving instructors team',
     },
     {
       id: 'hero-2',
       title: 'Learn in a Safe Environment',
       description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-      imageSrc: 'https://placehold.co/1920x1080.png',
+      imageSrc: 'https://placehold.co/1920x1080/3b82f6/ffffff.png',
       imageHint: 'driving lesson car interior',
     },
     {
       id: 'hero-3',
       title: 'Your Success Is Our Mission',
       description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-      imageSrc: 'https://placehold.co/1920x1080.png',
+      imageSrc: 'https://placehold.co/1920x1080/10b981/ffffff.png',
       imageHint: 'happy driver license',
     }
   ];
@@ -465,7 +465,7 @@ const adminUser: UserProfile = {
   id: ADMIN_ID,
   uniqueId: 'ADMIN-001',
   name: 'Admin User',
-  username: 'Admin',
+  username: 'admin',
   password: 'admin',
   contact: 'admin@drivergy.com',
   phone: '1234567890',
@@ -637,25 +637,31 @@ export const authenticateUserByCredentials = async (username: string, password: 
     const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
 
     if (!db) {
+        if (user && user.uniqueId === 'ADMIN-001') {
+            const adminExists = MOCK_DB.users.some(u => u.uniqueId === 'ADMIN-001');
+            if (!adminExists) {
+                MOCK_DB.users.push(adminUser);
+                saveData();
+            }
+        }
         return user ? { ...user } : null;
     }
 
     // Live DB logic
-    if (user && user.uniqueId === 'ADMIN-001') {
-        const adminDocRef = doc(db, 'users', user.id);
+    if (username.toLowerCase() === 'admin' && password === 'admin') {
+        const adminDocRef = doc(db, 'users', ADMIN_ID);
         const adminDocSnap = await getDoc(adminDocRef);
         if (!adminDocSnap.exists()) {
-            const { id, ...adminData } = user;
+            const { id, ...adminData } = adminUser;
             await setDoc(adminDocRef, adminData);
             console.log("Admin user has been seeded into the live database.");
-            return user;
+            return adminUser;
         } else {
             return { id: adminDocSnap.id, ...adminDocSnap.data() } as UserProfile;
         }
     }
     
     // Regular user login for live DB needs a case-insensitive query, which Firestore doesn't support directly.
-    // A common workaround is to store a lowercase version of the username. For now, we rely on the mock data logic.
     // The query below will only work for exact case matches.
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
@@ -808,7 +814,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 };
 
 export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
-  if (!db) {
+  const mockUpdate = () => {
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
       MOCK_DB.users[userIndex].approvalStatus = newStatus;
@@ -816,12 +822,30 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
       return true;
     }
     return false;
-  }
+  };
   
-  const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, { approvalStatus: newStatus });
-  return true;
+  if (!db) {
+    return mockUpdate();
+  }
+
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { approvalStatus: newStatus });
+    return true;
+  } catch (error: any) {
+    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('usingMockDataFallback', 'true');
+      }
+      console.warn(`Firebase permission denied in updateUserApprovalStatus. Falling back to mock data update.`);
+      return mockUpdate(); // Fallback to local update
+    }
+    // For other errors, log them and indicate failure.
+    console.error(`Error updating user ${userId} status:`, error);
+    return false;
+  }
 };
+
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
   const mockFetch = () => [...MOCK_DB.users].sort((a,b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
@@ -1594,6 +1618,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
