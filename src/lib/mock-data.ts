@@ -1,5 +1,4 @@
 
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -466,7 +465,7 @@ const adminUser: UserProfile = {
   id: ADMIN_ID,
   uniqueId: 'ADMIN-001',
   name: 'Admin User',
-  username: 'admin',
+  username: 'Admin',
   password: 'password123',
   contact: 'admin@drivergy.com',
   phone: '1234567890',
@@ -1542,6 +1541,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+
 
 
 
