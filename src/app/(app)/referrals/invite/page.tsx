@@ -6,7 +6,7 @@ import { fetchUserById } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Gift, Copy, Share2, Twitter, Facebook, MessageSquare } from 'lucide-react';
+import { Gift, Copy, Share2, Twitter, Facebook, MessageSquare, Mail } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
@@ -29,26 +29,32 @@ export default function InviteReferralsPage() {
         }
     }, [user]);
 
+    const referralUrl = referralCode ? `https://drivergy.com/site/register?ref=${referralCode}` : '';
+
     const handleCopy = () => {
-        if (!referralCode) return;
-        navigator.clipboard.writeText(referralCode);
+        if (!referralUrl) return;
+        navigator.clipboard.writeText(referralUrl);
         toast({
             title: "Copied to Clipboard!",
-            description: "Your referral code has been copied.",
+            description: "Your referral link has been copied.",
         });
     };
     
-    const getShareLink = (platform: 'twitter' | 'facebook' | 'whatsapp') => {
-        const text = `Join Drivergy, the best driving school platform, using my referral code: ${referralCode}`;
+    const getShareLink = (platform: 'twitter' | 'facebook' | 'whatsapp' | 'email') => {
+        if (!referralUrl) return '#';
+        const text = `Join Drivergy, the best driving school platform, using my referral link!`;
         const encodedText = encodeURIComponent(text);
-        const url = "https://drivergy.com"; // Placeholder URL
+        const encodedUrl = encodeURIComponent(referralUrl);
+
         switch(platform) {
             case 'twitter':
-                return `https://twitter.com/intent/tweet?text=${encodedText}&url=${url}`;
+                return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
             case 'facebook':
-                return `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${encodedText}`;
+                return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
             case 'whatsapp':
-                return `https://wa.me/?text=${encodedText}%20${url}`;
+                return `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+            case 'email':
+                return `mailto:?subject=${encodeURIComponent('Invitation to join Drivergy')}&body=${encodedText}%0A%0A${encodedUrl}`;
         }
     }
 
@@ -92,17 +98,17 @@ export default function InviteReferralsPage() {
                         </div>
                         <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Refer & Earn</h1>
                         <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                            Share your referral code with friends and earn points when they subscribe!
+                            Share your referral link with friends and earn points when they subscribe!
                         </p>
                     </div>
                 </div>
                 <CardContent className="p-6 text-center space-y-6">
-                    <p className="text-muted-foreground">Share this code with your friends:</p>
+                    <p className="text-muted-foreground">Share your unique referral link:</p>
                     <div className="flex justify-center items-center gap-2">
                         <Input 
                             readOnly 
-                            value={referralCode || 'Loading...'}
-                            className="text-2xl font-bold tracking-widest text-center h-14 bg-muted/50 text-primary"
+                            value={referralUrl || 'Loading...'}
+                            className="text-lg font-bold tracking-wide text-center h-14 bg-muted/50 text-primary"
                         />
                         <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode}>
                             <Copy className="h-5 w-5" />
@@ -119,6 +125,9 @@ export default function InviteReferralsPage() {
                         </Button>
                          <Button asChild size="icon" className="rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
                             <a href={getShareLink('whatsapp')} target="_blank" rel="noopener noreferrer"><MessageSquare className="text-white" /></a>
+                        </Button>
+                        <Button asChild size="icon" className="rounded-full bg-gray-500 hover:bg-gray-600">
+                           <a href={getShareLink('email')}><Mail className="text-white" /></a>
                         </Button>
                     </div>
                 </CardContent>
