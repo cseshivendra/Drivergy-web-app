@@ -8,46 +8,46 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 
 
 const initialFaqs: FaqItem[] = [
-    {
-      id: "faq-1",
-      question: "What documents do I need to enroll?",
-      answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
-    },
-    {
-      id: "faq-2",
-      question: "Can I choose my instructor?",
-      answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
-    },
-    {
-      id: "faq-3",
-      question: "How do I book a driving lesson slot?",
-      answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
-    },
-    {
-      id: "faq-4",
-      question: "What types of vehicles are available for training?",
-      answer: "We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.",
-    },
-    {
-      id: "faq-5",
-      question: "What if I need to cancel or reschedule a lesson?",
-      answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
-    },
-    {
-      id: "faq-6",
-      question: "How do I redeem a coupon code?",
-      answer: "You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount."
-    },
-    {
-      id: "faq-7",
-      question: "How can I use the points earned from referrals?",
-      answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey."
-    },
-    {
-      id: "faq-8",
-      question: "Is our driving school completion certificate valid at the RTO?",
-      answer: "Drivergy Certificates are valid at RTO office as we are authorized partner.",
-    }
+  {
+    id: "faq-1",
+    question: "What documents do I need to enroll?",
+    answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
+  },
+  {
+    id: "faq-2",
+    question: "Can I choose my instructor?",
+    answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
+  },
+  {
+    id: "faq-3",
+    question: "How do I book a driving lesson slot?",
+    answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
+  },
+  {
+    id: "faq-4",
+    question: "What types of vehicles are available for training?",
+    answer: "We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.",
+  },
+  {
+    id: "faq-5",
+    question: "What if I need to cancel or reschedule a lesson?",
+    answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
+  },
+  {
+    id: "faq-6",
+    question: "How do I redeem a coupon code?",
+    answer: "You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount."
+  },
+  {
+    id: "faq-7",
+    question: "How can I use the points earned from referrals?",
+    answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey."
+  },
+  {
+    id: "faq-8",
+    question: "Is our driving school completion certificate valid at the RTO?",
+    answer: "Drivergy Certificates are valid at RTO office as we are authorized partner.",
+  }
 ];
 
 const initialBlogPosts: BlogPost[] = [
@@ -126,28 +126,28 @@ const initialBlogPosts: BlogPost[] = [
 ];
 
 const initialBanners: SiteBanner[] = [
-    {
-      id: 'hero-1',
-      title: 'Join a Team of Professionals',
-      description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-      imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/team.jpg',
-      imageHint: 'driving instructors team',
-    },
-    {
-      id: 'hero-2',
-      title: 'Learn in a Safe Environment',
-      description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-      imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/lesson.jpg',
-      imageHint: 'driving lesson car interior',
-    },
-    {
-      id: 'hero-3',
-      title: 'Your Success Is Our Mission',
-      description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-      imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/student.jpg',
-      imageHint: 'happy driver license',
-    }
-  ];
+  {
+    id: 'hero-1',
+    title: 'Join a Team of Professionals',
+    description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
+    imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/team.jpg',
+    imageHint: 'driving instructors team',
+  },
+  {
+    id: 'hero-2',
+    title: 'Learn in a Safe Environment',
+    description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
+    imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/lesson.jpg',
+    imageHint: 'driving lesson car interior',
+  },
+  {
+    id: 'hero-3',
+    title: 'Your Success Is Our Mission',
+    description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
+    imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/student.jpg',
+    imageHint: 'happy driver license',
+  }
+];
 
 const initialPromotionalPosters: PromotionalPoster[] = [
   {
@@ -177,43 +177,43 @@ const initialPromotionalPosters: PromotionalPoster[] = [
 ];
 
 const initialCourses: Omit<Course, 'icon'>[] = [
-    {
-        id: 'course1',
-        title: 'Comprehensive Car Program',
-        description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
-        totalEnrolled: 125,
-        totalCertified: 98,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
-        { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
-        { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
-        ],
-    },
-    {
-        id: 'course2',
-        title: 'Motorcycle Rider Course',
-        description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
-        totalEnrolled: 88,
-        totalCertified: 71,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
-        { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
-        ],
-    },
-    {
-        id: 'course3',
-        title: 'RTO Test Preparation',
-        description: 'A specialized course to help you ace the official RTO driving test and get your license.',
-        totalEnrolled: 210,
-        totalCertified: 195,
-        image: 'https://placehold.co/600x400.png',
-        modules: [
-        { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
-        { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
-        ],
-    },
+  {
+    id: 'course1',
+    title: 'Comprehensive Car Program',
+    description: 'From basics to advanced maneuvers, this course prepares you for confident city and highway driving.',
+    totalEnrolled: 125,
+    totalCertified: 98,
+    image: 'https://placehold.co/600x400.png',
+    modules: [
+      { id: 'c1m1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its functions.', duration: '2 hours', recordedLectureLink: '#' },
+      { id: 'c1m2', title: 'Parking & Reversing', description: 'Master parallel, perpendicular, and angle parking.', duration: '3 hours', recordedLectureLink: '#' },
+      { id: 'c1m3', title: 'On-Road Traffic Navigation', description: 'Real-world driving in moderate traffic.', duration: '5 hours', recordedLectureLink: '#' },
+    ],
+  },
+  {
+    id: 'course2',
+    title: 'Motorcycle Rider Course',
+    description: 'Learn to ride a two-wheeler safely, covering balance, traffic rules, and emergency braking.',
+    totalEnrolled: 88,
+    totalCertified: 71,
+    image: 'https://placehold.co/600x400.png',
+    modules: [
+      { id: 'c2m1', title: 'Balancing and Control', description: 'Getting comfortable on the bike.', duration: '2 hours', recordedLectureLink: '#' },
+      { id: 'c2m2', title: 'Safety and Gear', description: 'Importance of helmets and safety gear.', duration: '1 hour', recordedLectureLink: '#' },
+    ],
+  },
+  {
+    id: 'course3',
+    title: 'RTO Test Preparation',
+    description: 'A specialized course to help you ace the official RTO driving test and get your license.',
+    totalEnrolled: 210,
+    totalCertified: 195,
+    image: 'https://placehold.co/600x400.png',
+    modules: [
+      { id: 'c3m1', title: 'Theory and Signals', description: 'Covering all traffic signs and rules.', duration: '3 hours', recordedLectureLink: '#' },
+      { id: 'c3m2', title: 'Practical Test Simulation', description: 'Simulating the official test environment.', duration: '2 hours', recordedLectureLink: '#' },
+    ],
+  },
 ];
 
 const baseQuestions = [
@@ -458,8 +458,25 @@ interface MockDatabase {
   promotionalPosters: PromotionalPoster[];
 }
 
+const ADMIN_ID = 'admin-user-id-01';
 const SAMPLE_TRAINER_ID = 'sample-trainer-id-01';
 const SAMPLE_CUSTOMER_ID = 'sample-customer-id-01';
+
+const adminUser: UserProfile = {
+  id: ADMIN_ID,
+  uniqueId: 'ADMIN-001',
+  name: 'Admin User',
+  username: 'admin',
+  password: 'password123',
+  contact: 'admin@drivergy.com',
+  phone: '1234567890',
+  location: 'Gurugram',
+  subscriptionPlan: 'Admin',
+  registrationTimestamp: new Date('2023-01-01T09:00:00Z').toISOString(),
+  approvalStatus: 'Approved',
+  gender: 'Other',
+  photoURL: 'https://placehold.co/100x100.png?text=A',
+};
 
 const sampleTrainer: UserProfile = {
   id: SAMPLE_TRAINER_ID,
@@ -515,21 +532,22 @@ const sampleCustomer: UserProfile = {
   completedLessons: 5,
   attendance: 'Pending',
   feedbackSubmitted: false,
+  totalReferralPoints: 0,
 };
 
 const sampleReferral: Referral = {
-    id: 'sample-ref-1',
-    referrerId: SAMPLE_TRAINER_ID,
-    referrerName: 'Rajesh Kumar',
-    refereeId: 'another-customer-id',
-    refereeName: 'Priya Sharma',
-    status: 'Successful',
-    pointsEarned: 100,
-    payoutStatus: 'Pending',
-    timestamp: new Date('2024-06-10T11:00:00Z').toISOString(),
+  id: 'sample-ref-1',
+  referrerId: SAMPLE_TRAINER_ID,
+  referrerName: 'Rajesh Kumar',
+  refereeId: 'another-customer-id',
+  refereeName: 'Priya Sharma',
+  status: 'Successful',
+  pointsEarned: 100,
+  payoutStatus: 'Pending',
+  timestamp: new Date('2024-06-10T11:00:00Z').toISOString(),
 };
 
-const initialUsers = [sampleCustomer, sampleTrainer];
+const initialUsers = [adminUser, sampleCustomer, sampleTrainer];
 
 let MOCK_DB: MockDatabase = {
   users: [],
@@ -561,8 +579,8 @@ const saveData = () => {
   if (typeof window !== 'undefined') {
     // We remove the icon functions before saving to avoid non-serializable data errors
     const serializableDb = {
-        ...MOCK_DB,
-        courses: MOCK_DB.courses.map(({ icon, ...rest }) => rest)
+      ...MOCK_DB,
+      courses: MOCK_DB.courses.map(({ icon, ...rest }) => rest)
     };
     localStorage.setItem('drivergyMockDb', JSON.stringify(serializableDb));
   }
@@ -575,12 +593,13 @@ const loadData = () => {
       const parsedDb = JSON.parse(data);
       parsedDb.courses = reAssignCourseIcons(parsedDb.courses || []);
       MOCK_DB = { ...MOCK_DB, ...parsedDb };
-      
+
       // Robustness checks - add initial data if missing
       const userExists = (uniqueId: string) => MOCK_DB.users.some(u => u.uniqueId === uniqueId);
+      if (!userExists('ADMIN-001')) MOCK_DB.users.push(adminUser);
       if (!userExists('CU-SAMPLE')) MOCK_DB.users.push(sampleCustomer);
       if (!userExists('TR-SAMPLE')) MOCK_DB.users.push(sampleTrainer);
-      
+
       const referralExists = (id: string) => MOCK_DB.referrals.some(r => r.id === id);
       if (!referralExists('sample-ref-1')) MOCK_DB.referrals.push(sampleReferral);
 
@@ -590,7 +609,7 @@ const loadData = () => {
       if (!MOCK_DB.promotionalPosters || MOCK_DB.promotionalPosters.length === 0) MOCK_DB.promotionalPosters = initialPromotionalPosters;
       if (!MOCK_DB.quizSets || MOCK_DB.quizSets.length === 0) MOCK_DB.quizSets = initialQuizSets;
       if (!MOCK_DB.courses || MOCK_DB.courses.length === 0) MOCK_DB.courses = reAssignCourseIcons(initialCourses);
-      
+
       saveData();
     } else {
       // If no data in local storage, initialize with all hardcoded data
@@ -652,19 +671,19 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
     saveData();
     return { ...updatedUser };
   }
-  
+
   const userRef = doc(db, "users", userId);
   const updateData = {
-      name: data.name,
-      contact: data.email,
-      phone: data.phone,
-      location: data.district,
-      photoURL: data.photo ? `https://placehold.co/100x100.png` : undefined, // This needs real storage logic
-      flatHouseNumber: data.flatHouseNumber,
-      street: data.street,
-      state: data.state,
-      district: data.district,
-      pincode: data.pincode,
+    name: data.name,
+    contact: data.email,
+    phone: data.phone,
+    location: data.district,
+    photoURL: data.photo ? `https://placehold.co/100x100.png` : undefined, // This needs real storage logic
+    flatHouseNumber: data.flatHouseNumber,
+    street: data.street,
+    state: data.state,
+    district: data.district,
+    pincode: data.pincode,
   };
   // This removes undefined fields so we don't overwrite existing data with nothing
   Object.keys(updateData).forEach(key => updateData[key as keyof typeof updateData] === undefined && delete updateData[key as keyof typeof updateData]);
@@ -723,7 +742,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
   if (!db) {
     const userWithId = { ...newUser, id: generateId() };
     MOCK_DB.users.push(userWithId);
-    
+
     const newRequest: LessonRequest = { id: generateId(), customerId: userWithId.id, customerName: newUser.name, vehicleType: data.vehiclePreference as VehicleType, status: 'Pending', requestTimestamp: new Date().toISOString() };
     MOCK_DB.lessonRequests.push(newRequest);
     saveData();
@@ -738,7 +757,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
 };
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile> => {
-   const newTrainer: Omit<UserProfile, 'id'> = {
+  const newTrainer: Omit<UserProfile, 'id'> = {
     uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
     name: data.name,
     username: data.username,
@@ -763,7 +782,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     saveData();
     return trainerWithId;
   }
-  
+
   const docRef = await addDoc(collection(db, 'users'), newTrainer);
   return { id: docRef.id, ...newTrainer };
 };
@@ -778,7 +797,7 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
     }
     return false;
   }
-  
+
   const userRef = doc(db, "users", userId);
   await updateDoc(userRef, { approvalStatus: newStatus });
   return true;
@@ -796,27 +815,56 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
   if (!db) {
-    return MOCK_DB.users.find(u => u.id === userId) || null;
+    const user = MOCK_DB.users.find(u => u.id === userId);
+    if (!user) return null;
+
+    // If user is a customer with an assigned trainer, fetch trainer details and attach them.
+    if (user.uniqueId.startsWith('CU') && user.assignedTrainerId) {
+      const trainer = MOCK_DB.users.find(t => t.id === user.assignedTrainerId);
+      if (trainer) {
+        user.assignedTrainerPhone = trainer.phone;
+        user.assignedTrainerExperience = trainer.yearsOfExperience;
+        user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+      }
+    }
+    return { ...user };
   }
   const userRef = doc(db, "users", userId);
   const userSnap = await getDoc(userRef);
-  return userSnap.exists() ? { id: userSnap.id, ...userSnap.data() } as UserProfile : null;
+  if (!userSnap.exists()) return null;
+
+  const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+
+  // If user is a customer with an assigned trainer, fetch trainer details and attach them.
+  if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+    const trainerRef = doc(db, "users", user.assignedTrainerId);
+    const trainerSnap = await getDoc(trainerRef);
+    if (trainerSnap.exists()) {
+      const trainer = trainerSnap.data() as UserProfile;
+      user.assignedTrainerPhone = trainer.phone;
+      user.assignedTrainerExperience = trainer.yearsOfExperience;
+      user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+    }
+  }
+
+  return user;
 };
+
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
   if (!db) {
     return MOCK_DB.users.filter(u =>
-      u.uniqueId.startsWith('TR') &&
-      u.approvalStatus === 'Approved' &&
-      (!filters.location || u.location === filters.location) &&
-      (!filters.gender || u.gender === filters.gender)
+        u.uniqueId.startsWith('TR') &&
+        u.approvalStatus === 'Approved' &&
+        (!filters.location || u.location === filters.location) &&
+        (!filters.gender || u.gender === filters.gender)
     );
   }
-  
+
   let queries = [
-      where("uniqueId", ">=", "TR-"),
-      where("uniqueId", "<", "TR." ), // A trick to query by prefix
-      where("approvalStatus", "==", "Approved")
+    where("uniqueId", ">=", "TR-"),
+    where("uniqueId", "<", "TR." ), // A trick to query by prefix
+    where("approvalStatus", "==", "Approved")
   ];
   if(filters.location) queries.push(where("location", "==", filters.location));
   if(filters.gender) queries.push(where("gender", "==", filters.gender));
@@ -842,7 +890,7 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
   const customerRef = doc(db, "users", customerId);
   const trainerDoc = await getDoc(doc(db, "users", trainerId));
   if (!trainerDoc.exists()) return false;
-  
+
   await updateDoc(customerRef, {
     approvalStatus: 'In Progress',
     assignedTrainerId: trainerId,
@@ -856,21 +904,21 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 // =================================================================
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
-   if (!db) {
-      const totalCustomers = MOCK_DB.users.filter(u => u.uniqueId.startsWith('CU')).length;
-      const totalInstructors = MOCK_DB.users.filter(u => u.uniqueId.startsWith('TR')).length;
-      const activeSubscriptions = MOCK_DB.users.filter(u => u.approvalStatus === 'Approved').length;
-      const pendingRequests = MOCK_DB.lessonRequests.filter(r => r.status === 'Pending').length;
-      const pendingRescheduleRequests = MOCK_DB.rescheduleRequests.filter(r => r.status === 'Pending').length;
-      const totalCertifiedTrainers = MOCK_DB.users.filter(u => u.uniqueId.startsWith('TR') && u.approvalStatus === 'Approved').length;
-      const totalEarnings = MOCK_DB.users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
-          if (user.subscriptionPlan === 'Premium') return acc + 9999;
-          if (user.subscriptionPlan === 'Gold') return acc + 7499;
-          if (user.subscriptionPlan === 'Basic') return acc + 3999;
-          return acc;
-        }, 0);
-      return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
-   }
+  if (!db) {
+    const totalCustomers = MOCK_DB.users.filter(u => u.uniqueId.startsWith('CU')).length;
+    const totalInstructors = MOCK_DB.users.filter(u => u.uniqueId.startsWith('TR')).length;
+    const activeSubscriptions = MOCK_DB.users.filter(u => u.approvalStatus === 'Approved').length;
+    const pendingRequests = MOCK_DB.lessonRequests.filter(r => r.status === 'Pending').length;
+    const pendingRescheduleRequests = MOCK_DB.rescheduleRequests.filter(r => r.status === 'Pending').length;
+    const totalCertifiedTrainers = MOCK_DB.users.filter(u => u.uniqueId.startsWith('TR') && u.approvalStatus === 'Approved').length;
+    const totalEarnings = MOCK_DB.users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
+      if (user.subscriptionPlan === 'Premium') return acc + 9999;
+      if (user.subscriptionPlan === 'Gold') return acc + 7499;
+      if (user.subscriptionPlan === 'Basic') return acc + 3999;
+      return acc;
+    }, 0);
+    return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
+  }
 
   const usersSnapshot = await getDocs(collection(db, 'users'));
   const users = usersSnapshot.docs.map(doc => doc.data() as UserProfile);
@@ -896,11 +944,11 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 // TRAINER SPECIFIC FUNCTIONS
 // =================================================================
 export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
-    if (!db) return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
-    
-    const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+  if (!db) return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
+
+  const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
@@ -917,18 +965,18 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
       const firstLessonDate = addDays(startDate, 2);
       firstLessonDate.setHours(9, 0, 0, 0); // 9 AM
       customer.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
-      
+
       const reqIndex = MOCK_DB.lessonRequests.findIndex(r => r.customerId === customerId && r.status === 'Pending');
       if (reqIndex !== -1) MOCK_DB.lessonRequests[reqIndex].status = 'Active';
 
     } else { // Rejected
-        MOCK_DB.users[customerIndex].assignedTrainerId = undefined;
-        MOCK_DB.users[customerIndex].assignedTrainerName = undefined;
+      MOCK_DB.users[customerIndex].assignedTrainerId = undefined;
+      MOCK_DB.users[customerIndex].assignedTrainerName = undefined;
     }
     saveData();
     return true;
   }
-  
+
   await updateDoc(customerRef, { approvalStatus: newStatus });
   if (newStatus === 'Approved') {
     const customerSnap = await getDoc(customerRef);
@@ -941,7 +989,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
     await updateDoc(customerRef, {
       upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
     });
-    
+
     const reqQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
     const reqSnapshot = await getDocs(reqQuery);
     const batch = writeBatch(db);
@@ -954,40 +1002,45 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
 };
 
 export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-    if (!db) return MOCK_DB.feedback.filter(f => f.trainerId === trainerId);
-    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+  if (!db) {
+    return MOCK_DB.feedback
+        .filter(f => f.trainerId === trainerId)
+        .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+  }
+  const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
+  const snapshot = await getDocs(q);
+  const feedbackData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+  return feedbackData;
 };
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
-    const studentRef = doc(db, "users", studentId);
-    if (!db) {
-      const studentIndex = MOCK_DB.users.findIndex(u => u.id === studentId);
-      if (studentIndex === -1) return false;
-      const student = MOCK_DB.users[studentIndex];
-      const alreadyPresent = student.attendance === 'Present';
-      student.attendance = status;
-      if (status === 'Present' && !alreadyPresent) {
-        student.completedLessons = (student.completedLessons || 0) + 1;
-      }
-      MOCK_DB.users[studentIndex] = student;
-      saveData();
-      return true;
+  const studentRef = doc(db, "users", studentId);
+  if (!db) {
+    const studentIndex = MOCK_DB.users.findIndex(u => u.id === studentId);
+    if (studentIndex === -1) return false;
+    const student = MOCK_DB.users[studentIndex];
+    const alreadyPresent = student.attendance === 'Present';
+    student.attendance = status;
+    if (status === 'Present' && !alreadyPresent) {
+      student.completedLessons = (student.completedLessons || 0) + 1;
     }
-
-    const studentSnap = await getDoc(studentRef);
-    if (!studentSnap.exists()) return false;
-
-    const studentData = studentSnap.data() as UserProfile;
-    const updates: Partial<UserProfile> = { attendance: status };
-
-    if (status === 'Present' && studentData.attendance !== 'Present') {
-      updates.completedLessons = (studentData.completedLessons || 0) + 1;
-    }
-
-    await updateDoc(studentRef, updates);
+    MOCK_DB.users[studentIndex] = student;
+    saveData();
     return true;
+  }
+
+  const studentSnap = await getDoc(studentRef);
+  if (!studentSnap.exists()) return false;
+
+  const studentData = studentSnap.data() as UserProfile;
+  const updates: Partial<UserProfile> = { attendance: status };
+
+  if (status === 'Present' && studentData.attendance !== 'Present') {
+    updates.completedLessons = (studentData.completedLessons || 0) + 1;
+  }
+
+  await updateDoc(studentRef, updates);
+  return true;
 };
 
 // =================================================================
@@ -1030,7 +1083,7 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
     saveData();
     return requestWithId;
   }
-  
+
   const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
   return { id: docRef.id, ...newRequest };
 };
@@ -1089,21 +1142,37 @@ export const fetchAllFeedback = async (): Promise<Feedback[]> => {
 };
 
 export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
-    if (!db) return MOCK_DB.users.filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName).map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+  if (!db) {
+    return MOCK_DB.users
+        .filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName)
+        .map(c => ({
+          studentId: c.uniqueId,
+          studentName: c.name,
+          trainerName: c.assignedTrainerName!,
+          subscriptionPlan: c.subscriptionPlan,
+          totalLessons: c.totalLessons || 0,
+          completedLessons: c.completedLessons || 0,
+          remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+        }))
+        .sort((a, b) => a.remainingLessons - b.remainingLessons);
+  }
 
-    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'), where('assignedTrainerName', '!=', null));
-    const snapshot = await getDocs(q);
-    const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-    return users.map(c => ({
-        studentId: c.uniqueId,
-        studentName: c.name,
-        trainerName: c.assignedTrainerName!,
-        subscriptionPlan: c.subscriptionPlan,
-        totalLessons: c.totalLessons || 0,
-        completedLessons: c.completedLessons || 0,
-        remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
-    })).sort((a, b) => a.remainingLessons - b.remainingLessons);
-}
+  const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
+  const snapshot = await getDocs(q);
+  const users = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+      .filter(u => u.assignedTrainerName); // Filter client-side
+
+  return users.map(c => ({
+    studentId: c.uniqueId,
+    studentName: c.name,
+    trainerName: c.assignedTrainerName!,
+    subscriptionPlan: c.subscriptionPlan,
+    totalLessons: c.totalLessons || 0,
+    completedLessons: c.completedLessons || 0,
+    remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+  })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+};
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
   const customerRef = doc(db, 'users', customerId);
@@ -1178,67 +1247,73 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 export const fetchCourses = async (): Promise<Course[]> => {
   if (!db) return [...MOCK_DB.courses];
   const snapshot = await getDocs(query(collection(db, 'courses')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.courses];
+  }
   return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
 };
 
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
-    if (!db) {
-        const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
-        if (courseIndex === -1) return null;
-        const newModule: CourseModule = { ...moduleData, id: generateId() };
-        MOCK_DB.courses[courseIndex].modules.push(newModule);
-        saveData();
-        return MOCK_DB.courses[courseIndex];
-    }
-    const courseRef = doc(db, 'courses', courseId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) return null;
-    const course = courseSnap.data() as Course;
-    const newModule = { ...moduleData, id: generateId() };
-    const updatedModules = [...(course.modules || []), newModule];
-    await updateDoc(courseRef, { modules: updatedModules });
-    return { ...course, modules: updatedModules, id: courseId };
+  if (!db) {
+    const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
+    if (courseIndex === -1) return null;
+    const newModule: CourseModule = { ...moduleData, id: generateId() };
+    MOCK_DB.courses[courseIndex].modules.push(newModule);
+    saveData();
+    return MOCK_DB.courses[courseIndex];
+  }
+  const courseRef = doc(db, 'courses', courseId);
+  const courseSnap = await getDoc(courseRef);
+  if (!courseSnap.exists()) return null;
+  const course = courseSnap.data() as Course;
+  const newModule = { ...moduleData, id: generateId() };
+  const updatedModules = [...(course.modules || []), newModule];
+  await updateDoc(courseRef, { modules: updatedModules });
+  return { ...course, modules: updatedModules, id: courseId };
 };
 
 export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> => {
-    if (!db) {
-        const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
-        if (courseIndex === -1) return null;
-        const moduleIndex = MOCK_DB.courses[courseIndex].modules.findIndex(m => m.id === moduleId);
-        if (moduleIndex === -1) return null;
-        MOCK_DB.courses[courseIndex].modules[moduleIndex] = { ...MOCK_DB.courses[courseIndex].modules[moduleIndex], ...moduleData };
-        saveData();
-        return MOCK_DB.courses[courseIndex];
-    }
-    const courseRef = doc(db, 'courses', courseId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) return null;
-    const course = courseSnap.data() as Course;
-    const updatedModules = course.modules.map(m => m.id === moduleId ? { ...m, ...moduleData } : m);
-    await updateDoc(courseRef, { modules: updatedModules });
-    return { ...course, modules: updatedModules, id: courseId };
+  if (!db) {
+    const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
+    if (courseIndex === -1) return null;
+    const moduleIndex = MOCK_DB.courses[courseIndex].modules.findIndex(m => m.id === moduleId);
+    if (moduleIndex === -1) return null;
+    MOCK_DB.courses[courseIndex].modules[moduleIndex] = { ...MOCK_DB.courses[courseIndex].modules[moduleIndex], ...moduleData };
+    saveData();
+    return MOCK_DB.courses[courseIndex];
+  }
+  const courseRef = doc(db, 'courses', courseId);
+  const courseSnap = await getDoc(courseRef);
+  if (!courseSnap.exists()) return null;
+  const course = courseSnap.data() as Course;
+  const updatedModules = course.modules.map(m => m.id === moduleId ? { ...m, ...moduleData } : m);
+  await updateDoc(courseRef, { modules: updatedModules });
+  return { ...course, modules: updatedModules, id: courseId };
 };
 
 export const deleteCourseModule = async (courseId: string, moduleId: string): Promise<boolean> => {
-    if (!db) {
-        const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
-        if (courseIndex === -1) return false;
-        MOCK_DB.courses[courseIndex].modules = MOCK_DB.courses[courseIndex].modules.filter(m => m.id !== moduleId);
-        saveData();
-        return true;
-    }
-    const courseRef = doc(db, 'courses', courseId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) return false;
-    const course = courseSnap.data() as Course;
-    const updatedModules = course.modules.filter(m => m.id !== moduleId);
-    await updateDoc(courseRef, { modules: updatedModules });
+  if (!db) {
+    const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
+    if (courseIndex === -1) return false;
+    MOCK_DB.courses[courseIndex].modules = MOCK_DB.courses[courseIndex].modules.filter(m => m.id !== moduleId);
+    saveData();
     return true;
+  }
+  const courseRef = doc(db, 'courses', courseId);
+  const courseSnap = await getDoc(courseRef);
+  if (!courseSnap.exists()) return false;
+  const course = courseSnap.data() as Course;
+  const updatedModules = course.modules.filter(m => m.id !== moduleId);
+  await updateDoc(courseRef, { modules: updatedModules });
+  return true;
 };
 
 export const fetchQuizSets = async (): Promise<QuizSet[]> => {
   if (!db) return [...MOCK_DB.quizSets];
   const snapshot = await getDocs(query(collection(db, 'quizSets')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.quizSets];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
 };
 
@@ -1254,20 +1329,20 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
     saveData();
     return MOCK_DB.quizSets[setIndex];
   }
-  
+
   const setSnap = await getDoc(setRef);
   if (!setSnap.exists()) return null;
   const quizSet = setSnap.data() as QuizSet;
   const updatedQuestions = quizSet.questions.map(q => {
-      if (q.id === questionId) {
-          return {
-              id: q.id,
-              question: { en: data.question_en, hi: data.question_hi },
-              options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') },
-              correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
-          };
-      }
-      return q;
+    if (q.id === questionId) {
+      return {
+        id: q.id,
+        question: { en: data.question_en, hi: data.question_hi },
+        options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') },
+        correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+      };
+    }
+    return q;
   });
   await updateDoc(setRef, { questions: updatedQuestions });
   return { ...quizSet, questions: updatedQuestions, id: quizSetId };
@@ -1276,6 +1351,9 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
 export const fetchFaqs = async (): Promise<FaqItem[]> => {
   if (!db) return [...MOCK_DB.faqs];
   const snapshot = await getDocs(query(collection(db, 'faqs')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.faqs];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
 };
 
@@ -1315,10 +1393,12 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
   if (!db) {
-    // Sort by date descending to show newest first
     return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
   const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
   return snapshot.docs.map(doc => doc.data() as BlogPost);
 };
 
@@ -1341,14 +1421,14 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> =
     saveData();
     return newPost;
   }
-  
+
   // In Firestore, we should also check for slug uniqueness before adding
   const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
   const existing = await getDocs(q);
   if (!existing.empty) {
     throw new Error("A blog post with this slug already exists.");
   }
-  
+
   await addDoc(collection(db, 'blogPosts'), newPost);
   return newPost;
 };
@@ -1357,28 +1437,28 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
   if (!db) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
   const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
   const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
+  if (snapshot.empty) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
   return snapshot.docs[0].data() as BlogPost;
 };
 
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
-    const { imageFile, ...restOfData } = data;
-    const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc; // Mock upload
-    
-    if (!db) {
-        const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
-        if (index === -1) return false;
-        MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc, slug: data.slug };
-        saveData();
-        return true;
-    }
-    
-    const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return false;
-    const docRef = snapshot.docs[0].ref;
-    await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+  const { imageFile, ...restOfData } = data;
+  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc; // Mock upload
+
+  if (!db) {
+    const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
+    if (index === -1) return false;
+    MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc, slug: data.slug };
+    saveData();
     return true;
+  }
+
+  const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return false;
+  const docRef = snapshot.docs[0].ref;
+  await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+  return true;
 }
 
 export const deleteBlogPost = async (slug: string): Promise<boolean> => {
@@ -1398,6 +1478,9 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
 export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
   if (!db) return [...MOCK_DB.siteBanners];
   const snapshot = await getDocs(query(collection(db, 'siteBanners')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.siteBanners];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
 };
 
@@ -1418,6 +1501,9 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
   if (!db) return [...MOCK_DB.promotionalPosters];
   const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
+  if (snapshot.empty) {
+    return [...MOCK_DB.promotionalPosters];
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
 };
 
@@ -1434,4 +1520,9 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
-    
+
+
+
+
+
+
