@@ -89,6 +89,9 @@ const fileSchema = z.instanceof(File, { message: 'File is required.' })
   .refine(file => file.size < 5 * 1024 * 1024, 'File size must be less than 5MB.')
   .or(z.undefined());
 
+const requiredFileSchema = z.instanceof(File, { message: "File is required." })
+  .refine(file => file.size < 5 * 1024 * 1024, 'File size must be less than 5MB.');
+
 const passwordSchema = z.string()
   .min(8, { message: "Password must be at least 8 characters long." })
   .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
@@ -122,7 +125,7 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   dlTypeHeld: z.string().optional(),
   photoIdType: z.enum(PhotoIdTypeOptions),
   photoIdNumber: z.string().min(1, 'ID number is required.'),
-  photoIdFile: fileSchema,
+  photoIdFile: requiredFileSchema,
   subscriptionStartDate: z.date({ required_error: "Please select a start date." }),
   referralCode: z.string().optional(),
 });
@@ -138,9 +141,9 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   trainerCertificateNumber: z.string().min(1, 'Certificate number is required.'),
   aadhaarCardNumber: z.string().min(1, 'Aadhaar number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-  trainerCertificateFile: fileSchema,
-  drivingLicenseFile: fileSchema,
-  aadhaarCardFile: fileSchema,
+  trainerCertificateFile: requiredFileSchema,
+  drivingLicenseFile: requiredFileSchema,
+  aadhaarCardFile: requiredFileSchema,
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [

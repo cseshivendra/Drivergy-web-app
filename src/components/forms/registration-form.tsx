@@ -647,7 +647,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         <Input
                         type="file"
                         {...fieldProps}
-                        onChange={(event) => onChange(event.target.files)}
+                        onChange={(event) => onChange(event.target.files?.[0])}
                         accept=".pdf,.jpg,.jpeg,.png"
                         />
                     </FormControl>
@@ -823,7 +823,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         <FormItem>
                         <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Certificate<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
-                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files)} accept=".pdf,.jpg,.jpeg,.png" />
+                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -852,7 +852,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         <FormItem>
                         <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
-                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files)} accept=".pdf,.jpg,.jpeg,.png" />
+                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -881,7 +881,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                         <FormItem>
                         <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
-                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files)} accept=".pdf,.jpg,.jpeg,.png" />
+                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
