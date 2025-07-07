@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -78,7 +77,6 @@ export default function AppSidebar() {
           </SidebarMenuItem>
 
           {(isCustomer || isTrainer) && (
-            <>
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -91,7 +89,9 @@ export default function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+          )}
 
+          {isCustomer && (
              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setReferralsOpen(!referralsOpen)}
@@ -132,7 +132,6 @@ export default function AppSidebar() {
                   </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
-            </>
           )}
           
            <SidebarMenuItem>
