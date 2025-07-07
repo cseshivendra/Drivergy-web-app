@@ -131,21 +131,21 @@ const initialBanners: SiteBanner[] = [
     id: 'hero-1',
     title: 'Learn from a Team of Professionals',
     description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-    imageSrc: 'https://placehold.co/1920x1080/60a5fa/ffffff.png',
+    imageSrc: 'https://placehold.co/1920x1080.png',
     imageHint: 'driving instructors team',
   },
   {
     id: 'hero-2',
     title: 'Drive in a Safe, Modern Fleet',
     description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-    imageSrc: 'https://placehold.co/1920x1080/fbbf24/ffffff.png',
+    imageSrc: 'https://placehold.co/1920x1080.png',
     imageHint: 'driving lesson car interior',
   },
   {
     id: 'hero-3',
     title: 'Your Success Is Our Driving Mission',
     description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-    imageSrc: 'https://placehold.co/1920x1080/34d399/ffffff.png',
+    imageSrc: 'https://placehold.co/1920x1080.png',
     imageHint: 'happy driver license',
   },
 ];
@@ -643,9 +643,7 @@ const handlePermissionError = <T>(error: any, fallback: () => T, functionName: s
     // This is not a critical app-breaking error, but an informational message for the developer.
     // The app will proceed to run in local mock mode for this data.
     console.warn(
-        `[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error. ` +
-        `This is often due to Firestore security rules. Falling back to local mock data. ` +
-        `Original Error:`, error
+        `[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error (e.g., missing permissions or indexes). Falling back to local mock data. Original Error:`, error
     );
     
     // Always return the fallback data to prevent the app from crashing.
@@ -928,19 +926,19 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
   if (!db) return mockFetch();
   
   try {
-    let queries = [
-        where("approvalStatus", "==", "Approved")
-    ];
-    if(filters.location) queries.push(where("location", "==", filters.location));
-    if(filters.gender) queries.push(where("gender", "==", filters.gender));
-
-    const q = query(collection(db, "users"), ...queries);
+    // This simplified query avoids composite indexes but is less efficient at scale.
+    // It fetches all approved users and filters for trainers on the client-side.
+    // This is a good trade-off for robustness in this application.
+    const q = query(collection(db, "users"), where("approvalStatus", "==", "Approved"));
     const querySnapshot = await getDocs(q);
     
-    // Additional client-side filtering because Firestore can't do inequality checks on multiple fields
     const instructors = querySnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-        .filter(u => u.uniqueId?.startsWith('TR'));
+        .filter(u =>
+            u.uniqueId?.startsWith('TR') &&
+            (!filters.location || u.location === filters.location) &&
+            (!filters.gender || u.gender === filters.gender)
+        );
         
     return instructors;
   } catch (error) {
@@ -978,7 +976,7 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
   } catch (error) {
     toast({
       title: "Live Update Failed",
-      description: "The change has been applied to your local session due to a database error. Please check your Firestore security rules.",
+      description: "The assignment was saved to your local session due to a database error. This is likely due to a missing index or insufficient permissions.",
       variant: "destructive",
     });
     return mockAssign();
@@ -1684,6 +1682,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
