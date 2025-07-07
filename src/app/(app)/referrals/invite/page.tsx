@@ -1,4 +1,128 @@
+'use client';
 
-export default function InviteReferralsPage() { 
-  return null;
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { fetchUserById } from '@/lib/mock-data';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Gift, Copy, Share2, Twitter, Facebook, MessageSquare } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from '@/components/ui/skeleton';
+import Image from 'next/image';
+
+export default function InviteReferralsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.uid) {
+      setLoading(true);
+      fetchUserById(user.uid).then(profile => {
+        if (profile && profile.myReferralCode) {
+          setReferralCode(profile.myReferralCode);
+        }
+        setLoading(false);
+      });
+    }
+  }, [user]);
+
+  const handleCopy = () => {
+    if (!referralCode) return;
+    navigator.clipboard.writeText(referralCode);
+    toast({
+      title: "Copied to Clipboard!",
+      description: "Your referral code has been copied.",
+    });
+  };
+
+  const getShareLink = (platform: 'twitter' | 'facebook' | 'whatsapp') => {
+    const text = `Join Drivergy, the best driving school platform, using my referral code: ${referralCode}`;
+    const encodedText = encodeURIComponent(text);
+    const url = "https://drivergy.com"; // Placeholder URL
+    switch(platform) {
+      case 'twitter':
+        return `https://twitter.com/intent/tweet?text=${encodedText}&url=${url}`;
+      case 'facebook':
+        return `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${encodedText}`;
+      case 'whatsapp':
+        return `https://wa.me/?text=${encodedText}%20${url}`;
+    }
+  }
+
+  if (loading) {
+    return (
+        <div className="container mx-auto max-w-2xl p-4 py-8 space-y-8">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center">
+              <Skeleton className="h-10 w-10 mx-auto mb-4" />
+              <Skeleton className="h-8 w-1/2 mx-auto" />
+              <Skeleton className="h-5 w-3/4 mx-auto mt-2" />
+            </CardHeader>
+            <CardContent className="text-center space-y-6">
+              <Skeleton className="h-12 w-full max-w-sm mx-auto" />
+              <Skeleton className="h-10 w-32 mx-auto" />
+              <div className="flex justify-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-10 w-10 rounded-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+    );
+  }
+
+  return (
+      <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
+        <Card className="shadow-xl overflow-hidden">
+          <div className="relative h-56 w-full bg-primary/10">
+            <Image
+                src="https://placehold.co/800x300/f59e0b/ffffff.png"
+                alt="Referral program banner"
+                layout="fill"
+                objectFit="cover"
+                data-ai-hint="gift friends sharing"
+            />
+            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+              <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
+                <Gift className="h-10 w-10 text-primary" />
+              </div>
+              <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Refer & Earn</h1>
+              <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
+                Share your referral code with friends and earn points when they subscribe!
+              </p>
+            </div>
+          </div>
+          <CardContent className="p-6 text-center space-y-6">
+            <p className="text-muted-foreground">Share this code with your friends:</p>
+            <div className="flex justify-center items-center gap-2">
+              <Input
+                  readOnly
+                  value={referralCode || 'Loading...'}
+                  className="text-2xl font-bold tracking-widest text-center h-14 bg-muted/50 text-primary"
+              />
+              <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode}>
+                <Copy className="h-5 w-5" />
+              </Button>
+            </div>
+
+            <p className="text-muted-foreground">Or share directly on:</p>
+            <div className="flex justify-center gap-4">
+              <Button asChild size="icon" className="rounded-full bg-[#1DA1F2] hover:bg-[#1DA1F2]/90">
+                <a href={getShareLink('twitter')} target="_blank" rel="noopener noreferrer"><Twitter className="text-white" /></a>
+              </Button>
+              <Button asChild size="icon" className="rounded-full bg-[#1877F2] hover:bg-[#1877F2]/90">
+                <a href={getShareLink('facebook')} target="_blank" rel="noopener noreferrer"><Facebook className="text-white" /></a>
+              </Button>
+              <Button asChild size="icon" className="rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
+                <a href={getShareLink('whatsapp')} target="_blank" rel="noopener noreferrer"><MessageSquare className="text-white" /></a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+  );
 }
