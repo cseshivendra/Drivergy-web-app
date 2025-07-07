@@ -634,7 +634,7 @@ loadData();
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
   if (!db) {
-    const user = MOCK_DB.users.find(u => u.username === username && u.password === password);
+    const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
     return user ? { ...user } : null;
   }
   const usersRef = collection(db, "users");
@@ -1017,11 +1017,9 @@ export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[
         .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
   }
   try {
-    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
+    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
     const snapshot = await getDocs(q);
-    const feedbackData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
-    // Sort client-side to avoid index requirement
-    return feedbackData.sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
   } catch (error: any) {
     if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
       console.warn("Firebase permission denied in fetchTrainerFeedback. Falling back to mock data. Please check your Firestore security rules.");
@@ -1541,6 +1539,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+
 
 
 
