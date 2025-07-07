@@ -633,17 +633,8 @@ loadData();
 // =================================================================
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
-    // Make the username check case-insensitive
-    const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
-
     if (!db) {
-        if (user && user.uniqueId === 'ADMIN-001') {
-            const adminExists = MOCK_DB.users.some(u => u.uniqueId === 'ADMIN-001');
-            if (!adminExists) {
-                MOCK_DB.users.push(adminUser);
-                saveData();
-            }
-        }
+        const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
         return user ? { ...user } : null;
     }
 
@@ -753,6 +744,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     approvalStatus: 'Pending',
     dlStatus: data.dlStatus,
     dlNumber: data.dlNumber,
+    dlTypeHeld: data.dlTypeHeld,
     photoIdType: data.photoIdType,
     photoIdNumber: data.photoIdNumber,
     trainerPreference: data.trainerPreference,
@@ -816,36 +808,40 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
   const userId = userToUpdate.id;
 
+  // This is the local/mock update logic. It will be used as a fallback.
   const mockUpdate = () => {
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
+      // User exists, update them
       MOCK_DB.users[userIndex].approvalStatus = newStatus;
     } else {
-      // If the user doesn't exist in the mock DB (e.g., read from live, write failed), add them.
+      // User does not exist locally (was read from live DB), add them to the local store
       MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
     }
     saveData();
     return true; // Always return true for the mock update to reflect UI change
   };
   
+  // If Firebase is not configured at all, just use the mock logic.
   if (!db) {
     return mockUpdate();
   }
 
+  // If Firebase is configured, try to update the live database.
   try {
     const userRef = doc(db, 'users', userId);
     await updateDoc(userRef, { approvalStatus: newStatus });
-    return true;
+    return true; // Live update was successful
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('usingMockDataFallback', 'true');
-      }
-      console.warn(`Firebase permission denied in updateUserApprovalStatus. Falling back to mock data update.`);
-      return mockUpdate(); // Fallback to local update
+    // If ANY error occurs during the live update (permission denied, bad request, network error, etc.)...
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('usingMockDataFallback', 'true');
     }
-    console.error(`Error updating user ${userId} status:`, error);
-    return false;
+    // Log the actual error for debugging, but proceed with the fallback for a smooth user experience.
+    console.warn(`Firebase update failed in updateUserApprovalStatus (Error: ${error.code || 'unknown'}). Falling back to mock data update.`);
+    
+    // Execute the fallback logic.
+    return mockUpdate();
   }
 };
 
@@ -1621,6 +1617,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
