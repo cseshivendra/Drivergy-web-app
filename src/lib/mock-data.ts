@@ -813,15 +813,19 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
   return { id: docRef.id, ...newTrainer };
 };
 
-export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
+export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
+  const userId = userToUpdate.id;
+
   const mockUpdate = () => {
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
       MOCK_DB.users[userIndex].approvalStatus = newStatus;
-      saveData();
-      return true;
+    } else {
+      // If the user doesn't exist in the mock DB (e.g., read from live, write failed), add them.
+      MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
     }
-    return false;
+    saveData();
+    return true; // Always return true for the mock update to reflect UI change
   };
   
   if (!db) {
@@ -840,7 +844,6 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
       console.warn(`Firebase permission denied in updateUserApprovalStatus. Falling back to mock data update.`);
       return mockUpdate(); // Fallback to local update
     }
-    // For other errors, log them and indicate failure.
     console.error(`Error updating user ${userId} status:`, error);
     return false;
   }
@@ -1618,6 +1621,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 

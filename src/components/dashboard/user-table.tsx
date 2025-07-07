@@ -105,16 +105,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     setIsAssigning(false);
   };
 
-  const handleUpdateStatus = async (userId: string, userName: string, newStatus: ApprovalStatusType) => {
-    const user = users.find(u => u.id === userId);
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "User not found in the current view.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
     const isTrainer = user.uniqueId.startsWith('TR');
 
     try {
@@ -128,25 +119,25 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
         return;
       }
       
-      const success = await updateUserApprovalStatus(userId, newStatus);
+      const success = await updateUserApprovalStatus(user, newStatus);
       if (success) {
         toast({
           title: `User ${newStatus}`,
-          description: `${userName} has been successfully ${newStatus.toLowerCase()}.`,
+          description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
         });
         onUserActioned(); // Trigger data refresh in DashboardPage
       } else {
         toast({
           title: "Update Failed",
-          description: `Could not update status for ${userName}. User not found.`,
+          description: `Could not update status for ${user.name}.`,
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error(`Error updating user ${userId} status:`, error);
+      console.error(`Error updating user ${user.id} status:`, error);
       toast({
         title: "Error",
-        description: `An error occurred while updating ${userName}'s status.`,
+        description: `An error occurred while updating ${user.name}'s status.`,
         variant: "destructive",
       });
     }
@@ -256,15 +247,15 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'Approved')}>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}>
                                     <Check className="mr-2 h-4 w-4 text-green-500" />
                                     <span>Approved</span>
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'In Progress')}>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'In Progress')}>
                                     <Hourglass className="mr-2 h-4 w-4 text-blue-500" />
                                     <span>In Progress</span>
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}>
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')}>
                                     <X className="mr-2 h-4 w-4 text-red-500" />
                                     <span>Rejected</span>
                                   </DropdownMenuItem>
@@ -296,7 +287,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
                               <Button 
                                 variant="destructive" 
                                 size="sm" 
-                                onClick={() => handleUpdateStatus(user.id, user.name, 'Rejected')}
+                                onClick={() => handleUpdateStatus(user, 'Rejected')}
                                 className="px-2 py-1"
                                 aria-label={`Reject ${user.name}`}
                               >
