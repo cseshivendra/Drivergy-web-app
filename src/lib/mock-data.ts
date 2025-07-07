@@ -4,6 +4,7 @@ import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 
 const initialFaqs: FaqItem[] = [
@@ -633,20 +634,18 @@ loadData();
 // =================================================================
 
 const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-    // This function will now catch any error during data fetching, not just permission errors.
-    console.error(`[Data Fetch Error] in ${functionName}:`, error);
-
     // Set a session flag to indicate that a fallback was used.
     if (typeof window !== 'undefined') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
     }
-    
-    // Warn the developer that a fallback is being used.
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-        console.warn(`[Mock Data Fallback] Firebase permission denied in ${functionName}. Falling back to mock data.`);
-    } else {
-        console.warn(`[Mock Data Fallback] An unexpected error occurred in ${functionName}. Falling back to mock data.`);
-    }
+
+    // This is not a critical app-breaking error, but an informational message for the developer.
+    // The app will proceed to run in local mock mode for this data.
+    console.warn(
+        `[Live Data Notice] Could not fetch live data for '${functionName}' due to a Firebase error. ` +
+        `This is often due to Firestore security rules. Falling back to local mock data. ` +
+        `Original Error:`, error.message
+    );
     
     // Always return the fallback data to prevent the app from crashing.
     return fallback();
@@ -851,7 +850,13 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
     await updateDoc(userRef, { approvalStatus: newStatus });
     return true;
   } catch (error) {
-    return handlePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
+    console.error(`[Data Write Error] in updateUserApprovalStatus for user ${userId}:`, error);
+    toast({
+        title: "Live Update Failed",
+        description: "Could not update live database due to an error. The change has been applied to your local session.",
+        variant: "destructive",
+      });
+    return mockUpdate();
   }
 };
 
@@ -1595,8 +1600,13 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
     saveData();
     return true;
   }
-  await updateDoc(doc(db, 'siteBanners', id), updateData);
-  return true;
+  try {
+    await updateDoc(doc(db, 'siteBanners', id), updateData);
+    return true;
+  } catch(error) {
+      toast({ title: "Error", description: "An error occurred while updating the banner. Please check the image URL and try again.", variant: "destructive" });
+      return false;
+  }
 }
 
 export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
@@ -1630,9 +1640,15 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     saveData();
     return true;
   }
-  await updateDoc(doc(db, 'promotionalPosters', id), updateData);
-  return true;
+  try {
+    await updateDoc(doc(db, 'promotionalPosters', id), updateData);
+    return true;
+  } catch(error) {
+      toast({ title: "Error", description: "An error occurred while updating the poster. Please check the image URL and try again.", variant: "destructive" });
+      return false;
+  }
 }
     
 
     
+
