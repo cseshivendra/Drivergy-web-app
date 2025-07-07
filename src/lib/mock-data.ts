@@ -769,7 +769,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     subscriptionPlan: "Trainer",
     registrationTimestamp: new Date().toISOString(),
     vehicleInfo: data.trainerVehicleType,
-    approvalStatus: "Approved",
+    approvalStatus: 'Pending',
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
     specialization: data.specialization,
@@ -944,11 +944,21 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 // TRAINER SPECIFIC FUNCTIONS
 // =================================================================
 export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
-    if (!db) return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
-    
-    const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+    if (!db) {
+        return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
+    }
+    try {
+        const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+    } catch (error: any) {
+        if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+            console.warn("Firebase permission denied in fetchAllTrainerStudents. Falling back to mock data. Please check your Firestore security rules.");
+            return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
+        }
+        // Re-throw other errors
+        throw error;
+    }
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
@@ -1007,12 +1017,22 @@ export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[
             .filter(f => f.trainerId === trainerId)
             .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
     }
-    // This query can fail without a composite index. Let's make it more robust.
-    const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
-    const snapshot = await getDocs(q);
-    const feedbackData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
-    // Sort client-side to avoid index requirement
-    return feedbackData.sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+    try {
+        const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
+        const snapshot = await getDocs(q);
+        const feedbackData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+        // Sort client-side to avoid index requirement
+        return feedbackData.sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+    } catch (error: any) {
+        if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+            console.warn("Firebase permission denied in fetchTrainerFeedback. Falling back to mock data. Please check your Firestore security rules.");
+            return MOCK_DB.feedback
+                .filter(f => f.trainerId === trainerId)
+                .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+        }
+        // Re-throw other errors
+        throw error;
+    }
 };
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
@@ -1525,6 +1545,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
