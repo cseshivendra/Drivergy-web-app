@@ -808,41 +808,22 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
   const userId = userToUpdate.id;
 
-  // This is the local/mock update logic. It will be used as a fallback.
-  const mockUpdate = () => {
+  if (!db) {
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-    if (userIndex !== -1) {
-      // User exists, update them
-      MOCK_DB.users[userIndex].approvalStatus = newStatus;
+    if (userIndex === -1) {
+        // This case handles when live data is shown but update fails, so we add the user to mock data
+        MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
     } else {
-      // User does not exist locally (was read from live DB), add them to the local store
-      MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
+        MOCK_DB.users[userIndex].approvalStatus = newStatus;
     }
     saveData();
-    return true; // Always return true for the mock update to reflect UI change
-  };
-  
-  // If Firebase is not configured at all, just use the mock logic.
-  if (!db) {
-    return mockUpdate();
+    return true;
   }
 
-  // If Firebase is configured, try to update the live database.
-  try {
-    const userRef = doc(db, 'users', userId);
-    await updateDoc(userRef, { approvalStatus: newStatus });
-    return true; // Live update was successful
-  } catch (error: any) {
-    // If ANY error occurs during the live update (permission denied, bad request, network error, etc.)...
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('usingMockDataFallback', 'true');
-    }
-    // Log the actual error for debugging, but proceed with the fallback for a smooth user experience.
-    console.warn(`Firebase update failed in updateUserApprovalStatus (Error: ${error.code || 'unknown'}). Falling back to mock data update.`);
-    
-    // Execute the fallback logic.
-    return mockUpdate();
-  }
+  // Always attempt the live update. If it fails, the error will be caught by the calling component.
+  const userRef = doc(db, 'users', userId);
+  await updateDoc(userRef, { approvalStatus: newStatus });
+  return true;
 };
 
 
@@ -1617,6 +1598,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
