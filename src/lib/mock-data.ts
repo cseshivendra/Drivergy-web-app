@@ -465,7 +465,7 @@ const adminUser: UserProfile = {
   id: ADMIN_ID,
   uniqueId: 'ADMIN-001',
   name: 'Admin User',
-  username: 'admin',
+  username: 'Admin',
   password: 'admin',
   contact: 'admin@drivergy.com',
   phone: '1234567890',
@@ -633,40 +633,39 @@ loadData();
 // =================================================================
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
-  if (!db) {
+    // Make the username check case-insensitive
     const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
-    return user ? { ...user } : null;
-  }
-  
-  // Special case for admin login on live DB to ensure it always works and seeds the user if needed.
-  if (username.toLowerCase() === 'admin' && password === 'admin') {
-      const adminDocRef = doc(db, 'users', ADMIN_ID);
-      const adminDocSnap = await getDoc(adminDocRef);
 
-      if (!adminDocSnap.exists()) {
-          // Admin user doesn't exist, so create it on the fly.
-          // We must remove the `id` from the object before setting it.
-          const { id, ...adminData } = adminUser;
-          await setDoc(adminDocRef, adminData);
-          console.log("Admin user has been seeded into the live database.");
-          return adminUser; // Return the complete profile including the ID
-      } else {
-          // Admin exists, return their profile
-          return { id: adminDocSnap.id, ...adminDocSnap.data() } as UserProfile;
-      }
-  }
+    if (!db) {
+        return user ? { ...user } : null;
+    }
 
-  // Regular user login logic for the live database
-  const usersRef = collection(db, "users");
-  // Firestore queries are case-sensitive. This will only find users with exact username match.
-  const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
-  const querySnapshot = await getDocs(q);
+    // Live DB logic
+    if (user && user.uniqueId === 'ADMIN-001') {
+        const adminDocRef = doc(db, 'users', user.id);
+        const adminDocSnap = await getDoc(adminDocRef);
+        if (!adminDocSnap.exists()) {
+            const { id, ...adminData } = user;
+            await setDoc(adminDocRef, adminData);
+            console.log("Admin user has been seeded into the live database.");
+            return user;
+        } else {
+            return { id: adminDocSnap.id, ...adminDocSnap.data() } as UserProfile;
+        }
+    }
+    
+    // Regular user login for live DB needs a case-insensitive query, which Firestore doesn't support directly.
+    // A common workaround is to store a lowercase version of the username. For now, we rely on the mock data logic.
+    // The query below will only work for exact case matches.
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
+    const querySnapshot = await getDocs(q);
 
-  if (querySnapshot.empty) {
-    return null;
-  }
-  const userDoc = querySnapshot.docs[0];
-  return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+    if (querySnapshot.empty) {
+        return null;
+    }
+    const userDoc = querySnapshot.docs[0];
+    return { id: userDoc.id, ...userDoc.data() } as UserProfile;
 };
 
 
@@ -834,11 +833,7 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
     const userSnapshot = await getDocs(q);
     return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      console.warn("Firebase permission denied in fetchAllUsers. Falling back to mock data.");
-      return mockFetch();
-    }
-    throw error;
+    return handlePermissionError(error, mockFetch, 'fetchAllUsers');
   }
 };
 
@@ -971,11 +966,7 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 
     return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      console.warn("Firebase permission denied in fetchSummaryData. Falling back to mock data.");
-      return mockFetch();
-    }
-    throw error;
+    return handlePermissionError(error, mockFetch, 'fetchSummaryData');
   }
 };
 
@@ -991,12 +982,7 @@ export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserPr
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
     } catch (error: any) {
-        if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-            console.warn("Firebase permission denied in fetchAllTrainerStudents. Falling back to mock data. Please check your Firestore security rules.");
-            return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
-        }
-        // Re-throw other errors
-        throw error;
+        return handlePermissionError(error, () => MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId), 'fetchAllTrainerStudents');
     }
 };
 
@@ -1051,24 +1037,18 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
 };
 
 export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-    if (!db) {
-        return MOCK_DB.feedback
-            .filter(f => f.trainerId === trainerId)
-            .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-    }
+    const mockFetch = () => MOCK_DB.feedback
+        .filter(f => f.trainerId === trainerId)
+        .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+
+    if (!db) return mockFetch();
+    
     try {
         const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
     } catch (error: any) {
-        if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-            console.warn("Firebase permission denied in fetchTrainerFeedback. Falling back to mock data. Please check your Firestore security rules.");
-            return MOCK_DB.feedback
-                .filter(f => f.trainerId === trainerId)
-                .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-        }
-        // Re-throw other errors
-        throw error;
+        return handlePermissionError(error, mockFetch, 'fetchTrainerFeedback');
     }
 };
 
@@ -1107,6 +1087,9 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 // =================================================================
 const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
     if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem('usingMockDataFallback', 'true');
+        }
         console.warn(`Firebase permission denied in ${functionName}. Falling back to mock data.`);
         return fallback();
     }
@@ -1611,6 +1594,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
