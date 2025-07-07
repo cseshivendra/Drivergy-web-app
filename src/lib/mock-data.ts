@@ -830,27 +830,29 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 };
 
 export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
-    const userId = userToUpdate.id;
-    const mockUpdate = () => {
-        const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-        if (userIndex !== -1) {
-            MOCK_DB.users[userIndex].approvalStatus = newStatus;
-        } else {
-            MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
-        }
-        saveData();
-        return true;
-    }
-
-    if (!db) return mockUpdate();
+  const userId = userToUpdate.id;
   
-    try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, { approvalStatus: newStatus });
-      return true;
-    } catch (error) {
-      return handlePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
+  const mockUpdate = () => {
+    const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
+    // If user doesn't exist in local mock, add them before updating.
+    if (userIndex === -1) {
+      MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
+    } else {
+      MOCK_DB.users[userIndex].approvalStatus = newStatus;
     }
+    saveData();
+    return true;
+  }
+
+  if (!db) return mockUpdate();
+
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { approvalStatus: newStatus });
+    return true;
+  } catch (error) {
+    return handlePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
+  }
 };
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
@@ -1577,16 +1579,23 @@ export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
 };
 
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
-  const { imageFile, ...restOfData } = data;
-  const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
+  const newImageSrc = data.imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
+  
+  const updateData = {
+    title: data.title,
+    description: data.description,
+    imageSrc: newImageSrc || 'https://placehold.co/1200x800.png',
+    imageHint: data.imageHint,
+  };
+
   if (!db) {
     const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
     if (index === -1) return false;
-    MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.siteBanners[index].imageSrc };
+    MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...updateData };
     saveData();
     return true;
   }
-  await updateDoc(doc(db, 'siteBanners', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+  await updateDoc(doc(db, 'siteBanners', id), updateData);
   return true;
 }
 
@@ -1604,36 +1613,26 @@ export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> =>
 };
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
-  const { imageFile, ...restOfData } = data;
-  const newImageSrc = imageFile ? 'https://placehold.co/600x800.png' : data.imageSrc;
+  const newImageSrc = data.imageFile ? 'https://placehold.co/600x800.png' : data.imageSrc;
+  
+  const updateData = {
+    title: data.title,
+    description: data.description,
+    imageSrc: newImageSrc || 'https://placehold.co/600x800.png',
+    imageHint: data.imageHint,
+    href: data.href || '#',
+  };
+
   if (!db) {
     const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
     if (index === -1) return false;
-    MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.promotionalPosters[index].imageSrc, href: data.href || '#' };
+    MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...updateData };
     saveData();
     return true;
   }
-  await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
+  await updateDoc(doc(db, 'promotionalPosters', id), updateData);
   return true;
 }
     
 
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

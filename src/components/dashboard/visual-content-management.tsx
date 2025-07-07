@@ -62,7 +62,7 @@ function VisualContentForm({ item, onFormSubmit }: { item: ContentItem; onFormSu
       onFormSubmit();
       setOpen(false);
     } catch (error) {
-      toast({ title: "Error", description: "An error occurred.", variant: "destructive" });
+      toast({ title: "Error", description: error instanceof Error ? error.message : "An unexpected error occurred.", variant: "destructive" });
     }
   };
 
