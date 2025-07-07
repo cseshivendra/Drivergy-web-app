@@ -825,13 +825,21 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
 };
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
-  if (!db) {
-    return [...MOCK_DB.users].sort((a,b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
+  const mockFetch = () => [...MOCK_DB.users].sort((a,b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
+  if (!db) return mockFetch();
+
+  try {
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, orderBy("registrationTimestamp", "desc"));
+    const userSnapshot = await getDocs(q);
+    return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+  } catch (error: any) {
+    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+      console.warn("Firebase permission denied in fetchAllUsers. Falling back to mock data.");
+      return mockFetch();
+    }
+    throw error;
   }
-  const usersCollection = collection(db, 'users');
-  const q = query(usersCollection, orderBy("registrationTimestamp", "desc"));
-  const userSnapshot = await getDocs(q);
-  return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
 };
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
@@ -925,7 +933,7 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 // =================================================================
 
 export const fetchSummaryData = async (): Promise<SummaryData> => {
-  if (!db) {
+  const mockFetch = () => {
     const totalCustomers = MOCK_DB.users.filter(u => u.uniqueId.startsWith('CU')).length;
     const totalInstructors = MOCK_DB.users.filter(u => u.uniqueId.startsWith('TR')).length;
     const activeSubscriptions = MOCK_DB.users.filter(u => u.approvalStatus === 'Approved').length;
@@ -939,26 +947,36 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
       return acc;
     }, 0);
     return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
+  };
+
+  if (!db) return mockFetch();
+
+  try {
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    const users = usersSnapshot.docs.map(doc => doc.data() as UserProfile);
+
+    const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
+    const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
+    const activeSubscriptions = users.filter(u => u.approvalStatus === 'Approved').length;
+    const pendingRequests = (await getDocs(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')))).size;
+    const pendingRescheduleRequests = (await getDocs(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')))).size;
+    const totalCertifiedTrainers = users.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved').length;
+
+    const totalEarnings = users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
+      if (user.subscriptionPlan === 'Premium') return acc + 9999;
+      if (user.subscriptionPlan === 'Gold') return acc + 7499;
+      if (user.subscriptionPlan === 'Basic') return acc + 3999;
+      return acc;
+    }, 0);
+
+    return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
+  } catch (error: any) {
+    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+      console.warn("Firebase permission denied in fetchSummaryData. Falling back to mock data.");
+      return mockFetch();
+    }
+    throw error;
   }
-
-  const usersSnapshot = await getDocs(collection(db, 'users'));
-  const users = usersSnapshot.docs.map(doc => doc.data() as UserProfile);
-
-  const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
-  const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
-  const activeSubscriptions = users.filter(u => u.approvalStatus === 'Approved').length;
-  const pendingRequests = (await getDocs(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')))).size;
-  const pendingRescheduleRequests = (await getDocs(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')))).size;
-  const totalCertifiedTrainers = users.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved').length;
-
-  const totalEarnings = users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
-    if (user.subscriptionPlan === 'Premium') return acc + 9999;
-    if (user.subscriptionPlan === 'Gold') return acc + 7499;
-    if (user.subscriptionPlan === 'Basic') return acc + 3999;
-    return acc;
-  }, 0);
-
-  return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
 };
 
 // =================================================================
@@ -1087,25 +1105,24 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 // =================================================================
 // GENERIC CONTENT MANAGEMENT & OTHER FUNCTIONS
 // =================================================================
-
-const createMockOrDbFunction = <T extends any[], U>(collectionName: string, mockFunction: (...args: T) => U) => {
-  return async (...args: T): Promise<U> => {
-    if (!db) {
-      return mockFunction(...args);
-    }
-    // The actual DB logic would be more complex and specific per function.
-    // This is a placeholder for a more robust implementation. For now, it will
-    // read the entire collection, which is inefficient but works for this demo.
-    const snapshot = await getDocs(collection(db, collectionName));
-    MOCK_DB[collectionName as keyof MockDatabase] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any;
-    return mockFunction(...args);
-  };
+const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
+  if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+    console.warn(`Firebase permission denied in ${functionName}. Falling back to mock data.`);
+    return fallback();
+  }
+  throw error;
 };
 
 export const fetchAllLessonRequests = async (): Promise<LessonRequest[]> => {
-  if (!db) return [...MOCK_DB.lessonRequests].sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
-  const snapshot = await getDocs(query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc')));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LessonRequest[];
+  const mockFetch = () => [...MOCK_DB.lessonRequests].sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc')));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LessonRequest[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchAllLessonRequests');
+  }
 };
 
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
@@ -1130,9 +1147,15 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
 };
 
 export const fetchRescheduleRequests = async (): Promise<RescheduleRequest[]> => {
-  if (!db) return [...MOCK_DB.rescheduleRequests].sort((a,b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
-  const snapshot = await getDocs(query(collection(db, 'rescheduleRequests'), orderBy('requestTimestamp', 'desc')));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RescheduleRequest[];
+  const mockFetch = () => [...MOCK_DB.rescheduleRequests].sort((a,b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'rescheduleRequests'), orderBy('requestTimestamp', 'desc')));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RescheduleRequest[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchRescheduleRequests');
+  }
 };
 
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
@@ -1177,42 +1200,36 @@ export const addFeedback = async (customerId: string, customerName: string, trai
 };
 
 export const fetchAllFeedback = async (): Promise<Feedback[]> => {
-  if (!db) return [...MOCK_DB.feedback].sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-  const snapshot = await getDocs(query(collection(db, 'feedback'), orderBy('submissionDate', 'desc')));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+  const mockFetch = () => [...MOCK_DB.feedback].sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'feedback'), orderBy('submissionDate', 'desc')));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchAllFeedback');
+  }
 };
 
 export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
-  if (!db) {
-    return MOCK_DB.users
-        .filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName)
-        .map(c => ({
-          studentId: c.uniqueId,
-          studentName: c.name,
-          trainerName: c.assignedTrainerName!,
-          subscriptionPlan: c.subscriptionPlan,
-          totalLessons: c.totalLessons || 0,
-          completedLessons: c.completedLessons || 0,
-          remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
-        }))
-        .sort((a, b) => a.remainingLessons - b.remainingLessons);
+  const mockFetch = () => MOCK_DB.users
+      .filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName)
+      .map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), }))
+      .sort((a, b) => a.remainingLessons - b.remainingLessons);
+
+  if (!db) return mockFetch();
+
+  try {
+    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
+    const snapshot = await getDocs(q);
+    const users = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+        .filter(u => u.assignedTrainerName); // Filter client-side
+
+    return users.map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchCustomerLessonProgress');
   }
-
-  const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
-  const snapshot = await getDocs(q);
-  const users = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-      .filter(u => u.assignedTrainerName); // Filter client-side
-
-  return users.map(c => ({
-    studentId: c.uniqueId,
-    studentName: c.name,
-    trainerName: c.assignedTrainerName!,
-    subscriptionPlan: c.subscriptionPlan,
-    totalLessons: c.totalLessons || 0,
-    completedLessons: c.completedLessons || 0,
-    remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
-  })).sort((a, b) => a.remainingLessons - b.remainingLessons);
 };
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
@@ -1238,37 +1255,39 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 }
 
 export const fetchAllReferrals = async (): Promise<Referral[]> => {
-  if (!db) {
-    // Mock logic already handles joins
-    return MOCK_DB.referrals.map(ref => ({...ref,refereeUniqueId: MOCK_DB.users.find(u => u.id === ref.refereeId)?.uniqueId,refereeSubscriptionPlan: MOCK_DB.users.find(u => u.id === ref.refereeId)?.subscriptionPlan,refereeApprovalStatus: MOCK_DB.users.find(u => u.id === ref.refereeId)?.approvalStatus,})).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const mockFetch = () => MOCK_DB.referrals.map(ref => ({...ref,refereeUniqueId: MOCK_DB.users.find(u => u.id === ref.refereeId)?.uniqueId,refereeSubscriptionPlan: MOCK_DB.users.find(u => u.id === ref.refereeId)?.subscriptionPlan,refereeApprovalStatus: MOCK_DB.users.find(u => u.id === ref.refereeId)?.approvalStatus,})).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  if (!db) return mockFetch();
+
+  try {
+    const referralsSnapshot = await getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc')));
+    const referrals = referralsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Referral[]);
+    const refereeIds = [...new Set(referrals.map(r => r.refereeId).filter(Boolean))];
+
+    if (refereeIds.length === 0) return referrals;
+
+    const usersSnapshot = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', refereeIds)));
+    const usersById = new Map(usersSnapshot.docs.map(doc => [doc.id, doc.data() as UserProfile]));
+
+    return referrals.map(ref => {
+      const referee = usersById.get(ref.refereeId);
+      return { ...ref, refereeUniqueId: referee?.uniqueId, refereeSubscriptionPlan: referee?.subscriptionPlan, refereeApprovalStatus: referee?.approvalStatus, };
+    });
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchAllReferrals');
   }
-
-  const referralsSnapshot = await getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc')));
-  const referrals = referralsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Referral[]);
-  const refereeIds = [...new Set(referrals.map(r => r.refereeId).filter(Boolean))];
-
-  if (refereeIds.length === 0) return referrals;
-
-  const usersSnapshot = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', refereeIds)));
-  const usersById = new Map(usersSnapshot.docs.map(doc => [doc.id, doc.data() as UserProfile]));
-
-  return referrals.map(ref => {
-    const referee = usersById.get(ref.refereeId);
-    return {
-      ...ref,
-      refereeUniqueId: referee?.uniqueId,
-      refereeSubscriptionPlan: referee?.subscriptionPlan,
-      refereeApprovalStatus: referee?.approvalStatus,
-    };
-  });
 };
 
 export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
-  if (!db) return MOCK_DB.referrals.filter(r => r.referrerId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  const mockFetch = () => MOCK_DB.referrals.filter(r => r.referrerId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  if (!db) return mockFetch();
 
-  const q = query(collection(db, 'referrals'), where('referrerId', '==', userId), orderBy('timestamp', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Referral[];
+  try {
+    const q = query(collection(db, 'referrals'), where('referrerId', '==', userId), orderBy('timestamp', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Referral[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchReferralsByUserId');
+  }
 };
 
 export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
@@ -1286,12 +1305,16 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 };
 
 export const fetchCourses = async (): Promise<Course[]> => {
-  if (!db) return [...MOCK_DB.courses];
-  const snapshot = await getDocs(query(collection(db, 'courses')));
-  if (snapshot.empty) {
-    return [...MOCK_DB.courses];
+  const mockFetch = () => [...MOCK_DB.courses];
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'courses')));
+    if (snapshot.empty) return mockFetch();
+    return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchCourses');
   }
-  return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
 };
 
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
@@ -1350,12 +1373,16 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
 };
 
 export const fetchQuizSets = async (): Promise<QuizSet[]> => {
-  if (!db) return [...MOCK_DB.quizSets];
-  const snapshot = await getDocs(query(collection(db, 'quizSets')));
-  if (snapshot.empty) {
-    return [...MOCK_DB.quizSets];
+  const mockFetch = () => [...MOCK_DB.quizSets];
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'quizSets')));
+    if (snapshot.empty) return mockFetch();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
+  } catch(error) {
+    return handlePermissionError(error, mockFetch, 'fetchQuizSets');
   }
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
 };
 
 export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
@@ -1390,12 +1417,16 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
 };
 
 export const fetchFaqs = async (): Promise<FaqItem[]> => {
-  if (!db) return [...MOCK_DB.faqs];
-  const snapshot = await getDocs(query(collection(db, 'faqs')));
-  if (snapshot.empty) {
-    return [...MOCK_DB.faqs];
+  const mockFetch = () => [...MOCK_DB.faqs];
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'faqs')));
+    if (snapshot.empty) return mockFetch();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
+  } catch(error) {
+    return handlePermissionError(error, mockFetch, 'fetchFaqs');
   }
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
 };
 
 export const addFaq = async (data: FaqFormValues): Promise<FaqItem> => {
@@ -1433,14 +1464,16 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 }
 
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
-  if (!db) {
-    return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const mockFetch = () => [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
+    if (snapshot.empty) return mockFetch();
+    return snapshot.docs.map(doc => doc.data() as BlogPost);
+  } catch(error) {
+    return handlePermissionError(error, mockFetch, 'fetchBlogPosts');
   }
-  const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
-  if (snapshot.empty) {
-    return [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }
-  return snapshot.docs.map(doc => doc.data() as BlogPost);
 };
 
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
@@ -1475,11 +1508,17 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> =
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-  if (!db) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
-  const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
-  return snapshot.docs[0].data() as BlogPost;
+  const mockFetch = () => MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
+  if (!db) return mockFetch();
+
+  try {
+    const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return mockFetch();
+    return snapshot.docs[0].data() as BlogPost;
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchBlogPostBySlug');
+  }
 };
 
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
@@ -1517,12 +1556,16 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
 }
 
 export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
-  if (!db) return [...MOCK_DB.siteBanners];
-  const snapshot = await getDocs(query(collection(db, 'siteBanners')));
-  if (snapshot.empty) {
-    return [...MOCK_DB.siteBanners];
+  const mockFetch = () => [...MOCK_DB.siteBanners];
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'siteBanners')));
+    if (snapshot.empty) return mockFetch();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchSiteBanners');
   }
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
 };
 
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
@@ -1540,12 +1583,16 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 }
 
 export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
-  if (!db) return [...MOCK_DB.promotionalPosters];
-  const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
-  if (snapshot.empty) {
-    return [...MOCK_DB.promotionalPosters];
+  const mockFetch = () => [...MOCK_DB.promotionalPosters];
+  if (!db) return mockFetch();
+
+  try {
+    const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
+    if (snapshot.empty) return mockFetch();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
+  } catch (error) {
+    return handlePermissionError(error, mockFetch, 'fetchPromotionalPosters');
   }
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
 };
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
@@ -1561,6 +1608,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+
 
 
 
