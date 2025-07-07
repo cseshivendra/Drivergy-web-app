@@ -131,21 +131,21 @@ const initialBanners: SiteBanner[] = [
         id: 'hero-1',
         title: 'Learn from a Team of Professionals',
         description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-        imageSrc: 'https://placehold.co/1920x1080/60a5fa/ffffff.png',
+        imageSrc: 'https://placehold.co/1920x1080.png',
         imageHint: 'driving instructors team',
     },
     {
         id: 'hero-2',
         title: 'Drive in a Safe, Modern Fleet',
         description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-        imageSrc: 'https://placehold.co/1920x1080/fbbf24/ffffff.png',
+        imageSrc: 'https://placehold.co/1920x1080.png',
         imageHint: 'driving lesson car interior',
     },
     {
         id: 'hero-3',
         title: 'Your Success Is Our Driving Mission',
         description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-        imageSrc: 'https://placehold.co/1920x1080/34d399/ffffff.png',
+        imageSrc: 'https://placehold.co/1920x1080.png',
         imageHint: 'happy driver license',
     },
 ];
@@ -634,23 +634,30 @@ loadData();
 // HELPER FUNCTIONS
 // =================================================================
 
-const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-    // Set a session flag to indicate that a fallback was used.
+const hasFallenBack = () => typeof window !== 'undefined' && sessionStorage.getItem('usingMockDataFallback') === 'true';
+
+const handleReadPermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
     if (typeof window !== 'undefined') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
     }
-
-    // This is not a critical app-breaking error, but an informational message for the developer.
-    // The app will proceed to run in local mock mode for this data.
-    console.warn(
-        `[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error. ` +
-        `This is often due to Firestore security rules. Falling back to local mock data. ` +
-        `Original Error:`, error
-    );
-
-    // Always return the fallback data to prevent the app from crashing.
+    console.warn(`[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error (e.g., missing permissions or indexes). Falling back to local mock data. Original Error:`, error);
     return fallback();
 };
+
+const handleWritePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem('usingMockDataFallback', 'true');
+    }
+    console.error(`[Data Write Notice] Could not write to live Firestore for '${functionName}'. Falling back to local update. Error:`, error);
+    toast({
+        title: "Live Update Failed",
+        description: "The change has been saved to your local session due to a database error. Please check your Firestore security rules for write permissions.",
+        variant: "destructive",
+        duration: 9000,
+    });
+    return fallback();
+};
+
 
 // =================================================================
 // USER MANAGEMENT
@@ -662,7 +669,6 @@ export const authenticateUserByCredentials = async (username: string, password: 
         return user ? { ...user } : null;
     }
 
-    // Live DB logic
     if (username.toLowerCase() === 'admin' && password === 'admin') {
         const adminDocRef = doc(db, 'users', ADMIN_ID);
         const adminDocSnap = await getDoc(adminDocRef);
@@ -676,8 +682,6 @@ export const authenticateUserByCredentials = async (username: string, password: 
         }
     }
 
-    // Regular user login for live DB needs a case-insensitive query, which Firestore doesn't support directly.
-    // The query below will only work for exact case matches.
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
     const querySnapshot = await getDocs(q);
@@ -691,7 +695,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
 
 
 export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
-    if (!db) {
+    const mockUpdate = () => {
         const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
         if (userIndex === -1) return null;
 
@@ -711,31 +715,38 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         MOCK_DB.users[userIndex] = updatedUser;
         saveData();
         return { ...updatedUser };
-    }
-
-    const userRef = doc(db, "users", userId);
-    const updateData = {
-        name: data.name,
-        contact: data.email,
-        phone: data.phone,
-        location: data.district,
-        photoURL: data.photo ? `https://placehold.co/100x100.png` : undefined, // This needs real storage logic
-        flatHouseNumber: data.flatHouseNumber,
-        street: data.street,
-        state: data.state,
-        district: data.district,
-        pincode: data.pincode,
     };
-    // This removes undefined fields so we don't overwrite existing data with nothing
-    Object.keys(updateData).forEach(key => updateData[key as keyof typeof updateData] === undefined && delete updateData[key as keyof typeof updateData]);
 
-    await updateDoc(userRef, updateData);
-    const updatedDoc = await getDoc(userRef);
-    return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+    if (!db) return mockUpdate();
+
+    try {
+        const userRef = doc(db, "users", userId);
+        const updateData: Partial<UserProfileUpdateValues> = {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            location: data.district,
+            flatHouseNumber: data.flatHouseNumber,
+            street: data.street,
+            state: data.state,
+            district: data.district,
+            pincode: data.pincode,
+        };
+        // In a real app, you would handle file upload and get a URL.
+        if (data.photo) {
+            updateData.photoURL = `https://placehold.co/100x100.png`;
+        }
+        Object.keys(updateData).forEach(key => (updateData as any)[key] === undefined && delete (updateData as any)[key]);
+
+        await updateDoc(userRef, updateData);
+        const updatedDoc = await getDoc(userRef);
+        return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+    } catch(error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateUserProfile');
+    }
 };
 
 export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
-    // This function remains mock-only as it requires Firebase Auth integration, not just Firestore.
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
     if (userIndex !== -1 && MOCK_DB.users[userIndex].password === currentPassword) {
         MOCK_DB.users[userIndex].password = newPassword;
@@ -794,7 +805,6 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     const docRef = await addDoc(collection(db, 'users'), newUser);
     const newRequestData: Omit<LessonRequest, 'id'> = { customerId: docRef.id, customerName: newUser.name, vehicleType: data.vehiclePreference as VehicleType, status: 'Pending', requestTimestamp: new Date().toISOString() };
     await addDoc(collection(db, 'lessonRequests'), newRequestData);
-    // Handle referral logic for firestore if needed
     return { id: docRef.id, ...newUser };
 };
 
@@ -834,11 +844,9 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
 
     const mockUpdate = () => {
         const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
+        // If user not in mock db, add them. This can happen if they were fetched from live but update fails.
         if (userIndex === -1) {
-            const userExists = MOCK_DB.users.some(u => u.id === userToUpdate.id);
-            if (!userExists) {
-                MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
-            }
+            MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
         } else {
             MOCK_DB.users[userIndex].approvalStatus = newStatus;
         }
@@ -853,19 +861,13 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
         await updateDoc(userRef, { approvalStatus: newStatus });
         return true;
     } catch (error) {
-        console.error(`Error updating user ${userId} status:`, error);
-        toast({
-            title: "Live Update Failed",
-            description: "The change has been applied to your local session due to a database error. Please check your Firestore security rules.",
-            variant: "destructive",
-        });
-        return mockUpdate();
+        return handleWritePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
     }
 };
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
     const mockFetch = () => [...MOCK_DB.users].sort((a,b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const usersCollection = collection(db, 'users');
@@ -873,7 +875,7 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
         const userSnapshot = await getDocs(q);
         return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
     } catch (error: any) {
-        return handlePermissionError(error, mockFetch, 'fetchAllUsers');
+        return handleReadPermissionError(error, mockFetch, 'fetchAllUsers');
     }
 };
 
@@ -891,7 +893,7 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
         }
         return { ...user };
     }
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const userRef = doc(db, "users", userId);
@@ -912,10 +914,9 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
         }
         return user;
     } catch(error) {
-        return handlePermissionError(error, mockFetch, 'fetchUserById');
+        return handleReadPermissionError(error, mockFetch, 'fetchUserById');
     }
 };
-
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
     const mockFetch = () => MOCK_DB.users.filter(u =>
@@ -925,26 +926,28 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
         (!filters.gender || u.gender === filters.gender)
     );
 
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
-        let queries = [
-            where("approvalStatus", "==", "Approved")
-        ];
-        if(filters.location) queries.push(where("location", "==", filters.location));
-        if(filters.gender) queries.push(where("gender", "==", filters.gender));
+        let constraints = [where("approvalStatus", "==", "Approved")];
+        if (filters.location) constraints.push(where("location", "==", filters.location));
+        if (filters.gender) constraints.push(where("gender", "==", filters.gender));
 
-        const q = query(collection(db, "users"), ...queries);
-        const querySnapshot = await getDocs(q);
+        // This query now requires a composite index. The simplified fetch-then-filter is more robust for this app.
+        const allApprovedQuery = query(collection(db, "users"), where("approvalStatus", "==", "Approved"));
+        const querySnapshot = await getDocs(allApprovedQuery);
 
-        // Additional client-side filtering because Firestore can't do inequality checks on multiple fields
         const instructors = querySnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-            .filter(u => u.uniqueId?.startsWith('TR'));
+            .filter(u =>
+                u.uniqueId?.startsWith('TR') &&
+                (!filters.location || u.location === filters.location) &&
+                (!filters.gender || u.gender === filters.gender)
+            );
 
         return instructors;
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchApprovedInstructors');
+        return handleReadPermissionError(error, mockFetch, 'fetchApprovedInstructors');
     }
 };
 
@@ -976,12 +979,7 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
         });
         return true;
     } catch (error) {
-        toast({
-            title: "Live Update Failed",
-            description: "The change has been applied to your local session due to a database error. Please check your Firestore security rules.",
-            variant: "destructive",
-        });
-        return mockAssign();
+        return handleWritePermissionError(error, mockAssign, 'assignTrainerToCustomer');
     }
 };
 
@@ -1006,7 +1004,7 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
         return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
     };
 
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const usersSnapshot = await getDocs(collection(db, 'users'));
@@ -1028,7 +1026,7 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 
         return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
     } catch (error: any) {
-        return handlePermissionError(error, mockFetch, 'fetchSummaryData');
+        return handleReadPermissionError(error, mockFetch, 'fetchSummaryData');
     }
 };
 
@@ -1037,19 +1035,18 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 // =================================================================
 export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
     const mockFetch = () => MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
     try {
         const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
     } catch (error: any) {
-        return handlePermissionError(error, mockFetch, 'fetchAllTrainerStudents');
+        return handleReadPermissionError(error, mockFetch, 'fetchAllTrainerStudents');
     }
 };
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
-    const customerRef = doc(db, "users", customerId);
-    if (!db) {
+    const mockUpdate = () => {
         const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
         if (customerIndex === -1) return false;
 
@@ -1071,51 +1068,54 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
         }
         saveData();
         return true;
+    };
+
+    if (!db) return mockUpdate();
+
+    try {
+        const customerRef = doc(db, "users", customerId);
+        await updateDoc(customerRef, { approvalStatus: newStatus });
+        if (newStatus === 'Approved') {
+            const customerSnap = await getDoc(customerRef);
+            if(!customerSnap.exists()) return false;
+            const user = customerSnap.data() as UserProfile;
+            const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
+            const firstLessonDate = addDays(startDate, 2);
+            firstLessonDate.setHours(9, 0, 0, 0);
+
+            await updateDoc(customerRef, {
+                upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+            });
+
+            const reqQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
+            const reqSnapshot = await getDocs(reqQuery);
+            const batch = writeBatch(db);
+            reqSnapshot.docs.forEach(doc => batch.update(doc.ref, { status: 'Active' }));
+            await batch.commit();
+        } else {
+            await updateDoc(customerRef, { assignedTrainerId: undefined, assignedTrainerName: undefined });
+        }
+        return true;
+    } catch (error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateAssignmentStatusByTrainer');
     }
-
-    await updateDoc(customerRef, { approvalStatus: newStatus });
-    if (newStatus === 'Approved') {
-        const customerSnap = await getDoc(customerRef);
-        if(!customerSnap.exists()) return false;
-        const user = customerSnap.data() as UserProfile;
-        const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
-        const firstLessonDate = addDays(startDate, 2);
-        firstLessonDate.setHours(9, 0, 0, 0);
-
-        await updateDoc(customerRef, {
-            upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
-        });
-
-        const reqQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
-        const reqSnapshot = await getDocs(reqQuery);
-        const batch = writeBatch(db);
-        reqSnapshot.docs.forEach(doc => batch.update(doc.ref, { status: 'Active' }));
-        await batch.commit();
-    } else {
-        await updateDoc(customerRef, { assignedTrainerId: null, assignedTrainerName: null });
-    }
-    return true;
 };
 
 export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-    const mockFetch = () => MOCK_DB.feedback
-        .filter(f => f.trainerId === trainerId)
-        .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-
-    if (!db) return mockFetch();
+    const mockFetch = () => MOCK_DB.feedback.filter(f => f.trainerId === trainerId).sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
     } catch (error: any) {
-        return handlePermissionError(error, mockFetch, 'fetchTrainerFeedback');
+        return handleReadPermissionError(error, mockFetch, 'fetchTrainerFeedback');
     }
 };
 
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
-    const studentRef = doc(db, "users", studentId);
-    if (!db) {
+    const mockUpdate = () => {
         const studentIndex = MOCK_DB.users.findIndex(u => u.id === studentId);
         if (studentIndex === -1) return false;
         const student = MOCK_DB.users[studentIndex];
@@ -1127,20 +1127,26 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
         MOCK_DB.users[studentIndex] = student;
         saveData();
         return true;
+    };
+    if (!db) return mockUpdate();
+
+    try {
+        const studentRef = doc(db, "users", studentId);
+        const studentSnap = await getDoc(studentRef);
+        if (!studentSnap.exists()) return false;
+
+        const studentData = studentSnap.data() as UserProfile;
+        const updates: Partial<UserProfile> = { attendance: status };
+
+        if (status === 'Present' && studentData.attendance !== 'Present') {
+            updates.completedLessons = (studentData.completedLessons || 0) + 1;
+        }
+
+        await updateDoc(studentRef, updates);
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateUserAttendance');
     }
-
-    const studentSnap = await getDoc(studentRef);
-    if (!studentSnap.exists()) return false;
-
-    const studentData = studentSnap.data() as UserProfile;
-    const updates: Partial<UserProfile> = { attendance: status };
-
-    if (status === 'Present' && studentData.attendance !== 'Present') {
-        updates.completedLessons = (studentData.completedLessons || 0) + 1;
-    }
-
-    await updateDoc(studentRef, updates);
-    return true;
 };
 
 // =================================================================
@@ -1149,52 +1155,56 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 
 export const fetchAllLessonRequests = async (): Promise<LessonRequest[]> => {
     const mockFetch = () => [...MOCK_DB.lessonRequests].sort((a, b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc')));
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LessonRequest[];
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchAllLessonRequests');
+        return handleReadPermissionError(error, mockFetch, 'fetchAllLessonRequests');
     }
 };
 
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest> => {
     const newRequest = {
-        userId,
-        customerName,
+        userId, customerName,
         originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
         requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
         status: 'Pending' as RescheduleRequestStatusType,
         requestTimestamp: new Date().toISOString(),
     };
 
-    if (!db) {
+    const mockAdd = () => {
         const requestWithId = { ...newRequest, id: generateId() };
         MOCK_DB.rescheduleRequests.push(requestWithId);
         saveData();
         return requestWithId;
-    }
+    };
 
-    const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
-    return { id: docRef.id, ...newRequest };
+    if (!db) return mockAdd();
+
+    try {
+        const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
+        return { id: docRef.id, ...newRequest };
+    } catch(error) {
+        return handleWritePermissionError(error, mockAdd, 'addRescheduleRequest');
+    }
 };
 
 export const fetchRescheduleRequests = async (): Promise<RescheduleRequest[]> => {
     const mockFetch = () => [...MOCK_DB.rescheduleRequests].sort((a,b) => new Date(b.requestTimestamp).getTime() - new Date(a.requestTimestamp).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'rescheduleRequests'), orderBy('requestTimestamp', 'desc')));
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RescheduleRequest[];
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchRescheduleRequests');
+        return handleReadPermissionError(error, mockFetch, 'fetchRescheduleRequests');
     }
 };
 
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
-    const requestRef = doc(db, 'rescheduleRequests', requestId);
-    if (!db) {
+    const mockUpdate = () => {
         const requestIndex = MOCK_DB.rescheduleRequests.findIndex(r => r.id === requestId);
         if (requestIndex === -1) return false;
         MOCK_DB.rescheduleRequests[requestIndex].status = newStatus;
@@ -1207,41 +1217,53 @@ export const updateRescheduleRequestStatus = async (requestId: string, newStatus
         }
         saveData();
         return true;
-    }
+    };
+    if (!db) return mockUpdate();
 
-    await updateDoc(requestRef, { status: newStatus });
-    if (newStatus === 'Approved') {
-        const requestSnap = await getDoc(requestRef);
-        if (!requestSnap.exists()) return false;
-        const requestData = requestSnap.data() as RescheduleRequest;
-        await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
+    try {
+        const requestRef = doc(db, 'rescheduleRequests', requestId);
+        await updateDoc(requestRef, { status: newStatus });
+        if (newStatus === 'Approved') {
+            const requestSnap = await getDoc(requestRef);
+            if (!requestSnap.exists()) return false;
+            const requestData = requestSnap.data() as RescheduleRequest;
+            await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
+        }
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateRescheduleRequestStatus');
     }
-    return true;
 };
 
 export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
-    if (!db) {
+    const mockAdd = () => {
         MOCK_DB.feedback.push({ ...newFeedback, id: generateId() });
         const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
         if (customerIndex !== -1) MOCK_DB.users[customerIndex].feedbackSubmitted = true;
         saveData();
         return true;
+    };
+    if (!db) return mockAdd();
+
+    try {
+        await addDoc(collection(db, 'feedback'), newFeedback);
+        await updateDoc(doc(db, 'users', customerId), { feedbackSubmitted: true });
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockAdd, 'addFeedback');
     }
-    await addDoc(collection(db, 'feedback'), newFeedback);
-    await updateDoc(doc(db, 'users', customerId), { feedbackSubmitted: true });
-    return true;
 };
 
 export const fetchAllFeedback = async (): Promise<Feedback[]> => {
     const mockFetch = () => [...MOCK_DB.feedback].sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'feedback'), orderBy('submissionDate', 'desc')));
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchAllFeedback');
+        return handleReadPermissionError(error, mockFetch, 'fetchAllFeedback');
     }
 };
 
@@ -1250,47 +1272,50 @@ export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[
         .filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName)
         .map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), }))
         .sort((a, b) => a.remainingLessons - b.remainingLessons);
-
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
         const snapshot = await getDocs(q);
         const users = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-            .filter(u => u.assignedTrainerName); // Filter client-side
+            .filter(u => u.assignedTrainerName);
 
         return users.map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchCustomerLessonProgress');
+        return handleReadPermissionError(error, mockFetch, 'fetchCustomerLessonProgress');
     }
 };
 
 export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
-    const customerRef = doc(db, 'users', customerId);
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0); // 9 AM
     const updates = {
         subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
         upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
     };
-
-    if (!db) {
+    const mockUpdate = () => {
         const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
         if (customerIndex === -1) return null;
         MOCK_DB.users[customerIndex] = { ...MOCK_DB.users[customerIndex], ...updates };
         saveData();
         return { ...MOCK_DB.users[customerIndex] };
-    }
+    };
+    if (!db) return mockUpdate();
 
-    await updateDoc(customerRef, updates);
-    const updatedSnap = await getDoc(customerRef);
-    return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
+    try {
+        const customerRef = doc(db, 'users', customerId);
+        await updateDoc(customerRef, updates);
+        const updatedSnap = await getDoc(customerRef);
+        return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
+    } catch(error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateSubscriptionStartDate');
+    }
 }
 
 export const fetchAllReferrals = async (): Promise<Referral[]> => {
     const mockFetch = () => MOCK_DB.referrals.map(ref => ({...ref,refereeUniqueId: MOCK_DB.users.find(u => u.id === ref.refereeId)?.uniqueId,refereeSubscriptionPlan: MOCK_DB.users.find(u => u.id === ref.refereeId)?.subscriptionPlan,refereeApprovalStatus: MOCK_DB.users.find(u => u.id === ref.refereeId)?.approvalStatus,})).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const referralsSnapshot = await getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc')));
@@ -1307,25 +1332,25 @@ export const fetchAllReferrals = async (): Promise<Referral[]> => {
             return { ...ref, refereeUniqueId: referee?.uniqueId, refereeSubscriptionPlan: referee?.subscriptionPlan, refereeApprovalStatus: referee?.approvalStatus, };
         });
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchAllReferrals');
+        return handleReadPermissionError(error, mockFetch, 'fetchAllReferrals');
     }
 };
 
 export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
     const mockFetch = () => MOCK_DB.referrals.filter(r => r.referrerId === userId).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const q = query(collection(db, 'referrals'), where('referrerId', '==', userId), orderBy('timestamp', 'desc'));
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Referral[];
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchReferralsByUserId');
+        return handleReadPermissionError(error, mockFetch, 'fetchReferralsByUserId');
     }
 };
 
 export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
-    if (!db) {
+    const mockUpdate = () => {
         const referralIndex = MOCK_DB.referrals.findIndex(r => r.id === referralId);
         if (referralIndex !== -1) {
             MOCK_DB.referrals[referralIndex].payoutStatus = status;
@@ -1333,45 +1358,57 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
             return true;
         }
         return false;
+    };
+    if (!db) return mockUpdate();
+
+    try {
+        await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateReferralPayoutStatus');
     }
-    await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
-    return true;
 };
 
 export const fetchCourses = async (): Promise<Course[]> => {
     const mockFetch = () => [...MOCK_DB.courses];
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'courses')));
         if (snapshot.empty) return mockFetch();
         return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchCourses');
+        return handleReadPermissionError(error, mockFetch, 'fetchCourses');
     }
 };
 
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
-    if (!db) {
+    const mockAdd = () => {
         const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
         if (courseIndex === -1) return null;
         const newModule: CourseModule = { ...moduleData, id: generateId() };
         MOCK_DB.courses[courseIndex].modules.push(newModule);
         saveData();
         return MOCK_DB.courses[courseIndex];
+    };
+    if (!db) return mockAdd();
+
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnap = await getDoc(courseRef);
+        if (!courseSnap.exists()) return null;
+        const course = courseSnap.data() as Course;
+        const newModule = { ...moduleData, id: generateId() };
+        const updatedModules = [...(course.modules || []), newModule];
+        await updateDoc(courseRef, { modules: updatedModules });
+        return { ...course, modules: updatedModules, id: courseId };
+    } catch (error) {
+        return handleWritePermissionError(error, mockAdd, 'addCourseModule');
     }
-    const courseRef = doc(db, 'courses', courseId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) return null;
-    const course = courseSnap.data() as Course;
-    const newModule = { ...moduleData, id: generateId() };
-    const updatedModules = [...(course.modules || []), newModule];
-    await updateDoc(courseRef, { modules: updatedModules });
-    return { ...course, modules: updatedModules, id: courseId };
 };
 
 export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> => {
-    if (!db) {
+    const mockUpdate = () => {
         const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
         if (courseIndex === -1) return null;
         const moduleIndex = MOCK_DB.courses[courseIndex].modules.findIndex(m => m.id === moduleId);
@@ -1379,49 +1416,60 @@ export const updateCourseModule = async (courseId: string, moduleId: string, mod
         MOCK_DB.courses[courseIndex].modules[moduleIndex] = { ...MOCK_DB.courses[courseIndex].modules[moduleIndex], ...moduleData };
         saveData();
         return MOCK_DB.courses[courseIndex];
+    };
+    if (!db) return mockUpdate();
+
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnap = await getDoc(courseRef);
+        if (!courseSnap.exists()) return null;
+        const course = courseSnap.data() as Course;
+        const updatedModules = course.modules.map(m => m.id === moduleId ? { ...m, ...moduleData } : m);
+        await updateDoc(courseRef, { modules: updatedModules });
+        return { ...course, modules: updatedModules, id: courseId };
+    } catch (error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateCourseModule');
     }
-    const courseRef = doc(db, 'courses', courseId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) return null;
-    const course = courseSnap.data() as Course;
-    const updatedModules = course.modules.map(m => m.id === moduleId ? { ...m, ...moduleData } : m);
-    await updateDoc(courseRef, { modules: updatedModules });
-    return { ...course, modules: updatedModules, id: courseId };
 };
 
 export const deleteCourseModule = async (courseId: string, moduleId: string): Promise<boolean> => {
-    if (!db) {
+    const mockDelete = () => {
         const courseIndex = MOCK_DB.courses.findIndex(c => c.id === courseId);
         if (courseIndex === -1) return false;
         MOCK_DB.courses[courseIndex].modules = MOCK_DB.courses[courseIndex].modules.filter(m => m.id !== moduleId);
         saveData();
         return true;
+    };
+    if (!db) return mockDelete();
+
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnap = await getDoc(courseRef);
+        if (!courseSnap.exists()) return false;
+        const course = courseSnap.data() as Course;
+        const updatedModules = course.modules.filter(m => m.id !== moduleId);
+        await updateDoc(courseRef, { modules: updatedModules });
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockDelete, 'deleteCourseModule');
     }
-    const courseRef = doc(db, 'courses', courseId);
-    const courseSnap = await getDoc(courseRef);
-    if (!courseSnap.exists()) return false;
-    const course = courseSnap.data() as Course;
-    const updatedModules = course.modules.filter(m => m.id !== moduleId);
-    await updateDoc(courseRef, { modules: updatedModules });
-    return true;
 };
 
 export const fetchQuizSets = async (): Promise<QuizSet[]> => {
     const mockFetch = () => [...MOCK_DB.quizSets];
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'quizSets')));
         if (snapshot.empty) return mockFetch();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
     } catch(error) {
-        return handlePermissionError(error, mockFetch, 'fetchQuizSets');
+        return handleReadPermissionError(error, mockFetch, 'fetchQuizSets');
     }
 };
 
 export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
-    const setRef = doc(db, 'quizSets', quizSetId);
-    if (!db) {
+    const mockUpdate = () => {
         const setIndex = MOCK_DB.quizSets.findIndex(s => s.id === quizSetId);
         if (setIndex === -1) return null;
         const questionIndex = MOCK_DB.quizSets[setIndex].questions.findIndex(q => q.id === questionId);
@@ -1430,120 +1478,137 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
         MOCK_DB.quizSets[setIndex].questions[questionIndex] = updatedQuestion;
         saveData();
         return MOCK_DB.quizSets[setIndex];
-    }
+    };
+    if (!db) return mockUpdate();
 
-    const setSnap = await getDoc(setRef);
-    if (!setSnap.exists()) return null;
-    const quizSet = setSnap.data() as QuizSet;
-    const updatedQuestions = quizSet.questions.map(q => {
-        if (q.id === questionId) {
-            return {
-                id: q.id,
-                question: { en: data.question_en, hi: data.question_hi },
-                options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') },
-                correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
-            };
-        }
-        return q;
-    });
-    await updateDoc(setRef, { questions: updatedQuestions });
-    return { ...quizSet, questions: updatedQuestions, id: quizSetId };
+    try {
+        const setRef = doc(db, 'quizSets', quizSetId);
+        const setSnap = await getDoc(setRef);
+        if (!setSnap.exists()) return null;
+        const quizSet = setSnap.data() as QuizSet;
+        const updatedQuestions = quizSet.questions.map(q => {
+            if (q.id === questionId) {
+                return {
+                    id: q.id,
+                    question: { en: data.question_en, hi: data.question_hi },
+                    options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') },
+                    correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+                };
+            }
+            return q;
+        });
+        await updateDoc(setRef, { questions: updatedQuestions });
+        return { ...quizSet, questions: updatedQuestions, id: quizSetId };
+    } catch(error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateQuizQuestion');
+    }
 };
 
 export const fetchFaqs = async (): Promise<FaqItem[]> => {
     const mockFetch = () => [...MOCK_DB.faqs];
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'faqs')));
         if (snapshot.empty) return mockFetch();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
     } catch(error) {
-        return handlePermissionError(error, mockFetch, 'fetchFaqs');
+        return handleReadPermissionError(error, mockFetch, 'fetchFaqs');
     }
 };
 
 export const addFaq = async (data: FaqFormValues): Promise<FaqItem> => {
-    if (!db) {
+    const mockAdd = () => {
         const newFaq: FaqItem = { id: generateId(), ...data };
         MOCK_DB.faqs.push(newFaq);
         saveData();
         return newFaq;
+    };
+    if (!db) return mockAdd();
+
+    try {
+        const docRef = await addDoc(collection(db, 'faqs'), data);
+        return { id: docRef.id, ...data };
+    } catch (error) {
+        return handleWritePermissionError(error, mockAdd, 'addFaq');
     }
-    const docRef = await addDoc(collection(db, 'faqs'), data);
-    return { id: docRef.id, ...data };
 }
 
 export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolean> => {
-    if (!db) {
+    const mockUpdate = () => {
         const index = MOCK_DB.faqs.findIndex(f => f.id === id);
         if (index === -1) return false;
         MOCK_DB.faqs[index] = { ...MOCK_DB.faqs[index], ...data };
         saveData();
         return true;
+    };
+    if (!db) return mockUpdate();
+
+    try {
+        await updateDoc(doc(db, 'faqs', id), data);
+        return true;
+    } catch (error) {
+        return handleWritePermissionError(error, mockUpdate, 'updateFaq');
     }
-    await updateDoc(doc(db, 'faqs', id), data);
-    return true;
 }
 
 export const deleteFaq = async (id: string): Promise<boolean> => {
-    if (!db) {
+    const mockDelete = () => {
         const initialLength = MOCK_DB.faqs.length;
         MOCK_DB.faqs = MOCK_DB.faqs.filter(f => f.id !== id);
         saveData();
         return MOCK_DB.faqs.length < initialLength;
+    };
+    if (!db) return mockDelete();
+
+    try {
+        await deleteDoc(doc(db, 'faqs', id));
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockDelete, 'deleteFaq');
     }
-    await deleteDoc(doc(db, 'faqs', id));
-    return true;
 }
 
 export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
     const mockFetch = () => [...MOCK_DB.blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
         if (snapshot.empty) return mockFetch();
         return snapshot.docs.map(doc => doc.data() as BlogPost);
     } catch(error) {
-        return handlePermissionError(error, mockFetch, 'fetchBlogPosts');
+        return handleReadPermissionError(error, mockFetch, 'fetchBlogPosts');
     }
 };
 
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost> => {
     const { imageFile, ...restOfData } = data;
-    // This is a mock upload. In a real app, you'd upload the file and get a URL.
     const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
+    const newPost: BlogPost = { ...restOfData, imageSrc: newImageSrc || 'https://placehold.co/1200x800.png' };
 
-    const newPost: BlogPost = {
-        ...restOfData,
-        imageSrc: newImageSrc || 'https://placehold.co/1200x800.png', // Provide a fallback
-    };
-
-    if (!db) {
-        // Check if slug already exists to prevent duplicates
-        if (MOCK_DB.blogPosts.some(p => p.slug === newPost.slug)) {
-            throw new Error("A blog post with this slug already exists.");
-        }
+    const mockAdd = () => {
+        if (MOCK_DB.blogPosts.some(p => p.slug === newPost.slug)) { throw new Error("A blog post with this slug already exists."); }
         MOCK_DB.blogPosts.unshift(newPost);
         saveData();
         return newPost;
-    }
+    };
+    if (!db) return mockAdd();
 
-    // In Firestore, we should also check for slug uniqueness before adding
-    const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
-    const existing = await getDocs(q);
-    if (!existing.empty) {
-        throw new Error("A blog post with this slug already exists.");
+    try {
+        const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
+        const existing = await getDocs(q);
+        if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
+        await addDoc(collection(db, 'blogPosts'), newPost);
+        return newPost;
+    } catch(error) {
+        return handleWritePermissionError(error, mockAdd, 'addBlogPost');
     }
-
-    await addDoc(collection(db, 'blogPosts'), newPost);
-    return newPost;
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
     const mockFetch = () => MOCK_DB.blogPosts.find(p => p.slug === slug) || null;
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
@@ -1551,22 +1616,20 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
         if (snapshot.empty) return mockFetch();
         return snapshot.docs[0].data() as BlogPost;
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchBlogPostBySlug');
+        return handleReadPermissionError(error, mockFetch, 'fetchBlogPostBySlug');
     }
 };
 
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
     const { imageFile, ...restOfData } = data;
-    const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc; // Mock upload
-
+    const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
     const mockUpdate = () => {
         const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
         if (index === -1) return false;
         MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc, slug: data.slug };
         saveData();
         return true;
-    }
-
+    };
     if (!db) return mockUpdate();
 
     try {
@@ -1577,91 +1640,80 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
         await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
         return true;
     } catch(error) {
-        toast({ title: "Live Update Failed", description: "The change was saved to your local session due to a database error.", variant: "destructive" });
-        return mockUpdate();
+        return handleWritePermissionError(error, mockUpdate, 'updateBlogPost');
     }
 }
 
 export const deleteBlogPost = async (slug: string): Promise<boolean> => {
-    if (!db) {
+    const mockDelete = () => {
         const initialLength = MOCK_DB.blogPosts.length;
         MOCK_DB.blogPosts = MOCK_DB.blogPosts.filter(p => p.slug !== slug);
         saveData();
         return MOCK_DB.blogPosts.length < initialLength;
+    };
+    if (!db) return mockDelete();
+
+    try {
+        const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return false;
+        await deleteDoc(snapshot.docs[0].ref);
+        return true;
+    } catch(error) {
+        return handleWritePermissionError(error, mockDelete, 'deleteBlogPost');
     }
-    const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return false;
-    await deleteDoc(snapshot.docs[0].ref);
-    return true;
 }
 
 export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
     const mockFetch = () => [...MOCK_DB.siteBanners];
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'siteBanners')));
         if (snapshot.empty) return mockFetch();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchSiteBanners');
+        return handleReadPermissionError(error, mockFetch, 'fetchSiteBanners');
     }
 };
 
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     const newImageSrc = data.imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc;
-
-    const updateData = {
-        title: data.title,
-        description: data.description,
-        imageSrc: newImageSrc || 'https://placehold.co/1200x800.png',
-        imageHint: data.imageHint,
-    };
-
+    const updateData = { title: data.title, description: data.description, imageSrc: newImageSrc || 'https://placehold.co/1200x800.png', imageHint: data.imageHint };
     const mockUpdate = () => {
         const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
         if (index === -1) return false;
         MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...updateData };
         saveData();
         return true;
-    }
-
+    };
     if (!db) return mockUpdate();
 
     try {
         await updateDoc(doc(db, 'siteBanners', id), updateData);
-        mockUpdate(); // Update local data as well to keep it in sync
+        mockUpdate();
         return true;
     } catch(error) {
-        toast({ title: "Live Update Failed", description: "The change was saved to your local session due to a database error.", variant: "destructive" });
-        return mockUpdate();
+        return handleWritePermissionError(error, mockUpdate, 'updateSiteBanner');
     }
 }
 
 export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
     const mockFetch = () => [...MOCK_DB.promotionalPosters];
-    if (!db) return mockFetch();
+    if (!db || hasFallenBack()) return mockFetch();
 
     try {
         const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
         if (snapshot.empty) return mockFetch();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
     } catch (error) {
-        return handlePermissionError(error, mockFetch, 'fetchPromotionalPosters');
+        return handleReadPermissionError(error, mockFetch, 'fetchPromotionalPosters');
     }
 };
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     const newImageSrc = data.imageFile ? 'https://placehold.co/600x800.png' : data.imageSrc;
-
-    const updateData = {
-        title: data.title,
-        description: data.description,
-        imageSrc: newImageSrc || 'https://placehold.co/600x800.png',
-        imageHint: data.imageHint,
-        href: data.href || '#',
-    };
+    const updateData = { title: data.title, description: data.description, imageSrc: newImageSrc || 'https://placehold.co/600x800.png', imageHint: data.imageHint, href: data.href || '#' };
 
     const mockUpdate = () => {
         const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
@@ -1669,18 +1721,19 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
         MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...updateData };
         saveData();
         return true;
-    }
-
+    };
     if (!db) return mockUpdate();
+
     try {
         await updateDoc(doc(db, 'promotionalPosters', id), updateData);
         mockUpdate();
         return true;
     } catch(error) {
-        toast({ title: "Live Update Failed", description: "The change was saved to your local session due to a database error.", variant: "destructive" });
-        return mockUpdate();
+        return handleWritePermissionError(error, mockUpdate, 'updatePromotionalPoster');
     }
 }
+
+
 
 
 
