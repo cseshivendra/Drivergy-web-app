@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -126,28 +127,28 @@ const initialBlogPosts: BlogPost[] = [
 ];
 
 const initialBanners: SiteBanner[] = [
-    {
-      id: 'hero-1',
-      title: 'Join a Team of Professionals',
-      description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-      imageSrc: 'https://placehold.co/1920x1080/60a5fa/ffffff.png',
-      imageHint: 'driving instructors team',
-    },
-    {
-      id: 'hero-2',
-      title: 'Learn in a Safe Environment',
-      description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-      imageSrc: 'https://placehold.co/1920x1080/fbbf24/ffffff.png',
-      imageHint: 'driving lesson car interior',
-    },
-    {
-      id: 'hero-3',
-      title: 'Your Success Is Our Mission',
-      description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-      imageSrc: 'https://placehold.co/1920x1080/34d399/ffffff.png',
-      imageHint: 'happy driver license',
-    }
-  ];
+  {
+    id: 'hero-1',
+    title: 'Learn from a Team of Professionals',
+    description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
+    imageSrc: 'https://placehold.co/1920x1080/60a5fa/ffffff.png',
+    imageHint: 'driving instructors team',
+  },
+  {
+    id: 'hero-2',
+    title: 'Drive in a Safe, Modern Fleet',
+    description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
+    imageSrc: 'https://placehold.co/1920x1080/fbbf24/ffffff.png',
+    imageHint: 'driving lesson car interior',
+  },
+  {
+    id: 'hero-3',
+    title: 'Your Success Is Our Driving Mission',
+    description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
+    imageSrc: 'https://placehold.co/1920x1080/34d399/ffffff.png',
+    imageHint: 'happy driver license',
+  },
+];
 
 const initialPromotionalPosters: PromotionalPoster[] = [
   {
@@ -834,7 +835,10 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
     const mockUpdate = () => {
         const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
         if (userIndex === -1) {
-             MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
+             const userExists = MOCK_DB.users.some(u => u.id === userToUpdate.id);
+             if (!userExists) {
+                MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
+             }
         } else {
             MOCK_DB.users[userIndex].approvalStatus = newStatus;
         }
@@ -848,10 +852,11 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, { approvalStatus: newStatus });
         return true;
-    } catch (error: any) {
+    } catch (error) {
+        console.error(`Error updating user ${userId} status:`, error);
         toast({
             title: "Live Update Failed",
-            description: "Could not update live database. The change has been applied to your local session.",
+            description: "The change has been applied to your local session due to a database error. Please check your Firestore security rules.",
             variant: "destructive",
         });
         return mockUpdate();
@@ -924,8 +929,6 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
   
   try {
     let queries = [
-        where("uniqueId", ">=", "TR-"),
-        where("uniqueId", "<", "TR." ), // A trick to query by prefix
         where("approvalStatus", "==", "Approved")
     ];
     if(filters.location) queries.push(where("location", "==", filters.location));
@@ -933,14 +936,20 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
 
     const q = query(collection(db, "users"), ...queries);
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
+    
+    // Additional client-side filtering because Firestore can't do inequality checks on multiple fields
+    const instructors = querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+        .filter(u => u.uniqueId?.startsWith('TR'));
+        
+    return instructors;
   } catch (error) {
     return handlePermissionError(error, mockFetch, 'fetchApprovedInstructors');
   }
 };
 
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
-  if (!db) {
+  const mockAssign = () => {
     const customerIndex = MOCK_DB.users.findIndex(u => u.id === customerId);
     const trainer = MOCK_DB.users.find(u => u.id === trainerId);
     if (customerIndex !== -1 && trainer) {
@@ -951,17 +960,29 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
       return true;
     }
     return false;
-  }
-  const customerRef = doc(db, "users", customerId);
-  const trainerDoc = await getDoc(doc(db, "users", trainerId));
-  if (!trainerDoc.exists()) return false;
+  };
   
-  await updateDoc(customerRef, {
-    approvalStatus: 'In Progress',
-    assignedTrainerId: trainerId,
-    assignedTrainerName: trainerDoc.data().name
-  });
-  return true;
+  if (!db) return mockAssign();
+
+  try {
+    const customerRef = doc(db, "users", customerId);
+    const trainerDoc = await getDoc(doc(db, "users", trainerId));
+    if (!trainerDoc.exists()) return false;
+    
+    await updateDoc(customerRef, {
+      approvalStatus: 'In Progress',
+      assignedTrainerId: trainerId,
+      assignedTrainerName: trainerDoc.data().name
+    });
+    return true;
+  } catch (error) {
+    toast({
+      title: "Live Update Failed",
+      description: "The change has been applied to your local session due to a database error. Please check your Firestore security rules.",
+      variant: "destructive",
+    });
+    return mockAssign();
+  }
 };
 
 // =================================================================
@@ -1538,20 +1559,27 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
     const { imageFile, ...restOfData } = data;
     const newImageSrc = imageFile ? 'https://placehold.co/1200x800.png' : data.imageSrc; // Mock upload
     
-    if (!db) {
+    const mockUpdate = () => {
         const index = MOCK_DB.blogPosts.findIndex(p => p.slug === slug);
         if (index === -1) return false;
         MOCK_DB.blogPosts[index] = { ...MOCK_DB.blogPosts[index], ...restOfData, imageSrc: newImageSrc || MOCK_DB.blogPosts[index].imageSrc, slug: data.slug };
         saveData();
         return true;
     }
+
+    if (!db) return mockUpdate();
     
-    const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) return false;
-    const docRef = snapshot.docs[0].ref;
-    await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
-    return true;
+    try {
+        const q = query(collection(db, 'blogPosts'), where('slug', '==', slug), limit(1));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return false;
+        const docRef = snapshot.docs[0].ref;
+        await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+        return true;
+    } catch(error) {
+        toast({ title: "Live Update Failed", description: "The change was saved to your local session due to a database error.", variant: "destructive" });
+        return mockUpdate();
+    }
 }
 
 export const deleteBlogPost = async (slug: string): Promise<boolean> => {
@@ -1656,5 +1684,6 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
