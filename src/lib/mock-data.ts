@@ -3,7 +3,7 @@ import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, Cour
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db } from './firebase';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc } from 'firebase/firestore';
 
 
 const initialFaqs: FaqItem[] = [
@@ -129,21 +129,21 @@ const initialBanners: SiteBanner[] = [
     id: 'hero-1',
     title: 'Join a Team of Professionals',
     description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-    imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
+    imageSrc: 'https://placehold.co/1920x1080.png',
     imageHint: 'driving instructors team',
   },
   {
     id: 'hero-2',
     title: 'Learn in a Safe Environment',
     description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-    imageSrc: 'https://placehold.co/1920x1080/2563eb/ffffff.png',
+    imageSrc: 'https://placehold.co/1920x1080.png',
     imageHint: 'driving lesson car interior',
   },
   {
     id: 'hero-3',
     title: 'Your Success Is Our Mission',
     description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-    imageSrc: 'https://placehold.co/1920x1080/16a34a/ffffff.png',
+    imageSrc: 'https://placehold.co/1920x1080.png',
     imageHint: 'happy driver license',
   }
 ];
@@ -637,7 +637,28 @@ export const authenticateUserByCredentials = async (username: string, password: 
     const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
     return user ? { ...user } : null;
   }
+
+  // Special case for admin login on live DB to ensure it always works and seeds the user if needed.
+  if (username.toLowerCase() === 'admin' && password === 'admin') {
+    const adminDocRef = doc(db, 'users', ADMIN_ID);
+    const adminDocSnap = await getDoc(adminDocRef);
+
+    if (!adminDocSnap.exists()) {
+      // Admin user doesn't exist, so create it on the fly.
+      // We must remove the `id` from the object before setting it.
+      const { id, ...adminData } = adminUser;
+      await setDoc(adminDocRef, adminData);
+      console.log("Admin user has been seeded into the live database.");
+      return adminUser; // Return the complete profile including the ID
+    } else {
+      // Admin exists, return their profile
+      return { id: adminDocSnap.id, ...adminDocSnap.data() } as UserProfile;
+    }
+  }
+
+  // Regular user login logic for the live database
   const usersRef = collection(db, "users");
+  // Firestore queries are case-sensitive. This will only find users with exact username match.
   const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
   const querySnapshot = await getDocs(q);
 
@@ -647,6 +668,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
   const userDoc = querySnapshot.docs[0];
   return { id: userDoc.id, ...userDoc.data() } as UserProfile;
 };
+
 
 export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
   if (!db) {
@@ -1539,6 +1561,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+
 
 
 
