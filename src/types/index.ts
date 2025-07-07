@@ -256,7 +256,7 @@ export type VisualContentFormValues = z.infer<typeof VisualContentSchema>;
 
 
 // Data structure types
-export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler';
+export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler' | 'Both';
 
 export interface LessonRequest {
   id: string;

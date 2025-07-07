@@ -97,8 +97,7 @@ export default function RequestTable({ title, requests, isLoading }: RequestTabl
                         </SelectTrigger>
                         <SelectContent>
                         <SelectItem value="all">All Vehicle Types</SelectItem>
-                        {/* Filter out "Both" if it exists in VehiclePreferenceOptions for this context */}
-                        {VehiclePreferenceOptions.filter(opt => opt !== "Both").map(type => (
+                        {VehiclePreferenceOptions.map(type => (
                             <SelectItem key={type} value={type}>{type}</SelectItem>
                         ))}
                         </SelectContent>
@@ -132,7 +131,7 @@ export default function RequestTable({ title, requests, isLoading }: RequestTabl
             <TableHeader>
               <TableRow>
                 <TableHead><User className="inline-block mr-2 h-4 w-4" />Customer Name</TableHead>
-                <TableHead><ListTree className="inline-block mr-2 h-4 w-4" />Vehicle Type</TableHead> {/* Generic Icon */}
+                <TableHead><ListTree className="inline-block mr-2 h-4 w-4" />Vehicle Type</TableHead>
                 <TableHead><HelpCircle className="inline-block mr-2 h-4 w-4" />Status</TableHead>
                 <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Requested At</TableHead>
               </TableRow>
@@ -145,6 +144,7 @@ export default function RequestTable({ title, requests, isLoading }: RequestTabl
                     <TableCell>
                       {request.vehicleType === 'Two-Wheeler' && <Bike className="inline-block mr-1.5 h-4 w-4 text-muted-foreground" />}
                       {request.vehicleType === 'Four-Wheeler' && <FourWheelerIcon className="inline-block mr-1.5 h-4 w-4 text-muted-foreground" />}
+                      {request.vehicleType === 'Both' && <ListTree className="inline-block mr-1.5 h-4 w-4 text-muted-foreground" />}
                       {request.vehicleType}
                     </TableCell>
                     <TableCell>
@@ -216,4 +216,3 @@ export default function RequestTable({ title, requests, isLoading }: RequestTabl
     </Card>
   );
 }
-
