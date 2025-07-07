@@ -85,12 +85,18 @@ export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approvalStatus>;
 
 // Registration Forms
-const fileSchema = z.instanceof(File, { message: 'File is required.' })
-  .refine(file => file.size < 5 * 1024 * 1024, 'File size must be less than 5MB.')
-  .or(z.undefined());
+const requiredFileSchema = z
+  .any()
+  .refine((file): file is File => file instanceof File, "File is required.")
+  .refine((file) => file.size > 0, "File is required.")
+  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
 
-const requiredFileSchema = z.instanceof(File, { message: "File is required." })
-  .refine(file => file.size < 5 * 1024 * 1024, 'File size must be less than 5MB.');
+const optionalFileSchema = z
+  .any()
+  .refine((file): file is File => file === undefined || file instanceof File, "Invalid file type.")
+  .refine((file) => file === undefined || file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
+  .optional();
+
 
 const passwordSchema = z.string()
   .min(8, { message: "Password must be at least 8 characters long." })
@@ -165,7 +171,7 @@ export const UserProfileUpdateSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   location: z.string(),
-  photo: z.instanceof(File).optional(),
+  photo: optionalFileSchema,
   flatHouseNumber: z.string().optional(),
   street: z.string().optional(),
   state: z.string().optional(),
@@ -241,7 +247,7 @@ export const BlogPostSchema = z.object({
   author: z.string().min(1, "Author is required."),
   date: z.string(),
   imageSrc: z.string().optional(),
-  imageFile: fileSchema,
+  imageFile: optionalFileSchema,
   imageHint: z.string().optional(),
   tags: z.string().optional(),
 });
@@ -251,7 +257,7 @@ export const VisualContentSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
   imageSrc: z.string(),
-  imageFile: fileSchema,
+  imageFile: optionalFileSchema,
   imageHint: z.string().optional(),
   href: z.string().optional(),
 });
