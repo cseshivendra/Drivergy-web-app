@@ -465,8 +465,8 @@ const adminUser: UserProfile = {
   id: ADMIN_ID,
   uniqueId: 'ADMIN-001',
   name: 'Admin User',
-  username: 'Admin',
-  password: 'password123',
+  username: 'admin',
+  password: 'admin',
   contact: 'admin@drivergy.com',
   phone: '1234567890',
   location: 'Gurugram',
@@ -1544,6 +1544,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
