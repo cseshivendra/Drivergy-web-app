@@ -4,6 +4,7 @@ import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc } from 'firebase/firestore';
+import { toast } from '@/hooks/use-toast';
 
 
 const initialFaqs: FaqItem[] = [
@@ -129,21 +130,21 @@ const initialBanners: SiteBanner[] = [
         id: 'hero-1',
         title: 'Join a Team of Professionals',
         description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-        imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
+        imageSrc: 'https://placehold.co/1920x1080/60a5fa/ffffff.png',
         imageHint: 'driving instructors team',
     },
     {
         id: 'hero-2',
         title: 'Learn in a Safe Environment',
         description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-        imageSrc: 'https://placehold.co/1920x1080/3b82f6/ffffff.png',
+        imageSrc: 'https://placehold.co/1920x1080/fbbf24/ffffff.png',
         imageHint: 'driving lesson car interior',
     },
     {
         id: 'hero-3',
         title: 'Your Success Is Our Mission',
         description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-        imageSrc: 'https://placehold.co/1920x1080/10b981/ffffff.png',
+        imageSrc: 'https://placehold.co/1920x1080/34d399/ffffff.png',
         imageHint: 'happy driver license',
     }
 ];
@@ -633,20 +634,18 @@ loadData();
 // =================================================================
 
 const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-    // This function will now catch any error during data fetching, not just permission errors.
-    console.error(`[Data Fetch Error] in ${functionName}:`, error);
-
     // Set a session flag to indicate that a fallback was used.
     if (typeof window !== 'undefined') {
         sessionStorage.setItem('usingMockDataFallback', 'true');
     }
 
-    // Warn the developer that a fallback is being used.
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-        console.warn(`[Mock Data Fallback] Firebase permission denied in ${functionName}. Falling back to mock data.`);
-    } else {
-        console.warn(`[Mock Data Fallback] An unexpected error occurred in ${functionName}. Falling back to mock data.`);
-    }
+    // This is not a critical app-breaking error, but an informational message for the developer.
+    // The app will proceed to run in local mock mode for this data.
+    console.warn(
+        `[Data Fetch Notice] Could not fetch live data for '${functionName}' due to a Firebase error. ` +
+        `This is often due to Firestore security rules. Falling back to local mock data. ` +
+        `Original Error:`, error
+    );
 
     // Always return the fallback data to prevent the app from crashing.
     return fallback();
@@ -834,7 +833,6 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
 
     const mockUpdate = () => {
         const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-        // If user doesn't exist in local mock, add them before updating.
         if (userIndex === -1) {
             MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
         } else {
@@ -850,8 +848,13 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, { approvalStatus: newStatus });
         return true;
-    } catch (error) {
-        return handlePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
+    } catch (error: any) {
+        toast({
+            title: "Live Update Failed",
+            description: "Could not update live database. The change has been applied to your local session.",
+            variant: "destructive",
+        });
+        return mockUpdate();
     }
 };
 
@@ -1588,15 +1591,24 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
         imageHint: data.imageHint,
     };
 
-    if (!db) {
+    const mockUpdate = () => {
         const index = MOCK_DB.siteBanners.findIndex(b => b.id === id);
         if (index === -1) return false;
         MOCK_DB.siteBanners[index] = { ...MOCK_DB.siteBanners[index], ...updateData };
         saveData();
         return true;
     }
-    await updateDoc(doc(db, 'siteBanners', id), updateData);
-    return true;
+
+    if (!db) return mockUpdate();
+
+    try {
+        await updateDoc(doc(db, 'siteBanners', id), updateData);
+        mockUpdate(); // Update local data as well to keep it in sync
+        return true;
+    } catch(error) {
+        toast({ title: "Live Update Failed", description: "The change was saved to your local session due to a database error.", variant: "destructive" });
+        return mockUpdate();
+    }
 }
 
 export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
@@ -1623,16 +1635,26 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
         href: data.href || '#',
     };
 
-    if (!db) {
+    const mockUpdate = () => {
         const index = MOCK_DB.promotionalPosters.findIndex(p => p.id === id);
         if (index === -1) return false;
         MOCK_DB.promotionalPosters[index] = { ...MOCK_DB.promotionalPosters[index], ...updateData };
         saveData();
         return true;
     }
-    await updateDoc(doc(db, 'promotionalPosters', id), updateData);
-    return true;
+
+    if (!db) return mockUpdate();
+    try {
+        await updateDoc(doc(db, 'promotionalPosters', id), updateData);
+        mockUpdate();
+        return true;
+    } catch(error) {
+        toast({ title: "Live Update Failed", description: "The change was saved to your local session due to a database error.", variant: "destructive" });
+        return mockUpdate();
+    }
 }
+
+
 
 
 
