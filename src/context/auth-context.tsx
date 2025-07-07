@@ -117,13 +117,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       logInUser(userProfile, true);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Google Sign-In Error:", error);
-      toast({
-        title: "Sign-In Failed",
-        description: "Could not sign in with Google. Please try again.",
-        variant: "destructive",
-      });
+      if (error.code === 'auth/configuration-not-found') {
+        toast({
+          title: "Firebase Configuration Error",
+          description: "Google Sign-In failed. Please ensure your Firebase environment variables are set correctly in your .env.local file.",
+          variant: "destructive",
+          duration: 9000,
+        });
+      } else {
+        toast({
+          title: "Sign-In Failed",
+          description: "Could not sign in with Google. Please try again.",
+          variant: "destructive",
+        });
+      }
       setLoading(false);
     }
   };
