@@ -129,21 +129,21 @@ const initialBanners: SiteBanner[] = [
       id: 'hero-1',
       title: 'Join a Team of Professionals',
       description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-      imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/team.jpg',
+      imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
       imageHint: 'driving instructors team',
     },
     {
       id: 'hero-2',
       title: 'Learn in a Safe Environment',
       description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-      imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/lesson.jpg',
+      imageSrc: 'https://placehold.co/1920x1080/2563eb/ffffff.png',
       imageHint: 'driving lesson car interior',
     },
     {
       id: 'hero-3',
       title: 'Your Success Is Our Mission',
       description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-      imageSrc: 'https://storage.googleapis.com/maker-studio-5f284.appspot.com/assets/images/student.jpg',
+      imageSrc: 'https://placehold.co/1920x1080/16a34a/ffffff.png',
       imageHint: 'happy driver license',
     }
   ];
@@ -1544,6 +1544,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
