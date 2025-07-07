@@ -633,15 +633,23 @@ loadData();
 // =================================================================
 
 const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem('usingMockDataFallback', 'true');
-        }
-        console.warn(`[Mock Data Fallback] Firebase permission denied in ${functionName}. Falling back to mock data.`);
-        return fallback();
+    // This function will now catch any error during data fetching, not just permission errors.
+    console.error(`[Data Fetch Error] in ${functionName}:`, error);
+
+    // Set a session flag to indicate that a fallback was used.
+    if (typeof window !== 'undefined') {
+        sessionStorage.setItem('usingMockDataFallback', 'true');
     }
-    console.error(`[Live Data Error] in ${functionName}:`, error);
-    throw error;
+    
+    // Warn the developer that a fallback is being used.
+    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+        console.warn(`[Mock Data Fallback] Firebase permission denied in ${functionName}. Falling back to mock data.`);
+    } else {
+        console.warn(`[Mock Data Fallback] An unexpected error occurred in ${functionName}. Falling back to mock data.`);
+    }
+    
+    // Always return the fallback data to prevent the app from crashing.
+    return fallback();
 };
 
 // =================================================================
@@ -823,33 +831,25 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 
 export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
     const userId = userToUpdate.id;
-    if (!db) {
-      const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-      if (userIndex !== -1) {
-        MOCK_DB.users[userIndex].approvalStatus = newStatus;
-      } else {
-        // If the user doesn't exist in mock data (e.g., from a failed live fetch), add them.
-        MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
-      }
-      saveData();
-      return true;
+    const mockUpdate = () => {
+        const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
+        if (userIndex !== -1) {
+            MOCK_DB.users[userIndex].approvalStatus = newStatus;
+        } else {
+            MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
+        }
+        saveData();
+        return true;
     }
+
+    if (!db) return mockUpdate();
   
     try {
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, { approvalStatus: newStatus });
       return true;
     } catch (error) {
-      console.error(`Error updating status for user ${userId}:`, error);
-      // Fallback for any live update error
-      const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
-      if (userIndex !== -1) {
-        MOCK_DB.users[userIndex].approvalStatus = newStatus;
-      } else {
-        MOCK_DB.users.push({ ...userToUpdate, approvalStatus: newStatus });
-      }
-      saveData();
-      return true;
+      return handlePermissionError(error, mockUpdate, 'updateUserApprovalStatus');
     }
 };
 
@@ -1619,6 +1619,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     
 
     
+
 
 
 
