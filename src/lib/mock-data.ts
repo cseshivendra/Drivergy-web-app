@@ -129,21 +129,21 @@ const initialBanners: SiteBanner[] = [
     id: 'hero-1',
     title: 'Join a Team of Professionals',
     description: 'Our certified instructors provide personalized training to ensure you become a safe and confident driver.',
-    imageSrc: 'https://placehold.co/1920x1080.png',
+    imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
     imageHint: 'driving instructors team',
   },
   {
     id: 'hero-2',
     title: 'Learn in a Safe Environment',
     description: 'Master driving in our fleet of modern, dual-control cars, making your learning experience safe and comfortable.',
-    imageSrc: 'https://placehold.co/1920x1080.png',
+    imageSrc: 'https://placehold.co/1920x1080/3b82f6/ffffff.png',
     imageHint: 'driving lesson car interior',
   },
   {
     id: 'hero-3',
     title: 'Your Success Is Our Mission',
     description: "Join thousands of successful students who've passed their driving test with our expert guidance and support.",
-    imageSrc: 'https://placehold.co/1920x1080.png',
+    imageSrc: 'https://placehold.co/1920x1080/10b981/ffffff.png',
     imageHint: 'happy driver license',
   }
 ];
@@ -633,32 +633,37 @@ loadData();
 // =================================================================
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+  // Make the username check case-insensitive
+  const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
+
   if (!db) {
-    const user = MOCK_DB.users.find(u => u.username?.toLowerCase() === username.toLowerCase() && u.password === password);
+    if (user && user.uniqueId === 'ADMIN-001') {
+      const adminExists = MOCK_DB.users.some(u => u.uniqueId === 'ADMIN-001');
+      if (!adminExists) {
+        MOCK_DB.users.push(adminUser);
+        saveData();
+      }
+    }
     return user ? { ...user } : null;
   }
 
-  // Special case for admin login on live DB to ensure it always works and seeds the user if needed.
+  // Live DB logic
   if (username.toLowerCase() === 'admin' && password === 'admin') {
     const adminDocRef = doc(db, 'users', ADMIN_ID);
     const adminDocSnap = await getDoc(adminDocRef);
-
     if (!adminDocSnap.exists()) {
-      // Admin user doesn't exist, so create it on the fly.
-      // We must remove the `id` from the object before setting it.
       const { id, ...adminData } = adminUser;
       await setDoc(adminDocRef, adminData);
       console.log("Admin user has been seeded into the live database.");
-      return adminUser; // Return the complete profile including the ID
+      return adminUser;
     } else {
-      // Admin exists, return their profile
       return { id: adminDocSnap.id, ...adminDocSnap.data() } as UserProfile;
     }
   }
 
-  // Regular user login logic for the live database
+  // Regular user login for live DB needs a case-insensitive query, which Firestore doesn't support directly.
+  // The query below will only work for exact case matches.
   const usersRef = collection(db, "users");
-  // Firestore queries are case-sensitive. This will only find users with exact username match.
   const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
   const querySnapshot = await getDocs(q);
 
@@ -809,7 +814,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
 };
 
 export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
-  if (!db) {
+  const mockUpdate = () => {
     const userIndex = MOCK_DB.users.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
       MOCK_DB.users[userIndex].approvalStatus = newStatus;
@@ -817,12 +822,30 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
       return true;
     }
     return false;
+  };
+
+  if (!db) {
+    return mockUpdate();
   }
 
-  const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, { approvalStatus: newStatus });
-  return true;
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, { approvalStatus: newStatus });
+    return true;
+  } catch (error: any) {
+    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('usingMockDataFallback', 'true');
+      }
+      console.warn(`Firebase permission denied in updateUserApprovalStatus. Falling back to mock data update.`);
+      return mockUpdate(); // Fallback to local update
+    }
+    // For other errors, log them and indicate failure.
+    console.error(`Error updating user ${userId} status:`, error);
+    return false;
+  }
 };
+
 
 export const fetchAllUsers = async (): Promise<UserProfile[]> => {
   const mockFetch = () => [...MOCK_DB.users].sort((a,b) => new Date(b.registrationTimestamp).getTime() - new Date(a.registrationTimestamp).getTime());
@@ -834,11 +857,7 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
     const userSnapshot = await getDocs(q);
     return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      console.warn("Firebase permission denied in fetchAllUsers. Falling back to mock data.");
-      return mockFetch();
-    }
-    throw error;
+    return handlePermissionError(error, mockFetch, 'fetchAllUsers');
   }
 };
 
@@ -971,11 +990,7 @@ export const fetchSummaryData = async (): Promise<SummaryData> => {
 
     return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      console.warn("Firebase permission denied in fetchSummaryData. Falling back to mock data.");
-      return mockFetch();
-    }
-    throw error;
+    return handlePermissionError(error, mockFetch, 'fetchSummaryData');
   }
 };
 
@@ -991,12 +1006,7 @@ export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserPr
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      console.warn("Firebase permission denied in fetchAllTrainerStudents. Falling back to mock data. Please check your Firestore security rules.");
-      return MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId);
-    }
-    // Re-throw other errors
-    throw error;
+    return handlePermissionError(error, () => MOCK_DB.users.filter(u => u.assignedTrainerId === trainerId), 'fetchAllTrainerStudents');
   }
 };
 
@@ -1051,24 +1061,18 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
 };
 
 export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-  if (!db) {
-    return MOCK_DB.feedback
-        .filter(f => f.trainerId === trainerId)
-        .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-  }
+  const mockFetch = () => MOCK_DB.feedback
+      .filter(f => f.trainerId === trainerId)
+      .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+
+  if (!db) return mockFetch();
+
   try {
     const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
   } catch (error: any) {
-    if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-      console.warn("Firebase permission denied in fetchTrainerFeedback. Falling back to mock data. Please check your Firestore security rules.");
-      return MOCK_DB.feedback
-          .filter(f => f.trainerId === trainerId)
-          .sort((a, b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
-    }
-    // Re-throw other errors
-    throw error;
+    return handlePermissionError(error, mockFetch, 'fetchTrainerFeedback');
   }
 };
 
@@ -1107,6 +1111,9 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
 // =================================================================
 const handlePermissionError = <T>(error: any, fallback: () => T, functionName: string): T => {
   if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('usingMockDataFallback', 'true');
+    }
     console.warn(`Firebase permission denied in ${functionName}. Falling back to mock data.`);
     return fallback();
   }
@@ -1608,6 +1615,8 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   await updateDoc(doc(db, 'promotionalPosters', id), { ...restOfData, imageSrc: newImageSrc || data.imageSrc, href: data.href || '#' });
   return true;
 }
+
+
 
 
 
