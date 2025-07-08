@@ -11,7 +11,7 @@ import RescheduleRequestTable from '@/components/dashboard/reschedule-request-ta
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchCourses, fetchQuizSets, fetchFaqs, fetchBlogPosts, fetchSiteBanners, fetchPromotionalPosters } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
-import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, AlertCircle as AlertCircleIcon } from 'lucide-react';
+import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,7 +21,6 @@ import QuizManagement from './quiz-management';
 import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function AdminDashboard() {
   const searchParams = useSearchParams();
@@ -42,63 +41,46 @@ export default function AdminDashboard() {
   const [promotionalPosters, setPromotionalPosters] = useState<PromotionalPoster[]>([]);
 
   const [loading, setLoading] = useState(true);
-  const [usingFallback, setUsingFallback] = useState(false);
 
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState('');
 
   const loadAllData = useCallback(async () => {
-    if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('usingMockDataFallback');
-        setUsingFallback(false);
-    }
     setLoading(true);
+    const [
+      summary, users, lessonRequests, reschedules, feedbackData,
+      progressData, courseData, quizData, faqData,
+      blogData, bannerData, posterData
+    ] = await Promise.all([
+      fetchSummaryData(),
+      fetchAllUsers(),
+      fetchAllLessonRequests(),
+      fetchRescheduleRequests(),
+      fetchAllFeedback(),
+      fetchCustomerLessonProgress(),
+      fetchCourses(),
+      fetchQuizSets(),
+      fetchFaqs(),
+      fetchBlogPosts(),
+      fetchSiteBanners(),
+      fetchPromotionalPosters(),
+    ]);
+    
+    setSummaryData(summary);
+    setAllUsers(users);
+    setAllLessonRequests(lessonRequests);
+    setRescheduleRequests(reschedules);
+    setFeedback(feedbackData);
+    setLessonProgress(progressData);
+    setCourses(courseData);
+    setQuizSets(quizData);
+    setFaqs(faqData);
+    setBlogPosts(blogData);
+    setSiteBanners(bannerData);
+    setPromotionalPosters(posterData);
 
-    try {
-      const [
-        summary, users, lessonRequests, reschedules, feedbackData,
-        progressData, courseData, quizData, faqData,
-        blogData, bannerData, posterData
-      ] = await Promise.all([
-        fetchSummaryData(),
-        fetchAllUsers(),
-        fetchAllLessonRequests(),
-        fetchRescheduleRequests(),
-        fetchAllFeedback(),
-        fetchCustomerLessonProgress(),
-        fetchCourses(),
-        fetchQuizSets(),
-        fetchFaqs(),
-        fetchBlogPosts(),
-        fetchSiteBanners(),
-        fetchPromotionalPosters(),
-      ]);
-      
-      setSummaryData(summary);
-      setAllUsers(users);
-      setAllLessonRequests(lessonRequests);
-      setRescheduleRequests(reschedules);
-      setFeedback(feedbackData);
-      setLessonProgress(progressData);
-      setCourses(courseData);
-      setQuizSets(quizData);
-      setFaqs(faqData);
-      setBlogPosts(blogData);
-      setSiteBanners(bannerData);
-      setPromotionalPosters(posterData);
-
-    } catch (error) {
-        console.error("Error loading dashboard data:", error);
-    } finally {
-        setLoading(false);
-        if (typeof window !== 'undefined') {
-            const fallbackStatus = sessionStorage.getItem('usingMockDataFallback');
-            if (fallbackStatus === 'true') {
-                setUsingFallback(true);
-            }
-        }
-    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -257,16 +239,6 @@ export default function AdminDashboard() {
             </Button>
           </div>
         </div>
-        
-        {usingFallback && (
-            <Alert variant="destructive" className="mb-8">
-                <AlertCircleIcon className="h-4 w-4" />
-                <AlertTitle>Displaying Local Data</AlertTitle>
-                <AlertDescription>
-                    Could not connect to the live database due to a permission error. Showing local sample data instead. To see live data, please update your Firestore security rules in the Firebase console.
-                </AlertDescription>
-            </Alert>
-        )}
         
         {activeTab === 'content' ? renderContentView() : renderDashboardView()}
         

@@ -38,13 +38,13 @@ if (isConfigured) {
         db = getFirestore(app);
         auth = getAuth(app);
     } catch (error) {
-        console.error("[firebase-init] Error initializing Firebase. This can happen during hot reloads. Error:", error);
+        console.error("[firebase-init] CRITICAL: Error initializing Firebase. This can happen during hot reloads. Error:", error);
         isConfigured = false;
     }
 } else {
-    // This is not an error, but an informational message for developers.
-    // The app will proceed to run in local mock mode.
-    console.warn("[firebase-init] Firebase configuration is missing or incomplete. The application will run in local mock mode, and no data will be sent to a live database. To enable Firebase, please provide the required environment variables in your `.env.local` file.");
+    // This is a critical error for a live-only app.
+    console.error("[firebase-init] CRITICAL: Firebase configuration is missing or incomplete. The application requires a valid Firebase configuration in .env.local to function.");
 }
 
 export { app, db, auth };
+
