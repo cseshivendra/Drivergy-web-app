@@ -340,14 +340,17 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField = "id") => {
+const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
     if (!db) {
         console.warn(`[createListener] Firestore (db) is not initialized. Cannot listen to ${collectionName}. Returning empty data.`);
-        // Ensure the callback is fired to update loading states in components.
         setTimeout(() => callback([]), 0);
         return () => {}; // Return an empty unsubscribe function
     }
-    const q = query(collection(db, collectionName));
+    const collectionRef = collection(db, collectionName);
+    const q = orderField 
+        ? query(collectionRef, orderBy(orderField, orderDirection)) 
+        : query(collectionRef);
+
     return onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
         callback(data);
@@ -366,7 +369,7 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => cr
 export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', (data) => callback(reAssignCourseIcons(data)));
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback);
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date');
+export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
 export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 
@@ -774,6 +777,38 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
   } catch (error: any) {
     console.error("Error fetching approved instructors:", error);
     toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
+    return [];
+  }
+};
+
+export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
+  if (!db) return [];
+  try {
+    const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
+    const querySnapshot = await getDocs(q);
+    
+    const referrals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
+
+    if (referrals.length === 0) return [];
+    
+    const refereeIds = referrals.map(r => r.refereeId);
+    const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', refereeIds));
+    const usersSnapshot = await getDocs(usersQuery);
+    const usersMap = new Map<string, UserProfile>();
+    usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
+
+    return referrals.map(ref => {
+      const referee = usersMap.get(ref.refereeId);
+      return {
+        ...ref,
+        refereeUniqueId: referee?.uniqueId,
+        refereeSubscriptionPlan: referee?.subscriptionPlan,
+        refereeApprovalStatus: referee?.approvalStatus,
+      };
+    });
+  } catch (error: any) {
+    console.error("Error fetching user referrals:", error);
+    toast({ title: "Data Fetch Error", description: `Could not fetch referrals: ${error.message}`, variant: "destructive" });
     return [];
   }
 };
