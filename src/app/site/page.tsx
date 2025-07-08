@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { fetchSiteBanners } from '@/lib/mock-data';
+import { listenToSiteBanners } from '@/lib/mock-data';
 import type { SiteBanner } from '@/types';
 import {
   Tooltip,
@@ -115,10 +115,11 @@ export default function PortfolioSitePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSiteBanners().then(data => {
+    setLoading(true);
+    const unsubscribe = listenToSiteBanners((data) => {
       setHeroSlides(data);
       setLoading(false);
-    })
+    });
 
     const popupShown = sessionStorage.getItem('promotionalPopupShown');
     if (!popupShown) {
@@ -127,8 +128,13 @@ export default function PortfolioSitePage() {
         sessionStorage.setItem('promotionalPopupShown', 'true');
       }, 2000); // Delay popup by 2 seconds
       
-      return () => clearTimeout(popupTimer);
+      return () => {
+        clearTimeout(popupTimer);
+        unsubscribe(); // Cleanup listener
+      };
     }
+    
+    return () => unsubscribe(); // Cleanup listener if popup was already shown
   }, []);
 
   useEffect(() => {
