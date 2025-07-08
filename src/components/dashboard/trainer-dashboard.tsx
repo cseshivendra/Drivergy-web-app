@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchAllTrainerStudents, updateUserAttendance, fetchUserById, updateAssignmentStatusByTrainer, fetchTrainerFeedback } from '@/lib/mock-data';
+import { listenToTrainerStudents, updateUserAttendance, listenToUser, updateAssignmentStatusByTrainer, listenToTrainerFeedback } from '@/lib/mock-data';
 import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -55,58 +54,48 @@ export default function TrainerDashboard() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
-    const [students, setStudents] = useState<UserProfile[]>([]);
-    const [pendingAssignments, setPendingAssignments] = useState<UserProfile[]>([]);
+    const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
     const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchData = useCallback(async () => {
+    useEffect(() => {
         if (!user) return;
         setLoading(true);
-        try {
-            const [allAssignedStudents, profileData, feedbackData] = await Promise.all([
-                fetchAllTrainerStudents(user.uid),
-                fetchUserById(user.uid),
-                fetchTrainerFeedback(user.uid),
-            ]);
 
-            const approvedStudents = allAssignedStudents.filter(s => s.approvalStatus === 'Approved');
+        const unsubs = [
+            listenToUser(user.uid, setTrainerProfile),
+            listenToTrainerStudents(user.uid, (students, feedback) => {
+                setAllStudents(students);
 
-            let avgRating = 0;
-            if (feedbackData.length > 0) {
-                const totalRating = feedbackData.reduce((acc, doc) => acc + doc.rating, 0);
-                avgRating = parseFloat((totalRating / feedbackData.length).toFixed(1));
-            }
+                const approvedStudents = students.filter(s => s.approvalStatus === 'Approved');
+                let avgRating = 0;
+                if (feedback.length > 0) {
+                    const totalRating = feedback.reduce((acc, doc) => acc + doc.rating, 0);
+                    avgRating = parseFloat((totalRating / feedback.length).toFixed(1));
+                }
 
-            const summaryData: TrainerSummaryData = {
-                totalStudents: approvedStudents.length,
-                totalEarnings: approvedStudents.length * 2000, // This is a mock calculation
-                upcomingLessons: approvedStudents.filter(doc => doc.upcomingLesson && isFuture(parse(doc.upcomingLesson, 'MMM dd, yyyy, h:mm a', new Date()))).length,
-                rating: avgRating,
-            };
+                const summaryData: TrainerSummaryData = {
+                    totalStudents: approvedStudents.length,
+                    totalEarnings: approvedStudents.length * 2000,
+                    upcomingLessons: approvedStudents.filter(doc => doc.upcomingLesson && isFuture(parse(doc.upcomingLesson, 'MMM dd, yyyy, h:mm a', new Date()))).length,
+                    rating: avgRating,
+                };
+                setSummary(summaryData);
+            }),
+        ];
 
-            setSummary(summaryData);
-            setStudents(approvedStudents);
-            setPendingAssignments(allAssignedStudents.filter(s => s.approvalStatus === 'In Progress'));
-            setTrainerProfile(profileData);
+        const loadingTimeout = setTimeout(() => setLoading(false), 2000);
 
-        } catch (error: any) {
-            console.error("Failed to fetch trainer dashboard data", error);
-            toast({ title: "Error", description: "Could not load your dashboard data. Please try refreshing.", variant: "destructive" });
-        } finally {
-            setLoading(false);
-        }
-    }, [user, toast]);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        return () => {
+            unsubs.forEach(unsub => unsub());
+            clearTimeout(loadingTimeout);
+        };
+    }, [user]);
 
     const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
         const success = await updateAssignmentStatusByTrainer(studentId, status);
         if (success) {
             toast({ title: `Request ${status}`, description: `You have ${status.toLowerCase()} the request for ${studentName}.` });
-            fetchData(); // Refresh all data
         } else {
             toast({ title: 'Error', description: 'Could not update assignment status.', variant: 'destructive' });
         }
@@ -116,7 +105,6 @@ export default function TrainerDashboard() {
         const success = await updateUserAttendance(studentId, status);
         if(success) {
             toast({ title: 'Attendance Marked', description: `${studentName} marked as ${status}.` });
-            fetchData();
         } else {
             toast({ title: 'Error', description: 'Could not update attendance.', variant: 'destructive' });
         }
@@ -130,7 +118,10 @@ export default function TrainerDashboard() {
         });
     };
 
-    if (loading || !trainerProfile) {
+    const approvedStudents = allStudents.filter(s => s.approvalStatus === 'Approved');
+    const pendingAssignments = allStudents.filter(s => s.approvalStatus === 'In Progress');
+
+    if (loading) {
         return (
             <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
                 <Skeleton className="h-10 w-1/3 mb-4" />
@@ -145,7 +136,7 @@ export default function TrainerDashboard() {
         );
     }
 
-    if (trainerProfile.approvalStatus !== 'Approved') {
+    if (trainerProfile && trainerProfile.approvalStatus !== 'Approved') {
         return (
             <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
                 <Card className="shadow-xl text-center p-8">
@@ -180,9 +171,9 @@ export default function TrainerDashboard() {
             <header className="mb-4">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                     <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-                        Welcome, {trainerProfile.name}!
+                        Welcome, {trainerProfile?.name}!
                     </h1>
-                    <Badge className={`text-base ${getStatusBadgeClass(trainerProfile.approvalStatus)}`}>
+                    <Badge className={`text-base ${getStatusBadgeClass(trainerProfile?.approvalStatus || 'Pending')}`}>
                         <ShieldCheck className="mr-2 h-5 w-5"/>
                         Verified
                     </Badge>
@@ -278,7 +269,7 @@ export default function TrainerDashboard() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {students.length > 0 ? students.map(student => (
+                            {approvedStudents.length > 0 ? approvedStudents.map(student => (
                                 <TableRow key={student.id}>
                                     <TableCell className="font-medium">{student.name}</TableCell>
                                     <TableCell>{student.phone || 'N/A'}</TableCell>
@@ -327,7 +318,7 @@ export default function TrainerDashboard() {
                         </TableBody>
                     </Table>
                 </CardContent>
-                {students.length > 0 && (
+                {approvedStudents.length > 0 && (
                     <CardFooter>
                         <p className="text-xs text-muted-foreground">Mark attendance for each completed lesson.</p>
                     </CardFooter>

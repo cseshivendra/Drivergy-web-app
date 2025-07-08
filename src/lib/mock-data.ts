@@ -1,9 +1,8 @@
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db } from './firebase';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 
 const generateId = () => doc(collection(db!, 'mock')).id; // Use Firestore's ID generation
@@ -20,23 +19,18 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
 };
 
 // =================================================================
-// USER MANAGEMENT
+// USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
-    if (!db) {
-        toast({ title: "Database Error", description: "Firebase is not configured.", variant: "destructive" });
-        return null;
-    }
-
+    if (!db) return null;
     try {
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            return null;
-        }
+        if (querySnapshot.empty) return null;
+
         const userDoc = querySnapshot.docs[0];
         return { id: userDoc.id, ...userDoc.data() } as UserProfile;
     } catch (error: any) {
@@ -45,6 +39,34 @@ export const authenticateUserByCredentials = async (username: string, password: 
         return null;
     }
 };
+
+export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
+    if (!db) return null;
+    try {
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) return null;
+
+        const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+
+        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+            const trainerRef = doc(db, "users", user.assignedTrainerId);
+            const trainerSnap = await getDoc(trainerRef);
+            if (trainerSnap.exists()) {
+                const trainer = trainerSnap.data() as UserProfile;
+                user.assignedTrainerPhone = trainer.phone;
+                user.assignedTrainerExperience = trainer.yearsOfExperience;
+                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+            }
+        }
+        return user;
+    } catch(error: any) {
+        console.error(`Error fetching user ${userId}:`, error);
+        toast({ title: "Data Fetch Error", description: `Could not fetch user profile: ${error.message}`, variant: "destructive" });
+        return null;
+    }
+};
+
 
 export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
     if (!db) return null;
@@ -190,79 +212,12 @@ export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newSta
     }
 };
 
-export const fetchAllUsers = async (): Promise<UserProfile[]> => {
-    if (!db) return [];
-    try {
-        const usersCollection = collection(db, 'users');
-        const q = query(usersCollection, orderBy("registrationTimestamp", "desc"));
-        const userSnapshot = await getDocs(q);
-        return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
-    } catch (error: any) {
-        console.error("Error fetching all users:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch users: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
-export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
-    if (!db) return null;
-    try {
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) return null;
-
-        const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
-
-        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerRef = doc(db, "users", user.assignedTrainerId);
-            const trainerSnap = await getDoc(trainerRef);
-            if (trainerSnap.exists()) {
-                const trainer = trainerSnap.data() as UserProfile;
-                user.assignedTrainerPhone = trainer.phone;
-                user.assignedTrainerExperience = trainer.yearsOfExperience;
-                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
-            }
-        }
-        return user;
-    } catch(error: any) {
-        console.error(`Error fetching user ${userId}:`, error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch user profile: ${error.message}`, variant: "destructive" });
-        return null;
-    }
-};
-
-export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
-    if (!db) return [];
-    try {
-        const q = query(
-            collection(db, "users"),
-            where("approvalStatus", "==", "Approved"),
-            where("subscriptionPlan", "==", "Trainer")
-        );
-        const querySnapshot = await getDocs(q);
-
-        // Perform subsequent filtering on the client side to avoid composite indexes
-        return querySnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-            .filter(u =>
-                (!filters.location || u.location === filters.location) &&
-                (!filters.gender || u.gender === filters.gender)
-            );
-    } catch (error: any) {
-        console.error("Error fetching approved instructors:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
 export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
     if (!db) return false;
     try {
         const customerRef = doc(db, "users", customerId);
         const trainerDoc = await getDoc(doc(db, "users", trainerId));
-        if (!trainerDoc.exists()) {
-            throw new Error("Assign Trainer Error: Trainer document not found.");
-        }
+        if (!trainerDoc.exists()) throw new Error("Assign Trainer Error: Trainer document not found.");
 
         const batch = writeBatch(db);
         batch.update(customerRef, {
@@ -287,53 +242,6 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
     }
 };
 
-// =================================================================
-// SUMMARY & DASHBOARD DATA
-// =================================================================
-
-export const fetchSummaryData = async (): Promise<SummaryData | null> => {
-    if (!db) return null;
-    try {
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        const users = usersSnapshot.docs.map(doc => doc.data() as UserProfile);
-
-        const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
-        const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
-        const activeSubscriptions = users.filter(u => u.approvalStatus === 'Approved').length;
-        const pendingRequests = (await getDocs(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')))).size;
-        const pendingRescheduleRequests = (await getDocs(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')))).size;
-        const totalCertifiedTrainers = users.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved').length;
-
-        const totalEarnings = users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
-            if (user.subscriptionPlan === 'Premium') return acc + 9999;
-            if (user.subscriptionPlan === 'Gold') return acc + 7499;
-            if (user.subscriptionPlan === 'Basic') return acc + 3999;
-            return acc;
-        }, 0);
-
-        return { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers };
-    } catch (error: any) {
-        console.error("Error fetching summary data:", error);
-        toast({ title: "Dashboard Load Error", description: `Could not fetch summary data: ${error.message}`, variant: "destructive" });
-        return null;
-    }
-};
-
-// =================================================================
-// TRAINER SPECIFIC FUNCTIONS
-// =================================================================
-export const fetchAllTrainerStudents = async (trainerId: string): Promise<UserProfile[]> => {
-    if (!db) return [];
-    try {
-        const q = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as UserProfile[];
-    } catch (error: any) {
-        console.error("Error fetching trainer's students:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch students: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
 
 export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
     if (!db) return false;
@@ -363,19 +271,6 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
     }
 };
 
-export const fetchTrainerFeedback = async (trainerId: string): Promise<Feedback[]> => {
-    if (!db) return [];
-    try {
-        const q = query(collection(db, 'feedback'), where('trainerId', '==', trainerId), orderBy('submissionDate', 'desc'));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
-    } catch (error: any) {
-        console.error("Error fetching trainer feedback:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch feedback: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
 export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
     if (!db) return false;
     try {
@@ -399,21 +294,166 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
     }
 };
 
+export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
+    if (!db) return null;
+    const firstLessonDate = addDays(newDate, 2);
+    firstLessonDate.setHours(9, 0, 0, 0);
+    const updates = {
+        subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
+        upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+    };
+    try {
+        const customerRef = doc(db, 'users', customerId);
+        await updateDoc(customerRef, updates);
+        const updatedSnap = await getDoc(customerRef);
+        return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
+    } catch(error: any) {
+        console.error("Error updating start date:", error);
+        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
+        return null;
+    }
+}
+
 // =================================================================
-// GENERIC CONTENT MANAGEMENT & OTHER FUNCTIONS
+// REAL-TIME LISTENERS
 // =================================================================
 
-export const fetchAllLessonRequests = async (): Promise<LessonRequest[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc')));
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LessonRequest[];
-    } catch (error: any) {
-        console.error("Error fetching lesson requests:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch requests: ${error.message}`, variant: "destructive" });
-        return [];
-    }
+const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField = "id") => {
+    if (!db) return () => {};
+    const q = query(collection(db, collectionName));
+    return onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
+        callback(data);
+    }, (error) => {
+        console.error(`Error listening to ${collectionName}:`, error);
+        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
+    });
 };
+
+export const listenToAllUsers = (callback: (data: UserProfile[]) => void) => createListener('users', callback, 'registrationTimestamp');
+export const listenToAllLessonRequests = (callback: (data: LessonRequest[]) => void) => createListener('lessonRequests', callback, 'requestTimestamp');
+export const listenToRescheduleRequests = (callback: (data: RescheduleRequest[]) => void) => createListener('rescheduleRequests', callback, 'requestTimestamp');
+export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => createListener('feedback', callback, 'submissionDate');
+export const listenToAllReferrals = (callback: (data: Referral[]) => void) => createListener('referrals', callback, 'timestamp');
+export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', (data) => callback(reAssignCourseIcons(data)));
+export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
+export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback);
+export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date');
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback);
+export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
+
+export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
+    if (!db) return () => {};
+    return onSnapshot(doc(db, 'users', userId), async (snap) => {
+        if (!snap.exists()) {
+            callback(null);
+            return;
+        }
+        const user = { id: snap.id, ...snap.data() } as UserProfile;
+        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+            const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
+            if (trainerSnap.exists()) {
+                const trainer = trainerSnap.data() as UserProfile;
+                user.assignedTrainerPhone = trainer.phone;
+                user.assignedTrainerExperience = trainer.yearsOfExperience;
+                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+            }
+        }
+        callback(user);
+    });
+};
+
+export const listenToTrainerStudents = (trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) => {
+    if (!db) return () => {};
+    const studentsQuery = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
+    const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
+
+    const unsubStudents = onSnapshot(studentsQuery, () => {
+        // This is a bit of a trick. When student data changes, we refetch both to keep them in sync.
+        Promise.all([getDocs(studentsQuery), getDocs(feedbackQuery)]).then(([studentsSnap, feedbackSnap]) => {
+            const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
+            const feedback = feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback));
+            callback(students, feedback);
+        });
+    });
+
+    const unsubFeedback = onSnapshot(feedbackQuery, () => {
+        Promise.all([getDocs(studentsQuery), getDocs(feedbackQuery)]).then(([studentsSnap, feedbackSnap]) => {
+            const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
+            const feedback = feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback));
+            callback(students, feedback);
+        });
+    });
+
+    return () => {
+        unsubStudents();
+        unsubFeedback();
+    };
+}
+
+
+// =================================================================
+// CALCULATED/AGGREGATED DATA LISTENERS
+// =================================================================
+
+export const listenToSummaryData = (callback: (data: SummaryData) => void) => {
+    if (!db) return () => {};
+    const usersUnsub = onSnapshot(collection(db, 'users'), (snap) => {
+        const users = snap.docs.map(doc => doc.data() as UserProfile);
+        const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
+        const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
+        const activeSubscriptions = users.filter(u => u.approvalStatus === 'Approved').length;
+        const totalCertifiedTrainers = users.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved').length;
+        const totalEarnings = users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
+            if (user.subscriptionPlan === 'Premium') return acc + 9999;
+            if (user.subscriptionPlan === 'Gold') return acc + 7499;
+            if (user.subscriptionPlan === 'Basic') return acc + 3999;
+            return acc;
+        }, 0);
+
+        callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings, pendingRequests: 0, pendingRescheduleRequests: 0 });
+    });
+
+    const requestsUnsub = onSnapshot(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
+        callback(prev => ({ ...prev, pendingRequests: snap.size }));
+    });
+
+    const rescheduleUnsub = onSnapshot(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
+        callback(prev => ({ ...prev, pendingRescheduleRequests: snap.size }));
+    });
+
+    return () => {
+        usersUnsub();
+        requestsUnsub();
+        rescheduleUnsub();
+    };
+};
+
+export const listenToCustomerLessonProgress = (callback: (data: LessonProgressData[]) => void) => {
+    if (!db) return () => {};
+    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
+    return onSnapshot(q, (snapshot) => {
+        const users = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+            .filter(u => u.assignedTrainerName);
+
+        const progressData = users.map(c => ({
+            studentId: c.uniqueId,
+            studentName: c.name,
+            trainerName: c.assignedTrainerName!,
+            subscriptionPlan: c.subscriptionPlan,
+            totalLessons: c.totalLessons || 0,
+            completedLessons: c.completedLessons || 0,
+            remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+        })).sort((a, b) => a.remainingLessons - b.remainingLessons);
+
+        callback(progressData);
+    });
+};
+
+// =================================================================
+// WRITE OPERATIONS (No changes needed for real-time, they trigger listeners)
+// =================================================================
 
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> => {
     if (!db) return null;
@@ -432,18 +472,6 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
         console.error("Error adding reschedule request:", error);
         toast({ title: "Request Failed", description: error.message, variant: "destructive" });
         return null;
-    }
-};
-
-export const fetchRescheduleRequests = async (): Promise<RescheduleRequest[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'rescheduleRequests'), orderBy('requestTimestamp', 'desc')));
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as RescheduleRequest[];
-    } catch (error: any) {
-        console.error("Error fetching reschedule requests:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch reschedule requests: ${error.message}`, variant: "destructive" });
-        return [];
     }
 };
 
@@ -480,91 +508,6 @@ export const addFeedback = async (customerId: string, customerName: string, trai
     }
 };
 
-export const fetchAllFeedback = async (): Promise<Feedback[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'feedback'), orderBy('submissionDate', 'desc')));
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Feedback[];
-    } catch (error: any) {
-        console.error("Error fetching all feedback:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch feedback: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
-export const fetchCustomerLessonProgress = async (): Promise<LessonProgressData[]> => {
-    if (!db) return [];
-    try {
-        const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
-        const snapshot = await getDocs(q);
-        const users = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-            .filter(u => u.assignedTrainerName);
-
-        return users.map(c => ({ studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!, subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0, completedLessons: c.completedLessons || 0, remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), })).sort((a, b) => a.remainingLessons - b.remainingLessons);
-    } catch (error: any) {
-        console.error("Error fetching lesson progress:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch progress: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
-export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
-    if (!db) return null;
-    const firstLessonDate = addDays(newDate, 2);
-    firstLessonDate.setHours(9, 0, 0, 0);
-    const updates = {
-        subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
-        upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
-    };
-    try {
-        const customerRef = doc(db, 'users', customerId);
-        await updateDoc(customerRef, updates);
-        const updatedSnap = await getDoc(customerRef);
-        return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
-    } catch(error: any) {
-        console.error("Error updating start date:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
-}
-
-export const fetchAllReferrals = async (): Promise<Referral[]> => {
-    if (!db) return [];
-    try {
-        const referralsSnapshot = await getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc')));
-        const referrals = referralsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Referral[]);
-        const refereeIds = [...new Set(referrals.map(r => r.refereeId).filter(Boolean))];
-
-        if (refereeIds.length === 0) return referrals;
-
-        const usersSnapshot = await getDocs(query(collection(db, 'users'), where(documentId(), 'in', refereeIds)));
-        const usersById = new Map(usersSnapshot.docs.map(doc => [doc.id, doc.data() as UserProfile]));
-
-        return referrals.map(ref => {
-            const referee = usersById.get(ref.refereeId);
-            return { ...ref, refereeUniqueId: referee?.uniqueId, refereeSubscriptionPlan: referee?.subscriptionPlan, refereeApprovalStatus: referee?.approvalStatus, };
-        });
-    } catch (error: any) {
-        console.error("Error fetching all referrals:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch referrals: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
-export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
-    if (!db) return [];
-    try {
-        const q = query(collection(db, 'referrals'), where('referrerId', '==', userId), orderBy('timestamp', 'desc'));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Referral[];
-    } catch (error: any) {
-        console.error("Error fetching user referrals:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch your referrals: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
 export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
     if (!db) return false;
     try {
@@ -577,18 +520,6 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
     }
 };
 
-export const fetchCourses = async (): Promise<Course[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'courses')));
-        if (snapshot.empty) return [];
-        return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Course[]);
-    } catch (error: any) {
-        console.error("Error fetching courses:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch courses: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
 
 export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
     if (!db) return null;
@@ -642,19 +573,6 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
     }
 };
 
-export const fetchQuizSets = async (): Promise<QuizSet[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'quizSets')));
-        if (snapshot.empty) return [];
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as QuizSet[];
-    } catch(error: any) {
-        console.error("Error fetching quiz sets:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch quizzes: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
 export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
     if (!db) return null;
     try {
@@ -682,18 +600,6 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
     }
 };
 
-export const fetchFaqs = async (): Promise<FaqItem[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'faqs')));
-        if (snapshot.empty) return [];
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FaqItem[];
-    } catch(error: any) {
-        console.error("Error fetching FAQs:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch FAQs: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
 
 export const addFaq = async (data: FaqFormValues): Promise<FaqItem | null> => {
     if (!db) return null;
@@ -731,19 +637,6 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
     }
 }
 
-export const fetchBlogPosts = async (): Promise<BlogPost[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
-        if (snapshot.empty) return [];
-        return snapshot.docs.map(doc => doc.data() as BlogPost);
-    } catch(error: any) {
-        console.error("Error fetching blog posts:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch blog posts: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
     if (!db) return null;
     const { imageFile, ...restOfData } = data;
@@ -754,8 +647,6 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | 
         const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
         const existing = await getDocs(q);
         if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
-        // Firestore doesn't have an auto-incrementing ID, and we're using slug as the key for lookup
-        // so we set the document ID to be the slug for easy retrieval.
         await setDoc(doc(db, 'blogPosts', newPost.slug), newPost);
         return newPost;
     } catch(error: any) {
@@ -806,19 +697,6 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
     }
 }
 
-export const fetchSiteBanners = async (): Promise<SiteBanner[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'siteBanners')));
-        if (snapshot.empty) return [];
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
-    } catch (error: any) {
-        console.error("Error fetching site banners:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch banners: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
-
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
     const newImageSrc = data.imageFile ? 'https://placehold.co/1920x1080.png' : data.imageSrc;
@@ -832,19 +710,6 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
         return false;
     }
 }
-
-export const fetchPromotionalPosters = async (): Promise<PromotionalPoster[]> => {
-    if (!db) return [];
-    try {
-        const snapshot = await getDocs(query(collection(db, 'promotionalPosters')));
-        if (snapshot.empty) return [];
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PromotionalPoster[];
-    } catch (error: any) {
-        console.error("Error fetching promotional posters:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch posters: ${error.message}`, variant: "destructive" });
-        return [];
-    }
-};
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
@@ -861,3 +726,26 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
     }
 }
 
+// These one-time fetches are still needed for pages that don't need real-time updates.
+export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
+    if (!db) return [];
+    try {
+        const q = query(
+            collection(db, "users"),
+            where("approvalStatus", "==", "Approved"),
+            where("subscriptionPlan", "==", "Trainer")
+        );
+        const querySnapshot = await getDocs(q);
+
+        return querySnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+            .filter(u =>
+                (!filters.location || u.location === filters.location) &&
+                (!filters.gender || u.gender === filters.gender)
+            );
+    } catch (error: any) {
+        console.error("Error fetching approved instructors:", error);
+        toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
+        return [];
+    }
+};
