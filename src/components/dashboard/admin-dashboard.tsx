@@ -21,8 +21,10 @@ import QuizManagement from './quiz-management';
 import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
+import { useAuth } from '@/context/auth-context';
 
 export default function AdminDashboard() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab');
 
@@ -84,8 +86,10 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+    if (user) {
+      loadAllData();
+    }
+  }, [user, loadAllData]);
   
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {
