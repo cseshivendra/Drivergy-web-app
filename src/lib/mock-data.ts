@@ -341,7 +341,12 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // =================================================================
 
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField = "id") => {
-    if (!db) return () => {};
+    if (!db) {
+        console.warn(`[createListener] Firestore (db) is not initialized. Cannot listen to ${collectionName}. Returning empty data.`);
+        // Ensure the callback is fired to update loading states in components.
+        setTimeout(() => callback([]), 0);
+        return () => {}; // Return an empty unsubscribe function
+    }
     const q = query(collection(db, collectionName));
     return onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
@@ -349,6 +354,7 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
         toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
+        callback([]); // Also return empty array on error to stop loading states.
     });
 };
 
