@@ -99,10 +99,10 @@ export default function SiteHeader() {
                   alt={user.name || 'User'}
                 />
                 <AvatarFallback>
-                  {user.name?.charAt(0).toUpperCase()}
+                  {(user.name || 'U').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span>{user.name}</span>
+              <span>{user.name || 'User'}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
