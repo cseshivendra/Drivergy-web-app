@@ -61,7 +61,10 @@ export default function TrainerDashboard() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+        setLoading(false);
+        return;
+    };
     setLoading(true);
     try {
       const [allAssignedStudents, profileData, feedbackData] = await Promise.all([

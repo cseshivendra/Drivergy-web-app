@@ -133,17 +133,21 @@ export default function CustomerDashboard() {
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
 
   useEffect(() => {
-    if (user?.uid) {
-      setLoading(true);
-      fetchUserById(user.uid).then(userProfile => {
-        if (userProfile) {
-          setProfile(userProfile);
-        }
-        setLoading(false);
-      });
-    } else if (!user) {
-        setLoading(false);
+    if (!user?.uid) {
+      setLoading(false);
+      return;
     }
+
+    const loadData = async () => {
+      setLoading(true);
+      const userProfile = await fetchUserById(user.uid);
+      if (userProfile) {
+        setProfile(userProfile);
+      }
+      setLoading(false);
+    };
+
+    loadData();
   }, [user]);
 
   useEffect(() => {
