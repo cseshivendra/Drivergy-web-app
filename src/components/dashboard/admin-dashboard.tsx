@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
@@ -9,7 +8,20 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
-import { fetchAllUsers, fetchAllLessonRequests, fetchSummaryData, fetchRescheduleRequests, fetchAllFeedback, fetchCustomerLessonProgress, fetchCourses, fetchQuizSets, fetchFaqs, fetchBlogPosts, fetchSiteBanners, fetchPromotionalPosters } from '@/lib/mock-data';
+import {
+  listenToSummaryData,
+  listenToAllUsers,
+  listenToAllLessonRequests,
+  listenToRescheduleRequests,
+  listenToAllFeedback,
+  listenToCustomerLessonProgress,
+  listenToCourses,
+  listenToQuizSets,
+  listenToFaqs,
+  listenToBlogPosts,
+  listenToSiteBanners,
+  listenToPromotionalPosters,
+} from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
 import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -47,49 +59,37 @@ export default function AdminDashboard() {
   const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState('');
-
-  const loadAllData = useCallback(async () => {
-    setLoading(true);
-    const [
-      summary, users, lessonRequests, reschedules, feedbackData,
-      progressData, courseData, quizData, faqData,
-      blogData, bannerData, posterData
-    ] = await Promise.all([
-      fetchSummaryData(),
-      fetchAllUsers(),
-      fetchAllLessonRequests(),
-      fetchRescheduleRequests(),
-      fetchAllFeedback(),
-      fetchCustomerLessonProgress(),
-      fetchCourses(),
-      fetchQuizSets(),
-      fetchFaqs(),
-      fetchBlogPosts(),
-      fetchSiteBanners(),
-      fetchPromotionalPosters(),
-    ]);
-    
-    setSummaryData(summary);
-    setAllUsers(users);
-    setAllLessonRequests(lessonRequests);
-    setRescheduleRequests(reschedules);
-    setFeedback(feedbackData);
-    setLessonProgress(progressData);
-    setCourses(courseData);
-    setQuizSets(quizData);
-    setFaqs(faqData);
-    setBlogPosts(blogData);
-    setSiteBanners(bannerData);
-    setPromotionalPosters(posterData);
-
-    setLoading(false);
-  }, []);
-
+  
+  // Real-time data listeners
   useEffect(() => {
-    if (user) {
-      loadAllData();
-    }
-  }, [user, loadAllData]);
+    if (!user) return;
+    setLoading(true);
+
+    const subscriptions = [
+      listenToSummaryData(setSummaryData),
+      listenToAllUsers(setAllUsers),
+      listenToAllLessonRequests(setAllLessonRequests),
+      listenToRescheduleRequests(setRescheduleRequests),
+      listenToAllFeedback(setFeedback),
+      listenToCustomerLessonProgress(setLessonProgress),
+      listenToCourses(setCourses),
+      listenToQuizSets(setQuizSets),
+      listenToFaqs(setFaqs),
+      listenToBlogPosts(setBlogPosts),
+      listenToSiteBanners(setSiteBanners),
+      listenToPromotionalPosters(setPromotionalPosters),
+    ];
+    
+    // A simple mechanism to hide the main loader once all initial data has likely arrived.
+    const loadingTimeout = setTimeout(() => setLoading(false), 2500);
+
+    // Cleanup listeners on component unmount
+    return () => {
+      subscriptions.forEach(unsubscribe => unsubscribe());
+      clearTimeout(loadingTimeout);
+    };
+  }, [user]);
+
   
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {
@@ -120,7 +120,8 @@ export default function AdminDashboard() {
   };
 
   const handleActioned = () => {
-    loadAllData();
+    // With real-time listeners, we no longer need to manually trigger a data refresh.
+    // The UI will update automatically.
   };
 
   const renderDashboardView = () => (

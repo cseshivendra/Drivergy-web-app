@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { fetchPromotionalPosters } from '@/lib/mock-data';
+import { listenToPromotionalPosters } from '@/lib/mock-data';
 import type { PromotionalPoster } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -22,10 +22,15 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      fetchPromotionalPosters().then(data => {
+      const unsubscribe = listenToPromotionalPosters((data) => {
         setPosters(data);
         setLoading(false);
-      })
+      });
+      
+      // Cleanup the listener when the popup is closed or component unmounts
+      return () => {
+        unsubscribe();
+      };
     }
   }, [isOpen]);
 

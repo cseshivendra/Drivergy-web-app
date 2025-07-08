@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchUserById, addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/mock-data';
+import { listenToUser, addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/mock-data';
 import type { UserProfile, FeedbackFormValues } from '@/types';
 import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, 
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { add, differenceInHours, format, isFuture, parse, addDays, isPast } from 'date-fns';
+import { differenceInHours, format, isFuture, parse, addDays, isPast } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -138,16 +137,15 @@ export default function CustomerDashboard() {
       return;
     }
 
-    const loadData = async () => {
-      setLoading(true);
-      const userProfile = await fetchUserById(user.uid);
+    setLoading(true);
+    const unsubscribe = listenToUser(user.uid, (userProfile) => {
       if (userProfile) {
         setProfile(userProfile);
       }
       setLoading(false);
-    };
+    });
 
-    loadData();
+    return () => unsubscribe();
   }, [user]);
 
   useEffect(() => {
@@ -538,9 +536,6 @@ export default function CustomerDashboard() {
               profile={profile}
               onSubmitted={() => {
                 setIsFeedbackDialogOpen(false);
-                if (user?.uid) {
-                  fetchUserById(user.uid).then(setProfile);
-                }
               }}
             />
           )}
