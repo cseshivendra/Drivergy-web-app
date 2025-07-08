@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -31,7 +32,7 @@ export default function AdminDashboard() {
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
-  
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
@@ -47,63 +48,57 @@ export default function AdminDashboard() {
 
   const loadAllData = useCallback(async () => {
     setLoading(true);
+    const [
+      summary, users, lessonRequests, reschedules, feedbackData,
+      progressData, courseData, quizData, faqData,
+      blogData, bannerData, posterData
+    ] = await Promise.all([
+      fetchSummaryData(),
+      fetchAllUsers(),
+      fetchAllLessonRequests(),
+      fetchRescheduleRequests(),
+      fetchAllFeedback(),
+      fetchCustomerLessonProgress(),
+      fetchCourses(),
+      fetchQuizSets(),
+      fetchFaqs(),
+      fetchBlogPosts(),
+      fetchSiteBanners(),
+      fetchPromotionalPosters(),
+    ]);
 
-    try {
-      const [
-        summary, users, lessonRequests, reschedules, feedbackData,
-        progressData, courseData, quizData, faqData,
-        blogData, bannerData, posterData
-      ] = await Promise.all([
-        fetchSummaryData(),
-        fetchAllUsers(),
-        fetchAllLessonRequests(),
-        fetchRescheduleRequests(),
-        fetchAllFeedback(),
-        fetchCustomerLessonProgress(),
-        fetchCourses(),
-        fetchQuizSets(),
-        fetchFaqs(),
-        fetchBlogPosts(),
-        fetchSiteBanners(),
-        fetchPromotionalPosters(),
-      ]);
-      
-      setSummaryData(summary);
-      setAllUsers(users);
-      setAllLessonRequests(lessonRequests);
-      setRescheduleRequests(reschedules);
-      setFeedback(feedbackData);
-      setLessonProgress(progressData);
-      setCourses(courseData);
-      setQuizSets(quizData);
-      setFaqs(faqData);
-      setBlogPosts(blogData);
-      setSiteBanners(bannerData);
-      setPromotionalPosters(posterData);
+    setSummaryData(summary);
+    setAllUsers(users);
+    setAllLessonRequests(lessonRequests);
+    setRescheduleRequests(reschedules);
+    setFeedback(feedbackData);
+    setLessonProgress(progressData);
+    setCourses(courseData);
+    setQuizSets(quizData);
+    setFaqs(faqData);
+    setBlogPosts(blogData);
+    setSiteBanners(bannerData);
+    setPromotionalPosters(posterData);
 
-    } catch (error) {
-        console.error("Error loading dashboard data:", error);
-    } finally {
-        setLoading(false);
-    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
-  
+
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {
-        const locationMatch = !filters.location || user.location === filters.location;
-        const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
-        
-        const searchTermMatch = !searchTerm || (
-            user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.contact.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      const locationMatch = !filters.location || user.location === filters.location;
+      const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
 
-        return locationMatch && subscriptionMatch && searchTermMatch;
+      const searchTermMatch = !searchTerm || (
+          user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.contact.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      return locationMatch && subscriptionMatch && searchTermMatch;
     });
   }, [allUsers, filters, searchTerm]);
 
@@ -125,129 +120,129 @@ export default function AdminDashboard() {
   };
 
   const renderDashboardView = () => (
-    <>
-      <SummaryMetrics data={summaryData} isLoading={loading} />
-      <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
-      <Tabs defaultValue="verifications" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
-          <TabsTrigger value="verifications">Verifications</TabsTrigger>
-          <TabsTrigger value="requests">Requests</TabsTrigger>
-          <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="feedback">Feedback</TabsTrigger>
-        </TabsList>
-        <TabsContent value="verifications" className="space-y-8">
-          <UserTable 
-            title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>} 
-            users={customers} 
-            isLoading={loading} 
-            onUserActioned={handleActioned}
-          />
-          <UserTable 
-            title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>} 
-            users={instructors} 
-            isLoading={loading} 
-            onUserActioned={handleActioned}
-          />
-          <UserTable 
-            title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
-            users={existingInstructors} 
-            isLoading={loading} 
-            onUserActioned={handleActioned}
-          />
-        </TabsContent>
-        <TabsContent value="requests" className="space-y-8">
-          <RequestTable 
-            title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
-            requests={allLessonRequests} 
-            isLoading={loading} 
-          />
-          <RescheduleRequestTable
-            title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
-            requests={rescheduleRequests}
-            isLoading={loading}
-            onActioned={handleActioned}
-          />
-        </TabsContent>
-        <TabsContent value="progress" className="space-y-8">
+      <>
+        <SummaryMetrics data={summaryData} isLoading={loading} />
+        <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
+        <Tabs defaultValue="verifications" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
+            <TabsTrigger value="verifications">Verifications</TabsTrigger>
+            <TabsTrigger value="requests">Requests</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          </TabsList>
+          <TabsContent value="verifications" className="space-y-8">
+            <UserTable
+                title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>}
+                users={customers}
+                isLoading={loading}
+                onUserActioned={handleActioned}
+            />
+            <UserTable
+                title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>}
+                users={instructors}
+                isLoading={loading}
+                onUserActioned={handleActioned}
+            />
+            <UserTable
+                title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>}
+                users={existingInstructors}
+                isLoading={loading}
+                onUserActioned={handleActioned}
+            />
+          </TabsContent>
+          <TabsContent value="requests" className="space-y-8">
+            <RequestTable
+                title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>}
+                requests={allLessonRequests}
+                isLoading={loading}
+            />
+            <RescheduleRequestTable
+                title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
+                requests={rescheduleRequests}
+                isLoading={loading}
+                onActioned={handleActioned}
+            />
+          </TabsContent>
+          <TabsContent value="progress" className="space-y-8">
             <LessonProgressTable
                 title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
                 data={lessonProgress}
                 isLoading={loading}
             />
-        </TabsContent>
-        <TabsContent value="feedback" className="space-y-8">
-             <FeedbackTable
+          </TabsContent>
+          <TabsContent value="feedback" className="space-y-8">
+            <FeedbackTable
                 title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
                 feedback={feedback}
                 isLoading={loading}
             />
-        </TabsContent>
-      </Tabs>
-    </>
+          </TabsContent>
+        </Tabs>
+      </>
   );
-  
+
   const renderContentView = () => (
-    <div className="space-y-8">
-      <BlogManagement
-        title={<><BookText className="inline-block mr-3 h-6 w-6 align-middle" />Blog Post Management</>}
-        posts={blogPosts}
-        isLoading={loading}
-        onAction={handleActioned}
-      />
-      <FaqManagement
-        title={<><HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />FAQ Management</>}
-        faqs={faqs}
-        isLoading={loading}
-        onAction={handleActioned}
-      />
-      <VisualContentManagement
-        title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Banners & Posters Management</>}
-        banners={siteBanners}
-        posters={promotionalPosters}
-        isLoading={loading}
-        onAction={handleActioned}
-      />
-      <CourseManagement
-        title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Content Management</>}
-        courses={courses}
-        isLoading={loading}
-        onAction={handleActioned}
-      />
-      <QuizManagement
-        title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
-        quizSets={quizSets}
-        isLoading={loading}
-        onAction={handleActioned}
-      />
-    </div>
+      <div className="space-y-8">
+        <BlogManagement
+            title={<><BookText className="inline-block mr-3 h-6 w-6 align-middle" />Blog Post Management</>}
+            posts={blogPosts}
+            isLoading={loading}
+            onAction={handleActioned}
+        />
+        <FaqManagement
+            title={<><HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />FAQ Management</>}
+            faqs={faqs}
+            isLoading={loading}
+            onAction={handleActioned}
+        />
+        <VisualContentManagement
+            title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Banners & Posters Management</>}
+            banners={siteBanners}
+            posters={promotionalPosters}
+            isLoading={loading}
+            onAction={handleActioned}
+        />
+        <CourseManagement
+            title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Content Management</>}
+            courses={courses}
+            isLoading={loading}
+            onAction={handleActioned}
+        />
+        <QuizManagement
+            title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
+            quizSets={quizSets}
+            isLoading={loading}
+            onAction={handleActioned}
+        />
+      </div>
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-            {activeTab === 'content' ? 'Content Management' : 'Admin Dashboard'}
-          </h1>
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
-            <Input
-              type="text"
-              placeholder="Search ID, Name, Email..."
-              value={tempSearchTerm}
-              onChange={(e) => setTempSearchTerm(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-              className="h-10 flex-grow sm:w-64"
-            />
-            <Button onClick={handleSearch} className="h-10">
-              <Search className="mr-0 sm:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Search</span>
-            </Button>
+      <div className="min-h-screen bg-background text-foreground">
+        <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+            <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+              {activeTab === 'content' ? 'Content Management' : 'Admin Dashboard'}
+            </h1>
+            <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <Input
+                  type="text"
+                  placeholder="Search ID, Name, Email..."
+                  value={tempSearchTerm}
+                  onChange={(e) => setTempSearchTerm(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                  className="h-10 flex-grow sm:w-64"
+              />
+              <Button onClick={handleSearch} className="h-10">
+                <Search className="mr-0 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Search</span>
+              </Button>
+            </div>
           </div>
-        </div>
-        
-        {activeTab === 'content' ? renderContentView() : renderDashboardView()}
-        
-      </main>
-    </div>
+
+          {activeTab === 'content' ? renderContentView() : renderDashboardView()}
+
+        </main>
+      </div>
   );
 }

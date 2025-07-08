@@ -2,38 +2,16 @@
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db } from '@/lib/firebase';
-
-// Define a User type that can be a simulated regular user or a GuestUser
-export interface SimulatedUser {
-  uid: string;
-  uniqueId: string; // Add uniqueId to identify role
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-  isGuest?: false; // Explicitly not a guest
-}
-
-export interface GuestUser {
-  uid: string;
-  uniqueId: string; // Add uniqueId to identify role
-  displayName: string | null;
-  email: string | null;
-  photoURL: string | null;
-  isGuest: true;
-}
-
-type AppUser = SimulatedUser | GuestUser;
+import { auth } from '@/lib/firebase';
 
 interface AuthContextType {
-  user: AppUser | null;
+  user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithCredentials: (username: string, password: string) => Promise<boolean>;
@@ -44,92 +22,61 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState(true); // Start true to mimic initial auth check
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate checking for a stored session (e.g., in localStorage)
-    const storedUser = sessionStorage.getItem('mockUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    if (!auth) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const profile = await fetchUserById(firebaseUser.uid);
+        if (profile) {
+          setUser(profile);
+        } else {
+          // This case might happen if a user exists in Auth but not Firestore.
+          // For this app, we'll treat them as logged out.
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const storeUserInSession = (userToStore: AppUser | null) => {
-    if (userToStore) {
-      sessionStorage.setItem('mockUser', JSON.stringify(userToStore));
-    } else {
-      sessionStorage.removeItem('mockUser');
-    }
-  };
-
-  const handleSuccessfulSignIn = (newUser: AppUser) => {
-    setUser(newUser);
-    storeUserInSession(newUser);
-    setLoading(false);
-    toast({
-      title: `Welcome to Drivergy, ${newUser.displayName}!`,
-      description: 'You are now logged in.',
-    });
-    router.push('/site');
-  };
-
   const signInWithGoogle = async () => {
-    if (!auth || !db) {
-      toast({
-        title: "Configuration Error",
-        description: "Firebase is not configured. Cannot sign in with Google.",
-        variant: "destructive",
-      });
+    if (!auth) {
+      toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
       return;
     }
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      const googleUser = result.user;
-
-      const userDocRef = doc(db, 'users', googleUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      let userProfile: UserProfile;
-
-      if (userDocSnap.exists()) {
-        userProfile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
-      } else {
-        const newUserProfileData: Omit<UserProfile, 'id'> = {
-          uniqueId: `ADMIN-${googleUser.uid.slice(0, 6).toUpperCase()}`,
-          name: googleUser.displayName || 'Google User',
-          contact: googleUser.email!,
-          location: 'N/A',
-          subscriptionPlan: 'Admin',
-          registrationTimestamp: new Date().toISOString(),
-          approvalStatus: 'Approved',
-          gender: 'Other',
-          photoURL: googleUser.photoURL || `https://placehold.co/100x100.png?text=${googleUser.displayName?.charAt(0) || 'G'}`,
-        };
-        await setDoc(userDocRef, newUserProfileData);
-        userProfile = { id: googleUser.uid, ...newUserProfileData };
-      }
-
-      logInUser(userProfile, true);
-
-    } catch (error) {
-      console.error("Google Sign-In Error:", error);
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle setting the user and redirecting.
       toast({
-        title: "Sign-In Failed",
-        description: "Could not sign in with Google. Please try again.",
-        variant: "destructive",
+        title: `Login Successful!`,
+        description: 'Redirecting to your dashboard...',
       });
+      router.push('/');
+    } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      toast({ title: "Sign-In Failed", description: error.message, variant: "destructive" });
       setLoading(false);
     }
   };
 
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
+    // This method does not create a Firebase Auth session and is intended for development/mock purposes.
+    // Real users should use Google Sign-In for proper authentication with security rules.
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
       logInUser(userProfile, true); // true to redirect
@@ -146,9 +93,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    if (auth) {
+      await firebaseSignOut(auth);
+    }
+    // For credential-based mock users who don't have a firebase auth session
     setUser(null);
-    storeUserInSession(null);
     setLoading(false);
     toast({
       title: 'Logged Out',
@@ -157,26 +106,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/site');
   };
 
+  // This function is for mock/credential login, as Google Sign-In is handled by onAuthStateChanged
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
-    setLoading(true);
-    const newUser: SimulatedUser = {
-      uid: userProfile.id,
-      uniqueId: userProfile.uniqueId,
-      displayName: userProfile.name,
-      email: userProfile.contact,
-      photoURL: userProfile.photoURL || `https://placehold.co/100x100.png?text=${userProfile.name.charAt(0)}`,
-      isGuest: false,
-    };
-    setUser(newUser);
-    storeUserInSession(newUser);
+    setUser(userProfile);
     setLoading(false);
 
     if (isDirectLogin) {
       toast({
-        title: `Welcome to Drivergy, ${newUser.displayName}!`,
+        title: `Welcome, ${userProfile.name}!`,
         description: 'You are now logged in.',
       });
-      router.push('/site');
+      router.push('/');
     }
   };
 

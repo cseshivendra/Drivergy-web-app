@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -40,17 +41,6 @@ const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-const getStatusBadgeVariant = (status: ApprovalStatusType): "default" | "secondary" | "destructive" | "outline" => {
-    switch(status) {
-        case 'Approved': return 'default';
-        case 'Rejected': return 'destructive';
-        case 'Pending':
-        case 'In Progress':
-        default:
-            return 'secondary';
-    }
-}
-
 const getStatusBadgeClass = (status: ApprovalStatusType): string => {
     switch (status) {
         case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
@@ -80,10 +70,9 @@ export default function TrainerDashboard() {
                 fetchTrainerFeedback(user.uid),
             ]);
 
-            // Calculate summary data on the client
             const approvedStudents = allAssignedStudents.filter(s => s.approvalStatus === 'Approved');
 
-            let avgRating = 4.8;
+            let avgRating = 0;
             if (feedbackData.length > 0) {
                 const totalRating = feedbackData.reduce((acc, doc) => acc + doc.rating, 0);
                 avgRating = parseFloat((totalRating / feedbackData.length).toFixed(1));
@@ -91,7 +80,7 @@ export default function TrainerDashboard() {
 
             const summaryData: TrainerSummaryData = {
                 totalStudents: approvedStudents.length,
-                totalEarnings: approvedStudents.length * 2000,
+                totalEarnings: approvedStudents.length * 2000, // This is a mock calculation
                 upcomingLessons: approvedStudents.filter(doc => doc.upcomingLesson && isFuture(parse(doc.upcomingLesson, 'MMM dd, yyyy, h:mm a', new Date()))).length,
                 rating: avgRating,
             };
@@ -102,36 +91,8 @@ export default function TrainerDashboard() {
             setTrainerProfile(profileData);
 
         } catch (error: any) {
-            if (error.code === 'permission-denied' || (error.message && error.message.includes('insufficient permissions'))) {
-                console.warn("Firebase permission denied. Falling back to mock data. Please check your Firestore security rules.");
-                // Fallback to mock data on permission error
-                const allAssignedStudents = MOCK_DB.users.filter(u => u.assignedTrainerId === user.uid);
-                const profileData = MOCK_DB.users.find(u => u.id === user.uid);
-                const feedbackData = MOCK_DB.feedback.filter(f => f.trainerId === user.uid);
-
-                const approvedStudents = allAssignedStudents.filter(s => s.approvalStatus === 'Approved');
-                let avgRating = 4.8;
-                if (feedbackData.length > 0) {
-                    const totalRating = feedbackData.reduce((acc, doc) => acc + doc.rating, 0);
-                    avgRating = parseFloat((totalRating / feedbackData.length).toFixed(1));
-                }
-
-                const summaryData: TrainerSummaryData = {
-                    totalStudents: approvedStudents.length,
-                    totalEarnings: approvedStudents.length * 2000,
-                    upcomingLessons: approvedStudents.filter(doc => doc.upcomingLesson && isFuture(parse(doc.upcomingLesson, 'MMM dd, yyyy, h:mm a', new Date()))).length,
-                    rating: avgRating,
-                };
-
-                setSummary(summaryData);
-                setStudents(approvedStudents);
-                setPendingAssignments(allAssignedStudents.filter(s => s.approvalStatus === 'In Progress'));
-                setTrainerProfile(profileData || null);
-
-            } else {
-                console.error("Failed to fetch trainer dashboard data", error);
-                toast({ title: "Error", description: "Could not load dashboard data.", variant: "destructive" });
-            }
+            console.error("Failed to fetch trainer dashboard data", error);
+            toast({ title: "Error", description: "Could not load your dashboard data. Please try refreshing.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
