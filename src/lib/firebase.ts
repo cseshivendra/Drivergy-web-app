@@ -42,9 +42,9 @@ if (isConfigured) {
         isConfigured = false;
     }
 } else {
-    // This is a critical error for a live-only app.
-    console.error("[firebase-init] CRITICAL: Firebase configuration is missing or incomplete. The application requires a valid Firebase configuration in .env.local to function.");
+    // This is a warning for developers to add their credentials.
+    // The app will not function correctly without them, but we avoid a hard crash.
+    console.warn("[firebase-init] WARNING: Firebase configuration is missing or incomplete. The application requires a valid Firebase configuration in .env.local to function with live data.");
 }
 
 export { app, db, auth };
-
