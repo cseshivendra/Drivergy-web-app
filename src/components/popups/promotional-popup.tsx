@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { listenToPromotionalPosters } from '@/lib/mock-data';
 import type { PromotionalPoster } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle } from 'lucide-react';
 
 interface PromotionalPopupProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
           <div className="p-6 overflow-y-auto flex-grow">
             {loading ? (
                 renderSkeletons()
-            ) : (
+            ) : posters.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   {posters.map((poster) => (
                       <Card key={poster.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
@@ -81,6 +82,12 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
                         </Link>
                       </Card>
                   ))}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center text-center h-full text-muted-foreground p-8">
+                  <AlertCircle className="h-12 w-12 mb-4 text-primary/50" />
+                  <h3 className="text-xl font-semibold text-foreground">No Offers Today</h3>
+                  <p>There are no special offers available at the moment. Please check back later!</p>
                 </div>
             )}
           </div>
