@@ -96,13 +96,13 @@ export default function SiteHeader() {
               <Avatar className="h-6 w-6">
                 <AvatarImage
                   src={user.photoURL || undefined}
-                  alt={user.displayName || 'User'}
+                  alt={user.name || 'User'}
                 />
                 <AvatarFallback>
-                  {user.displayName?.charAt(0).toUpperCase()}
+                  {user.name?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span>{user.displayName}</span>
+              <span>{user.name}</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
