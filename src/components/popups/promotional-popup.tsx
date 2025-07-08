@@ -27,7 +27,11 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
         setPosters(data);
         setLoading(false);
       });
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
       // Cleanup the listener when the popup is closed or component unmounts
       return () => {
         unsubscribe();
@@ -36,16 +40,17 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
   }, [isOpen]);
 
   const renderSkeletons = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i} className="shadow-lg overflow-hidden">
-          <Skeleton className="h-96 w-full" />
-        </Card>
-      ))}
-    </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="shadow-lg overflow-hidden">
+              <Skeleton className="h-96 w-full" />
+            </Card>
+        ))}
+      </div>
   )
 
   return (
+<<<<<<< HEAD
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-[calc(100%-2rem)] sm:w-full p-0 flex flex-col max-h-[85vh] rounded-lg">
         <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
@@ -93,5 +98,48 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
         </div>
       </DialogContent>
     </Dialog>
+=======
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl w-[calc(100%-2rem)] sm:w-full p-0 flex flex-col max-h-[85vh] rounded-lg">
+          <DialogHeader className="p-6 pb-4 border-b flex-shrink-0">
+            <DialogTitle className="font-headline text-3xl font-bold text-primary text-center">
+              Today's Special Offers!
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Check out our latest offers and events. Click on a poster to learn more!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-6 overflow-y-auto flex-grow">
+            {loading ? (
+                renderSkeletons()
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {posters.map((poster) => (
+                      <Card key={poster.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
+                        <Link href={poster.href} onClick={() => onOpenChange(false)}>
+                          <div className="relative h-96 w-full">
+                            <Image
+                                src={poster.imageSrc}
+                                alt={poster.title}
+                                layout="fill"
+                                objectFit="cover"
+                                className="group-hover:scale-105 transition-transform duration-500"
+                                data-ai-hint={poster.imageHint}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                            <div className="absolute bottom-0 left-0 p-6">
+                              <h3 className="text-2xl font-bold text-white font-headline drop-shadow-md">{poster.title}</h3>
+                              <p className="text-white/90 mt-1 drop-shadow-sm">{poster.description}</p>
+                            </div>
+                          </div>
+                        </Link>
+                      </Card>
+                  ))}
+                </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
   );
 }

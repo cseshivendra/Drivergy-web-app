@@ -36,11 +36,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (firebaseUser) {
         const profile = await fetchUserById(firebaseUser.uid);
         if (profile) {
+<<<<<<< HEAD
             setUser(profile);
         } else {
             // This case might happen if a user exists in Auth but not Firestore.
             // For this app, we'll treat them as logged out.
             setUser(null);
+=======
+          setUser(profile);
+        } else {
+          // This case might happen if a user exists in Auth but not Firestore.
+          // For this app, we'll treat them as logged out.
+          setUser(null);
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
         }
       } else {
         setUser(null);
@@ -50,7 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, []);
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
   const signInWithGoogle = async () => {
     if (!auth) {
       toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
@@ -61,7 +73,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await signInWithPopup(auth, provider);
       // onAuthStateChanged will handle setting the user and redirecting.
+<<<<<<< HEAD
        toast({
+=======
+      toast({
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
         title: `Login Successful!`,
         description: 'Redirecting to your dashboard...',
       });
@@ -72,21 +88,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     }
   };
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     // This method does not create a Firebase Auth session and is intended for development/mock purposes.
     // Real users should use Google Sign-In for proper authentication with security rules.
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
-        logInUser(userProfile, true); // true to redirect
-        return true;
+      logInUser(userProfile, true); // true to redirect
+      return true;
     }
     setLoading(false);
     toast({
-        title: 'Login Failed',
-        description: 'Invalid username or password.',
-        variant: 'destructive',
+      title: 'Login Failed',
+      description: 'Invalid username or password.',
+      variant: 'destructive',
     });
     return false;
   };
@@ -94,10 +114,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     setLoading(true);
     if (auth) {
+<<<<<<< HEAD
         await firebaseSignOut(auth);
     }
     // For credential-based mock users who don't have a firebase auth session
     setUser(null); 
+=======
+      await firebaseSignOut(auth);
+    }
+    // For credential-based mock users who don't have a firebase auth session
+    setUser(null);
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
     setLoading(false);
     toast({
       title: 'Logged Out',
@@ -105,12 +132,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     router.push('/site');
   };
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
   // This function is for mock/credential login, as Google Sign-In is handled by onAuthStateChanged
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
     setUser(userProfile);
     setLoading(false);
-    
+
     if (isDirectLogin) {
       toast({
         title: `Welcome, ${userProfile.name}!`,
@@ -121,9 +152,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
+<<<<<<< HEAD
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials }}>
       {children}
     </AuthContext.Provider>
+=======
+      <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials }}>
+        {children}
+      </AuthContext.Provider>
+>>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
   );
 };
 
