@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import {
 import { HelpCircle, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchFaqs } from '@/lib/mock-data';
+import { listenToFaqs } from '@/lib/mock-data';
 import type { FaqItem } from '@/types';
 
 export default function FaqPage() {
@@ -21,10 +20,12 @@ export default function FaqPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetchFaqs().then(data => {
+    const unsubscribe = listenToFaqs(data => {
       setFaqData(data);
       setLoading(false);
     });
+
+    return () => unsubscribe();
   }, []);
 
   const renderSkeletons = () => (

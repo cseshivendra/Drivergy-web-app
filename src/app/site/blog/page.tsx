@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { User, Calendar, BookText, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchBlogPosts } from '@/lib/mock-data';
+import { listenToBlogPosts } from '@/lib/mock-data';
 import type { BlogPost } from '@/types';
 
 const POSTS_PER_PAGE = 6;
@@ -21,10 +21,11 @@ export default function BlogPage() {
   
   useEffect(() => {
     setLoading(true);
-    fetchBlogPosts().then(data => {
+    const unsubscribe = listenToBlogPosts(data => {
       setBlogPosts(data);
       setLoading(false);
     });
+    return () => unsubscribe();
   }, []);
 
   const totalPages = Math.ceil(blogPosts.length / POSTS_PER_PAGE);

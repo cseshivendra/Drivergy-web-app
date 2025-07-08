@@ -156,9 +156,8 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
   };
   
   try {
+    // Lesson request is no longer created here. It's created upon admin assignment.
     const docRef = await addDoc(collection(db, 'users'), newUser);
-    const newRequestData: Omit<LessonRequest, 'id'> = { customerId: docRef.id, customerName: newUser.name, vehicleType: data.vehiclePreference as VehicleType, status: 'Pending', requestTimestamp: new Date().toISOString() };
-    await addDoc(collection(db, 'lessonRequests'), newRequestData);
     return { id: docRef.id, ...newUser };
   } catch (error: any) {
     console.error("Error adding customer:", error);
@@ -216,23 +215,36 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
     if (!db) return false;
     try {
         const customerRef = doc(db, "users", customerId);
-        const trainerDoc = await getDoc(doc(db, "users", trainerId));
-        if (!trainerDoc.exists()) throw new Error("Assign Trainer Error: Trainer document not found.");
+        const customerSnap = await getDoc(customerRef);
+        const trainerSnap = await getDoc(doc(db, "users", trainerId));
+        
+        if (!customerSnap.exists() || !trainerSnap.exists()) {
+             throw new Error("Assign Trainer Error: Customer or Trainer document not found.");
+        }
+        
+        const customerData = customerSnap.data() as UserProfile;
+        const trainerData = trainerSnap.data() as UserProfile;
 
         const batch = writeBatch(db);
+        
+        // Update customer to 'In Progress' and assign trainer details
         batch.update(customerRef, {
             approvalStatus: 'In Progress',
             assignedTrainerId: trainerId,
-            assignedTrainerName: trainerDoc.data().name
+            assignedTrainerName: trainerData.name
         });
 
-        const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId), where('status', '==', 'Pending'));
-        const requestSnapshot = await getDocs(requestQuery);
-        if (!requestSnapshot.empty) {
-            const requestDocRef = requestSnapshot.docs[0].ref;
-            batch.update(requestDocRef, { status: 'Active' });
-        }
-
+        // Create the lesson request now that the customer is assigned
+        const newRequestData: Omit<LessonRequest, 'id'> = {
+          customerId: customerId,
+          customerName: customerData.name,
+          vehicleType: customerData.vehicleInfo as VehicleType,
+          status: 'Pending', // This is pending for the trainer to accept
+          requestTimestamp: new Date().toISOString(),
+        };
+        const newRequestRef = doc(collection(db, 'lessonRequests'));
+        batch.set(newRequestRef, newRequestData);
+        
         await batch.commit();
         return true;
     } catch (error: any) {
@@ -257,9 +269,19 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
             const firstLessonDate = addDays(startDate, 2);
             firstLessonDate.setHours(9, 0, 0, 0);
             updates.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
-        } else { // Rejected
-            updates.assignedTrainerId = null; // Using null to remove field
+            
+            // Update lesson request to 'Active'
+            const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId));
+            const requestSnapshot = await getDocs(requestQuery);
+            if (!requestSnapshot.empty) {
+                const requestDocRef = requestSnapshot.docs[0].ref;
+                await updateDoc(requestDocRef, { status: 'Active' });
+            }
+
+        } else { // If trainer rejects
+            updates.assignedTrainerId = null; 
             updates.assignedTrainerName = null;
+            updates.approvalStatus = 'Pending'; // Return to admin queue
         }
 
         await updateDoc(customerRef, updates);
@@ -396,7 +418,7 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
 // CALCULATED/AGGREGATED DATA LISTENERS
 // =================================================================
 
-export const listenToSummaryData = (callback: (data: SummaryData) => void) => {
+export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => void) => {
     if (!db) return () => {};
     const usersUnsub = onSnapshot(collection(db, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
@@ -411,7 +433,7 @@ export const listenToSummaryData = (callback: (data: SummaryData) => void) => {
             return acc;
         }, 0);
 
-        callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings, pendingRequests: 0, pendingRescheduleRequests: 0 });
+        callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings });
     });
 
     const requestsUnsub = onSnapshot(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
@@ -585,7 +607,7 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
               return {
                   id: q.id,
                   question: { en: data.question_en, hi: data.question_hi },
-                  options: { en: data.options_en.split('\\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\\n').filter(o => o.trim() !== '') },
+                  options: { en: data.options_en.split('\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\n').filter(o => o.trim() !== '') },
                   correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
               };
           }

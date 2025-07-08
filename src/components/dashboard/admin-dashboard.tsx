@@ -40,7 +40,7 @@ export default function AdminDashboard() {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab');
 
-  const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
+  const [summaryData, setSummaryData] = useState<Partial<SummaryData>>({});
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
@@ -62,7 +62,10 @@ export default function AdminDashboard() {
   
   // Real-time data listeners
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+        setLoading(false); // If no user, no need to load data
+        return;
+    }
     setLoading(true);
 
     const subscriptions = [
@@ -126,7 +129,7 @@ export default function AdminDashboard() {
 
   const renderDashboardView = () => (
     <>
-      <SummaryMetrics data={summaryData} isLoading={loading} />
+      <SummaryMetrics data={summaryData as SummaryData} isLoading={loading} />
       <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
       <Tabs defaultValue="verifications" className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
