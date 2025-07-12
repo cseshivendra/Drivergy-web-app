@@ -8,6 +8,23 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 import { toast } from '@/hooks/use-toast';
 
 // Default mock data for when Firebase is not connected
+const MOCK_SITE_BANNERS: SiteBanner[] = [
+    {
+      id: "banner-1",
+      title: "Start Your Driving Journey Today",
+      description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
+      imageSrc: "https://placehold.co/1920x1080/dc2626/ffffff.png",
+      imageHint: "driving road car sunset",
+    },
+    {
+      id: "banner-2",
+      title: "Become a Certified Driving Trainer",
+      description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
+      imageSrc: "https://placehold.co/1920x1080/1d4ed8/ffffff.png",
+      imageHint: "driving instructor teaching student",
+    },
+];
+
 const MOCK_BLOG_POSTS: BlogPost[] = [
     {
       slug: "mastering-the-three-point-turn",
@@ -427,19 +444,19 @@ export const listenToCourses = (callback: (data: Course[]) => void) => createLis
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc', MOCK_FAQS);
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc', MOCK_BLOG_POSTS);
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback);
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback, undefined, 'asc', MOCK_SITE_BANNERS);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
-    if (!db) return () => {};
-    return onSnapshot(doc(db, 'users', userId), async (snap) => {
+    if (!isFirebaseConfigured()) return () => {};
+    return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
             callback(null);
             return;
         }
         const user = { id: snap.id, ...snap.data() } as UserProfile;
         if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
+            const trainerSnap = await getDoc(doc(db!, "users", user.assignedTrainerId));
             if (trainerSnap.exists()) {
                 const trainer = trainerSnap.data() as UserProfile;
                 user.assignedTrainerPhone = trainer.phone;
@@ -452,9 +469,9 @@ export const listenToUser = (userId: string, callback: (data: UserProfile | null
 };
 
 export const listenToTrainerStudents = (trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) => {
-    if (!db) return () => {};
-    const studentsQuery = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
-    const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
+    if (!isFirebaseConfigured()) return () => {};
+    const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
+    const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
 
     const unsubStudents = onSnapshot(studentsQuery, () => {
         // This is a bit of a trick. When student data changes, we refetch both to keep them in sync.
