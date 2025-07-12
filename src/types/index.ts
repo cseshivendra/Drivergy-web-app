@@ -51,11 +51,7 @@ export const UserProfileSchema = z.object({
   myReferralCode: z.string().optional(),
   photoURL: z.string().optional(),
   gender: z.string(),
-<<<<<<< HEAD
-  
-=======
 
->>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
   // Customer specific
   flatHouseNumber: z.string().optional(),
   street: z.string().optional(),
@@ -90,26 +86,6 @@ export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approval
 
 // Registration Forms
 const requiredFileSchema = z
-<<<<<<< HEAD
-  .any()
-  .refine((file): file is File => file instanceof File, "File is required.")
-  .refine((file) => file.size > 0, "File is required.")
-  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
-
-const optionalFileSchema = z
-  .any()
-  .refine((file): file is File => file === undefined || file instanceof File, "Invalid file type.")
-  .refine((file) => file === undefined || file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
-  .optional();
-
-
-const passwordSchema = z.string()
-  .min(8, { message: "Password must be at least 8 characters long." })
-  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
-  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter." })
-  .regex(/[0-9]/, { message: "Password must contain at least one number." })
-  .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character." });
-=======
     .any()
     .refine((file): file is File => file instanceof File, "File is required.")
     .refine((file) => file.size > 0, "File is required.")
@@ -128,7 +104,6 @@ const passwordSchema = z.string()
     .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter." })
     .regex(/[0-9]/, { message: "Password must contain at least one number." })
     .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character." });
->>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
 
 const baseRegistrationSchema = z.object({
   userRole: z.enum(['customer', 'trainer']),
@@ -331,15 +306,6 @@ export interface Course {
 }
 
 export interface RescheduleRequest {
-<<<<<<< HEAD
-    id: string;
-    userId: string;
-    customerName: string;
-    originalLessonDate: string;
-    requestedRescheduleDate: string;
-    status: RescheduleRequestStatusType;
-    requestTimestamp: string;
-=======
   id: string;
   userId: string;
   customerName: string;
@@ -347,7 +313,6 @@ export interface RescheduleRequest {
   requestedRescheduleDate: string;
   status: RescheduleRequestStatusType;
   requestTimestamp: string;
->>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
 }
 export type RescheduleRequestStatusType = (typeof RescheduleRequestStatusOptions)[number];
 
@@ -371,31 +336,16 @@ export interface Feedback {
 }
 
 export interface LessonProgressData {
-    studentId: string;
-    studentName: string;
-    trainerName: string;
-    subscriptionPlan: string;
-    totalLessons: number;
-    completedLessons: number;
-    remainingLessons: number;
+  studentId: string;
+  studentName: string;
+  trainerName: string;
+  subscriptionPlan: string;
+  totalLessons: number;
+  completedLessons: number;
+  remainingLessons: number;
 }
 
 export interface Referral {
-<<<<<<< HEAD
-    id: string;
-    referrerId: string;
-    referrerName: string;
-    refereeId: string;
-    refereeName: string;
-    status: 'Successful' | 'Pending';
-    pointsEarned: number;
-    payoutStatus: PayoutStatusType;
-    timestamp: string;
-    // These are joined in from the User table for display
-    refereeUniqueId?: string;
-    refereeSubscriptionPlan?: string;
-    refereeApprovalStatus?: ApprovalStatusType;
-=======
   id: string;
   referrerId: string;
   referrerName: string;
@@ -409,7 +359,6 @@ export interface Referral {
   refereeUniqueId?: string;
   refereeSubscriptionPlan?: string;
   refereeApprovalStatus?: ApprovalStatusType;
->>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
 }
 export type PayoutStatusType = (typeof PayoutStatusOptions)[number];
 
@@ -446,40 +395,6 @@ export interface BlogPost {
 }
 
 export interface JobOpening {
-<<<<<<< HEAD
-    id: string;
-    title: string;
-    location: string;
-    type: 'Full-time' | 'Part-time' | 'Contract';
-    description: string;
-    requirements: string[];
-}
-export const JobOpenings: JobOpening[] = [
-    {
-        id: 'job-1',
-        title: 'Senior Driving Instructor',
-        location: 'Gurugram',
-        type: 'Full-time',
-        description: 'Lead a team of instructors and develop training curriculum.',
-        requirements: ['5+ years of experience', 'Official Trainer Certification', 'Excellent communication skills'],
-    },
-    {
-        id: 'job-2',
-        title: 'Customer Support Executive',
-        location: 'Remote',
-        type: 'Full-time',
-        description: 'Assist customers with queries and provide platform support.',
-        requirements: ['1+ year in customer service', 'Proficiency in English and Hindi', 'Strong problem-solving skills'],
-    },
-    {
-        id: 'job-3',
-        title: 'Marketing Manager',
-        location: 'Noida',
-        type: 'Full-time',
-        description: 'Plan and execute marketing campaigns to drive growth.',
-        requirements: ['3+ years in digital marketing', 'Experience with social media ads', 'Strong analytical skills'],
-    }
-=======
   id: string;
   title: string;
   location: string;
@@ -512,7 +427,6 @@ export const JobOpenings: JobOpening[] = [
     description: 'Plan and execute marketing campaigns to drive growth.',
     requirements: ['3+ years in digital marketing', 'Experience with social media ads', 'Strong analytical skills'],
   }
->>>>>>> 538086b63da0cd9667c72db6f079de8896880ffe
 ];
 
 export interface SiteBanner {
