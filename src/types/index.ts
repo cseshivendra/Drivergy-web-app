@@ -116,24 +116,9 @@ const baseRegistrationSchema = z.object({
   gender: z.enum(GenderOptions),
 });
 
-export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
+export const InitialCustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
-  vehiclePreference: z.enum(VehiclePreferenceOptions),
-  subscriptionPlan: z.enum(SubscriptionPlans),
-  trainerPreference: z.enum(TrainerPreferenceOptions),
-  flatHouseNumber: z.string().min(1, 'This field is required.'),
-  street: z.string().min(1, 'This field is required.'),
-  district: z.string().min(1, 'District is required.'),
-  state: z.string().min(1, 'State is required.'),
-  pincode: z.string().length(6, 'Pincode must be 6 digits.'),
-  dlStatus: z.enum(DLStatusOptions),
-  dlNumber: z.string().optional(),
-  dlTypeHeld: z.string().optional(),
-  photoIdType: z.enum(PhotoIdTypeOptions),
-  photoIdNumber: z.string().min(1, 'ID number is required.'),
-  photoIdFile: requiredFileSchema,
-  subscriptionStartDate: z.date({ required_error: "Please select a start date." }),
-  referralCode: z.string().optional(),
+  // No other fields needed for initial sign up
 });
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
@@ -153,16 +138,46 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
-  CustomerRegistrationFormSchema,
+  InitialCustomerRegistrationFormSchema,
   TrainerRegistrationFormSchema
 ]).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
-export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
+export type CustomerRegistrationFormValues = z.infer<typeof InitialCustomerRegistrationFormSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
+
+
+// This schema is for the second step of customer registration (during payment)
+export const FullCustomerDetailsSchema = z.object({
+    subscriptionPlan: z.enum(SubscriptionPlans),
+    vehiclePreference: z.enum(VehiclePreferenceOptions),
+    trainerPreference: z.enum(TrainerPreferenceOptions),
+    flatHouseNumber: z.string().min(1, 'This field is required.'),
+    street: z.string().min(1, 'This field is required.'),
+    district: z.string().min(1, 'District is required.'),
+    state: z.string().min(1, 'State is required.'),
+    pincode: z.string().length(6, 'Pincode must be 6 digits.'),
+    dlStatus: z.enum(DLStatusOptions),
+    dlNumber: z.string().optional(),
+    dlTypeHeld: z.string().optional(),
+    photoIdType: z.enum(PhotoIdTypeOptions),
+    photoIdNumber: z.string().min(1, 'ID number is required.'),
+    photoIdFile: requiredFileSchema,
+    subscriptionStartDate: z.date({ required_error: "Please select a start date." }),
+    referralCode: z.string().optional(),
+}).refine((data) => {
+    if (data.dlStatus === 'Already Have DL') {
+        return !!data.dlNumber && !!data.dlTypeHeld;
+    }
+    return true;
+}, {
+    message: "DL Number and Type are required if you already have a license.",
+    path: ['dlNumber'],
+});
+export type FullCustomerDetailsValues = z.infer<typeof FullCustomerDetailsSchema>;
 
 
 // Profile Update Forms

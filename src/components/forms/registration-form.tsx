@@ -7,44 +7,30 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import {
   RegistrationFormSchema,
   type RegistrationFormValues,
   Locations,
-  SubscriptionPlans,
-  VehiclePreferenceOptions,
   SpecializationOptions,
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
   GenderOptions,
-  DLStatusOptions,
-  PhotoIdTypeOptions,
-  TrainerPreferenceOptions, 
-  type CustomerRegistrationFormValues,
   type TrainerRegistrationFormValues,
-  IndianStates,
-  DistrictsByState,
   type UserProfile,
+  type CustomerRegistrationFormValues,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, FileText, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, BadgePercent, FileUp, CreditCard, UserCheck as UserCheckIcon, Home, MapPin, KeyRound, AtSign, Eye, EyeOff, CalendarIcon, Loader2, Gift } from 'lucide-react'; 
-import { useMemo, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/context/auth-context';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
-import { format } from 'date-fns';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2 } from 'lucide-react'; 
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -53,9 +39,6 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const plan = searchParams.get('plan');
-  const price = searchParams.get('price');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -71,25 +54,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       gender: '', 
     };
     if (userRole === 'customer') {
-      return {
-        ...base,
-        vehiclePreference: undefined,
-        subscriptionPlan: plan || '', // Pre-fill plan from URL params
-        trainerPreference: '', 
-        flatHouseNumber: '',
-        street: '',
-        district: '',
-        state: '',
-        pincode: '',
-        dlStatus: '',
-        dlNumber: '',
-        dlTypeHeld: '',
-        photoIdType: '', 
-        photoIdNumber: '',
-        photoIdFile: undefined,
-        subscriptionStartDate: undefined,
-        referralCode: '',
-      } as CustomerRegistrationFormValues;
+      return base as CustomerRegistrationFormValues;
     } else { // trainer
       return {
         ...base,
@@ -107,7 +72,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         aadhaarCardFile: undefined,
       } as TrainerRegistrationFormValues;
     }
-  }, [userRole, plan]);
+  }, [userRole]);
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -115,26 +80,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     mode: 'onChange', 
   });
 
-  const dlStatus = form.watch('dlStatus'); 
-  const selectedState = form.watch('state');
-
-  const availableDistricts = useMemo(() => {
-    if (selectedState && DistrictsByState[selectedState as keyof typeof DistrictsByState]) {
-      return DistrictsByState[selectedState as keyof typeof DistrictsByState];
-    }
-    return [];
-  }, [selectedState]);
-
-  useEffect(() => {
-    const currentDistrict = form.getValues('district');
-    if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
-      form.setValue('district', '');
-    }
-  }, [selectedState, form, availableDistricts]);
-
   async function onSubmit(data: RegistrationFormValues) {
     try {
-      let newUser: UserProfile | undefined;
+      let newUser: UserProfile | null = null;
 
       if (data.userRole === 'customer') {
         newUser = await addCustomer(data as CustomerRegistrationFormValues);
@@ -147,13 +95,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           title: "Registration Successful!",
           description: "Your account has been created. Please log in to continue.",
         });
-
-        if (plan && price) {
-          const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
-          router.push(`/login?redirect=${redirectUrl}`);
-        } else {
-          router.push('/login');
-        }
+        router.push('/login');
       } else {
         throw new Error("Registration failed: No user data returned.");
       }
@@ -322,357 +264,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             )}
           />
         </div>
-
-        {userRole === 'customer' && (
-          <>
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Address Details</h3>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="flatHouseNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><Home className="mr-2 h-4 w-4 text-primary" />Flat / House No.<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., A-101, Flat 4B" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="street"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Road / Street Name<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., M.G. Road" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State<span className="text-destructive ml-1">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select state" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {IndianStates.map(state => (
-                                <SelectItem key={state} value={state}>{state}</SelectItem>
-                            ))}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="district"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District<span className="text-destructive ml-1">*</span></FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value || ''}
-                        disabled={!selectedState || availableDistricts.length === 0}
-                      >
-                          <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select district" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {availableDistricts.length > 0 ? (
-                                availableDistricts.map(district => (
-                                    <SelectItem key={district} value={district}>{district}</SelectItem>
-                                ))
-                              ) : (
-                                <SelectItem value="disabled" disabled>First select a state</SelectItem>
-                              )}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              <FormField
-                control={form.control}
-                name="pincode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Pincode<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="text" maxLength={6} placeholder="Enter 6-digit pincode" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Course & License Details</h3>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="vehiclePreference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference<span className="text-destructive ml-1">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select vehicle type" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {VehiclePreferenceOptions.map(option => (
-                          <SelectItem key={option} value={option}>
-                            {option === 'Two-Wheeler' && <Bike className="inline-block mr-2 h-4 w-4" />}
-                            {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="subscriptionPlan"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan<span className="text-destructive ml-1">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={!!plan}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select plan" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {SubscriptionPlans.map(plan => (
-                          <SelectItem key={plan} value={plan}>{plan}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
-                control={form.control}
-                name="trainerPreference"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference<span className="text-destructive ml-1">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select trainer preference" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {TrainerPreferenceOptions.map(option => (
-                            <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                  control={form.control}
-                  name="subscriptionStartDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col pt-2">
-                      <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-primary" />Subscription Start Date<span className="text-destructive ml-1">*</span></FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        Your lesson plan will start from this date.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="dlStatus"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License Status<span className="text-destructive ml-1">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Select DL status" />
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                      {DLStatusOptions.map(option => (
-                          <SelectItem key={option} value={option}>{option}</SelectItem>
-                      ))}
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}
-            />
-
-            {(dlStatus === 'Already Have DL' || (form.getValues() as CustomerRegistrationFormValues).dlStatus === 'Already Have DL') && (
-              <>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="dlNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />DL Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter DL number" {...field} value={field.value || ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="dlTypeHeld"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of DL Held</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., LMV, MCWG" {...field} value={field.value || ''}/>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </>
-            )}
-
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Photo ID & Referral</h3>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
-                    control={form.control}
-                    name="photoIdType"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><CreditCard className="mr-2 h-4 w-4 text-primary" />Photo ID Type<span className="text-destructive ml-1">*</span></FormLabel>
-                         <Select onValueChange={field.onChange} value={field.value || ''}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select ID type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {PhotoIdTypeOptions.map(type => (
-                              <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="photoIdNumber"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Photo ID Number<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                        <Input placeholder="Enter ID Number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-             <FormField
-                control={form.control}
-                name="photoIdFile"
-                render={({ field: { value, onChange, ...fieldProps } }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Photo ID<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                        <Input
-                        type="file"
-                        {...fieldProps}
-                        onChange={(event) => onChange(event.target.files?.[0])}
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                    </FormControl>
-                    <FormDescription>
-                        Upload a clear copy of your selected Photo ID (PDF, JPG, PNG).
-                    </FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="referralCode"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><Gift className="mr-2 h-4 w-4 text-primary" />Referral Code (Optional)</FormLabel>
-                    <FormControl>
-                        <Input placeholder="Enter referral code if you have one" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-          </>
-        )}
 
         {userRole === 'trainer' && (
           <>

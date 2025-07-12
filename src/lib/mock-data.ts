@@ -1,6 +1,6 @@
 
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from './firebase';
@@ -193,7 +193,6 @@ export const changeUserPassword = async (userId: string, currentPassword: string
 
 export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile | null> => {
   if (!db) return null;
-  const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
 
   const newUser: Omit<UserProfile, 'id'> = {
     uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
@@ -202,34 +201,17 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     password: data.password,
     contact: data.email,
     phone: data.phone,
-    location: data.district,
     gender: data.gender,
-    flatHouseNumber: data.flatHouseNumber,
-    street: data.street,
-    district: data.district,
-    state: data.state,
-    pincode: data.pincode,
-    subscriptionPlan: data.subscriptionPlan,
+    location: '', // Initially empty, filled in step 2
+    subscriptionPlan: '', // Initially empty
     registrationTimestamp: new Date().toISOString(),
-    vehicleInfo: data.vehiclePreference,
-    approvalStatus: 'Pending',
-    dlStatus: data.dlStatus,
-    dlNumber: data.dlNumber,
-    dlTypeHeld: data.dlTypeHeld,
-    photoIdType: data.photoIdType,
-    photoIdNumber: data.photoIdNumber,
-    trainerPreference: data.trainerPreference,
+    approvalStatus: 'Pending', // Pending profile completion
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-    attendance: 'Pending',
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-    subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
-    totalLessons: getLessonsForPlan(data.subscriptionPlan),
-    completedLessons: 0,
     totalReferralPoints: 0,
   };
   
   try {
-    // Lesson request is no longer created here. It's created upon admin assignment.
     const docRef = await addDoc(collection(db, 'users'), newUser);
     return { id: docRef.id, ...newUser };
   } catch (error: any) {
@@ -237,6 +219,43 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
     return null;
   }
+};
+
+export const completeCustomerProfile = async (userId: string, data: FullCustomerDetailsValues): Promise<boolean> => {
+    if (!db) return false;
+    const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
+
+    const profileData = {
+        subscriptionPlan: data.subscriptionPlan,
+        vehicleInfo: data.vehiclePreference,
+        trainerPreference: data.trainerPreference,
+        flatHouseNumber: data.flatHouseNumber,
+        street: data.street,
+        district: data.district,
+        state: data.state,
+        pincode: data.pincode,
+        location: data.district, // Set primary location from district
+        dlStatus: data.dlStatus,
+        dlNumber: data.dlNumber || '',
+        dlTypeHeld: data.dlTypeHeld || '',
+        photoIdType: data.photoIdType,
+        photoIdNumber: data.photoIdNumber,
+        subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
+        totalLessons: getLessonsForPlan(data.subscriptionPlan),
+        completedLessons: 0,
+        approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
+    };
+
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, profileData);
+        // In a real app, upload data.photoIdFile to Firebase Storage here
+        return true;
+    } catch (error: any) {
+        console.error("Error completing customer profile:", error);
+        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
+        return false;
+    }
 };
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
@@ -416,7 +435,7 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
     if (!isFirebaseConfigured()) {
         console.warn(`[createListener] Firebase is not configured. Using mock data for ${collectionName}.`);
-        setTimeout(() => callback(mockData), 0);
+        setTimeout(() => callback(mockData), 50); // Small delay to mimic async fetch
         return () => {}; // Return an empty unsubscribe function
     }
     

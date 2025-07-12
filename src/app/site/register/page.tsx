@@ -7,6 +7,7 @@ import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, UserCog, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: React.ElementType, title: string, description: string, onClick: () => void }) => (
     <Card 
@@ -24,14 +25,8 @@ const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: 
 export default function UnifiedRegisterPage() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
   const searchParams = useSearchParams();
-  const planFromUrl = searchParams.get('plan');
-  
-  useEffect(() => {
-    if (planFromUrl) {
-      setSelectedRole('customer');
-    }
-  }, [planFromUrl]);
-
+  // This page is now only for initial registration, not for plan selection.
+  // We remove the logic that auto-selects 'customer' based on URL params.
 
   const handleRoleSelection = (role: 'customer' | 'trainer') => {
     setSelectedRole(role);
@@ -77,8 +72,9 @@ export default function UnifiedRegisterPage() {
             <CardTitle className="font-headline text-3xl font-bold">
               Register as a {selectedRole === 'customer' ? 'Customer' : 'Trainer'}
             </CardTitle>
-            <CardDescription>
-              Join Drivergy! Fill in the details below to get started.
+            <CardDescription className="flex flex-col items-center gap-1">
+              <span>Join Drivergy! Fill in the details below to get started.</span>
+              <span className="text-xs">Already have an account? <Link href="/login" className="text-primary font-semibold hover:underline">Log in</Link></span>
             </CardDescription>
           </CardHeader>
           <CardContent>
