@@ -1,12 +1,30 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { db } from './firebase';
+import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 
 // Default mock data for when Firebase is not connected
+const MOCK_SITE_BANNERS: SiteBanner[] = [
+    {
+        id: "banner-1",
+        title: "Start Your Driving Journey Today",
+        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
+        imageSrc: "https://placehold.co/1920x1080/dc2626/ffffff.png",
+        imageHint: "driving road car sunset",
+    },
+    {
+        id: "banner-2",
+        title: "Become a Certified Driving Trainer",
+        description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
+        imageSrc: "https://placehold.co/1920x1080/1d4ed8/ffffff.png",
+        imageHint: "driving instructor teaching student",
+    },
+];
+
 const MOCK_BLOG_POSTS: BlogPost[] = [
     {
         slug: "mastering-the-three-point-turn",
@@ -53,7 +71,14 @@ const MOCK_FAQS: FaqItem[] = [
 ];
 
 
-const generateId = () => doc(collection(db!, 'mock')).id; // Use Firestore's ID generation
+const generateId = () => {
+    // Use Firestore's ID generation if available, otherwise fallback to a simple random string.
+    // This ensures that even in mock mode, we can generate unique-enough IDs.
+    if (db) {
+        return doc(collection(db, 'id-generator')).id;
+    }
+    return Math.random().toString(36).substring(2, 15);
+};
 
 // Helper to re-hydrate icons after fetching from DB
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
@@ -389,23 +414,24 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // =================================================================
 
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
-    if (!db) {
-        console.warn(`[createListener] Firestore (db) is not initialized. Using hardcoded mock data for ${collectionName}.`);
+    if (!isFirebaseConfigured()) {
+        console.warn(`[createListener] Firebase is not configured. Using mock data for ${collectionName}.`);
         setTimeout(() => callback(mockData), 0);
         return () => {}; // Return an empty unsubscribe function
     }
-    const collectionRef = collection(db, collectionName);
-    const q = orderField
-        ? query(collectionRef, orderBy(orderField, orderDirection))
-        : query(collectionRef);
+
+    let q = query(collection(db!, collectionName));
+    if (orderField) {
+        q = query(q, orderBy(orderField, orderDirection));
+    }
 
     return onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
         callback(data);
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
-        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
-        callback([]); // Also return empty array on error to stop loading states.
+        toast({ title: "Connection Error", description: `Could not sync ${collectionName}. Using local data.`, variant: "destructive" });
+        callback(mockData); // Fallback to mock data on error
     });
 };
 
@@ -418,19 +444,19 @@ export const listenToCourses = (callback: (data: Course[]) => void) => createLis
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc', MOCK_FAQS);
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc', MOCK_BLOG_POSTS);
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback);
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback, undefined, 'asc', MOCK_SITE_BANNERS);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
-    if (!db) return () => {};
-    return onSnapshot(doc(db, 'users', userId), async (snap) => {
+    if (!isFirebaseConfigured()) return () => {};
+    return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
             callback(null);
             return;
         }
         const user = { id: snap.id, ...snap.data() } as UserProfile;
         if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
+            const trainerSnap = await getDoc(doc(db!, "users", user.assignedTrainerId));
             if (trainerSnap.exists()) {
                 const trainer = trainerSnap.data() as UserProfile;
                 user.assignedTrainerPhone = trainer.phone;
@@ -443,9 +469,9 @@ export const listenToUser = (userId: string, callback: (data: UserProfile | null
 };
 
 export const listenToTrainerStudents = (trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) => {
-    if (!db) return () => {};
-    const studentsQuery = query(collection(db, "users"), where("assignedTrainerId", "==", trainerId));
-    const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
+    if (!isFirebaseConfigured()) return () => {};
+    const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
+    const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
 
     const unsubStudents = onSnapshot(studentsQuery, () => {
         // This is a bit of a trick. When student data changes, we refetch both to keep them in sync.
@@ -476,8 +502,8 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
 // =================================================================
 
 export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => void) => {
-    if (!db) return () => {};
-    const usersUnsub = onSnapshot(collection(db, 'users'), (snap) => {
+    if (!isFirebaseConfigured()) return () => {};
+    const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
         const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
         const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
@@ -493,11 +519,11 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
         callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings });
     });
 
-    const requestsUnsub = onSnapshot(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
+    const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRequests: snap.size }));
     });
 
-    const rescheduleUnsub = onSnapshot(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
+    const rescheduleUnsub = onSnapshot(query(collection(db!, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRescheduleRequests: snap.size }));
     });
 
@@ -509,8 +535,8 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
 };
 
 export const listenToCustomerLessonProgress = (callback: (data: LessonProgressData[]) => void) => {
-    if (!db) return () => {};
-    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
+    if (!isFirebaseConfigured()) return () => {};
+    const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
         const users = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
