@@ -1,9 +1,11 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import type { Metadata } from 'next';
 
 import { fetchBlogPostBySlug } from '@/lib/mock-data';
 import type { BlogPost } from '@/types';
@@ -12,6 +14,47 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { User, Calendar, ArrowLeft, AlertCircle, Tag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Dynamically generate metadata for each blog post
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const post = await fetchBlogPostBySlug(params.slug);
+
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+      description: 'The blog post you are looking for does not exist.',
+    };
+  }
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    keywords: post.tags?.split(',').map(tag => tag.trim()),
+    authors: [{ name: post.author }],
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      type: 'article',
+      publishedTime: new Date(post.date).toISOString(),
+      authors: [post.author],
+      images: [
+        {
+          url: post.imageSrc,
+          width: 1200,
+          height: 800,
+          alt: post.title,
+        },
+      ],
+    },
+     twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: [post.imageSrc],
+    },
+  };
+}
+
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
@@ -96,7 +139,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             </div>
             <CardHeader className="relative -mt-16 z-10 p-6 md:p-8">
                 <Badge variant="secondary" className="w-fit mb-3 text-sm">{post.category}</Badge>
-                <CardTitle className="font-headline text-3xl md:text-4xl font-bold text-primary dark:text-white drop-shadow-lg">{post.title}</CardTitle>
+                <CardTitle as="h1" className="font-headline text-3xl md:text-4xl font-bold text-primary dark:text-white drop-shadow-lg">{post.title}</CardTitle>
                 <div className="flex items-center gap-6 text-sm text-primary dark:text-white/90 mt-4 drop-shadow-lg">
                     <div className="flex items-center">
                         <User className="h-4 w-4 mr-1.5" />
@@ -108,8 +151,10 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="p-6 md:p-8 prose dark:prose-invert max-w-none text-base md:text-lg leading-relaxed">
+            <CardContent>
+              <article className="p-6 md:p-8 prose dark:prose-invert max-w-none text-base md:text-lg leading-relaxed">
                 {post.content}
+              </article>
             </CardContent>
             {post.tags && (
                 <CardFooter className="p-6 md:p-8 pt-4 border-t">

@@ -1,4 +1,5 @@
 
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
@@ -35,6 +36,21 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // Redirects for simplified URLs and SEO
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/site',
+        permanent: true,
+      },
+       {
+        source: '/app',
+        destination: '/site',
+        permanent: true,
+      },
+    ]
   },
 };
 

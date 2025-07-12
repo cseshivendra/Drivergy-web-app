@@ -6,8 +6,40 @@ import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/context/theme-context';
 
 export const metadata: Metadata = {
-  title: 'Drivergy',
-  description: 'Admin Dashboard for Driving School',
+  // Provides a template for page titles, e.g., "About Us | Drivergy"
+  title: {
+    template: '%s | Drivergy',
+    default: 'Drivergy - Modern Driving School Platform',
+  },
+  description: 'Drivergy is a modern platform for driving education in India, connecting students with qualified instructors for car and motorcycle training, RTO assistance, and more.',
+  keywords: ['driving school', 'learn to drive', 'RTO test', 'driving license', 'car training', 'motorcycle training', 'Gurugram', 'Delhi NCR'],
+  authors: [{ name: 'Drivergy Team', url: 'https://drivergy.com' }],
+  creator: 'Shivendra Singh',
+  // Sets the base URL for resolving relative URLs in metadata
+  metadataBase: new URL('https://drivergy.com'),
+  // Open Graph tags for better social media sharing
+  openGraph: {
+    title: 'Drivergy - Modern Driving School Platform',
+    description: 'The easiest way to learn driving, get your license, and become a safe driver in India.',
+    url: 'https://drivergy.com',
+    siteName: 'Drivergy',
+    images: [
+      {
+        url: 'https://placehold.co/1200x630.png', // Default social sharing image
+        width: 1200,
+        height: 630,
+        alt: 'Drivergy Logo and a scenic road',
+      },
+    ],
+    locale: 'en_IN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Drivergy - Modern Driving School Platform',
+    description: 'The easiest way to learn driving, get your license, and become a safe driver in India.',
+    images: ['https://placehold.co/1200x630.png'],
+  },
 };
 
 export default function RootLayout({

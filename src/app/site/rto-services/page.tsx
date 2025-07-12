@@ -1,9 +1,16 @@
+
 'use client';
 
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Car, ExternalLink, FileText, IndianRupee, Receipt, Search, Type, Ticket, CreditCard } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Online RTO Services',
+  description: 'Access official RTO services like applying for a driving license, checking challan status, and paying fees directly from the Parivahan Sewa portal.',
+};
 
 const rtoServices = [
     {
@@ -89,7 +96,7 @@ export default function RtoServicesPage() {
                             <div className="p-3 bg-primary/10 rounded-lg">
                                 <service.icon className="h-7 w-7 text-primary" />
                             </div>
-                            <CardTitle className="font-headline text-xl text-primary">{service.title}</CardTitle>
+                            <CardTitle as="h2" className="font-headline text-xl text-primary">{service.title}</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="flex-grow">
