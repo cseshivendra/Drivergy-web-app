@@ -6,6 +6,53 @@ import { db } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 
+// Default mock data for when Firebase is not connected
+const MOCK_BLOG_POSTS: BlogPost[] = [
+    {
+      slug: "mastering-the-three-point-turn",
+      title: "Mastering the Three-Point Turn: A Step-by-Step Guide",
+      category: "Driving Tips",
+      excerpt: "The three-point turn is a fundamental driving maneuver. This guide breaks it down into simple, easy-to-follow steps.",
+      content: "The three-point turn can be intimidating, but it's an essential skill for every driver. It allows you to turn a vehicle around in a narrow space. Here's how to do it safely: 1. Signal and pull over to the right side of the road. 2. Signal left, check mirrors and blind spots. 3. Turn the steering wheel fully to the left and move forward slowly until you are close to the opposite curb. 4. Put the car in reverse, turn the wheel fully to the right, and back up until you have enough space to move forward. 5. Shift to drive, turn the wheel left, and straighten out in your new direction of travel. Practice makes perfect!",
+      author: "Priya Sharma",
+      date: "August 15, 2024",
+      imageSrc: "https://placehold.co/1200x800.png",
+      imageHint: "driving maneuver car",
+      tags: "driving, tips, maneuver, test",
+    },
+    {
+      slug: "passing-your-rto-exam",
+      title: "Top 5 Tips for Passing Your RTO Exam on the First Try",
+      category: "RTO Exams",
+      excerpt: "Don't let the RTO exam intimidate you. Follow these five expert tips to ensure you're fully prepared for success.",
+      content: "Passing your RTO exam is your ticket to freedom on the road. To boost your chances: 1. Study the official manual thoroughly. 2. Take as many mock tests as you can, like the ones offered by Drivergy. 3. Understand traffic signs and signals completely, not just memorize them. 4. On the day of the test, stay calm and get a good night's sleep. 5. During the practical test, remember to check your mirrors frequently and use your signals for every turn.",
+      author: "Rohan Verma",
+      date: "August 10, 2024",
+      imageSrc: "https://placehold.co/1200x800.png",
+      imageHint: "exam test paper",
+      tags: "rto, exam, license, driving test",
+    },
+];
+
+const MOCK_FAQS: FaqItem[] = [
+    {
+      id: "faq1",
+      question: "What documents do I need to enroll?",
+      answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
+    },
+    {
+      id: "faq2",
+      question: "Can I choose my instructor?",
+      answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
+    },
+    {
+      id: "faq3",
+      question: "How do I book a driving lesson slot?",
+      answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
+    },
+];
+
+
 const generateId = () => doc(collection(db!, 'mock')).id; // Use Firestore's ID generation
 
 // Helper to re-hydrate icons after fetching from DB
@@ -341,10 +388,10 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
+const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
     if (!db) {
-        console.warn(`[createListener] Firestore (db) is not initialized. Cannot listen to ${collectionName}. Returning empty data.`);
-        setTimeout(() => callback([]), 0);
+        console.warn(`[createListener] Firestore (db) is not initialized. Using hardcoded mock data for ${collectionName}.`);
+        setTimeout(() => callback(mockData), 0);
         return () => {}; // Return an empty unsubscribe function
     }
     const collectionRef = collection(db, collectionName);
@@ -369,8 +416,8 @@ export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => cre
 export const listenToAllReferrals = (callback: (data: Referral[]) => void) => createListener('referrals', callback, 'timestamp');
 export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', (data) => callback(reAssignCourseIcons(data)));
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
-export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback);
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
+export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc', MOCK_FAQS);
+export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc', MOCK_BLOG_POSTS);
 export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 
@@ -689,7 +736,9 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | 
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-  if (!db) return null;
+  if (!db) {
+    return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
+  }
   try {
     const docRef = doc(db, 'blogPosts', slug);
     const snapshot = await getDoc(docRef);

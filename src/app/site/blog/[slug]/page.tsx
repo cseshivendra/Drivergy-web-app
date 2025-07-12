@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -55,15 +54,19 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
 
   if (!post) {
     return (
-      <div className="flex-grow flex items-center justify-center">
-        <div className="text-center">
-            <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
-          <h1 className="text-3xl font-bold">Post Not Found</h1>
-          <p className="text-muted-foreground mt-2">The blog post you're looking for doesn't exist.</p>
-          <Button asChild className="mt-6">
-            <Link href="/site/blog">Back to Blog</Link>
-          </Button>
-        </div>
+      <div className="flex-grow flex items-center justify-center p-4">
+        <Card className="text-center p-8 shadow-lg">
+            <CardHeader>
+                <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
+                <CardTitle className="text-3xl font-bold">Post Not Found</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground mt-2">The blog post you're looking for doesn't exist or couldn't be loaded.</p>
+                <Button asChild className="mt-6">
+                    <Link href="/site/blog">Back to Blog</Link>
+                </Button>
+            </CardContent>
+        </Card>
       </div>
     );
   }
