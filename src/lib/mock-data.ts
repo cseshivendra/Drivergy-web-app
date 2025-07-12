@@ -202,8 +202,8 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     contact: data.email,
     phone: data.phone,
     gender: data.gender,
-    location: '', // Initially empty, filled in step 2
-    subscriptionPlan: '', // Initially empty
+    location: "N/A", // Default valid value
+    subscriptionPlan: "N/A", // Default valid value
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
     approvalStatus: 'Pending', // Pending profile completion
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
