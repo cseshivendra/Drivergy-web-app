@@ -204,7 +204,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     gender: data.gender,
     location: '', // Initially empty, filled in step 2
     subscriptionPlan: '', // Initially empty
-    registrationTimestamp: new Date().toISOString(),
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
     approvalStatus: 'Pending', // Pending profile completion
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
@@ -212,8 +212,9 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
   };
   
   try {
-    const docRef = await addDoc(collection(db, 'users'), newUser);
-    return { id: docRef.id, ...newUser };
+    const userRef = doc(collection(db, 'users'));
+    await setDoc(userRef, newUser);
+    return { id: userRef.id, ...newUser };
   } catch (error: any) {
     console.error("Error adding customer:", error);
     toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
@@ -270,7 +271,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     location: data.location,
     gender: data.gender,
     subscriptionPlan: "Trainer",
-    registrationTimestamp: new Date().toISOString(),
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
     vehicleInfo: data.trainerVehicleType,
     approvalStatus: 'Pending',
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
@@ -280,8 +281,9 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
   };
 
   try {
-    const docRef = await addDoc(collection(db, 'users'), newTrainer);
-    return { id: docRef.id, ...newTrainer };
+    const userRef = doc(collection(db, 'users'));
+    await setDoc(userRef, newTrainer);
+    return { id: userRef.id, ...newTrainer };
   } catch (error: any) {
     console.error("Error adding trainer:", error);
     toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
