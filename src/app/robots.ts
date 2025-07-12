@@ -15,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
       disallow: ['/app/', '/login/', '/create/'],
     },
     // Specify the location of the sitemap file.
-    sitemap: 'https://drivergy.com/sitemap.xml',
+    sitemap: 'https://drivergy.in/sitemap.xml',
   };
 }

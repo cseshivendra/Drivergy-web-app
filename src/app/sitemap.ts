@@ -6,7 +6,7 @@ import { BlogPost } from '@/types';
 // This file generates a sitemap, which is an XML file that lists the important pages on your website.
 // It helps search engines like Google discover and index your content more efficiently.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://drivergy.com';
+  const baseUrl = 'https://drivergy.in';
 
   // 1. Define static routes that are always present on the site.
   const staticRoutes = [

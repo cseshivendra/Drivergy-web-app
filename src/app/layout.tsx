@@ -13,15 +13,15 @@ export const metadata: Metadata = {
   },
   description: 'Drivergy is a modern platform for driving education in India, connecting students with qualified instructors for car and motorcycle training, RTO assistance, and more.',
   keywords: ['driving school', 'learn to drive', 'RTO test', 'driving license', 'car training', 'motorcycle training', 'Gurugram', 'Delhi NCR'],
-  authors: [{ name: 'Drivergy Team', url: 'https://drivergy.com' }],
+  authors: [{ name: 'Drivergy Team', url: 'https://drivergy.in' }],
   creator: 'Shivendra Singh',
   // Sets the base URL for resolving relative URLs in metadata
-  metadataBase: new URL('https://drivergy.com'),
+  metadataBase: new URL('https://drivergy.in'),
   // Open Graph tags for better social media sharing
   openGraph: {
     title: 'Drivergy - Modern Driving School Platform',
     description: 'The easiest way to learn driving, get your license, and become a safe driver in India.',
-    url: 'https://drivergy.com',
+    url: 'https://drivergy.in',
     siteName: 'Drivergy',
     images: [
       {
