@@ -53,7 +53,12 @@ const MOCK_FAQS: FaqItem[] = [
 ];
 
 
-const generateId = () => doc(collection(db!, 'mock')).id; // Use Firestore's ID generation
+const generateId = () => {
+    if (db) {
+        return doc(collection(db, 'mock')).id; // Use Firestore's ID generation
+    }
+    return Math.random().toString(36).substring(2, 15); // Fallback for when db is null
+};
 
 // Helper to re-hydrate icons after fetching from DB
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
@@ -391,21 +396,22 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
     if (!db) {
         console.warn(`[createListener] Firestore (db) is not initialized. Using hardcoded mock data for ${collectionName}.`);
-        setTimeout(() => callback(mockData), 0);
+        setTimeout(() => callback(mockData), 0); // Use setTimeout to avoid synchronous state updates during render
         return () => {}; // Return an empty unsubscribe function
     }
-    const collectionRef = collection(db, collectionName);
-    const q = orderField 
-        ? query(collectionRef, orderBy(orderField, orderDirection)) 
-        : query(collectionRef);
+    
+    let q = query(collection(db, collectionName));
+    if (orderField) {
+        q = query(q, orderBy(orderField, orderDirection));
+    }
 
     return onSnapshot(q, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
         callback(data);
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
-        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
-        callback([]); // Also return empty array on error to stop loading states.
+        toast({ title: "Connection Error", description: `Could not sync ${collectionName}. Using local data.`, variant: "destructive" });
+        callback(mockData); // Fallback to mock data on error
     });
 };
 
