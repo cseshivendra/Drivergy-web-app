@@ -1,8 +1,9 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { db } from './firebase';
+import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 
@@ -54,10 +55,12 @@ const MOCK_FAQS: FaqItem[] = [
 
 
 const generateId = () => {
+    // Use Firestore's ID generation if available, otherwise fallback to a simple random string.
+    // This ensures that even in mock mode, we can generate unique-enough IDs.
     if (db) {
-        return doc(collection(db, 'mock')).id; // Use Firestore's ID generation
+        return doc(collection(db, 'id-generator')).id;
     }
-    return Math.random().toString(36).substring(2, 15); // Fallback for when db is null
+    return Math.random().toString(36).substring(2, 15);
 };
 
 // Helper to re-hydrate icons after fetching from DB
@@ -394,13 +397,13 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // =================================================================
 
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
-    if (!db) {
-        console.warn(`[createListener] Firestore (db) is not initialized. Using hardcoded mock data for ${collectionName}.`);
-        setTimeout(() => callback(mockData), 0); // Use setTimeout to avoid synchronous state updates during render
+    if (!isFirebaseConfigured()) {
+        console.warn(`[createListener] Firebase is not configured. Using mock data for ${collectionName}.`);
+        setTimeout(() => callback(mockData), 0);
         return () => {}; // Return an empty unsubscribe function
     }
     
-    let q = query(collection(db, collectionName));
+    let q = query(collection(db!, collectionName));
     if (orderField) {
         q = query(q, orderBy(orderField, orderDirection));
     }
@@ -482,8 +485,8 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
 // =================================================================
 
 export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => void) => {
-    if (!db) return () => {};
-    const usersUnsub = onSnapshot(collection(db, 'users'), (snap) => {
+    if (!isFirebaseConfigured()) return () => {};
+    const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
         const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
         const totalInstructors = users.filter(u => u.uniqueId?.startsWith('TR')).length;
@@ -499,11 +502,11 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
         callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings });
     });
 
-    const requestsUnsub = onSnapshot(query(collection(db, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
+    const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRequests: snap.size }));
     });
     
-    const rescheduleUnsub = onSnapshot(query(collection(db, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
+    const rescheduleUnsub = onSnapshot(query(collection(db!, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRescheduleRequests: snap.size }));
     });
 
@@ -515,8 +518,8 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
 };
 
 export const listenToCustomerLessonProgress = (callback: (data: LessonProgressData[]) => void) => {
-    if (!db) return () => {};
-    const q = query(collection(db, 'users'), where('approvalStatus', '==', 'Approved'));
+    if (!isFirebaseConfigured()) return () => {};
+    const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
         const users = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))

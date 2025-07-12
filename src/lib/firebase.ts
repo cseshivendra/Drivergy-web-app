@@ -23,14 +23,14 @@ const firebaseConfig = {
 };
 
 // Centralized check for essential configuration
-function isFirebaseConfigured(config: typeof firebaseConfig): boolean {
-    return !!(config.apiKey && config.authDomain && config.projectId);
+export function isFirebaseConfigured(): boolean {
+    return !!(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId);
 }
 
 let app;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
-let isConfigured = isFirebaseConfigured(firebaseConfig);
+let isConfigured = isFirebaseConfigured();
 
 if (isConfigured) {
     try {
