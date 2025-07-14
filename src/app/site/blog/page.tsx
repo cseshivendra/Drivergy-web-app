@@ -3,7 +3,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,12 +11,6 @@ import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { listenToBlogPosts } from '@/lib/mock-data';
 import type { BlogPost } from '@/types';
-
-export const metadata: Metadata = {
-  title: 'Drivergy Blog',
-  description: 'Your source for RTO exam tips, expert driving tricks, and road safety advice from the Drivergy team.',
-};
-
 
 const POSTS_PER_PAGE = 6;
 
