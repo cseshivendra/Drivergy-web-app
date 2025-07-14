@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import type { Metadata } from 'next';
 import {
     Accordion,
     AccordionContent,
@@ -15,11 +14,6 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { listenToFaqs } from '@/lib/mock-data';
 import type { FaqItem } from '@/types';
-
-export const metadata: Metadata = {
-    title: 'Frequently Asked Questions (FAQ)',
-    description: 'Find answers to common questions about Drivergy services, enrollment, payments, and our driving courses.',
-};
 
 
 export default function FaqPage() {
