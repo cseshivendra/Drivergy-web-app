@@ -436,8 +436,7 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
     if (!isFirebaseConfigured() || !db) {
-        // This is a critical check. If firebase isn't configured, we immediately stop.
-        return () => {}; // Return an empty unsubscribe function.
+        return () => {};
     }
     
     let q = query(collection(db, collectionName));
@@ -450,7 +449,7 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
         callback(data);
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
-        toast({ title: "Connection Error", description: `Could not sync ${collectionName}. Using local data.`, variant: "destructive" });
+        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
     });
 };
 
@@ -467,7 +466,7 @@ export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[])
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => {
     if (!isFirebaseConfigured()) {
         console.warn(`[listenToFaqs] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_FAQS), 50); // Use setTimeout to simulate async fetch
+        setTimeout(() => callback(MOCK_FAQS), 50);
         return () => {};
     }
     return createListener('faqs', callback, undefined, 'asc');
@@ -476,7 +475,7 @@ export const listenToFaqs = (callback: (data: FaqItem[]) => void) => {
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => {
     if (!isFirebaseConfigured()) {
         console.warn(`[listenToBlogPosts] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_BLOG_POSTS), 50); // Use setTimeout to simulate async fetch
+        setTimeout(() => callback(MOCK_BLOG_POSTS), 50);
         return () => {};
     }
     return createListener('blogPosts', callback, 'date', 'desc');
@@ -493,7 +492,7 @@ export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
 
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
             callback(null);
@@ -514,12 +513,11 @@ export const listenToUser = (userId: string, callback: (data: UserProfile | null
 };
 
 export const listenToTrainerStudents = (trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
     const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
 
     const unsubStudents = onSnapshot(studentsQuery, () => {
-        // This is a bit of a trick. When student data changes, we refetch both to keep them in sync.
         Promise.all([getDocs(studentsQuery), getDocs(feedbackQuery)]).then(([studentsSnap, feedbackSnap]) => {
             const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
             const feedback = feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback));
@@ -547,7 +545,7 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
 // =================================================================
 
 export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
         const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
@@ -580,7 +578,7 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
 };
 
 export const listenToCustomerLessonProgress = (callback: (data: LessonProgressData[]) => void) => {
-    if (!isFirebaseConfigured()) return () => {};
+    if (!isFirebaseConfigured() || !db) return () => {};
     const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
         const users = snapshot.docs
