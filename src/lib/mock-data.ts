@@ -202,8 +202,8 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     contact: data.email,
     phone: data.phone,
     gender: data.gender,
-    location: "N/A", // Default valid value
-    subscriptionPlan: "N/A", // Default valid value
+    location: "TBD", // To be determined
+    subscriptionPlan: "None", // Start with no plan
     registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
     approvalStatus: 'Pending', // Pending profile completion
     myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
@@ -434,11 +434,10 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
+const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
     if (!isFirebaseConfigured()) {
-        console.warn(`[createListener] Firebase is not configured. Using mock data for ${collectionName}.`);
-        setTimeout(() => callback(mockData), 50); // Small delay to mimic async fetch
-        return () => {}; // Return an empty unsubscribe function
+        // This case is now handled by the individual listenTo... functions for blog and faqs
+        return () => {};
     }
     
     let q = query(collection(db!, collectionName));
@@ -452,7 +451,6 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
         toast({ title: "Connection Error", description: `Could not sync ${collectionName}. Using local data.`, variant: "destructive" });
-        callback(mockData); // Fallback to mock data on error
     });
 };
 
@@ -463,10 +461,36 @@ export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => cre
 export const listenToAllReferrals = (callback: (data: Referral[]) => void) => createListener('referrals', callback, 'timestamp');
 export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', (data) => callback(reAssignCourseIcons(data)));
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
-export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc', MOCK_FAQS);
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc', MOCK_BLOG_POSTS);
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback, undefined, 'asc', MOCK_SITE_BANNERS);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
+
+// Special listeners for Blog and FAQ to handle mock data fallback correctly
+export const listenToFaqs = (callback: (data: FaqItem[]) => void) => {
+    if (!isFirebaseConfigured()) {
+        console.warn(`[listenToFaqs] Firebase not configured. Using mock data.`);
+        setTimeout(() => callback(MOCK_FAQS), 50);
+        return () => {};
+    }
+    return createListener('faqs', callback, undefined, 'asc');
+};
+
+export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => {
+    if (!isFirebaseConfigured()) {
+        console.warn(`[listenToBlogPosts] Firebase not configured. Using mock data.`);
+        setTimeout(() => callback(MOCK_BLOG_POSTS), 50);
+        return () => {};
+    }
+    return createListener('blogPosts', callback, 'date', 'desc');
+};
+
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
+    if (!isFirebaseConfigured()) {
+        console.warn(`[listenToSiteBanners] Firebase not configured. Using mock data.`);
+        setTimeout(() => callback(MOCK_SITE_BANNERS), 50);
+        return () => {};
+    }
+    return createListener('siteBanners', callback, undefined, 'asc');
+};
+
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
     if (!isFirebaseConfigured()) return () => {};
@@ -783,11 +807,11 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | 
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-  if (!db) {
+  if (!isFirebaseConfigured()) {
     return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
   }
   try {
-    const docRef = doc(db, 'blogPosts', slug);
+    const docRef = doc(db!, 'blogPosts', slug);
     const snapshot = await getDoc(docRef);
     if (!snapshot.exists()) return null;
     return snapshot.data() as BlogPost;
@@ -909,3 +933,5 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
     return [];
   }
 };
+
+    
