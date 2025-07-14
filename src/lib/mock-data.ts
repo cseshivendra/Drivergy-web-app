@@ -435,12 +435,12 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // =================================================================
 
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
-    if (!isFirebaseConfigured()) {
-        // This case is now handled by the individual listenTo... functions for blog and faqs
-        return () => {};
+    if (!isFirebaseConfigured() || !db) {
+        // This is a critical check. If firebase isn't configured, we immediately stop.
+        return () => {}; // Return an empty unsubscribe function.
     }
 
-    let q = query(collection(db!, collectionName));
+    let q = query(collection(db, collectionName));
     if (orderField) {
         q = query(q, orderBy(orderField, orderDirection));
     }
@@ -467,7 +467,7 @@ export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[])
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => {
     if (!isFirebaseConfigured()) {
         console.warn(`[listenToFaqs] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_FAQS), 50);
+        setTimeout(() => callback(MOCK_FAQS), 50); // Use setTimeout to simulate async fetch
         return () => {};
     }
     return createListener('faqs', callback, undefined, 'asc');
@@ -476,7 +476,7 @@ export const listenToFaqs = (callback: (data: FaqItem[]) => void) => {
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => {
     if (!isFirebaseConfigured()) {
         console.warn(`[listenToBlogPosts] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_BLOG_POSTS), 50);
+        setTimeout(() => callback(MOCK_BLOG_POSTS), 50); // Use setTimeout to simulate async fetch
         return () => {};
     }
     return createListener('blogPosts', callback, 'date', 'desc');
@@ -933,4 +933,3 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
         return [];
     }
 };
-
