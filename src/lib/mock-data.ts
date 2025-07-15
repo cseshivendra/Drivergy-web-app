@@ -146,7 +146,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
 };
 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
-  if (!db) return null;
+  if (!db || !userId) return null;
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
@@ -912,7 +912,7 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
   }
 };
 
-export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
+export const fetchReferralsByUserId = async (userId: string | undefined): Promise<Referral[]> => {
   if (!db || !userId) return [];
   try {
     const q = query(collection(db, "referrals"), where("referrerId", "==", userId));

@@ -43,8 +43,6 @@ export default function AppSidebar() {
   useEffect(() => {
     if (pathname.startsWith('/create')) {
       setCreateOpen(true);
-    } else {
-      setCreateOpen(false);
     }
     if (pathname.startsWith('/referrals')) {
       setReferralsOpen(true);
@@ -122,9 +120,9 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         asChild
-                        isActive={pathname === '/referrals'}
+                        isActive={pathname === '/referrals/track'}
                       >
-                        <Link href="/referrals">
+                        <Link href="/referrals/track">
                           <BarChart3 className="mr-2 h-4 w-4" />
                           Track Referrals
                         </Link>
@@ -205,10 +203,10 @@ export default function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === '/referrals'}
+                  isActive={pathname.startsWith('/referrals')}
                   tooltip={{ children: "Referrals", side: "right", align: "center" }}
                 >
-                  <Link href="/referrals">
+                  <Link href="/referrals/track">
                     <Gift />
                     <span>Referrals</span>
                   </Link>
