@@ -6,6 +6,7 @@ import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 // Default mock data for when Firebase is not connected
 const MOCK_SITE_BANNERS: SiteBanner[] = [
@@ -72,8 +73,6 @@ const MOCK_FAQS: FaqItem[] = [
 
 
 const generateId = () => {
-    // Use Firestore's ID generation if available, otherwise fallback to a simple random string.
-    // This ensures that even in mock mode, we can generate unique-enough IDs.
     if (db) {
         return doc(collection(db, 'id-generator')).id;
     }
@@ -94,6 +93,39 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
+export const getOrCreateGoogleUser = async (firebaseUser: FirebaseUser): Promise<UserProfile | null> => {
+    if (!db) return null;
+    const userRef = doc(db, "users", firebaseUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+        return { id: userSnap.id, ...userSnap.data() } as UserProfile;
+    } else {
+        const newUser: Omit<UserProfile, 'id'> = {
+            uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
+            name: firebaseUser.displayName || 'Google User',
+            username: firebaseUser.email || '',
+            contact: firebaseUser.email || '',
+            phone: firebaseUser.phoneNumber || '',
+            gender: 'Prefer not to say',
+            location: 'TBD',
+            subscriptionPlan: 'None',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            approvalStatus: 'Pending',
+            myReferralCode: `${(firebaseUser.displayName || 'USER').split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
+            photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${(firebaseUser.displayName || 'U').charAt(0)}`,
+            totalReferralPoints: 0,
+        };
+        try {
+            await setDoc(userRef, newUser);
+            return { id: userRef.id, ...newUser };
+        } catch(error: any) {
+            console.error("Error creating new Google user:", error);
+            toast({ title: "User Creation Failed", description: error.message, variant: "destructive" });
+            return null;
+        }
+    }
+};
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
     if (!db) return null;
@@ -436,6 +468,10 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 
 const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
     if (!isFirebaseConfigured() || !db) {
+        if (collectionName === 'faqs') callback(MOCK_FAQS as any);
+        else if (collectionName === 'blogPosts') callback(MOCK_BLOG_POSTS as any);
+        else if (collectionName === 'siteBanners') callback(MOCK_SITE_BANNERS as any);
+        else callback([]);
         return () => {};
     }
 
@@ -462,33 +498,9 @@ export const listenToCourses = (callback: (data: Course[]) => void) => createLis
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 
-// Special listeners for Blog and FAQ to handle mock data fallback correctly
-export const listenToFaqs = (callback: (data: FaqItem[]) => void) => {
-    if (!isFirebaseConfigured()) {
-        console.warn(`[listenToFaqs] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_FAQS), 50);
-        return () => {};
-    }
-    return createListener('faqs', callback, undefined, 'asc');
-};
-
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => {
-    if (!isFirebaseConfigured()) {
-        console.warn(`[listenToBlogPosts] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_BLOG_POSTS), 50);
-        return () => {};
-    }
-    return createListener('blogPosts', callback, 'date', 'desc');
-};
-
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
-    if (!isFirebaseConfigured()) {
-        console.warn(`[listenToSiteBanners] Firebase not configured. Using mock data.`);
-        setTimeout(() => callback(MOCK_SITE_BANNERS), 50);
-        return () => {};
-    }
-    return createListener('siteBanners', callback, undefined, 'asc');
-};
+export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
+export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback, undefined, 'asc');
 
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
@@ -805,7 +817,7 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | 
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-    if (!isFirebaseConfigured()) {
+    if (!isFirebaseConfigured() || !db) {
         return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
     }
     try {
