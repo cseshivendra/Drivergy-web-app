@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,19 +29,19 @@ import { useRouter } from 'next/navigation';
 // Helper component for Star Rating input
 const StarRating = ({ rating, setRating, disabled = false }: { rating: number; setRating: (r: number) => void; disabled?: boolean }) => {
   return (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={cn(
-            "h-8 w-8 cursor-pointer transition-colors",
-            rating >= star ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30",
-            !disabled && "hover:text-yellow-300"
-          )}
-          onClick={() => !disabled && setRating(star)}
-        />
-      ))}
-    </div>
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+                key={star}
+                className={cn(
+                    "h-8 w-8 cursor-pointer transition-colors",
+                    rating >= star ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/30",
+                    !disabled && "hover:text-yellow-300"
+                )}
+                onClick={() => !disabled && setRating(star)}
+            />
+        ))}
+      </div>
   );
 };
 
@@ -69,41 +70,41 @@ function FeedbackForm({ profile, onSubmitted }: { profile: UserProfile; onSubmit
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="rating"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Your Rating</FormLabel>
-              <FormControl>
-                <StarRating rating={field.value} setRating={field.onChange} disabled={form.formState.isSubmitting} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="comment"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Your Feedback</FormLabel>
-              <FormControl>
-                <Textarea placeholder={`Share your experience with ${profile.assignedTrainerName}...`} {...field} disabled={form.formState.isSubmitting} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <DialogFooter>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit Feedback"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </Form>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+              control={form.control}
+              name="rating"
+              render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Rating</FormLabel>
+                    <FormControl>
+                      <StarRating rating={field.value} setRating={field.onChange} disabled={form.formState.isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )}
+          />
+          <FormField
+              control={form.control}
+              name="comment"
+              render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Feedback</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder={`Share your experience with ${profile.assignedTrainerName}...`} {...field} disabled={form.formState.isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+              )}
+          />
+          <DialogFooter>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Submit Feedback"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Form>
   );
 }
 
@@ -168,8 +169,8 @@ export default function CustomerDashboard() {
         try {
           lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
         } catch(e) { console.error("Error parsing date:", e)}
-      } 
-      
+      }
+
       setUpcomingLessonDate(lessonDate);
 
       if (lessonDate) {
@@ -209,17 +210,17 @@ export default function CustomerDashboard() {
       setIsSubmitting(false);
     }
   };
-  
+
   const handleUpgradePlan = () => {
     toast({ title: 'Redirecting to Plans', description: 'You can choose a new plan on our main site.' });
     router.push('/site#subscriptions');
   };
-  
+
   const handleCancelPlan = () => {
-     toast({
-        title: 'Cancellation Request Submitted',
-        description: 'We have received your request. Our team will contact you shortly.',
-        variant: 'destructive'
+    toast({
+      title: 'Cancellation Request Submitted',
+      description: 'We have received your request. Our team will contact you shortly.',
+      variant: 'destructive'
     });
   }
 
@@ -230,108 +231,108 @@ export default function CustomerDashboard() {
     let hour24 = parseInt(hours, 10);
     if (period === 'PM' && hour24 !== 12) hour24 += 12;
     if (period === 'AM' && hour24 === 12) hour24 = 0;
-    
+
     const finalNewDate = new Date(newRescheduleDate);
     finalNewDate.setHours(hour24, 0, 0, 0);
 
     setIsSubmitting(true);
     try {
-        await addRescheduleRequest(user.uid, profile.name, upcomingLessonDate, finalNewDate);
-        toast({
-            title: 'Reschedule Request Sent',
-            description: 'Your request has been sent for approval. You will be notified of the outcome.',
-        });
-        setIsRescheduleDialogOpen(false);
-        setIsReschedulable(false);
+      await addRescheduleRequest(user.uid, profile.name, upcomingLessonDate, finalNewDate);
+      toast({
+        title: 'Reschedule Request Sent',
+        description: 'Your request has been sent for approval. You will be notified of the outcome.',
+      });
+      setIsRescheduleDialogOpen(false);
+      setIsReschedulable(false);
     } catch (error) {
-        toast({
-            title: 'Error',
-            description: 'Could not send reschedule request. Please try again.',
-            variant: 'destructive',
-        });
+      toast({
+        title: 'Error',
+        description: 'Could not send reschedule request. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 py-8 space-y-8">
-        <Skeleton className="h-10 w-1/2 mb-8" />
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-64 w-full" />
+        <div className="container mx-auto p-4 py-8 space-y-8">
+          <Skeleton className="h-10 w-1/2 mb-8" />
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-      <header className="mb-8">
-        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-          Welcome, {profile?.name || 'Customer'}!
-        </h1>
-        <p className="text-muted-foreground">Here's an overview of your learning journey with Drivergy.</p>
-      </header>
+      <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+        <header className="mb-8">
+          <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+            Welcome, {profile?.name || 'Customer'}!
+          </h1>
+          <p className="text-muted-foreground">Here's an overview of your learning journey with Drivergy.</p>
+        </header>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {/* Upcoming Lessons Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <CalendarClock className="h-7 w-7 text-primary" />
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {/* Upcoming Lessons Card */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <CalendarClock className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-xl">Upcoming Lesson</CardTitle>
+                  <CardDescription>Your next scheduled session.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl">Upcoming Lesson</CardTitle>
-                <CardDescription>Your next scheduled session.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            {upcomingLessonDate ? (
-              <div className="text-center bg-muted/50 p-4 rounded-lg">
-                  <p className="text-lg font-semibold">{format(upcomingLessonDate, 'eeee, MMM do')}</p>
-                  <p className="text-2xl font-bold text-primary">{format(upcomingLessonDate, 'h:mm a')}</p>
-              </div>
-            ) : (
-                 <p className="text-sm text-center text-muted-foreground">No upcoming lessons scheduled.</p>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button 
-                className="w-full"
-                disabled={!isReschedulable || isSubmitting}
-                onClick={() => setIsRescheduleDialogOpen(true)}
-            >
-              <Repeat className="mr-2 h-4 w-4" />Reschedule
-            </Button>
-          </CardFooter>
-           {!isReschedulable && upcomingLessonDate && (
+            </CardHeader>
+            <CardContent className="flex-grow">
+              {upcomingLessonDate ? (
+                  <div className="text-center bg-muted/50 p-4 rounded-lg">
+                    <p className="text-lg font-semibold">{format(upcomingLessonDate, 'eeee, MMM do')}</p>
+                    <p className="text-2xl font-bold text-primary">{format(upcomingLessonDate, 'h:mm a')}</p>
+                  </div>
+              ) : (
+                  <p className="text-sm text-center text-muted-foreground">No upcoming lessons scheduled.</p>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Button
+                  className="w-full"
+                  disabled={!isReschedulable || isSubmitting}
+                  onClick={() => setIsRescheduleDialogOpen(true)}
+              >
+                <Repeat className="mr-2 h-4 w-4" />Reschedule
+              </Button>
+            </CardFooter>
+            {!isReschedulable && upcomingLessonDate && (
                 <p className="text-xs text-muted-foreground text-center px-6 pb-4">
-                    Lessons can only be rescheduled more than 24 hours in advance.
+                  Lessons can only be rescheduled more than 24 hours in advance.
                 </p>
             )}
-        </Card>
+          </Card>
 
-        {/* My Subscription Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BookOpen className="h-7 w-7 text-primary" />
+          {/* My Subscription Card */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <BookOpen className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-xl">My Subscription</CardTitle>
+                  <CardDescription>Your subscribed plan details.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl">My Subscription</CardTitle>
-                <CardDescription>Your subscribed plan details.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow space-y-4">
+            </CardHeader>
+            <CardContent className="flex-grow space-y-4">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Current Plan:</span>
                 <span className="font-bold text-primary">{profile?.subscriptionPlan}</span>
@@ -347,263 +348,263 @@ export default function CustomerDashboard() {
                 <span className="font-semibold">{profile?.subscriptionStartDate ? format(parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date()), 'dd-MMM-yyyy') : 'N/A'}</span>
               </div>
               <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setIsStartDateDialogOpen(true)}
-                disabled={!isStartDateEditable}
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setIsStartDateDialogOpen(true)}
+                  disabled={!isStartDateEditable}
               >
                 <CalendarClock className="mr-2 h-4 w-4" /> Change Start Date
               </Button>
               {!isStartDateEditable && profile?.subscriptionStartDate && <p className="text-xs text-muted-foreground text-center">Start date can only be changed if it's in the future.</p>}
-          </CardContent>
-          <CardFooter className="grid grid-cols-2 gap-4">
-            <Button 
-                variant="default"
-                onClick={handleUpgradePlan}
-                className="w-full bg-green-600 hover:bg-green-700"
-            >
-              <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade
-            </Button>
-             <Button 
-                variant="destructive"
-                onClick={handleCancelPlan}
-                className="w-full"
-            >
-              <XCircle className="mr-2 h-4 w-4" /> Cancel
-            </Button>
-          </CardFooter>
-        </Card>
+            </CardContent>
+            <CardFooter className="grid grid-cols-2 gap-4">
+              <Button
+                  variant="default"
+                  onClick={handleUpgradePlan}
+                  className="w-full bg-green-600 hover:bg-green-700"
+              >
+                <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade
+              </Button>
+              <Button
+                  variant="destructive"
+                  onClick={handleCancelPlan}
+                  className="w-full"
+              >
+                <XCircle className="mr-2 h-4 w-4" /> Cancel
+              </Button>
+            </CardFooter>
+          </Card>
 
-        {/* My Trainer Card */}
-        {profile?.assignedTrainerName && (
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <UserCheck className="h-7 w-7 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="font-headline text-xl">My Trainer</CardTitle>
-                <CardDescription>Your assigned instructor.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4"/> Name:</span>
-                <span className="font-bold text-foreground">{profile.assignedTrainerName}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground flex items-center"><Phone className="mr-2 h-4 w-4"/> Contact:</span>
-                <span className="font-bold text-foreground">{profile.assignedTrainerPhone || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4"/> Experience:</span>
-                <span className="font-bold text-foreground">{profile.assignedTrainerExperience ? `${profile.assignedTrainerExperience} years` : 'N/A'}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground flex items-center"><Car className="mr-2 h-4 w-4"/> Vehicle:</span>
-                <span className="font-bold text-foreground">{profile.assignedTrainerVehicleDetails || 'N/A'}</span>
-              </div>
-          </CardContent>
-          <CardFooter>
-            <p className="text-xs text-muted-foreground text-center w-full">
-              Contact your trainer for any lesson-specific questions.
-            </p>
-          </CardFooter>
-        </Card>
-        )}
+          {/* My Trainer Card */}
+          {profile?.assignedTrainerName && (
+              <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <UserCheck className="h-7 w-7 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="font-headline text-xl">My Trainer</CardTitle>
+                      <CardDescription>Your assigned instructor.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground flex items-center"><User className="mr-2 h-4 w-4"/> Name:</span>
+                    <span className="font-bold text-foreground">{profile.assignedTrainerName}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground flex items-center"><Phone className="mr-2 h-4 w-4"/> Contact:</span>
+                    <span className="font-bold text-foreground">{profile.assignedTrainerPhone || 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4"/> Experience:</span>
+                    <span className="font-bold text-foreground">{profile.assignedTrainerExperience ? `${profile.assignedTrainerExperience} years` : 'N/A'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground flex items-center"><Car className="mr-2 h-4 w-4"/> Vehicle:</span>
+                    <span className="font-bold text-foreground">{profile.assignedTrainerVehicleDetails || 'N/A'}</span>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <p className="text-xs text-muted-foreground text-center w-full">
+                    Contact your trainer for any lesson-specific questions.
+                  </p>
+                </CardFooter>
+              </Card>
+          )}
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col xl:col-span-2">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BarChart2 className="h-7 w-7 text-primary" />
+          <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col xl:col-span-2">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <BarChart2 className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-xl">Lesson Progress</CardTitle>
+                  <CardDescription>Your completed driving sessions.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl">Lesson Progress</CardTitle>
-                <CardDescription>Your completed driving sessions.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col justify-center space-y-4">
+              <div className="flex justify-between items-baseline">
+                <p className="text-muted-foreground">Progress</p>
+                <p className="text-2xl font-bold text-primary">
+                  {profile?.completedLessons ?? 0} / {profile?.totalLessons ?? 0}
+                </p>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col justify-center space-y-4">
-            <div className="flex justify-between items-baseline">
-              <p className="text-muted-foreground">Progress</p>
-              <p className="text-2xl font-bold text-primary">
-                {profile?.completedLessons ?? 0} / {profile?.totalLessons ?? 0}
-              </p>
-            </div>
-            <Progress value={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100} />
-          </CardContent>
-          <CardFooter>
+              <Progress value={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100} />
+            </CardContent>
+            <CardFooter>
               <p className="text-xs text-muted-foreground text-center w-full">
                 Your trainer marks attendance after each lesson.
               </p>
-          </CardFooter>
-        </Card>
+            </CardFooter>
+          </Card>
 
-        {/* Feedback Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <MessageSquare className="h-7 w-7 text-primary" />
+          {/* Feedback Card */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <MessageSquare className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-xl">Rate Your Trainer</CardTitle>
+                  <CardDescription>Your feedback helps us improve.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl">Rate Your Trainer</CardTitle>
-                <CardDescription>Your feedback helps us improve.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Share your experience with your trainer, {profile?.assignedTrainerName || 'N/A'}.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button
-              className="w-full"
-              onClick={() => setIsFeedbackDialogOpen(true)}
-              disabled={!profile?.assignedTrainerId || profile?.feedbackSubmitted}
-            >
-              {profile?.feedbackSubmitted ? "Feedback Submitted" : "Give Feedback"}
-            </Button>
-          </CardFooter>
-        </Card>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-sm text-muted-foreground mb-4">
+                Share your experience with your trainer, {profile?.assignedTrainerName || 'N/A'}.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button
+                  className="w-full"
+                  onClick={() => setIsFeedbackDialogOpen(true)}
+                  disabled={!profile?.assignedTrainerId || profile?.feedbackSubmitted}
+              >
+                {profile?.feedbackSubmitted ? "Feedback Submitted" : "Give Feedback"}
+              </Button>
+            </CardFooter>
+          </Card>
 
-        {/* RTO Quiz Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <ClipboardCheck className="h-7 w-7 text-primary" />
+          {/* RTO Quiz Card */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <ClipboardCheck className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-xl">RTO Test Quiz</CardTitle>
+                  <CardDescription>Practice for your official test.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl">RTO Test Quiz</CardTitle>
-                <CardDescription>Practice for your official test.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Take our mock tests to build your confidence and knowledge for the RTO exam.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full">
-              <Link href="/rto-quiz">Start Quiz</Link>
-            </Button>
-          </CardFooter>
-        </Card>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-sm text-muted-foreground mb-4">
+                Take our mock tests to build your confidence and knowledge for the RTO exam.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button asChild className="w-full">
+                <Link href="/rto-quiz">Start Quiz</Link>
+              </Button>
+            </CardFooter>
+          </Card>
 
-        {/* Referral Program Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Gift className="h-7 w-7 text-primary" />
+          {/* Referral Program Card */}
+          <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Gift className="h-7 w-7 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-headline text-xl">Referral Program</CardTitle>
+                  <CardDescription>Invite friends and earn rewards.</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-headline text-xl">Referral Program</CardTitle>
-                <CardDescription>Invite friends and earn rewards.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Share your unique referral code with friends. You'll earn points when they sign up and subscribe!
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full">
-              <Link href="/referrals/invite">Go to Referrals</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-      
-      {/* Feedback Dialog */}
-      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Feedback for {profile?.assignedTrainerName}</DialogTitle>
-            <DialogDescription>
-              Let us know how your training experience was. Your feedback is valuable.
-            </DialogDescription>
-          </DialogHeader>
-          {profile && (
-            <FeedbackForm
-              profile={profile}
-              onSubmitted={() => {
-                setIsFeedbackDialogOpen(false);
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Start Date Change Dialog */}
-      <Dialog open={isStartDateDialogOpen} onOpenChange={setIsStartDateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Subscription Start Date</DialogTitle>
-            <DialogDescription>Select a new start date for your plan. This can only be done for future dates.</DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center py-4">
-            <Calendar
-              mode="single"
-              selected={newStartDate}
-              onSelect={setNewStartDate}
-              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsStartDateDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleStartDateChange} disabled={isSubmitting || !newStartDate}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Confirm New Date
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-sm text-muted-foreground mb-4">
+                Share your unique referral code with friends. You'll earn points when they sign up and subscribe!
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button asChild className="w-full">
+                <Link href="/referrals/invite">Go to Referrals</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
 
-      {/* Reschedule Dialog */}
-      <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reschedule Lesson</DialogTitle>
-            <DialogDescription>
-              Select a new date and time for your lesson. Your trainer will need to approve this change.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="flex justify-center">
+        {/* Feedback Dialog */}
+        <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Feedback for {profile?.assignedTrainerName}</DialogTitle>
+              <DialogDescription>
+                Let us know how your training experience was. Your feedback is valuable.
+              </DialogDescription>
+            </DialogHeader>
+            {profile && (
+                <FeedbackForm
+                    profile={profile}
+                    onSubmitted={() => {
+                      setIsFeedbackDialogOpen(false);
+                    }}
+                />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Start Date Change Dialog */}
+        <Dialog open={isStartDateDialogOpen} onOpenChange={setIsStartDateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change Subscription Start Date</DialogTitle>
+              <DialogDescription>Select a new start date for your plan. This can only be done for future dates.</DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center py-4">
               <Calendar
-                mode="single"
-                selected={newRescheduleDate}
-                onSelect={setNewRescheduleDate}
-                disabled={(date) => date <= addDays(new Date(), 1)} // Can only schedule for tomorrow onwards
+                  mode="single"
+                  selected={newStartDate}
+                  onSelect={setNewStartDate}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               />
             </div>
-            <Select value={newRescheduleTime} onValueChange={setNewRescheduleTime}>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsStartDateDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleStartDateChange} disabled={isSubmitting || !newStartDate}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Confirm New Date
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reschedule Dialog */}
+        <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reschedule Lesson</DialogTitle>
+              <DialogDescription>
+                Select a new date and time for your lesson. Your trainer will need to approve this change.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="flex justify-center">
+                <Calendar
+                    mode="single"
+                    selected={newRescheduleDate}
+                    onSelect={setNewRescheduleDate}
+                    disabled={(date) => date <= addDays(new Date(), 1)} // Can only schedule for tomorrow onwards
+                />
+              </div>
+              <Select value={newRescheduleTime} onValueChange={setNewRescheduleTime}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Select a time slot" />
+                  <SelectValue placeholder="Select a time slot" />
                 </SelectTrigger>
                 <SelectContent>
-                    {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
+                  {timeSlots.map(time => <SelectItem key={time} value={time}>{time}</SelectItem>)}
                 </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRescheduleDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleRescheduleRequest} disabled={isSubmitting || !newRescheduleDate || !newRescheduleTime}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Request Reschedule
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRescheduleDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleRescheduleRequest} disabled={isSubmitting || !newRescheduleDate || !newRescheduleTime}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Request Reschedule
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-    </div>
+      </div>
   );
 }
