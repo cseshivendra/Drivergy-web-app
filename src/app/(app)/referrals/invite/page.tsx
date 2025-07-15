@@ -30,7 +30,7 @@ export default function InviteReferralsPage() {
         }
     }, [user]);
 
-    const referralUrl = referralCode ? `https://drivergy.com/site/register?ref=${referralCode}` : '';
+    const referralUrl = referralCode ? `https://drivergy.in/site/register?ref=${referralCode}` : '';
 
     const handleCopy = () => {
         if (!referralUrl) return;
@@ -53,7 +53,7 @@ export default function InviteReferralsPage() {
             case 'facebook':
                 return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
             case 'whatsapp':
-                return `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+                return `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`;
             case 'email':
                 return `mailto:?subject=${encodeURIComponent('Invitation to join Drivergy')}&body=${encodedText}%0A%0A${encodedUrl}`;
         }
@@ -61,20 +61,22 @@ export default function InviteReferralsPage() {
 
     if (loading) {
         return (
-            <div className="container mx-auto max-w-2xl p-4 py-8 space-y-8">
+            <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
                 <Card className="shadow-lg">
-                    <CardHeader className="text-center">
-                        <Skeleton className="h-10 w-10 mx-auto mb-4" />
+                     <CardHeader className="text-center p-6 space-y-2">
+                        <Skeleton className="h-12 w-12 mx-auto rounded-full mb-3" />
                         <Skeleton className="h-8 w-1/2 mx-auto" />
                         <Skeleton className="h-5 w-3/4 mx-auto mt-2" />
                     </CardHeader>
-                    <CardContent className="text-center space-y-6">
-                        <Skeleton className="h-12 w-full max-w-sm mx-auto" />
-                        <Skeleton className="h-10 w-32 mx-auto" />
+                    <CardContent className="text-center space-y-6 p-6">
+                        <Skeleton className="h-6 w-1/2 mx-auto" />
+                        <Skeleton className="h-14 w-full max-w-sm mx-auto" />
+                        <Skeleton className="h-6 w-1/3 mx-auto mt-4" />
                         <div className="flex justify-center gap-4">
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <Skeleton className="h-12 w-12 rounded-full" />
+                            <Skeleton className="h-12 w-12 rounded-full" />
+                            <Skeleton className="h-12 w-12 rounded-full" />
+                            <Skeleton className="h-12 w-12 rounded-full" />
                         </div>
                     </CardContent>
                 </Card>
@@ -111,24 +113,30 @@ export default function InviteReferralsPage() {
                             value={referralUrl || 'Loading...'}
                             className="text-lg font-bold tracking-wide text-center h-14 bg-muted/50 text-primary"
                         />
-                        <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode}>
-                            <Copy className="h-5 w-5" />
+                        <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode} className="h-14 w-14 p-0">
+                            <Copy className="h-6 w-6" />
                         </Button>
                     </div>
                     
-                    <p className="text-muted-foreground">Or share directly on:</p>
+                    <div className="flex items-center space-x-4 my-4">
+                        <div className="flex-grow border-t border-muted"></div>
+                        <span className="text-muted-foreground text-sm font-semibold">OR</span>
+                        <div className="flex-grow border-t border-muted"></div>
+                    </div>
+
+                    <p className="text-muted-foreground">Share directly on:</p>
                     <div className="flex justify-center gap-4">
-                        <Button asChild size="icon" className="rounded-full bg-[#1DA1F2] hover:bg-[#1DA1F2]/90">
-                            <a href={getShareLink('twitter')} target="_blank" rel="noopener noreferrer"><Twitter className="text-white" /></a>
+                        <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#1DA1F2] hover:bg-[#1DA1F2]/90">
+                            <a href={getShareLink('twitter')} target="_blank" rel="noopener noreferrer"><Twitter className="text-white h-6 w-6" /></a>
                         </Button>
-                         <Button asChild size="icon" className="rounded-full bg-[#1877F2] hover:bg-[#1877F2]/90">
-                            <a href={getShareLink('facebook')} target="_blank" rel="noopener noreferrer"><Facebook className="text-white" /></a>
+                         <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#1877F2] hover:bg-[#1877F2]/90">
+                            <a href={getShareLink('facebook')} target="_blank" rel="noopener noreferrer"><Facebook className="text-white h-6 w-6" /></a>
                         </Button>
-                         <Button asChild size="icon" className="rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
-                            <a href={getShareLink('whatsapp')} target="_blank" rel="noopener noreferrer"><MessageSquare className="text-white" /></a>
+                         <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
+                            <a href={getShareLink('whatsapp')} target="_blank" rel="noopener noreferrer"><MessageSquare className="text-white h-6 w-6" /></a>
                         </Button>
-                        <Button asChild size="icon" className="rounded-full bg-gray-500 hover:bg-gray-600">
-                           <a href={getShareLink('email')}><Mail className="text-white" /></a>
+                        <Button asChild size="icon" className="h-14 w-14 rounded-full bg-gray-500 hover:bg-gray-600">
+                           <a href={getShareLink('email')}><Mail className="text-white h-6 w-6" /></a>
                         </Button>
                     </div>
                 </CardContent>

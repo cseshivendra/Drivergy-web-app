@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -45,7 +46,7 @@ export default function AppSidebar() {
     } else {
       setCreateOpen(false);
     }
-    if (pathname.startsWith('/referrals/invite') || pathname.startsWith('/referrals/track')) {
+    if (pathname.startsWith('/referrals')) {
       setReferralsOpen(true);
     }
   }, [pathname]);
@@ -95,7 +96,7 @@ export default function AppSidebar() {
              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setReferralsOpen(!referralsOpen)}
-                  isActive={pathname.startsWith('/referrals/invite') || pathname.startsWith('/referrals/track')}
+                  isActive={pathname.startsWith('/referrals')}
                   tooltip={{ children: "Referrals", side: "right", align: "center" }}
                   className="justify-between"
                 >
@@ -121,9 +122,9 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         asChild
-                        isActive={pathname === '/referrals/track'}
+                        isActive={pathname === '/referrals'}
                       >
-                        <Link href="/referrals/track">
+                        <Link href="/referrals">
                           <BarChart3 className="mr-2 h-4 w-4" />
                           Track Referrals
                         </Link>
