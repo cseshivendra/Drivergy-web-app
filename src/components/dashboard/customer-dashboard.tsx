@@ -274,7 +274,7 @@ export default function CustomerDashboard() {
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
       <header className="mb-8">
         <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-          Welcome, {profile?.name || 'Customer'}!
+          Welcome, {profile ? profile.name : 'Customer'}!
         </h1>
         <p className="text-muted-foreground">Here's an overview of your learning journey with Drivergy.</p>
       </header>
@@ -608,3 +608,5 @@ export default function CustomerDashboard() {
     </div>
   );
 }
+
+    
