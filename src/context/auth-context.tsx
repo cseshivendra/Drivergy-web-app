@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
+import { authenticateUserByCredentials, fetchUserById, getOrCreateGoogleUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 
@@ -34,13 +34,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const profile = await fetchUserById(firebaseUser.uid);
+        const profile = await getOrCreateGoogleUser(firebaseUser);
         if (profile) {
             setUser(profile);
         } else {
-            // This case might happen if a user exists in Auth but not Firestore.
-            // For this app, we'll treat them as logged out.
             setUser(null);
+            toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
+            await firebaseSignOut(auth);
         }
       } else {
         setUser(null);
@@ -68,18 +68,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       router.push('/');
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
-      toast({ title: "Sign-In Failed", description: error.message, variant: "destructive" });
+      // Don't show toast for user-closed popup
+      if (error.code !== 'auth/popup-closed-by-user') {
+          toast({ title: "Sign-In Failed", description: error.message, variant: "destructive" });
+      }
       setLoading(false);
     }
   };
   
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
-    // This method does not create a Firebase Auth session and is intended for development/mock purposes.
-    // Real users should use Google Sign-In for proper authentication with security rules.
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
-      logInUser(userProfile, true); // true to redirect
+      logInUser(userProfile, true); 
       return true;
     }
     setLoading(false);
@@ -93,10 +94,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     setLoading(true);
-    if (auth) {
+    if (auth?.currentUser) {
         await firebaseSignOut(auth);
     }
-    // For credential-based mock users who don't have a firebase auth session
     setUser(null); 
     setLoading(false);
     toast({
@@ -106,7 +106,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/site');
   };
   
-  // This function is for mock/credential login, as Google Sign-In is handled by onAuthStateChanged
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
     setUser(userProfile);
     setLoading(false);

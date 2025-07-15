@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -28,7 +29,7 @@ export default function LoginPage() {
   useEffect(() => {
     setIsMounted(true);
     if (user && !loading) {
-      router.push(redirect || '/site'); // Redirect to intended page or site page after login
+      router.push(redirect || '/'); // Redirect to intended page or dashboard after login
     }
   }, [user, loading, router, redirect]);
 
@@ -40,13 +41,13 @@ export default function LoginPage() {
     }
     const loggedIn = await signInWithCredentials(username, password);
     if (loggedIn) {
-        router.push(redirect || '/site');
+        router.push(redirect || '/');
     }
   };
 
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
-    router.push(redirect || '/site');
+    // The onAuthStateChanged listener in AuthContext will handle the redirect
   }
 
   const GoogleIcon = () => (
