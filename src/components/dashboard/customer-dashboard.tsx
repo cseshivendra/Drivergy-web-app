@@ -115,9 +115,9 @@ const timeSlots = [
 
 export default function CustomerDashboard() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<(UserProfile & { upcomingLesson?: string }) | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [upcomingLessonDate, setUpcomingLessonDate] = useState<Date | null>(null);
   const [isReschedulable, setIsReschedulable] = useState(false);
@@ -133,16 +133,16 @@ export default function CustomerDashboard() {
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
 
   useEffect(() => {
-    if (!user?.uid) {
+    if (!user?.id) {
       setLoading(false);
       return;
     }
 
+    // The user object from useAuth is the primary source of truth.
+    // We listen to changes on that specific user to get real-time updates for the dashboard.
     setLoading(true);
-    const unsubscribe = listenToUser(user.uid, (userProfile) => {
-      if (userProfile) {
-        setProfile(userProfile);
-      }
+    const unsubscribe = listenToUser(user.id, (userProfile) => {
+      setProfile(userProfile);
       setLoading(false);
     });
 
@@ -185,7 +185,7 @@ export default function CustomerDashboard() {
     if (!profile || !newStartDate || !user) return;
     setIsSubmitting(true);
     try {
-      const updatedProfile = await updateSubscriptionStartDate(user.uid, newStartDate);
+      const updatedProfile = await updateSubscriptionStartDate(user.id, newStartDate);
       if (updatedProfile) {
         toast({
           title: 'Start Date Updated',
@@ -237,7 +237,7 @@ export default function CustomerDashboard() {
 
     setIsSubmitting(true);
     try {
-      await addRescheduleRequest(user.uid, profile.name, upcomingLessonDate, finalNewDate);
+      await addRescheduleRequest(user.id, profile.name, upcomingLessonDate, finalNewDate);
       toast({
         title: 'Reschedule Request Sent',
         description: 'Your request has been sent for approval. You will be notified of the outcome.',
@@ -256,7 +256,7 @@ export default function CustomerDashboard() {
   };
 
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
         <div className="container mx-auto p-4 py-8 space-y-8">
           <Skeleton className="h-10 w-1/2 mb-8" />
@@ -274,7 +274,7 @@ export default function CustomerDashboard() {
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <header className="mb-8">
           <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-            Welcome, {profile ? profile.name : 'Customer'}!
+            Welcome, {user?.name || 'Customer'}!
           </h1>
           <p className="text-muted-foreground">Here's an overview of your learning journey with Drivergy.</p>
         </header>
@@ -608,4 +608,3 @@ export default function CustomerDashboard() {
       </div>
   );
 }
-
