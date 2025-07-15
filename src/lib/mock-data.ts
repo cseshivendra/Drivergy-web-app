@@ -913,7 +913,7 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
 };
 
 export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
-    if (!db) return [];
+    if (!db || !userId) return [];
     try {
         const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
         const querySnapshot = await getDocs(q);
@@ -923,6 +923,8 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
         if (referrals.length === 0) return [];
 
         const refereeIds = referrals.map(r => r.refereeId);
+        if(refereeIds.length === 0) return referrals;
+
         const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', refereeIds));
         const usersSnapshot = await getDocs(usersQuery);
         const usersMap = new Map<string, UserProfile>();

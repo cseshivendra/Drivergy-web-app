@@ -1,137 +1,148 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchUserById } from '@/lib/mock-data';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Gift, Copy, Share2, Twitter, Facebook, MessageSquare, Mail } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { fetchReferralsByUserId } from '@/lib/mock-data';
+import type { Referral } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BarChart3, Gift, AlertCircle, User, Star, Calendar, CheckCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
-export default function InviteReferralsPage() {
+const getStatusColor = (status: Referral['status']) => {
+    return status === 'Successful'
+        ? 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300'
+        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
+};
+
+const getPayoutStatusColor = (status: Referral['payoutStatus']) => {
+    switch (status) {
+        case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
+        case 'Paid': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
+        case 'Withdraw to UPI': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
+        default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
+    }
+};
+
+export default function TrackReferralsPage() {
     const { user } = useAuth();
-    const { toast } = useToast();
-    const [referralCode, setReferralCode] = useState<string | null>(null);
+    const [referrals, setReferrals] = useState<Referral[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (user?.uid) {
-            setLoading(true);
-            fetchUserById(user.uid).then(profile => {
-                if (profile && profile.myReferralCode) {
-                    setReferralCode(profile.myReferralCode);
-                }
-                setLoading(false);
-            });
+    const loadReferrals = useCallback(async () => {
+        if (!user?.uid) { // Check for user.uid instead of just user
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        try {
+            const referralData = await fetchReferralsByUserId(user.uid);
+            setReferrals(referralData);
+        } catch (error) {
+            console.error("Error loading referral data:", error);
+        } finally {
+            setLoading(false);
         }
     }, [user]);
 
-    const referralUrl = referralCode ? `https://drivergy.com/site/register?ref=${referralCode}` : '';
+    useEffect(() => {
+        loadReferrals();
+    }, [loadReferrals]);
 
-    const handleCopy = () => {
-        if (!referralUrl) return;
-        navigator.clipboard.writeText(referralUrl);
-        toast({
-            title: "Copied to Clipboard!",
-            description: "Your referral link has been copied.",
-        });
-    };
+    const totalPoints = referrals.reduce((sum, ref) => sum + (ref.status === 'Successful' ? ref.pointsEarned : 0), 0);
 
-    const getShareLink = (platform: 'twitter' | 'facebook' | 'whatsapp' | 'email') => {
-        if (!referralUrl) return '#';
-        const text = `Join Drivergy, the best driving school platform, using my referral link!`;
-        const encodedText = encodeURIComponent(text);
-        const encodedUrl = encodeURIComponent(referralUrl);
-
-        switch(platform) {
-            case 'twitter':
-                return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
-            case 'facebook':
-                return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
-            case 'whatsapp':
-                return `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
-            case 'email':
-                return `mailto:?subject=${encodeURIComponent('Invitation to join Drivergy')}&body=${encodedText}%0A%0A${encodedUrl}`;
-        }
-    }
-
-    if (loading) {
-        return (
-            <div className="container mx-auto max-w-2xl p-4 py-8 space-y-8">
-                <Card className="shadow-lg">
-                    <CardHeader className="text-center">
-                        <Skeleton className="h-10 w-10 mx-auto mb-4" />
-                        <Skeleton className="h-8 w-1/2 mx-auto" />
-                        <Skeleton className="h-5 w-3/4 mx-auto mt-2" />
-                    </CardHeader>
-                    <CardContent className="text-center space-y-6">
-                        <Skeleton className="h-12 w-full max-w-sm mx-auto" />
-                        <Skeleton className="h-10 w-32 mx-auto" />
-                        <div className="flex justify-center gap-4">
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    const renderSkeletons = () => (
+        Array(3).fill(0).map((_, i) => (
+            <TableRow key={`skeleton-${i}`}>
+                <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+            </TableRow>
+        ))
+    );
 
     return (
-        <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
             <Card className="shadow-xl overflow-hidden">
                 <div className="relative h-56 w-full bg-primary/10">
                     <Image
-                        src="https://placehold.co/800x300/f59e0b/ffffff.png"
-                        alt="Referral program banner"
+                        src="https://placehold.co/800x300/10b981/ffffff.png"
+                        alt="Track referrals banner"
                         layout="fill"
                         objectFit="cover"
-                        data-ai-hint="gift friends sharing"
+                        data-ai-hint="dashboard chart growth"
                     />
                     <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
                         <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                            <Gift className="h-10 w-10 text-primary" />
+                            <BarChart3 className="h-10 w-10 text-primary" />
                         </div>
-                        <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Refer & Earn</h1>
+                        <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Track Your Referrals</h1>
                         <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                            Share your referral link with friends and earn points when they subscribe!
+                            See the status of your invites and the points you've earned.
                         </p>
                     </div>
                 </div>
-                <CardContent className="p-6 text-center space-y-6">
-                    <p className="text-muted-foreground">Share your unique referral link:</p>
-                    <div className="flex justify-center items-center gap-2">
-                        <Input
-                            readOnly
-                            value={referralUrl || 'Loading...'}
-                            className="text-lg font-bold tracking-wide text-center h-14 bg-muted/50 text-primary"
-                        />
-                        <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode}>
-                            <Copy className="h-5 w-5" />
-                        </Button>
+                <CardHeader className="flex-row items-center justify-between border-b bg-muted/50 p-4">
+                    <CardTitle className="text-xl">My Referral History</CardTitle>
+                    <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Total Points Earned</p>
+                        <p className="text-2xl font-bold text-primary">{totalPoints}</p>
                     </div>
-
-                    <p className="text-muted-foreground">Or share directly on:</p>
-                    <div className="flex justify-center gap-4">
-                        <Button asChild size="icon" className="rounded-full bg-[#1DA1F2] hover:bg-[#1DA1F2]/90">
-                            <a href={getShareLink('twitter')} target="_blank" rel="noopener noreferrer"><Twitter className="text-white" /></a>
-                        </Button>
-                        <Button asChild size="icon" className="rounded-full bg-[#1877F2] hover:bg-[#1877F2]/90">
-                            <a href={getShareLink('facebook')} target="_blank" rel="noopener noreferrer"><Facebook className="text-white" /></a>
-                        </Button>
-                        <Button asChild size="icon" className="rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
-                            <a href={getShareLink('whatsapp')} target="_blank" rel="noopener noreferrer"><MessageSquare className="text-white" /></a>
-                        </Button>
-                        <Button asChild size="icon" className="rounded-full bg-gray-500 hover:bg-gray-600">
-                            <a href={getShareLink('email')}><Mail className="text-white" /></a>
-                        </Button>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><User className="inline-block mr-2 h-4 w-4" />Referred Friend</TableHead>
+                                    <TableHead><Calendar className="inline-block mr-2 h-4 w-4" />Date</TableHead>
+                                    <TableHead><CheckCircle className="inline-block mr-2 h-4 w-4" />Referral Status</TableHead>
+                                    <TableHead><Gift className="inline-block mr-2 h-4 w-4" />Payout Status</TableHead>
+                                    <TableHead className="text-right"><Star className="inline-block mr-2 h-4 w-4" />Points Earned</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {loading ? renderSkeletons() : referrals.length > 0 ? (
+                                    referrals.map((ref) => (
+                                        <TableRow key={ref.id}>
+                                            <TableCell className="font-medium">{ref.refereeName}</TableCell>
+                                            <TableCell>{new Date(ref.timestamp).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                <Badge className={cn(getStatusColor(ref.status))}>
+                                                    {ref.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge className={cn(getPayoutStatusColor(ref.payoutStatus))}>
+                                                    {ref.payoutStatus}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right font-semibold text-primary">
+                                                {ref.status === 'Successful' ? ref.pointsEarned : 0}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-32 text-center">
+                                            <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                                            You haven't referred anyone yet.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </CardContent>
+                <CardFooter className="bg-muted/50 p-4 border-t">
+                    <p className="text-xs text-muted-foreground">
+                        Points are awarded after your friend successfully subscribes and their account is approved.
+                    </p>
+                </CardFooter>
             </Card>
         </div>
     );
