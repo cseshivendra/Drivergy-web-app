@@ -33,7 +33,10 @@ export default function TrackReferralsPage() {
   const [loading, setLoading] = useState(true);
 
   const loadReferrals = useCallback(async () => {
-    if (!user) return;
+    if (!user?.uid) { // Check for user.uid instead of just user
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const referralData = await fetchReferralsByUserId(user.uid);
