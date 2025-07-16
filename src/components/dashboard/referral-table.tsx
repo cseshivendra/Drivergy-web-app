@@ -19,28 +19,28 @@ import { cn } from '@/lib/utils';
 
 
 interface ReferralTableProps {
-  title: ReactNode;
-  referrals: Referral[];
-  isLoading: boolean;
-  onActioned: () => void;
+    title: ReactNode;
+    referrals: Referral[];
+    isLoading: boolean;
+    onActioned: () => void;
 }
 
 const getPayoutStatusColor = (status: PayoutStatusType) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
-      case 'Paid': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
-      case 'Withdraw to UPI': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
+        case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
+        case 'Paid': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
+        case 'Withdraw to UPI': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
+        default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
     }
 };
 
 const getRefereeStatusColor = (status?: ApprovalStatusType) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300 border-yellow-200';
-      case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300 border-green-200';
-      case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300 border-blue-200';
-      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300 border-red-200';
-      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300 border-gray-200';
+        case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300 border-yellow-200';
+        case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300 border-green-200';
+        case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300 border-blue-200';
+        case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300 border-red-200';
+        default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300 border-gray-200';
     }
 };
 
@@ -55,13 +55,13 @@ const getPlanPrice = (plan?: string): number => {
 };
 
 // Sub-component for displaying the details of a selected referrer's referees
-const RefereeDetailsTable = ({ 
-    referrals, 
-    isLoading, 
-    onActioned,
-    selectedReferrerName 
-}: { 
-    referrals: Referral[]; 
+const RefereeDetailsTable = ({
+                                 referrals,
+                                 isLoading,
+                                 onActioned,
+                                 selectedReferrerName
+                             }: {
+    referrals: Referral[];
     isLoading: boolean;
     onActioned: () => void;
     selectedReferrerName: string | null;
@@ -81,7 +81,7 @@ const RefereeDetailsTable = ({
 
     const handlePreviousPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
     const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  
+
     const handleUpdateStatus = async (referralId: string, newStatus: PayoutStatusType) => {
         const success = await updateReferralPayoutStatus(referralId, newStatus);
         if (success) {
@@ -118,14 +118,14 @@ const RefereeDetailsTable = ({
 
     const renderSkeletons = () => (
         Array(ITEMS_PER_PAGE).fill(0).map((_, index) => (
-          <TableRow key={`skeleton-referee-${index}`}>
-            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-            <TableCell><Skeleton className="h-9 w-24" /></TableCell>
-          </TableRow>
+            <TableRow key={`skeleton-referee-${index}`}>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                <TableCell><Skeleton className="h-9 w-24" /></TableCell>
+            </TableRow>
         ))
     );
 
@@ -157,13 +157,13 @@ const RefereeDetailsTable = ({
                                             <div className="text-xs text-muted-foreground">{ref.refereeUniqueId}</div>
                                         </TableCell>
                                         <TableCell>
-                                          {ref.refereeApprovalStatus ? (
-                                            <Badge variant="outline" className={cn(getRefereeStatusColor(ref.refereeApprovalStatus))}>
-                                              {ref.refereeApprovalStatus}
-                                            </Badge>
-                                          ) : (
-                                            <Badge variant="outline">Unknown</Badge>
-                                          )}
+                                            {ref.refereeApprovalStatus ? (
+                                                <Badge variant="outline" className={cn(getRefereeStatusColor(ref.refereeApprovalStatus))}>
+                                                    {ref.refereeApprovalStatus}
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline">Unknown</Badge>
+                                            )}
                                         </TableCell>
                                         <TableCell>₹{getPlanPrice(ref.refereeSubscriptionPlan).toLocaleString('en-IN')}</TableCell>
                                         <TableCell className="font-semibold text-primary">{ref.pointsEarned}</TableCell>
@@ -195,7 +195,7 @@ const RefereeDetailsTable = ({
                 </div>
             </CardContent>
             {referrals.length > 0 && !isLoading && (
-                 <CardFooter className="flex items-center justify-between pt-4 border-t">
+                <CardFooter className="flex items-center justify-between pt-4 border-t">
                     <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
                     <div className="flex space-x-2">
                         <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>Previous</Button>
@@ -263,8 +263,8 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
                                 <TableBody>
                                     {isLoading ? renderReferrerSkeletons() : referrersSummary.length > 0 ? (
                                         referrersSummary.map(summary => (
-                                            <TableRow 
-                                                key={summary.referrerId} 
+                                            <TableRow
+                                                key={summary.referrerId}
                                                 className={cn(
                                                     "cursor-pointer",
                                                     selectedReferrer?.id === summary.referrerId && "bg-muted hover:bg-muted"
@@ -292,9 +292,9 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
                 {/* Referees Table */}
                 <div className="md:col-span-1">
                     <h3 className="text-lg font-semibold mb-2 flex items-center"><BarChart3 className="mr-2 h-5 w-5 text-primary"/>Referral Details</h3>
-                    <RefereeDetailsTable 
-                        referrals={filteredReferees} 
-                        isLoading={isLoading && !!selectedReferrer} 
+                    <RefereeDetailsTable
+                        referrals={filteredReferees}
+                        isLoading={isLoading && !!selectedReferrer}
                         onActioned={onActioned}
                         selectedReferrerName={selectedReferrer?.name || null}
                     />
