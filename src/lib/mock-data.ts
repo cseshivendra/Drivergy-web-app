@@ -71,6 +71,26 @@ const MOCK_FAQS: FaqItem[] = [
     },
 ];
 
+const MOCK_QUIZ_SETS: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
+    id: `set${i + 1}`,
+    title: `Practice Set ${i + 1}`,
+    questions: Array.from({ length: 15 }, (_, j) => ({
+        id: `q${i * 15 + j + 1}`,
+        question: {
+            en: `This is English question number ${j + 1} for Set ${i + 1}. What should you do at a stop sign?`,
+            hi: `यह सेट ${i + 1} के लिए हिंदी प्रश्न संख्या ${j + 1} है। स्टॉप साइन पर आपको क्या करना चाहिए?`
+        },
+        options: {
+            en: ["Stop completely", "Slow down", "Honk", "Speed up"],
+            hi: ["पूरी तरह रुकें", "धीमे चलें", "हॉर्न बजाएं", "गति बढ़ाएं"]
+        },
+        correctAnswer: {
+            en: "Stop completely",
+            hi: "पूरी तरह रुकें"
+        }
+    }))
+}));
+
 
 const generateId = () => {
     if (db) {
@@ -472,6 +492,7 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
         if (collectionName === 'faqs') callback(MOCK_FAQS as any);
         else if (collectionName === 'blogPosts') callback(MOCK_BLOG_POSTS as any);
         else if (collectionName === 'siteBanners') callback(MOCK_SITE_BANNERS as any);
+        else if (collectionName === 'quizSets') callback(MOCK_QUIZ_SETS as any);
         else callback([]);
         return () => {};
     }
@@ -902,6 +923,24 @@ export const fetchCourses = async (): Promise<Course[]> => {
     }
 };
 
+export const fetchQuizSets = async (): Promise<QuizSet[]> => {
+    if (!isFirebaseConfigured() || !db) return MOCK_QUIZ_SETS;
+    try {
+        const snapshot = await getDocs(collection(db!, "quizSets"));
+        if (snapshot.empty) {
+            console.warn("No quiz sets found in Firestore, returning mock data.");
+            return MOCK_QUIZ_SETS;
+        }
+        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
+        return sets;
+    } catch (error: any) {
+        console.error("Error fetching quiz sets:", error);
+        toast({ title: "Data Fetch Error", description: `Could not fetch quiz sets: ${error.message}`, variant: "destructive" });
+        return MOCK_QUIZ_SETS;
+    }
+};
+
+
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
     if (!db) return [];
     try {
@@ -958,3 +997,4 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
+
