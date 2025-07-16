@@ -406,15 +406,17 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.uid) {
+    // We now use `user.id` which is consistent for all user types.
+    if (user?.id) {
       setLoading(true);
-      fetchUserById(user.uid).then(userProfile => {
+      fetchUserById(user.id).then(userProfile => {
         if (userProfile) {
           setProfile(userProfile);
         }
         setLoading(false);
       });
     } else if (!authLoading) {
+      // If auth is done loading and we still don't have a user, stop loading.
       setLoading(false);
     }
   }, [user, authLoading]);
