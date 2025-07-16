@@ -13,22 +13,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 
 export default function InviteReferralsPage() {
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const [referralCode, setReferralCode] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user?.uid) {
+        if (user?.id) {
             setLoading(true);
-            fetchUserById(user.uid).then(profile => {
+            fetchUserById(user.id).then(profile => {
                 if (profile && profile.myReferralCode) {
                     setReferralCode(profile.myReferralCode);
                 }
                 setLoading(false);
             });
+        } else if (!authLoading) {
+            setLoading(false);
         }
-    }, [user]);
+    }, [user, authLoading]);
 
     const referralUrl = referralCode ? `https://drivergy.in/site/register?ref=${referralCode}` : '';
 
@@ -59,7 +61,7 @@ export default function InviteReferralsPage() {
         }
     }
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
                 <Card className="shadow-lg">
