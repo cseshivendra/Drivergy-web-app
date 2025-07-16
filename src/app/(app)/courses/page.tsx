@@ -20,6 +20,9 @@ export default function CoursesPage() {
     fetchCourses().then(data => {
       setCourses(data);
       setIsLoading(false);
+    }).catch(err => {
+      console.error("Failed to fetch courses:", err);
+      setIsLoading(false);
     });
   }, []);
 
@@ -63,7 +66,9 @@ export default function CoursesPage() {
         <p className="text-center text-muted-foreground text-xl">No courses available at the moment. Please check back later.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-          {courses.map((course) => (
+          {courses.map((course) => {
+            const CourseIcon = course.icon;
+            return (
             <Card key={course.id} className="shadow-xl hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
               {course.image && (
                 <div className="relative h-48 w-full">
@@ -74,9 +79,9 @@ export default function CoursesPage() {
                     objectFit="cover" 
                     data-ai-hint={course.title.toLowerCase().split(' ').slice(0,2).join(' ')} 
                   />
-                   {course.icon && (
+                   {CourseIcon && (
                     <div className="absolute top-4 right-4 bg-background/80 p-2 rounded-full shadow-md">
-                       <course.icon className="h-6 w-6 text-primary" />
+                       <CourseIcon className="h-6 w-6 text-primary" />
                     </div>
                   )}
                 </div>
@@ -101,7 +106,7 @@ export default function CoursesPage() {
                 
                 <div>
                   <h3 className="text-sm font-semibold text-foreground mb-2">Course Modules:</h3>
-                  {course.modules.length > 0 ? (
+                  {course.modules && course.modules.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
                       {course.modules.map((module) => (
                         <AccordionItem value={module.id} key={module.id} className="border-border/50">
@@ -138,7 +143,7 @@ export default function CoursesPage() {
                 </Button>
               </CardFooter>
             </Card>
-          ))}
+          )})}
         </div>
       )}
     </div>

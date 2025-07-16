@@ -82,10 +82,11 @@ const generateId = () => {
 // Helper to re-hydrate icons after fetching from DB
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
     return coursesToHydrate.map(course => {
-        let newIcon = course.icon;
+        let newIcon;
         if (course.id === 'course1') newIcon = Car;
         else if (course.id === 'course2') newIcon = Bike;
         else if (course.id === 'course3') newIcon = FileText;
+        else newIcon = FileText; // Default icon
         return { ...course, icon: newIcon };
     });
 };
@@ -494,7 +495,6 @@ export const listenToAllLessonRequests = (callback: (data: LessonRequest[]) => v
 export const listenToRescheduleRequests = (callback: (data: RescheduleRequest[]) => void) => createListener('rescheduleRequests', callback, 'requestTimestamp');
 export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => createListener('feedback', callback, 'submissionDate');
 export const listenToAllReferrals = (callback: (data: Referral[]) => void) => createListener('referrals', callback, 'timestamp');
-export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', (data) => callback(reAssignCourseIcons(data)));
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 
@@ -888,7 +888,20 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
   }
 }
 
-// These one-time fetches are still needed for pages that don't need real-time updates.
+// This one-time fetch is still needed for pages that don't need real-time updates.
+export const fetchCourses = async (): Promise<Course[]> => {
+    if (!isFirebaseConfigured() || !db) return [];
+    try {
+      const snapshot = await getDocs(collection(db!, "courses"));
+      const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Course);
+      return reAssignCourseIcons(courses);
+    } catch (error: any) {
+      console.error("Error fetching courses:", error);
+      toast({ title: "Data Fetch Error", description: `Could not fetch courses: ${error.message}`, variant: "destructive" });
+      return [];
+    }
+};
+
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
   if (!db) return [];
   try {
