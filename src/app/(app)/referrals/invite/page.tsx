@@ -34,12 +34,12 @@ export default function InviteReferralsPage() {
 
     const referralUrl = referralCode ? `https://drivergy.in/site/register?ref=${referralCode}` : '';
 
-    const handleCopy = () => {
-        if (!referralUrl) return;
-        navigator.clipboard.writeText(referralUrl);
+    const handleCopy = (textToCopy: string, type: 'Link' | 'Code') => {
+        if (!textToCopy) return;
+        navigator.clipboard.writeText(textToCopy);
         toast({
             title: "Copied to Clipboard!",
-            description: "Your referral link has been copied.",
+            description: `Your referral ${type.toLowerCase()} has been copied.`,
         });
     };
 
@@ -108,16 +108,31 @@ export default function InviteReferralsPage() {
                     </div>
                 </div>
                 <CardContent className="p-6 text-center space-y-6">
-                    <p className="text-muted-foreground">Share your unique referral link:</p>
-                    <div className="flex justify-center items-center gap-2">
-                        <Input
-                            readOnly
-                            value={referralUrl || 'Loading...'}
-                            className="text-lg font-bold tracking-wide text-center h-14 bg-muted/50 text-primary"
-                        />
-                        <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode} className="h-14 w-14 p-0">
-                            <Copy className="h-6 w-6" />
-                        </Button>
+                    <div className="space-y-2">
+                        <p className="text-muted-foreground">Share your unique referral link:</p>
+                        <div className="flex justify-center items-center gap-2">
+                            <Input
+                                readOnly
+                                value={referralUrl || 'Loading...'}
+                                className="text-lg font-mono text-center h-14 bg-muted/50 text-primary"
+                            />
+                            <Button size="lg" variant="outline" onClick={() => handleCopy(referralUrl, 'Link')} disabled={!referralCode} className="h-14 w-14 p-0">
+                                <Copy className="h-6 w-6" />
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <p className="text-muted-foreground">Or share your referral code:</p>
+                        <div className="flex justify-center items-center gap-2">
+                            <Input
+                                readOnly
+                                value={referralCode || 'Loading...'}
+                                className="text-xl font-bold tracking-widest text-center h-14 bg-muted/50 text-primary"
+                            />
+                            <Button size="lg" variant="outline" onClick={() => handleCopy(referralCode || '', 'Code')} disabled={!referralCode} className="h-14 w-14 p-0">
+                                <Copy className="h-6 w-6" />
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="flex items-center space-x-4 my-4">
