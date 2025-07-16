@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -8,6 +9,7 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
+import ReferralTable from '@/components/dashboard/referral-table';
 import {
   listenToSummaryData,
   listenToAllUsers,
@@ -21,9 +23,10 @@ import {
   listenToBlogPosts,
   listenToSiteBanners,
   listenToPromotionalPosters,
+  listenToAllReferrals,
 } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster } from '@/types';
-import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen } from 'lucide-react';
+import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral } from '@/types';
+import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -46,6 +49,7 @@ export default function AdminDashboard() {
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
@@ -74,6 +78,7 @@ export default function AdminDashboard() {
       listenToAllLessonRequests(setAllLessonRequests),
       listenToRescheduleRequests(setRescheduleRequests),
       listenToAllFeedback(setFeedback),
+      listenToAllReferrals(setReferrals),
       listenToCustomerLessonProgress(setLessonProgress),
       listenToCourses(setCourses),
       listenToQuizSets(setQuizSets),
@@ -188,6 +193,15 @@ export default function AdminDashboard() {
       </Tabs>
     </>
   );
+
+  const renderReferralsView = () => (
+    <ReferralTable
+        title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Program Management</>}
+        referrals={referrals}
+        isLoading={loading}
+        onActioned={handleActioned}
+    />
+  );
   
   const renderContentView = () => (
     <div className="space-y-8">
@@ -225,12 +239,28 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const renderCurrentTab = () => {
+    switch(activeTab) {
+      case 'content': return renderContentView();
+      case 'referrals': return renderReferralsView();
+      default: return renderDashboardView();
+    }
+  }
+
+  const getPageTitle = () => {
+    switch(activeTab) {
+      case 'content': return 'Content Management';
+      case 'referrals': return 'Referral Management';
+      default: return 'Admin Dashboard';
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-            {activeTab === 'content' ? 'Content Management' : 'Admin Dashboard'}
+            {getPageTitle()}
           </h1>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <Input
@@ -248,7 +278,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         
-        {activeTab === 'content' ? renderContentView() : renderDashboardView()}
+        {renderCurrentTab()}
         
       </main>
     </div>
