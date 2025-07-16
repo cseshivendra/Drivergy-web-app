@@ -105,7 +105,7 @@ const QuizSetComponent = ({ quizSet, onStart, selectedLanguage }: { quizSet: Qui
 
     let correctCount = 0;
     quizSet.questions.forEach((q) => {
-      if (selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage] || q.correctAnswer['en'])) {
+      if (selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage as keyof typeof q.correctAnswer] || q.correctAnswer['en'])) {
         correctCount++;
       }
     });
@@ -165,7 +165,7 @@ const QuizSetComponent = ({ quizSet, onStart, selectedLanguage }: { quizSet: Qui
       {quizSet.questions.map((q, index) => (
         <div key={q.id} className="rounded-lg border p-4 space-y-3 shadow-sm bg-card">
           <p className="font-semibold text-foreground">
-            {index + 1}. {q.question[selectedLanguage] || q.question['en']}
+            {index + 1}. {q.question[selectedLanguage as keyof typeof q.question] || q.question['en']}
           </p>
           <RadioGroup
             value={selectedAnswers[q.id]}
@@ -173,7 +173,7 @@ const QuizSetComponent = ({ quizSet, onStart, selectedLanguage }: { quizSet: Qui
             className="space-y-2"
             disabled={score !== null}
           >
-            {(q.options[selectedLanguage] || q.options['en']).map((option) => (
+            {(q.options[selectedLanguage as keyof typeof q.options] || q.options['en']).map((option) => (
               <div key={option} className="flex items-center space-x-2">
                 <RadioGroupItem value={option} id={`${q.id}-${option}`} />
                 <Label htmlFor={`${q.id}-${option}`} className="cursor-pointer font-normal">
@@ -185,20 +185,20 @@ const QuizSetComponent = ({ quizSet, onStart, selectedLanguage }: { quizSet: Qui
           {score !== null && (
             <div
               className={`mt-2 flex items-center text-sm p-2 rounded-md ${
-                selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage] || q.correctAnswer['en'])
+                selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage as keyof typeof q.correctAnswer] || q.correctAnswer['en'])
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               }`}
             >
-              {selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage] || q.correctAnswer['en']) ? (
+              {selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage as keyof typeof q.correctAnswer] || q.correctAnswer['en']) ? (
                 <CheckCircle className="h-4 w-4 mr-2" />
               ) : (
                 <XCircle className="h-4 w-4 mr-2" />
               )}
               <span>
-                {selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage] || q.correctAnswer['en'])
+                {selectedAnswers[q.id] === (q.correctAnswer[selectedLanguage as keyof typeof q.correctAnswer] || q.correctAnswer['en'])
                   ? 'Correct!'
-                  : `${correctAnsIsText[selectedLanguage as keyof typeof correctAnsIsText] || correctAnsIsText['en']} ${q.correctAnswer[selectedLanguage] || q.correctAnswer['en']}`}
+                  : `${correctAnsIsText[selectedLanguage as keyof typeof correctAnsIsText] || correctAnsIsText['en']} ${q.correctAnswer[selectedLanguage as keyof typeof q.correctAnswer] || q.correctAnswer['en']}`}
               </span>
             </div>
           )}
@@ -268,7 +268,7 @@ export default function AppRtoQuizPage() {
           </Select>
         </div>
         {user ? (
-          <Tabs defaultValue="set1" className="w-full">
+          <Tabs defaultValue={quizSets.length > 0 ? quizSets[0].id : ''} className="w-full">
             <TabsList className="flex h-auto flex-wrap justify-center gap-2">
               {quizSets.map((set) => (
                 <TabsTrigger key={set.id} value={set.id}>
