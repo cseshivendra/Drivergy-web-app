@@ -4,7 +4,7 @@
 import type { User as FirebaseUser } from 'firebase/auth';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { authenticateUserByCredentials, fetchUserById, getOrCreateGoogleUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -60,12 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
-            // onAuthStateChanged will handle setting the user and redirecting.
+            // onAuthStateChanged will handle setting the user. The redirect will be handled by the layout.
             toast({
                 title: `Login Successful!`,
                 description: 'Redirecting to your dashboard...',
             });
-            router.push('/');
+            router.push('/app'); // Redirect to the authenticated app section
         } catch (error: any) {
             console.error("Google Sign-In Error:", error);
             // Don't show toast for user-closed popup
@@ -103,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: 'Logged Out',
             description: 'You have been successfully signed out.',
         });
-        router.push('/site');
+        router.push('/site'); // Redirect to public homepage after sign out
     };
 
     const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
@@ -115,7 +116,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 title: `Welcome, ${userProfile.name}!`,
                 description: 'You are now logged in.',
             });
-            router.push('/');
+            const redirectUrl = searchParams.get('redirect') || '/app';
+            router.push(redirectUrl);
         }
     };
 

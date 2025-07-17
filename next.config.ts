@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/',
-        destination: '/app',
+        destination: '/site',
         permanent: true,
       },
     ];

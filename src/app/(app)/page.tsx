@@ -1,34 +1,29 @@
 
 'use client';
 
-import AuthGuard from '@/components/auth/auth-guard';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/layout/app-sidebar';
-import { SidebarInset } from '@/components/ui/sidebar';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer'; // Import Footer
-import type { ReactNode } from 'react';
+import { useAuth } from '@/context/auth-context';
+import Loading from '@/app/loading';
+import AdminDashboard from '@/components/dashboard/admin-dashboard';
+import CustomerDashboard from '@/components/dashboard/customer-dashboard';
+import TrainerDashboard from '@/components/dashboard/trainer-dashboard';
 
-export default function AuthenticatedAppLayout({
-                                                 children,
-                                               }: {
-  children: ReactNode;
-}) {
-  return (
-      <AuthGuard>
-        <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-screen bg-background">
-            <AppSidebar />
-            <SidebarInset className="flex flex-col flex-1">
-              <Header />
-              <main className="flex-1 overflow-y-auto">
-                {children}
-              </main>
-              <Footer /> {/* Add Footer here */}
-              {/* Toaster is in RootLayout */}
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </AuthGuard>
-  );
+export default function DashboardPage() {
+    const { user, loading } = useAuth();
+
+    if (loading || !user) {
+        return <Loading />;
+    }
+
+    // Check if the uniqueId starts with 'CU' to show customer dashboard
+    if (user.uniqueId && user.uniqueId.startsWith('CU')) {
+        return <CustomerDashboard />;
+    }
+
+    // Check if the uniqueId starts with 'TR' to show trainer dashboard
+    if (user.uniqueId && user.uniqueId.startsWith('TR')) {
+        return <TrainerDashboard />;
+    }
+
+    // Default to Admin Dashboard for guests, Google sign-ins, or other non-customer/trainer roles
+    return <AdminDashboard />;
 }
