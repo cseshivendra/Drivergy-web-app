@@ -17,13 +17,13 @@ import {
   listenToRescheduleRequests,
   listenToAllFeedback,
   listenToCustomerLessonProgress,
-  listenToCourses,
   listenToQuizSets,
   listenToFaqs,
   listenToBlogPosts,
   listenToSiteBanners,
   listenToPromotionalPosters,
   listenToAllReferrals,
+  listenToCourses,
 } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral } from '@/types';
 import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift } from 'lucide-react';

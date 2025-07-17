@@ -553,6 +553,7 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
 };
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
+export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback);
 
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
