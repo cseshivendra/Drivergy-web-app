@@ -40,6 +40,16 @@ export const metadata: Metadata = {
         description: 'The easiest way to learn driving, get your license, and become a safe driver in India.',
         images: ['https://placehold.co/1200x630.png'],
     },
+    icons: {
+        icon: [
+            { url: '/favicon.ico', sizes: 'any' },
+            {
+                url: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>",
+                type: 'image/svg+xml',
+            },
+        ],
+        apple: '/apple-touch-icon.png',
+    },
 };
 
 export default function RootLayout({
@@ -50,7 +60,6 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
         <head>
-            <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22hsl(0,85%,60%)%22></rect><path d=%22M25,65 L25,50 C25,40 35,30 45,30 L55,30 C65,30 75,40 75,50 L75,65 M25,65 L75,65%22 fill=%22none%22 stroke=%22white%22 stroke-width=%2210%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/><circle cx=%2235%22 cy=%2270%22 r=%225%22 fill=%22white%22/><circle cx=%2265%22 cy=%2270%22 r=%225%22 fill=%22white%22/></svg>" />
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />

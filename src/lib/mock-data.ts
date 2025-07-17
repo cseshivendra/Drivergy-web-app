@@ -502,10 +502,7 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
     }
 
     return onSnapshot(q, (snapshot) => {
-        let data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
-        if (collectionName === 'courses') {
-            data = reAssignCourseIcons(data as Course[]) as T[];
-        }
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
         callback(data);
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
@@ -554,9 +551,9 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
         callback(enrichedReferrals);
     });
 };
-export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback, undefined, 'asc');
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
+export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback);
 
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
@@ -1036,4 +1033,3 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
-
