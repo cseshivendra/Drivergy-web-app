@@ -1,7 +1,15 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { Metadata } from 'next';
+
+// Provide metadata specifically for the Not Found page
+export const metadata: Metadata = {
+  title: '404: Page Not Found | Drivergy',
+  description: 'The page you are looking for does not exist.',
+};
 
 export default function NotFound() {
   return (
