@@ -19,7 +19,7 @@ export default function DashboardPage() {
         return <CustomerDashboard />;
     }
 
-    // Check if the uniqueId starts with 'TR' to show trainer dashboards
+    // Check if the uniqueId starts with 'TR' to show trainer dashboard
     if (user.uniqueId && user.uniqueId.startsWith('TR')) {
         return <TrainerDashboard />;
     }
