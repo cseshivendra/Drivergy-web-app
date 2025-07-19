@@ -497,7 +497,6 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
     if (!isFirebaseConfigured() || !db) {
         if (collectionName === 'faqs') callback(MOCK_FAQS as any);
         else if (collectionName === 'blogPosts') callback(MOCK_BLOG_POSTS as any);
-        else if (collectionName === 'siteBanners') callback(MOCK_SITE_BANNERS as any);
         else if (collectionName === 'quizSets') callback(MOCK_QUIZ_SETS as any);
         else callback([]);
         return () => {};
@@ -564,7 +563,12 @@ export const listenToCourses = (callback: (data: Course[]) => void) => createLis
 
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback, undefined, 'asc');
+
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
+    // This listener is now forced to use mock data to ensure the 3 animated banners show on the live site.
+    callback(MOCK_SITE_BANNERS);
+    return () => {}; // Return an empty unsubscribe function as there's no active listener.
+};
 
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
@@ -1040,3 +1044,5 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
     return [];
   }
 };
+
+    
