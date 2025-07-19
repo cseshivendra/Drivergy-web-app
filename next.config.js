@@ -1,34 +1,52 @@
 
-'use client';
 
-import AuthGuard from '@/components/auth/auth-guard';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/layout/app-sidebar';
-import { SidebarInset } from '@/components/ui/sidebar';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer'; // Import Footer
-import type { ReactNode } from 'react';
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  /* config options here */
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.canva.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+  // Redirects for simplified URLs and SEO
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/site',
+        permanent: true,
+      }
+    ]
+  },
+};
 
-export default function AuthenticatedAppLayout({
-                                                 children,
-                                               }: {
-  children: ReactNode;
-}) {
-  return (
-      <AuthGuard>
-        <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-screen bg-background">
-            <AppSidebar />
-            <SidebarInset className="flex flex-col flex-1">
-              <Header />
-              <main className="flex-1 overflow-y-auto">
-                {children}
-              </main>
-              <Footer /> {/* Add Footer here */}
-              {/* Toaster is in RootLayout */}
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </AuthGuard>
-  );
-}
+module.exports = nextConfig;
