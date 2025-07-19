@@ -1,6 +1,7 @@
 
 import { Suspense } from 'react';
 import Loading from '@/app/loading';
+import LoginForm from '@/components/forms/login-form';
 
 // This page now acts as a wrapper for the LoginForm.
 // By using Suspense, we ensure that the client-side hooks within
