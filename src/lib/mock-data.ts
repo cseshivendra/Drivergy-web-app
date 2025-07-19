@@ -23,6 +23,13 @@ const MOCK_SITE_BANNERS: SiteBanner[] = [
       imageSrc: "https://placehold.co/1920x1080/1d4ed8/ffffff.png",
       imageHint: "driving instructor teaching student",
     },
+    {
+      id: "banner-3",
+      title: "Master the Roads with Confidence",
+      description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
+      imageSrc: "https://placehold.co/1920x1080/16a34a/ffffff.png",
+      imageHint: "city traffic modern car",
+    },
 ];
 
 const MOCK_BLOG_POSTS: BlogPost[] = [

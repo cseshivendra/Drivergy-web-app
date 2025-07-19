@@ -141,7 +141,7 @@ export default function PortfolioSitePage() {
     if (heroSlides.length === 0) return;
     const slideInterval = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 3000); // Change slide every 3 seconds
 
     return () => clearInterval(slideInterval);
   }, [heroSlides]);
