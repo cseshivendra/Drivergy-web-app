@@ -47,26 +47,26 @@ export default function AuthenticatedAppLayout({
 =======
 
 export default function AuthenticatedAppLayout({
-                                                 children,
-                                               }: {
+  children,
+}: {
   children: ReactNode;
 }) {
   return (
-      <AuthGuard>
-        <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-screen bg-background">
-            <AppSidebar />
-            <SidebarInset className="flex flex-col flex-1">
-              <Header />
-              <main className="flex-1 overflow-y-auto">
-                {children}
-              </main>
-              <Footer /> {/* Add Footer here */}
-              {/* Toaster is in RootLayout */}
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
-      </AuthGuard>
+    <AuthGuard>
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex min-h-screen bg-background">
+          <AppSidebar />
+          <SidebarInset className="flex flex-col flex-1">
+            <Header />
+            <main className="flex-1 overflow-y-auto">
+             {children}
+            </main>
+            <Footer /> {/* Add Footer here */}
+            {/* Toaster is in RootLayout */}
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    </AuthGuard>
   );
 >>>>>>> parent of 5f6afff (Added the fixes)
 }
