@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from 'react';
 import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,9 +23,6 @@ const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: 
 
 export default function UnifiedRegisterPage() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
-  const searchParams = useSearchParams();
-  // This page is now only for initial registration, not for plan selection.
-  // We remove the logic that auto-selects 'customer' based on URL params.
 
   const handleRoleSelection = (role: 'customer' | 'trainer') => {
     setSelectedRole(role);
