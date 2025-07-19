@@ -45,7 +45,7 @@ export default function ChatWidget() {
     try {
       const input: ChatInput = { 
         query: userMessage,
-        userId: user?.uid 
+        userId: user?.id // Corrected from user.uid to user.id
       };
       const result = await chat(input);
       if (result?.response) {
