@@ -1,7 +1,5 @@
-import RegistrationForm from '@/components/forms/registration-form';
-import { Card, CardContent } from '@/components/ui/card';
-import { User } from 'lucide-react';
-import Image from 'next/image';
+
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
