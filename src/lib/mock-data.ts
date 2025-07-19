@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -514,46 +515,9 @@ export const listenToAllUsers = (callback: (data: UserProfile[]) => void) => cre
 export const listenToAllLessonRequests = (callback: (data: LessonRequest[]) => void) => createListener('lessonRequests', callback, 'requestTimestamp');
 export const listenToRescheduleRequests = (callback: (data: RescheduleRequest[]) => void) => createListener('rescheduleRequests', callback, 'requestTimestamp');
 export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => createListener('feedback', callback, 'submissionDate');
-export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
-    if (!isFirebaseConfigured() || !db) return () => {};
-    const q = query(collection(db, "referrals"), orderBy("timestamp", "desc"));
-    return onSnapshot(q, async (snapshot) => {
-        const referrals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
-        if (referrals.length === 0) {
-            callback([]);
-            return;
-        }
-
-        const refereeIds = [...new Set(referrals.map(r => r.refereeId))].filter(Boolean);
-        if (refereeIds.length === 0) {
-            callback(referrals);
-            return;
-        }
-
-        const usersMap = new Map<string, UserProfile>();
-        // Firestore 'in' query supports up to 30 items. We need to batch if there are more.
-        for (let i = 0; i < refereeIds.length; i += 30) {
-            const batchIds = refereeIds.slice(i, i + 30);
-            const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', batchIds));
-            const usersSnapshot = await getDocs(usersQuery);
-            usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
-        }
-
-        const enrichedReferrals = referrals.map(ref => {
-            const referee = usersMap.get(ref.refereeId);
-            return {
-                ...ref,
-                refereeUniqueId: referee?.uniqueId,
-                refereeSubscriptionPlan: referee?.subscriptionPlan,
-                refereeApprovalStatus: referee?.approvalStatus,
-            };
-        });
-        callback(enrichedReferrals);
-    });
-};
+export const listenToAllReferrals = (callback: (data: Referral[]) => void) => createListener('referrals', callback, 'timestamp');
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
-export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback);
 
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
@@ -1033,3 +997,4 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
+

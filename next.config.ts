@@ -37,16 +37,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Redirects for simplified URLs and SEO
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/site',
-        permanent: true,
-      },
-    ];
-  },
 };
 
 export default nextConfig;

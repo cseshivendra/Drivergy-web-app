@@ -1,12 +1,12 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect import
 import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, UserCog, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { useSearchParams } from 'next/navigation'; // Added useSearchParams import
+import Link from 'next/link'; // Added Link import as it's used in the original code, but was missing in the conflict snippet
 
 const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: React.ElementType, title: string, description: string, onClick: () => void }) => (
     <Card
@@ -23,6 +23,14 @@ const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: 
 
 export default function UnifiedRegisterPage() {
     const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
+    const searchParams = useSearchParams();
+    const planFromUrl = searchParams.get('plan');
+
+    useEffect(() => {
+        if (planFromUrl) {
+            setSelectedRole('customer');
+        }
+    }, [planFromUrl]);
 
     const handleRoleSelection = (role: 'customer' | 'trainer') => {
         setSelectedRole(role);
