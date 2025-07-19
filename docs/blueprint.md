@@ -7,7 +7,7 @@
 - Data Filtering: Allow filtering of customers and instructors by location and subscription plan.
 - Summary Metrics: Display summary metrics: Total registered customers, Total registered instructors, Active subscriptions by location, Pending/active driving lesson requests.
 
-## Style Guidelines:
+## Style Guidelines: As followed
 
 - Primary color: Soft blue (#64B5F6) to evoke a sense of trust and competence.
 - Background color: Light gray (#F5F5F5), nearly white, for a clean and spacious feel.

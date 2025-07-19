@@ -54,6 +54,7 @@ export default function AppSidebar() {
 
   const isDashboardActive = pathname === '/' && !searchParams.get('tab');
   const isContentActive = pathname === '/' && searchParams.get('tab') === 'content';
+  const isReferralsActive = pathname === '/' && searchParams.get('tab') === 'referrals';
 
   return (
       <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
@@ -166,17 +167,6 @@ export default function AppSidebar() {
                           <SidebarMenuSubItem>
                             <SidebarMenuSubButton
                                 asChild
-                                isActive={pathname === '/create/customer'}
-                            >
-                              <Link href="/create/customer">
-                                <User className="mr-2 h-4 w-4" />
-                                New Customer
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                          <SidebarMenuSubItem>
-                            <SidebarMenuSubButton
-                                asChild
                                 isActive={pathname === '/create/trainer'}
                             >
                               <Link href="/create/trainer">
@@ -203,10 +193,10 @@ export default function AppSidebar() {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                         asChild
-                        isActive={pathname.startsWith('/referrals')}
+                        isActive={isReferralsActive}
                         tooltip={{ children: "Referrals", side: "right", align: "center" }}
                     >
-                      <Link href="/referrals/track">
+                      <Link href="/?tab=referrals">
                         <Gift />
                         <span>Referrals</span>
                       </Link>
