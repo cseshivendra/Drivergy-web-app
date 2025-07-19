@@ -31,6 +31,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 // By preparing the data beforehand, we can make all fields required here,
 // which makes the prompt template simpler and more reliable.
 const UserContextSchema = z.object({
+  id: z.string(),
   name: z.string(),
   username: z.string(),
   uniqueId: z.string(),
@@ -132,6 +133,7 @@ const drivergyChatFlow = ai.defineFlow(
     // Prepare a clean user context for the prompt, providing default values.
     // This makes the prompt template much simpler and more robust.
     const userContext = userProfile ? {
+        id: userProfile.id,
         name: userProfile.name,
         username: userProfile.username || 'N/A',
         uniqueId: userProfile.uniqueId,
