@@ -7,7 +7,6 @@ import { SidebarInset } from '@/components/ui/sidebar';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer'; // Import Footer
 import type { ReactNode } from 'react';
-<<<<<<< HEAD
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Loading from '@/app/loading';
@@ -44,7 +43,6 @@ export default function AuthenticatedAppLayout({
             </div>
         </SidebarProvider>
     );
-=======
 
 export default function AuthenticatedAppLayout({
   children,
@@ -68,5 +66,4 @@ export default function AuthenticatedAppLayout({
       </SidebarProvider>
     </AuthGuard>
   );
->>>>>>> parent of 5f6afff (Added the fixes)
 }
