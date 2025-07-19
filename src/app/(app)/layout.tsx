@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -13,8 +12,8 @@ import { useEffect } from 'react';
 import Loading from '@/app/loading';
 
 export default function AuthenticatedAppLayout({
-                                                   children,
-                                               }: {
+    children,
+}: {
     children: ReactNode;
 }) {
     const { user, loading } = useAuth();
