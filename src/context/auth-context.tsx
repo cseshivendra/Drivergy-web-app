@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, getOrCreateGoogleUser } from '@/lib/actions';
+import { authenticateUserByCredentials, fetchUserById } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 
@@ -34,18 +34,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                // Call the server action safely.
+                // After a Firebase user is detected, fetch their profile from our database
+                // This avoids calling server actions directly from the context
                 try {
-                    const profile = await getOrCreateGoogleUser(firebaseUser);
+                    const profile = await fetchUserById(firebaseUser.uid);
                     if (profile) {
                         setUser(profile);
                     } else {
                         setUser(null);
-                        toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
+                        toast({ title: "Login Error", description: "Could not fetch user profile.", variant: "destructive" });
                         await firebaseSignOut(auth);
                     }
                 } catch (error) {
-                    console.error("Error during getOrCreateGoogleUser action:", error);
+                    console.error("Error during fetchUserById:", error);
                     setUser(null);
                     toast({ title: "Login Error", description: "An error occurred while fetching your profile.", variant: "destructive" });
                     await firebaseSignOut(auth);

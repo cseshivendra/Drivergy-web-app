@@ -190,7 +190,16 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
             // Assume it's a Firestore document ID (which is the Firebase Auth UID)
             const userRef = doc(db, "users", userId);
             const userSnap = await getDoc(userRef);
-            if (!userSnap.exists()) return null;
+
+            // This is a new check for Google Sign-in. If user doc doesn't exist, create it.
+            if (!userSnap.exists()) {
+                const firebaseUser = auth?.currentUser;
+                if(firebaseUser && firebaseUser.uid === userId) {
+                    return await getOrCreateGoogleUser(firebaseUser);
+                }
+                return null;
+            }
+
             const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
             if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
                 const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
@@ -1098,5 +1107,3 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
-
-

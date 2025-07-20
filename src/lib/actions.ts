@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -15,7 +16,6 @@ import type {
     FullCustomerDetailsValues,
 } from '@/types';
 import {
-    getOrCreateGoogleUser as _getOrCreateGoogleUser,
     authenticateUserByCredentials as _authenticateUserByCredentials,
     fetchUserById as _fetchUserById,
     addCustomer as _addCustomer,
@@ -25,9 +25,8 @@ import {
     completeCustomerProfile as _completeCustomerProfile,
 } from '@/lib/mock-data';
 
-export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
-    return _getOrCreateGoogleUser(firebaseUser);
-}
+// Note: getOrCreateGoogleUser is intentionally removed from here.
+// It's now handled entirely within mock-data.ts to avoid client-side server function calls.
 
 export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
     return _authenticateUserByCredentials(username, password);
