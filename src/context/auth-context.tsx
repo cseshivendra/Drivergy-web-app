@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, fetchUserById, getOrCreateGoogleUser } from '@/lib/mock-data';
+import { authenticateUserByCredentials, getOrCreateGoogleUser } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 
