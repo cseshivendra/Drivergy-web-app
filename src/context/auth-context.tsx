@@ -34,12 +34,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                const profile = await getOrCreateGoogleUser(firebaseUser);
-                if (profile) {
-                    setUser(profile);
-                } else {
+                // Call the server action safely.
+                try {
+                    const profile = await getOrCreateGoogleUser(firebaseUser);
+                    if (profile) {
+                        setUser(profile);
+                    } else {
+                        setUser(null);
+                        toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
+                        await firebaseSignOut(auth);
+                    }
+                } catch (error) {
+                    console.error("Error during getOrCreateGoogleUser action:", error);
                     setUser(null);
-                    toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
+                    toast({ title: "Login Error", description: "An error occurred while fetching your profile.", variant: "destructive" });
                     await firebaseSignOut(auth);
                 }
             } else {
