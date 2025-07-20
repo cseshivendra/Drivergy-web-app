@@ -175,11 +175,35 @@ export const authenticateUserByCredentials = async (username: string, password: 
 export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
     if (!db || !userId) return null;
     try {
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) return null;
+        let userQuery;
+        // Check if the ID is a Firebase Auth UID or a Drivergy uniqueId
+        if (userId.startsWith('CU-') || userId.startsWith('TR-')) {
+            userQuery = query(collection(db, 'users'), where('uniqueId', '==', userId), limit(1));
+        } else {
+            // Assume it's a Firestore document ID (which is the Firebase Auth UID)
+            const userRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) return null;
+            const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+            if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+                const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
+                if (trainerSnap.exists()) {
+                    const trainer = trainerSnap.data() as UserProfile;
+                    user.assignedTrainerPhone = trainer.phone;
+                    user.assignedTrainerExperience = trainer.yearsOfExperience;
+                    user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+                }
+            }
+            return user;
+        }
 
-        const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+        const querySnapshot = await getDocs(userQuery);
+        if (querySnapshot.empty) {
+            return null;
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const user = { id: userDoc.id, ...userDoc.data() } as UserProfile;
 
         if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
             const trainerRef = doc(db, "users", user.assignedTrainerId);
@@ -1044,4 +1068,5 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
+
 
