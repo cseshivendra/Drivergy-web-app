@@ -6,7 +6,6 @@ import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { uploadFile } from './file-upload';
 
 // Default mock data for when Firebase is not connected
 const MOCK_SITE_BANNERS: SiteBanner[] = [
@@ -242,12 +241,8 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         };
 
         if (data.photo) {
-            const photoURL = await uploadFile(data.photo);
-            if (photoURL) {
-                updateData.photoURL = photoURL;
-            } else {
-                toast({ title: "Upload Failed", description: "Could not upload your profile picture.", variant: "destructive" });
-            }
+            // In a real app, you would upload to Firebase Storage and get a URL
+            updateData.photoURL = URL.createObjectURL(data.photo);
         }
         
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -313,13 +308,6 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
 export const completeCustomerProfile = async (userId: string, data: FullCustomerDetailsValues): Promise<boolean> => {
     if (!db) return false;
     const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
-
-    const photoIdUrl = await uploadFile(data.photoIdFile);
-    if (!photoIdUrl) {
-      toast({ title: "Upload Failed", description: "Could not upload your Photo ID. Please try again.", variant: "destructive" });
-      return false;
-    }
-
     const profileData = {
         subscriptionPlan: data.subscriptionPlan,
         vehicleInfo: data.vehiclePreference,
@@ -335,7 +323,7 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
         dlTypeHeld: data.dlTypeHeld || '',
         photoIdType: data.photoIdType,
         photoIdNumber: data.photoIdNumber,
-        photoIdUrl: photoIdUrl,
+        photoIdUrl: URL.createObjectURL(data.photoIdFile), // Mock URL
         subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
         totalLessons: getLessonsForPlan(data.subscriptionPlan),
         completedLessons: 0,
@@ -356,18 +344,6 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
    if (!db) return null;
-
-   const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-        uploadFile(data.trainerCertificateFile),
-        uploadFile(data.drivingLicenseFile),
-        uploadFile(data.aadhaarCardFile),
-   ]);
-
-   if (!certUrl || !dlUrl || !aadhaarUrl) {
-       toast({ title: "Upload Failed", description: "One or more document uploads failed. Please try again.", variant: "destructive" });
-       return null;
-   }
-
    const newTrainer: Omit<UserProfile, 'id'> = {
     uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
     name: data.name,
@@ -385,10 +361,10 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
     specialization: data.specialization,
     yearsOfExperience: data.yearsOfExperience,
-    // Document URLs
-    trainerCertificateUrl: certUrl,
-    drivingLicenseUrl: dlUrl,
-    aadhaarCardUrl: aadhaarUrl,
+    // Document URLs would be uploaded to storage in a real app
+    trainerCertificateUrl: URL.createObjectURL(data.trainerCertificateFile),
+    drivingLicenseUrl: URL.createObjectURL(data.drivingLicenseFile),
+    aadhaarCardUrl: URL.createObjectURL(data.aadhaarCardFile),
   };
 
   try {
@@ -919,20 +895,7 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
   if (!db) return null;
-  
-  const { imageFile, ...restOfData } = data;
-  let imageUrl = data.imageSrc;
-
-  if (imageFile) {
-      imageUrl = await uploadFile(imageFile);
-      if (!imageUrl) {
-          toast({ title: "Upload Failed", description: "Could not upload blog post image.", variant: "destructive" });
-          return null;
-      }
-  }
-
-  const newPost: BlogPost = { ...restOfData, imageSrc: imageUrl || 'https://placehold.co/1200x800.png' };
-
+  const newPost: BlogPost = { ...data, imageSrc: 'https://placehold.co/1200x800.png' }; // Mock image
   try {
     const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
     const existing = await getDocs(q);
@@ -964,18 +927,9 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
 
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
     if (!db) return false;
-    const { imageFile, ...restOfData } = data;
-    let imageUrl = data.imageSrc;
-    if (imageFile) {
-        imageUrl = await uploadFile(imageFile);
-        if (!imageUrl) {
-            toast({ title: "Upload Failed", description: "Could not upload new blog post image.", variant: "destructive" });
-            return false;
-        }
-    }
     try {
         const docRef = doc(db, 'blogPosts', slug);
-        await updateDoc(docRef, { ...restOfData, imageSrc: imageUrl || data.imageSrc });
+        await updateDoc(docRef, data as any);
         return true;
     } catch(error: any) {
         console.error("Error updating blog post:", error);
@@ -998,17 +952,8 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
 
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
-    let imageUrl = data.imageSrc;
-    if (data.imageFile) {
-        imageUrl = await uploadFile(data.imageFile);
-        if (!imageUrl) {
-             toast({ title: "Upload Failed", description: "Could not upload new banner image.", variant: "destructive" });
-             return false;
-        }
-    }
-    const updateData = { title: data.title, description: data.description, imageSrc: imageUrl, imageHint: data.imageHint };
     try {
-        await updateDoc(doc(db, 'siteBanners', id), updateData);
+        await updateDoc(doc(db, 'siteBanners', id), data as any);
         return true;
     } catch(error: any) {
         console.error("Error updating site banner:", error);
@@ -1019,18 +964,8 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
-    let imageUrl = data.imageSrc;
-    if (data.imageFile) {
-        imageUrl = await uploadFile(data.imageFile);
-        if (!imageUrl) {
-             toast({ title: "Upload Failed", description: "Could not upload new poster image.", variant: "destructive" });
-             return false;
-        }
-    }
-    const updateData = { title: data.title, description: data.description, imageSrc: imageUrl, imageHint: data.imageHint, href: data.href || '#' };
-  
     try {
-        await updateDoc(doc(db, 'promotionalPosters', id), updateData);
+        await updateDoc(doc(db, 'promotionalPosters', id), data as any);
         return true;
     } catch(error: any) {
         console.error("Error updating promotional poster:", error);
