@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { cloudinaryConfig } from './cloudinary';
@@ -14,6 +15,7 @@ import streamifier from 'streamifier';
  * @throws An error if the upload fails.
  */
 export async function uploadFile(file: File, folder: string): Promise<string> {
+    // This will throw an error if config is missing, which will be caught by the calling function.
     await cloudinaryConfig();
 
     return new Promise((resolve, reject) => {
@@ -25,7 +27,7 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
             (error, result) => {
                 if (error) {
                     console.error('Cloudinary upload error:', error);
-                    reject(new Error('File upload failed.'));
+                    reject(new Error('File upload to Cloudinary failed.'));
                 } else if (result) {
                     resolve(result.secure_url);
                 } else {
@@ -40,8 +42,8 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
                 streamifier.createReadStream(Buffer.from(buffer)).pipe(stream);
             })
             .catch(error => {
-                 console.error('Error converting file to buffer:', error);
-                 reject(new Error('Failed to read file for upload.'));
+                console.error('Error converting file to buffer:', error);
+                reject(new Error('Failed to read file for upload.'));
             });
     });
 }
