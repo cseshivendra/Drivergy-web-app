@@ -6,13 +6,6 @@ import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { cloudinaryConfig } from './cloudinary';
-import { uploadFileAndGetURL } from './file-upload';
-
-
-// Configure Cloudinary
-cloudinaryConfig();
-
 
 // Default mock data for when Firebase is not connected
 const MOCK_SITE_BANNERS: SiteBanner[] = [
@@ -107,9 +100,9 @@ const MOCK_QUIZ_SETS: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
 
 const generateId = () => {
     if (db) {
-        return doc(collection(db, 'mock')).id; // Use Firestore's ID generation
+        return doc(collection(db, 'id-generator')).id;
     }
-    return Math.random().toString(36).substring(2, 15); // Fallback for when db is null
+    return Math.random().toString(36).substring(2, 15);
 };
 
 // Helper to re-hydrate icons after fetching from DB
@@ -248,7 +241,8 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         };
 
         if (data.photo) {
-            updateData.photoURL = await uploadFileAndGetURL(data.photo, `profile_photos/${userId}`);
+            // In a real app, upload data.photo to Firebase Storage and get the URL
+            updateData.photoURL = `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`;
         }
 
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -315,32 +309,31 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
     if (!db) return false;
     const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
 
-    try {
-        const photoIdUrl = await uploadFileAndGetURL(data.photoIdFile, `documents/${userId}/photoId`);
-        const profileData = {
-            subscriptionPlan: data.subscriptionPlan,
-            vehicleInfo: data.vehiclePreference,
-            trainerPreference: data.trainerPreference,
-            flatHouseNumber: data.flatHouseNumber,
-            street: data.street,
-            district: data.district,
-            state: data.state,
-            pincode: data.pincode,
-            location: data.district, // Set primary location from district
-            dlStatus: data.dlStatus,
-            dlNumber: data.dlNumber || '',
-            dlTypeHeld: data.dlTypeHeld || '',
-            photoIdType: data.photoIdType,
-            photoIdNumber: data.photoIdNumber,
-            photoIdUrl,
-            subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
-            totalLessons: getLessonsForPlan(data.subscriptionPlan),
-            completedLessons: 0,
-            approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
-        };
+    const profileData = {
+        subscriptionPlan: data.subscriptionPlan,
+        vehicleInfo: data.vehiclePreference,
+        trainerPreference: data.trainerPreference,
+        flatHouseNumber: data.flatHouseNumber,
+        street: data.street,
+        district: data.district,
+        state: data.state,
+        pincode: data.pincode,
+        location: data.district, // Set primary location from district
+        dlStatus: data.dlStatus,
+        dlNumber: data.dlNumber || '',
+        dlTypeHeld: data.dlTypeHeld || '',
+        photoIdType: data.photoIdType,
+        photoIdNumber: data.photoIdNumber,
+        subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
+        totalLessons: getLessonsForPlan(data.subscriptionPlan),
+        completedLessons: 0,
+        approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
+    };
 
+    try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
+        // In a real app, upload data.photoIdFile to Firebase Storage here
         return true;
     } catch (error: any) {
         console.error("Error completing customer profile:", error);
@@ -351,36 +344,26 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
     if (!db) return null;
+    const newTrainer: Omit<UserProfile, 'id'> = {
+        uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
+        name: data.name,
+        username: data.username,
+        password: data.password,
+        contact: data.email,
+        phone: data.phone,
+        location: data.location,
+        gender: data.gender,
+        subscriptionPlan: "Trainer",
+        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+        vehicleInfo: data.trainerVehicleType,
+        approvalStatus: 'Pending',
+        myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
+        photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
+        specialization: data.specialization,
+        yearsOfExperience: data.yearsOfExperience,
+    };
+
     try {
-        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-            uploadFileAndGetURL(data.trainerCertificateFile, `documents/trainers/${data.username}/certificate`),
-            uploadFileAndGetURL(data.drivingLicenseFile, `documents/trainers/${data.username}/driving_license`),
-            uploadFileAndGetURL(data.aadhaarCardFile, `documents/trainers/${data.username}/aadhaar`),
-        ]);
-
-        const newTrainer: Omit<UserProfile, 'id'> = {
-            uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
-            name: data.name,
-            username: data.username,
-            password: data.password,
-            contact: data.email,
-            phone: data.phone,
-            location: data.location,
-            gender: data.gender,
-            subscriptionPlan: "Trainer",
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            vehicleInfo: data.trainerVehicleType,
-            approvalStatus: 'Pending',
-            myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-            photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-            specialization: data.specialization,
-            yearsOfExperience: data.yearsOfExperience,
-            // Document URLs would be saved here
-            // trainerCertificateUrl: certUrl,
-            // drivingLicenseUrl: dlUrl,
-            // aadhaarCardUrl: aadhaarUrl,
-        };
-
         const userRef = doc(collection(db, 'users'));
         await setDoc(userRef, newTrainer);
         return { id: userRef.id, ...newTrainer };
@@ -534,11 +517,13 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc', mockData: T[] = []) => {
-    if (!db) {
-        console.warn(`[createListener] Firestore (db) is not initialized. Using hardcoded mock data for ${collectionName}.`);
-        setTimeout(() => callback(mockData), 0); // Use setTimeout to avoid synchronous state updates during render
-        return () => {}; // Return an empty unsubscribe function
+const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
+    if (!isFirebaseConfigured() || !db) {
+        if (collectionName === 'faqs') callback(MOCK_FAQS as any);
+        else if (collectionName === 'blogPosts') callback(MOCK_BLOG_POSTS as any);
+        else if (collectionName === 'quizSets') callback(MOCK_QUIZ_SETS as any);
+        else callback([]);
+        return () => {};
     }
 
     let q = query(collection(db, collectionName));
@@ -551,8 +536,7 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
         callback(data);
     }, (error) => {
         console.error(`Error listening to ${collectionName}:`, error);
-        toast({ title: "Connection Error", description: `Could not sync ${collectionName}. Using local data.`, variant: "destructive" });
-        callback(mockData); // Fallback to mock data on error
+        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
     });
 };
 
@@ -601,8 +585,8 @@ export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createL
 export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
 export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback);
 
-export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc', MOCK_FAQS);
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc', MOCK_BLOG_POSTS);
+export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
+export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
 
 export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
     // This listener is now forced to use mock data to ensure the 3 animated banners show on the live site.
@@ -908,26 +892,21 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
     if (!db) return null;
     const { imageFile, ...restOfData } = data;
+    const newImageSrc = imageFile ? `https://placehold.co/1200x800.png?text=New` : data.imageSrc;
+    const newPost: BlogPost = { ...restOfData, imageSrc: newImageSrc || 'https://placehold.co/1200x800.png' };
+
     try {
-        let newImageSrc = data.imageSrc;
-        if (imageFile) {
-            newImageSrc = await uploadFileAndGetURL(imageFile, `blog_images/${data.slug}`);
-        }
-
-        const newPost: BlogPost = { ...restOfData, imageSrc: newImageSrc || 'https://placehold.co/1200x800.png' };
-
         const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
         const existing = await getDocs(q);
         if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
         await setDoc(doc(db, 'blogPosts', newPost.slug), newPost);
         return newPost;
-    } catch (error: any) {
+    } catch(error: any) {
         console.error("Error adding blog post:", error);
         toast({ title: "Save Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
-
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
     if (!isFirebaseConfigured() || !db) {
@@ -948,14 +927,10 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
     if (!db) return false;
     const { imageFile, ...restOfData } = data;
+    const newImageSrc = imageFile ? `https://placehold.co/1200x800.png?text=Updated` : data.imageSrc;
     try {
-        let finalImageSrc = data.imageSrc;
-        if (imageFile) {
-            finalImageSrc = await uploadFileAndGetURL(imageFile, `blog_images/${slug}`);
-        }
-
         const docRef = doc(db, 'blogPosts', slug);
-        await updateDoc(docRef, { ...restOfData, imageSrc: finalImageSrc || data.imageSrc });
+        await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
         return true;
     } catch(error: any) {
         console.error("Error updating blog post:", error);
@@ -978,12 +953,9 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
 
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
+    const newImageSrc = data.imageFile ? 'https://placehold.co/1920x1080.png' : data.imageSrc;
+    const updateData = { title: data.title, description: data.description, imageSrc: newImageSrc || 'https://placehold.co/1920x1080.png', imageHint: data.imageHint };
     try {
-        let finalImageSrc = data.imageSrc;
-        if (data.imageFile) {
-            finalImageSrc = await uploadFileAndGetURL(data.imageFile, `site_banners/${id}`);
-        }
-        const updateData = { title: data.title, description: data.description, imageSrc: finalImageSrc, imageHint: data.imageHint };
         await updateDoc(doc(db, 'siteBanners', id), updateData);
         return true;
     } catch(error: any) {
@@ -995,12 +967,10 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
+    const newImageSrc = data.imageFile ? 'https://placehold.co/600x800.png' : data.imageSrc;
+    const updateData = { title: data.title, description: data.description, imageSrc: newImageSrc || 'https://placehold.co/600x800.png', imageHint: data.imageHint, href: data.href || '#' };
+
     try {
-        let finalImageSrc = data.imageSrc;
-        if (data.imageFile) {
-            finalImageSrc = await uploadFileAndGetURL(data.imageFile, `promotional_posters/${id}`);
-        }
-        const updateData = { title: data.title, description: data.description, imageSrc: finalImageSrc, imageHint: data.imageHint, href: data.href || '#' };
         await updateDoc(doc(db, 'promotionalPosters', id), updateData);
         return true;
     } catch(error: any) {
