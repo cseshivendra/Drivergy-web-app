@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -382,7 +383,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
         return { id: userRef.id, ...newTrainer };
     } catch (error: any) {
         console.error("Error adding trainer:", error);
-        if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
+        if (error.message.includes("Cloudinary configuration")) {
             throw new Error("Server configuration error. Cannot upload documents. Please contact support.");
         }
         throw new Error(error.message || "An unexpected error occurred during registration.");
