@@ -63,6 +63,7 @@ export const UserProfileSchema = z.object({
   dlTypeHeld: z.string().optional(),
   photoIdType: z.string().optional(),
   photoIdNumber: z.string().optional(),
+  photoIdUrl: z.string().optional(),
   trainerPreference: z.string().optional(),
   assignedTrainerId: z.string().optional(),
   assignedTrainerName: z.string().optional(),
@@ -80,6 +81,9 @@ export const UserProfileSchema = z.object({
   // Trainer specific
   specialization: z.string().optional(),
   yearsOfExperience: z.number().optional(),
+  trainerCertificateUrl: z.string().optional(),
+  drivingLicenseUrl: z.string().optional(),
+  aadhaarCardUrl: z.string().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approvalStatus>;
