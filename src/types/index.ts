@@ -90,15 +90,13 @@ export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approval
 
 // Registration Forms
 const requiredFileSchema = z
-  .any()
-  .refine((file): file is File => file instanceof File, "File is required.")
-  .refine((file) => file.size > 0, "File is required.")
+  .instanceof(File, { message: "File is required." })
+  .refine((file) => file.size > 0, "File cannot be empty.")
   .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
 
 const optionalFileSchema = z
-  .any()
-  .refine((file): file is File => file === undefined || file instanceof File, "Invalid file type.")
-  .refine((file) => file === undefined || file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
+  .instanceof(File)
+  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
   .optional();
 
 

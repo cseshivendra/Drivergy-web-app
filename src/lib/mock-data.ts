@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -6,6 +7,7 @@ import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
+import { uploadFile } from './file-upload';
 
 // Default mock data for when Firebase is not connected
 const MOCK_SITE_BANNERS: SiteBanner[] = [
@@ -241,8 +243,7 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         };
 
         if (data.photo) {
-            // In a real app, you would upload to Firebase Storage and get a URL
-            updateData.photoURL = URL.createObjectURL(data.photo);
+            updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
         }
         
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -308,6 +309,9 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
 export const completeCustomerProfile = async (userId: string, data: FullCustomerDetailsValues): Promise<boolean> => {
     if (!db) return false;
     const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
+
+    const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
+
     const profileData = {
         subscriptionPlan: data.subscriptionPlan,
         vehicleInfo: data.vehiclePreference,
@@ -323,7 +327,7 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
         dlTypeHeld: data.dlTypeHeld || '',
         photoIdType: data.photoIdType,
         photoIdNumber: data.photoIdNumber,
-        photoIdUrl: URL.createObjectURL(data.photoIdFile), // Mock URL
+        photoIdUrl: photoIdUrl,
         subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
         totalLessons: getLessonsForPlan(data.subscriptionPlan),
         completedLessons: 0,
@@ -333,7 +337,6 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
-        // In a real app, upload data.photoIdFile to Firebase Storage here
         return true;
     } catch (error: any) {
         console.error("Error completing customer profile:", error);
@@ -344,6 +347,13 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
    if (!db) return null;
+
+   const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
+       uploadFile(data.trainerCertificateFile, 'trainer_documents'),
+       uploadFile(data.drivingLicenseFile, 'trainer_documents'),
+       uploadFile(data.aadhaarCardFile, 'trainer_documents'),
+   ]);
+
    const newTrainer: Omit<UserProfile, 'id'> = {
     uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
     name: data.name,
@@ -361,10 +371,9 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
     specialization: data.specialization,
     yearsOfExperience: data.yearsOfExperience,
-    // Document URLs would be uploaded to storage in a real app
-    trainerCertificateUrl: URL.createObjectURL(data.trainerCertificateFile),
-    drivingLicenseUrl: URL.createObjectURL(data.drivingLicenseFile),
-    aadhaarCardUrl: URL.createObjectURL(data.aadhaarCardFile),
+    trainerCertificateUrl: certUrl,
+    drivingLicenseUrl: dlUrl,
+    aadhaarCardUrl: aadhaarUrl,
   };
 
   try {
@@ -895,7 +904,13 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
 
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
   if (!db) return null;
-  const newPost: BlogPost = { ...data, imageSrc: 'https://placehold.co/1200x800.png' }; // Mock image
+  let imageUrl = 'https://placehold.co/1200x800.png';
+  if(data.imageFile) {
+      imageUrl = await uploadFile(data.imageFile, 'blog_images');
+  } else if (data.imageSrc) {
+      imageUrl = data.imageSrc;
+  }
+  const newPost: BlogPost = { ...data, imageSrc: imageUrl };
   try {
     const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
     const existing = await getDocs(q);
@@ -929,7 +944,13 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
     if (!db) return false;
     try {
         const docRef = doc(db, 'blogPosts', slug);
-        await updateDoc(docRef, data as any);
+        const updateData: Partial<BlogPostFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'blog_images');
+        }
+        delete updateData.imageFile;
+
+        await updateDoc(docRef, updateData as any);
         return true;
     } catch(error: any) {
         console.error("Error updating blog post:", error);
@@ -953,7 +974,12 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
     try {
-        await updateDoc(doc(db, 'siteBanners', id), data as any);
+        const updateData: Partial<VisualContentFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        }
+        delete updateData.imageFile;
+        await updateDoc(doc(db, 'siteBanners', id), updateData as any);
         return true;
     } catch(error: any) {
         console.error("Error updating site banner:", error);
@@ -965,7 +991,12 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
     try {
-        await updateDoc(doc(db, 'promotionalPosters', id), data as any);
+        const updateData: Partial<VisualContentFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        }
+        delete updateData.imageFile;
+        await updateDoc(doc(db, 'promotionalPosters', id), updateData as any);
         return true;
     } catch(error: any) {
         console.error("Error updating promotional poster:", error);

@@ -112,7 +112,7 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
               <FormField
                 control={form.control}
                 name="photo"
-                render={({ field: { onChange, ...rest }}) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormControl>
                       <Button asChild variant="outline" className="relative">
@@ -124,18 +124,7 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
                             type="file" 
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer sr-only"
                             accept="image/png, image/jpeg"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  onChange(file);
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    setPreview(reader.result as string);
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                            }}
-                            {...rest}
+                            onChange={handlePhotoChange}
                           />
                         </label>
                       </Button>
