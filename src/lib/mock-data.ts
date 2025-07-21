@@ -339,10 +339,10 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
     } catch (error: any) {
         console.error("Error completing customer profile:", error);
         // Throw a more specific error to be caught in the form component
-        if (error.message.includes("Cloudinary configuration")) {
-            throw new Error("Server configuration error. Please contact support.");
+        if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
+            throw new Error("Cannot upload file: Server storage is not configured. Please contact support.");
         }
-        throw new Error(error.message || "An unexpected error occurred during profile update.");
+        throw new Error("An unexpected error occurred during profile update.");
     }
 };
 
