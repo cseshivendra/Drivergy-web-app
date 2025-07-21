@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +13,9 @@ import { CreditCard, Calendar, Lock, User, QrCode, ShieldCheck, UserPlus, LogIn,
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
+import type { UserProfile } from '@/types';
 
 function PaymentGateway() {
   const router = useRouter();
@@ -27,6 +29,14 @@ function PaymentGateway() {
   const [referralCode, setReferralCode] = useState('');
   const [finalPrice, setFinalPrice] = useState(price);
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+
+  useEffect(() => {
+    // If user's profile is already complete, show payment options directly.
+    if (user && user.pincode && user.dlStatus) {
+        setShowPayment(true);
+    }
+  }, [user]);
 
   const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
     e.preventDefault();
@@ -67,7 +77,7 @@ function PaymentGateway() {
 
   if (!user) {
     const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
-    const registerUrl = `/site/register?plan=${encodeURIComponent(plan)}&price=${price}`;
+    const registerUrl = `/site/register`;
     
     return (
        <Card className="w-full max-w-lg shadow-xl">
@@ -97,6 +107,23 @@ function PaymentGateway() {
         </CardContent>
       </Card>
     )
+  }
+  
+  // If user is logged in, but profile is not complete, show the details form.
+  if (!showPayment) {
+      return (
+          <Card className="w-full max-w-3xl shadow-xl">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl font-bold">Complete Your Profile</CardTitle>
+                <CardDescription>
+                    Please provide the following details to proceed with your <span className="font-semibold text-primary">{plan}</span> plan purchase.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <FullCustomerDetailsForm user={user} onFormSubmit={() => setShowPayment(true)} plan={plan} />
+            </CardContent>
+          </Card>
+      );
   }
 
   return (
@@ -218,7 +245,7 @@ function PaymentGateway() {
 
 export default function PaymentPage() {
   return (
-    <div className="flex items-center justify-center p-4">
+    <div className="flex items-center justify-center p-4 min-h-[calc(100vh-10rem)]">
         <PaymentGateway />
     </div>
   );

@@ -34,15 +34,15 @@ export default function InviteReferralsPage() {
 
     const referralUrl = referralCode ? `https://drivergy.in/site/register?ref=${referralCode}` : '';
 
-    const handleCopy = () => {
-        if (!referralUrl) return;
-        navigator.clipboard.writeText(referralUrl);
+    const handleCopy = (textToCopy: string, type: 'Link' | 'Code') => {
+        if (!textToCopy) return;
+        navigator.clipboard.writeText(textToCopy);
         toast({
             title: "Copied to Clipboard!",
-            description: "Your referral link has been copied.",
+            description: `Your referral ${type.toLowerCase()} has been copied.`,
         });
     };
-
+    
     const getShareLink = (platform: 'twitter' | 'facebook' | 'whatsapp' | 'email') => {
         if (!referralUrl) return '#';
         const text = `Join Drivergy, the best driving school platform, using my referral link!`;
@@ -65,7 +65,7 @@ export default function InviteReferralsPage() {
         return (
             <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
                 <Card className="shadow-lg">
-                    <CardHeader className="text-center p-6 space-y-2">
+                     <CardHeader className="text-center p-6 space-y-2">
                         <Skeleton className="h-12 w-12 mx-auto rounded-full mb-3" />
                         <Skeleton className="h-8 w-1/2 mx-auto" />
                         <Skeleton className="h-5 w-3/4 mx-auto mt-2" />
@@ -108,18 +108,33 @@ export default function InviteReferralsPage() {
                     </div>
                 </div>
                 <CardContent className="p-6 text-center space-y-6">
-                    <p className="text-muted-foreground">Share your unique referral link:</p>
-                    <div className="flex justify-center items-center gap-2">
-                        <Input
-                            readOnly
-                            value={referralUrl || 'Loading...'}
-                            className="text-lg font-bold tracking-wide text-center h-14 bg-muted/50 text-primary"
-                        />
-                        <Button size="lg" variant="outline" onClick={handleCopy} disabled={!referralCode} className="h-14 w-14 p-0">
-                            <Copy className="h-6 w-6" />
-                        </Button>
+                    <div className="space-y-2">
+                        <p className="text-muted-foreground">Share your unique referral link:</p>
+                        <div className="flex justify-center items-center gap-2">
+                            <Input 
+                                readOnly 
+                                value={referralUrl || 'Loading...'}
+                                className="text-lg font-mono text-center h-14 bg-muted/50 text-primary"
+                            />
+                            <Button size="lg" variant="outline" onClick={() => handleCopy(referralUrl, 'Link')} disabled={!referralCode} className="h-14 w-14 p-0">
+                                <Copy className="h-6 w-6" />
+                            </Button>
+                        </div>
                     </div>
-
+                     <div className="space-y-2">
+                        <p className="text-muted-foreground">Or share your referral code:</p>
+                        <div className="flex justify-center items-center gap-2">
+                            <Input 
+                                readOnly 
+                                value={referralCode || 'Loading...'}
+                                className="text-xl font-bold tracking-widest text-center h-14 bg-muted/50 text-primary"
+                            />
+                            <Button size="lg" variant="outline" onClick={() => handleCopy(referralCode || '', 'Code')} disabled={!referralCode} className="h-14 w-14 p-0">
+                                <Copy className="h-6 w-6" />
+                            </Button>
+                        </div>
+                    </div>
+                    
                     <div className="flex items-center space-x-4 my-4">
                         <div className="flex-grow border-t border-muted"></div>
                         <span className="text-muted-foreground text-sm font-semibold">OR</span>
@@ -131,14 +146,14 @@ export default function InviteReferralsPage() {
                         <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#1DA1F2] hover:bg-[#1DA1F2]/90">
                             <a href={getShareLink('twitter')} target="_blank" rel="noopener noreferrer"><Twitter className="text-white h-6 w-6" /></a>
                         </Button>
-                        <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#1877F2] hover:bg-[#1877F2]/90">
+                         <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#1877F2] hover:bg-[#1877F2]/90">
                             <a href={getShareLink('facebook')} target="_blank" rel="noopener noreferrer"><Facebook className="text-white h-6 w-6" /></a>
                         </Button>
-                        <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
+                         <Button asChild size="icon" className="h-14 w-14 rounded-full bg-[#25D366] hover:bg-[#25D366]/90">
                             <a href={getShareLink('whatsapp')} target="_blank" rel="noopener noreferrer"><MessageSquare className="text-white h-6 w-6" /></a>
                         </Button>
                         <Button asChild size="icon" className="h-14 w-14 rounded-full bg-gray-500 hover:bg-gray-600">
-                            <a href={getShareLink('email')}><Mail className="text-white h-6 w-6" /></a>
+                           <a href={getShareLink('email')}><Mail className="text-white h-6 w-6" /></a>
                         </Button>
                     </div>
                 </CardContent>

@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -6,74 +7,75 @@ import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
+import { uploadFile } from './file-upload';
 
 // Default mock data for when Firebase is not connected
 const MOCK_SITE_BANNERS: SiteBanner[] = [
     {
-        id: "banner-1",
-        title: "Start Your Driving Journey Today",
-        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
-        imageSrc: "https://placehold.co/1920x1080/dc2626/ffffff.png",
-        imageHint: "driving road car sunset",
+      id: "banner-1",
+      title: "Start Your Driving Journey Today",
+      description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
+      imageSrc: "https://placehold.co/1920x1080/dc2626/ffffff.png",
+      imageHint: "driving road car sunset",
     },
     {
-        id: "banner-2",
-        title: "Become a Certified Driving Trainer",
-        description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
-        imageSrc: "https://placehold.co/1920x1080/1d4ed8/ffffff.png",
-        imageHint: "driving instructor teaching student",
+      id: "banner-2",
+      title: "Become a Certified Driving Trainer",
+      description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
+      imageSrc: "https://placehold.co/1920x1080/1d4ed8/ffffff.png",
+      imageHint: "driving instructor teaching student",
     },
     {
-        id: "banner-3",
-        title: "Master the Roads with Confidence",
-        description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
-        imageSrc: "https://placehold.co/1920x1080/16a34a/ffffff.png",
-        imageHint: "city traffic modern car",
+      id: "banner-3",
+      title: "Master the Roads with Confidence",
+      description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
+      imageSrc: "https://placehold.co/1920x1080/16a34a/ffffff.png",
+      imageHint: "city traffic modern car",
     },
 ];
 
 const MOCK_BLOG_POSTS: BlogPost[] = [
     {
-        slug: "mastering-the-three-point-turn",
-        title: "Mastering the Three-Point Turn: A Step-by-Step Guide",
-        category: "Driving Tips",
-        excerpt: "The three-point turn is a fundamental driving maneuver. This guide breaks it down into simple, easy-to-follow steps.",
-        content: "The three-point turn can be intimidating, but it's an essential skill for every driver. It allows you to turn a vehicle around in a narrow space. Here's how to do it safely: 1. Signal and pull over to the right side of the road. 2. Signal left, check mirrors and blind spots. 3. Turn the steering wheel fully to the left and move forward slowly until you are close to the opposite curb. 4. Put the car in reverse, turn the wheel fully to the right, and back up until you have enough space to move forward. 5. Shift to drive, turn the wheel left, and straighten out in your new direction of travel. Practice makes perfect!",
-        author: "Priya Sharma",
-        date: "August 15, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "driving maneuver car",
-        tags: "driving, tips, maneuver, test",
+      slug: "mastering-the-three-point-turn",
+      title: "Mastering the Three-Point Turn: A Step-by-Step Guide",
+      category: "Driving Tips",
+      excerpt: "The three-point turn is a fundamental driving maneuver. This guide breaks it down into simple, easy-to-follow steps.",
+      content: "The three-point turn can be intimidating, but it's an essential skill for every driver. It allows you to turn a vehicle around in a narrow space. Here's how to do it safely: 1. Signal and pull over to the right side of the road. 2. Signal left, check mirrors and blind spots. 3. Turn the steering wheel fully to the left and move forward slowly until you are close to the opposite curb. 4. Put the car in reverse, turn the wheel fully to the right, and back up until you have enough space to move forward. 5. Shift to drive, turn the wheel left, and straighten out in your new direction of travel. Practice makes perfect!",
+      author: "Priya Sharma",
+      date: "August 15, 2024",
+      imageSrc: "https://placehold.co/1200x800.png",
+      imageHint: "driving maneuver car",
+      tags: "driving, tips, maneuver, test",
     },
     {
-        slug: "passing-your-rto-exam",
-        title: "Top 5 Tips for Passing Your RTO Exam on the First Try",
-        category: "RTO Exams",
-        excerpt: "Don't let the RTO exam intimidate you. Follow these five expert tips to ensure you're fully prepared for success.",
-        content: "Passing your RTO exam is your ticket to freedom on the road. To boost your chances: 1. Study the official manual thoroughly. 2. Take as many mock tests as you can, like the ones offered by Drivergy. 3. Understand traffic signs and signals completely, not just memorize them. 4. On the day of the test, stay calm and get a good night's sleep. 5. During the practical test, remember to check your mirrors frequently and use your signals for every turn.",
-        author: "Rohan Verma",
-        date: "August 10, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "exam test paper",
-        tags: "rto, exam, license, driving test",
+      slug: "passing-your-rto-exam",
+      title: "Top 5 Tips for Passing Your RTO Exam on the First Try",
+      category: "RTO Exams",
+      excerpt: "Don't let the RTO exam intimidate you. Follow these five expert tips to ensure you're fully prepared for success.",
+      content: "Passing your RTO exam is your ticket to freedom on the road. To boost your chances: 1. Study the official manual thoroughly. 2. Take as many mock tests as you can, like the ones offered by Drivergy. 3. Understand traffic signs and signals completely, not just memorize them. 4. On the day of the test, stay calm and get a good night's sleep. 5. During the practical test, remember to check your mirrors frequently and use your signals for every turn.",
+      author: "Rohan Verma",
+      date: "August 10, 2024",
+      imageSrc: "https://placehold.co/1200x800.png",
+      imageHint: "exam test paper",
+      tags: "rto, exam, license, driving test",
     },
 ];
 
 const MOCK_FAQS: FaqItem[] = [
     {
-        id: "faq1",
-        question: "What documents do I need to enroll?",
-        answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
+      id: "faq1",
+      question: "What documents do I need to enroll?",
+      answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
     },
     {
-        id: "faq2",
-        question: "Can I choose my instructor?",
-        answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
+      id: "faq2",
+      question: "Can I choose my instructor?",
+      answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
     },
     {
-        id: "faq3",
-        question: "How do I book a driving lesson slot?",
-        answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
+      id: "faq3",
+      question: "How do I book a driving lesson slot?",
+      answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
     },
 ];
 
@@ -162,7 +164,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) return null;
-
+        
         const userDoc = querySnapshot.docs[0];
         return { id: userDoc.id, ...userDoc.data() } as UserProfile;
     } catch (error: any) {
@@ -241,10 +243,9 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         };
 
         if (data.photo) {
-            // In a real app, upload data.photo to Firebase Storage and get the URL
-            updateData.photoURL = `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`;
+            updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
         }
-
+        
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
         await updateDoc(userRef, updateData);
@@ -258,56 +259,58 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
 };
 
 export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
-    if (!db) return false;
-    try {
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists() || userSnap.data().password !== currentPassword) {
-            return false;
-        }
-        await updateDoc(userRef, { password: newPassword });
-        return true;
-    } catch (error: any) {
-        console.error("Error changing password:", error);
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-        return false;
+  if (!db) return false;
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists() || userSnap.data().password !== currentPassword) {
+      return false;
     }
+    await updateDoc(userRef, { password: newPassword });
+    return true;
+  } catch (error: any) {
+    console.error("Error changing password:", error);
+    toast({ title: "Error", description: error.message, variant: "destructive" });
+    return false;
+  }
 };
 
 export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile | null> => {
-    if (!db) return null;
+  if (!db) return null;
 
-    const newUser: Omit<UserProfile, 'id'> = {
-        uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
-        name: data.name,
-        username: data.username,
-        password: data.password,
-        contact: data.email,
-        phone: data.phone,
-        gender: data.gender,
-        location: "TBD", // To be determined
-        subscriptionPlan: "None", // Start with no plan
-        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-        approvalStatus: 'Pending', // Pending profile completion
-        myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-        photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-        totalReferralPoints: 0,
-    };
-
-    try {
-        const userRef = doc(collection(db, 'users'));
-        await setDoc(userRef, newUser);
-        return { id: userRef.id, ...newUser };
-    } catch (error: any) {
-        console.error("Error adding customer:", error);
-        toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
+  const newUser: Omit<UserProfile, 'id'> = {
+    uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
+    name: data.name,
+    username: data.username,
+    password: data.password,
+    contact: data.email,
+    phone: data.phone,
+    gender: data.gender,
+    location: "TBD", // To be determined
+    subscriptionPlan: "None", // Start with no plan
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+    approvalStatus: 'Pending', // Pending profile completion
+    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
+    photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
+    totalReferralPoints: 0,
+  };
+  
+  try {
+    const userRef = doc(collection(db, 'users'));
+    await setDoc(userRef, newUser);
+    return { id: userRef.id, ...newUser };
+  } catch (error: any) {
+    console.error("Error adding customer:", error);
+    toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
+    return null;
+  }
 };
 
 export const completeCustomerProfile = async (userId: string, data: FullCustomerDetailsValues): Promise<boolean> => {
     if (!db) return false;
     const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
+
+    const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
 
     const profileData = {
         subscriptionPlan: data.subscriptionPlan,
@@ -324,6 +327,7 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
         dlTypeHeld: data.dlTypeHeld || '',
         photoIdType: data.photoIdType,
         photoIdNumber: data.photoIdNumber,
+        photoIdUrl: photoIdUrl,
         subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
         totalLessons: getLessonsForPlan(data.subscriptionPlan),
         completedLessons: 0,
@@ -333,7 +337,6 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
-        // In a real app, upload data.photoIdFile to Firebase Storage here
         return true;
     } catch (error: any) {
         console.error("Error completing customer profile:", error);
@@ -343,35 +346,45 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
 };
 
 export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
-    if (!db) return null;
-    const newTrainer: Omit<UserProfile, 'id'> = {
-        uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
-        name: data.name,
-        username: data.username,
-        password: data.password,
-        contact: data.email,
-        phone: data.phone,
-        location: data.location,
-        gender: data.gender,
-        subscriptionPlan: "Trainer",
-        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-        vehicleInfo: data.trainerVehicleType,
-        approvalStatus: 'Pending',
-        myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-        photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-        specialization: data.specialization,
-        yearsOfExperience: data.yearsOfExperience,
-    };
+   if (!db) return null;
 
-    try {
-        const userRef = doc(collection(db, 'users'));
-        await setDoc(userRef, newTrainer);
-        return { id: userRef.id, ...newTrainer };
-    } catch (error: any) {
-        console.error("Error adding trainer:", error);
-        toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
+   const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
+       uploadFile(data.trainerCertificateFile, 'trainer_documents'),
+       uploadFile(data.drivingLicenseFile, 'trainer_documents'),
+       uploadFile(data.aadhaarCardFile, 'trainer_documents'),
+   ]);
+
+   const newTrainer: Omit<UserProfile, 'id'> = {
+    uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
+    name: data.name,
+    username: data.username,
+    password: data.password,
+    contact: data.email,
+    phone: data.phone,
+    location: data.location,
+    gender: data.gender,
+    subscriptionPlan: "Trainer",
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+    vehicleInfo: data.trainerVehicleType,
+    approvalStatus: 'Pending',
+    myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
+    photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
+    specialization: data.specialization,
+    yearsOfExperience: data.yearsOfExperience,
+    trainerCertificateUrl: certUrl,
+    drivingLicenseUrl: dlUrl,
+    aadhaarCardUrl: aadhaarUrl,
+  };
+
+  try {
+    const userRef = doc(collection(db, 'users'));
+    await setDoc(userRef, newTrainer);
+    return { id: userRef.id, ...newTrainer };
+  } catch (error: any) {
+    console.error("Error adding trainer:", error);
+    toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
+    return null;
+  }
 };
 
 export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
@@ -394,16 +407,16 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
         const customerRef = doc(db, "users", customerId);
         const customerSnap = await getDoc(customerRef);
         const trainerSnap = await getDoc(doc(db, "users", trainerId));
-
+        
         if (!customerSnap.exists() || !trainerSnap.exists()) {
-            throw new Error("Assign Trainer Error: Customer or Trainer document not found.");
+             throw new Error("Assign Trainer Error: Customer or Trainer document not found.");
         }
-
+        
         const customerData = customerSnap.data() as UserProfile;
         const trainerData = trainerSnap.data() as UserProfile;
 
         const batch = writeBatch(db);
-
+        
         // Update customer to 'In Progress' and assign trainer details
         batch.update(customerRef, {
             approvalStatus: 'In Progress',
@@ -413,15 +426,15 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 
         // Create the lesson request now that the customer is assigned
         const newRequestData: Omit<LessonRequest, 'id'> = {
-            customerId: customerId,
-            customerName: customerData.name,
-            vehicleType: customerData.vehicleInfo as VehicleType,
-            status: 'Pending', // This is pending for the trainer to accept
-            requestTimestamp: new Date().toISOString(),
+          customerId: customerId,
+          customerName: customerData.name,
+          vehicleType: customerData.vehicleInfo as VehicleType,
+          status: 'Pending', // This is pending for the trainer to accept
+          requestTimestamp: new Date().toISOString(),
         };
         const newRequestRef = doc(collection(db, 'lessonRequests'));
         batch.set(newRequestRef, newRequestData);
-
+        
         await batch.commit();
         return true;
     } catch (error: any) {
@@ -446,7 +459,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
             const firstLessonDate = addDays(startDate, 2);
             firstLessonDate.setHours(9, 0, 0, 0);
             updates.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
-
+            
             // Update lesson request to 'Active'
             const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId));
             const requestSnapshot = await getDocs(requestQuery);
@@ -456,7 +469,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
             }
 
         } else { // If trainer rejects
-            updates.assignedTrainerId = null;
+            updates.assignedTrainerId = null; 
             updates.assignedTrainerName = null;
             updates.approvalStatus = 'Pending'; // Return to admin queue
         }
@@ -481,7 +494,7 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
         const updates: { [key: string]: any } = { attendance: status };
 
         if (status === 'Present' && studentData.attendance !== 'Present') {
-            updates.completedLessons = (studentData.completedLessons || 0) + 1;
+          updates.completedLessons = (studentData.completedLessons || 0) + 1;
         }
 
         await updateDoc(studentRef, updates);
@@ -498,8 +511,8 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
     const updates = {
-        subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
-        upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+      subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
+      upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
     };
     try {
         const customerRef = doc(db, 'users', customerId);
@@ -525,7 +538,7 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
         else callback([]);
         return () => {};
     }
-
+    
     let q = query(collection(db, collectionName));
     if (orderField) {
         q = query(q, orderBy(orderField, orderDirection));
@@ -630,7 +643,7 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
     });
 
     const unsubFeedback = onSnapshot(feedbackQuery, () => {
-        Promise.all([getDocs(studentsQuery), getDocs(feedbackQuery)]).then(([studentsSnap, feedbackSnap]) => {
+         Promise.all([getDocs(studentsQuery), getDocs(feedbackQuery)]).then(([studentsSnap, feedbackSnap]) => {
             const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
             const feedback = feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback));
             callback(students, feedback);
@@ -669,7 +682,7 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
     const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRequests: snap.size }));
     });
-
+    
     const rescheduleUnsub = onSnapshot(query(collection(db!, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRescheduleRequests: snap.size }));
     });
@@ -689,16 +702,16 @@ export const listenToCustomerLessonProgress = (callback: (data: LessonProgressDa
             .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
             .filter(u => u.assignedTrainerName);
 
-        const progressData = users.map(c => ({
-            studentId: c.uniqueId,
-            studentName: c.name,
-            trainerName: c.assignedTrainerName!,
-            subscriptionPlan: c.subscriptionPlan,
-            totalLessons: c.totalLessons || 0,
-            completedLessons: c.completedLessons || 0,
-            remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+        const progressData = users.map(c => ({ 
+            studentId: c.uniqueId, 
+            studentName: c.name, 
+            trainerName: c.assignedTrainerName!, 
+            subscriptionPlan: c.subscriptionPlan, 
+            totalLessons: c.totalLessons || 0, 
+            completedLessons: c.completedLessons || 0, 
+            remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0), 
         })).sort((a, b) => a.remainingLessons - b.remainingLessons);
-
+        
         callback(progressData);
     });
 };
@@ -708,37 +721,37 @@ export const listenToCustomerLessonProgress = (callback: (data: LessonProgressDa
 // =================================================================
 
 export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> => {
-    if (!db) return null;
-    const newRequest = {
-        userId, customerName,
-        originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
-        requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
-        status: 'Pending' as RescheduleRequestStatusType,
-        requestTimestamp: new Date().toISOString(),
-    };
+  if (!db) return null;
+  const newRequest = {
+    userId, customerName,
+    originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
+    requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
+    status: 'Pending' as RescheduleRequestStatusType,
+    requestTimestamp: new Date().toISOString(),
+  };
 
-    try {
-        const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
-        return { id: docRef.id, ...newRequest };
-    } catch(error: any) {
-        console.error("Error adding reschedule request:", error);
-        toast({ title: "Request Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
+  try {
+    const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
+    return { id: docRef.id, ...newRequest };
+  } catch(error: any) {
+    console.error("Error adding reschedule request:", error);
+    toast({ title: "Request Failed", description: error.message, variant: "destructive" });
+    return null;
+  }
 };
 
 export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
     if (!db) return false;
     try {
-        const requestRef = doc(db, 'rescheduleRequests', requestId);
-        await updateDoc(requestRef, { status: newStatus });
-        if (newStatus === 'Approved') {
-            const requestSnap = await getDoc(requestRef);
-            if (!requestSnap.exists()) return false;
-            const requestData = requestSnap.data() as RescheduleRequest;
-            await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
-        }
-        return true;
+      const requestRef = doc(db, 'rescheduleRequests', requestId);
+      await updateDoc(requestRef, { status: newStatus });
+      if (newStatus === 'Approved') {
+        const requestSnap = await getDoc(requestRef);
+        if (!requestSnap.exists()) return false;
+        const requestData = requestSnap.data() as RescheduleRequest;
+        await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
+      }
+      return true;
     } catch(error: any) {
         console.error("Error updating reschedule request:", error);
         toast({ title: "Update Failed", description: error.message, variant: "destructive" });
@@ -826,111 +839,118 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
 };
 
 export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
-    if (!db) return null;
-    try {
-        const setRef = doc(db, 'quizSets', quizSetId);
-        const setSnap = await getDoc(setRef);
-        if (!setSnap.exists()) return null;
-        const quizSet = setSnap.data() as QuizSet;
-        const updatedQuestions = quizSet.questions.map(q => {
-            if (q.id === questionId) {
-                return {
-                    id: q.id,
-                    question: { en: data.question_en, hi: data.question_hi },
-                    options: { en: data.options_en.split('\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\n').filter(o => o.trim() !== '') },
-                    correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
-                };
-            }
-            return q;
-        });
-        await updateDoc(setRef, { questions: updatedQuestions });
-        return { ...quizSet, questions: updatedQuestions, id: quizSetId };
-    } catch(error: any) {
-        console.error("Error updating quiz question:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
+  if (!db) return null;
+  try {
+      const setRef = doc(db, 'quizSets', quizSetId);
+      const setSnap = await getDoc(setRef);
+      if (!setSnap.exists()) return null;
+      const quizSet = setSnap.data() as QuizSet;
+      const updatedQuestions = quizSet.questions.map(q => {
+          if (q.id === questionId) {
+              return {
+                  id: q.id,
+                  question: { en: data.question_en, hi: data.question_hi },
+                  options: { en: data.options_en.split('\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\n').filter(o => o.trim() !== '') },
+                  correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+              };
+          }
+          return q;
+      });
+      await updateDoc(setRef, { questions: updatedQuestions });
+      return { ...quizSet, questions: updatedQuestions, id: quizSetId };
+  } catch(error: any) {
+      console.error("Error updating quiz question:", error);
+      toast({ title: "Update Failed", description: error.message, variant: "destructive" });
+      return null;
+  }
 };
 
 
 export const addFaq = async (data: FaqFormValues): Promise<FaqItem | null> => {
-    if (!db) return null;
-    try {
-        const docRef = await addDoc(collection(db, 'faqs'), data);
-        return { id: docRef.id, ...data };
-    } catch (error: any) {
-        console.error("Error adding FAQ:", error);
-        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
+  if (!db) return null;
+  try {
+    const docRef = await addDoc(collection(db, 'faqs'), data);
+    return { id: docRef.id, ...data };
+  } catch (error: any) {
+    console.error("Error adding FAQ:", error);
+    toast({ title: "Save Failed", description: error.message, variant: "destructive" });
+    return null;
+  }
 }
 
 export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolean> => {
-    if (!db) return false;
-    try {
-        await updateDoc(doc(db, 'faqs', id), data);
-        return true;
-    } catch (error: any) {
-        console.error("Error updating FAQ:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
-        return false;
-    }
+  if (!db) return false;
+  try {
+    await updateDoc(doc(db, 'faqs', id), data);
+    return true;
+  } catch (error: any) {
+    console.error("Error updating FAQ:", error);
+    toast({ title: "Update Failed", description: error.message, variant: "destructive" });
+    return false;
+  }
 }
 
 export const deleteFaq = async (id: string): Promise<boolean> => {
-    if (!db) return false;
-    try {
-        await deleteDoc(doc(db, 'faqs', id));
-        return true;
-    } catch(error: any) {
-        console.error("Error deleting FAQ:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
-        return false;
-    }
+  if (!db) return false;
+  try {
+    await deleteDoc(doc(db, 'faqs', id));
+    return true;
+  } catch(error: any) {
+    console.error("Error deleting FAQ:", error);
+    toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+    return false;
+  }
 }
 
 export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
-    if (!db) return null;
-    const { imageFile, ...restOfData } = data;
-    const newImageSrc = imageFile ? `https://placehold.co/1200x800.png?text=New` : data.imageSrc;
-    const newPost: BlogPost = { ...restOfData, imageSrc: newImageSrc || 'https://placehold.co/1200x800.png' };
-
-    try {
-        const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
-        const existing = await getDocs(q);
-        if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
-        await setDoc(doc(db, 'blogPosts', newPost.slug), newPost);
-        return newPost;
-    } catch(error: any) {
-        console.error("Error adding blog post:", error);
-        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
-        return null;
-    }
+  if (!db) return null;
+  let imageUrl = 'https://placehold.co/1200x800.png';
+  if(data.imageFile) {
+      imageUrl = await uploadFile(data.imageFile, 'blog_images');
+  } else if (data.imageSrc) {
+      imageUrl = data.imageSrc;
+  }
+  const newPost: BlogPost = { ...data, imageSrc: imageUrl };
+  try {
+    const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
+    const existing = await getDocs(q);
+    if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
+    await setDoc(doc(db, 'blogPosts', newPost.slug), newPost);
+    return newPost;
+  } catch(error: any) {
+    console.error("Error adding blog post:", error);
+    toast({ title: "Save Failed", description: error.message, variant: "destructive" });
+    return null;
+  }
 };
 
 export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-    if (!isFirebaseConfigured() || !db) {
-        return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
-    }
-    try {
-        const docRef = doc(db!, 'blogPosts', slug);
-        const snapshot = await getDoc(docRef);
-        if (!snapshot.exists()) return null;
-        return snapshot.data() as BlogPost;
-    } catch (error: any) {
-        console.error("Error fetching blog post by slug:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch post: ${error.message}`, variant: "destructive" });
-        return null;
-    }
+  if (!isFirebaseConfigured() || !db) {
+    return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
+  }
+  try {
+    const docRef = doc(db!, 'blogPosts', slug);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return null;
+    return snapshot.data() as BlogPost;
+  } catch (error: any) {
+    console.error("Error fetching blog post by slug:", error);
+    toast({ title: "Data Fetch Error", description: `Could not fetch post: ${error.message}`, variant: "destructive" });
+    return null;
+  }
 };
 
 export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
     if (!db) return false;
-    const { imageFile, ...restOfData } = data;
-    const newImageSrc = imageFile ? `https://placehold.co/1200x800.png?text=Updated` : data.imageSrc;
     try {
         const docRef = doc(db, 'blogPosts', slug);
-        await updateDoc(docRef, { ...restOfData, imageSrc: newImageSrc || data.imageSrc });
+        const updateData: Partial<BlogPostFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'blog_images');
+        }
+        delete updateData.imageFile;
+
+        await updateDoc(docRef, updateData as any);
         return true;
     } catch(error: any) {
         console.error("Error updating blog post:", error);
@@ -940,23 +960,26 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
 }
 
 export const deleteBlogPost = async (slug: string): Promise<boolean> => {
-    if (!db) return false;
-    try {
-        await deleteDoc(doc(db, 'blogPosts', slug));
-        return true;
-    } catch(error: any) {
-        console.error("Error deleting blog post:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
-        return false;
-    }
+  if (!db) return false;
+  try {
+    await deleteDoc(doc(db, 'blogPosts', slug));
+    return true;
+  } catch(error: any) {
+    console.error("Error deleting blog post:", error);
+    toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+    return false;
+  }
 }
 
 export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
-    const newImageSrc = data.imageFile ? 'https://placehold.co/1920x1080.png' : data.imageSrc;
-    const updateData = { title: data.title, description: data.description, imageSrc: newImageSrc || 'https://placehold.co/1920x1080.png', imageHint: data.imageHint };
     try {
-        await updateDoc(doc(db, 'siteBanners', id), updateData);
+        const updateData: Partial<VisualContentFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        }
+        delete updateData.imageFile;
+        await updateDoc(doc(db, 'siteBanners', id), updateData as any);
         return true;
     } catch(error: any) {
         console.error("Error updating site banner:", error);
@@ -967,11 +990,13 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
-    const newImageSrc = data.imageFile ? 'https://placehold.co/600x800.png' : data.imageSrc;
-    const updateData = { title: data.title, description: data.description, imageSrc: newImageSrc || 'https://placehold.co/600x800.png', imageHint: data.imageHint, href: data.href || '#' };
-
     try {
-        await updateDoc(doc(db, 'promotionalPosters', id), updateData);
+        const updateData: Partial<VisualContentFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        }
+        delete updateData.imageFile;
+        await updateDoc(doc(db, 'promotionalPosters', id), updateData as any);
         return true;
     } catch(error: any) {
         console.error("Error updating promotional poster:", error);
@@ -984,89 +1009,89 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
 export const fetchCourses = async (): Promise<Course[]> => {
     if (!isFirebaseConfigured() || !db) return [];
     try {
-        const snapshot = await getDocs(collection(db!, "courses"));
-        const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Course);
-        return reAssignCourseIcons(courses);
+      const snapshot = await getDocs(collection(db!, "courses"));
+      const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Course);
+      return reAssignCourseIcons(courses);
     } catch (error: any) {
-        console.error("Error fetching courses:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch courses: ${error.message}`, variant: "destructive" });
-        return [];
+      console.error("Error fetching courses:", error);
+      toast({ title: "Data Fetch Error", description: `Could not fetch courses: ${error.message}`, variant: "destructive" });
+      return [];
     }
 };
 
 export const fetchQuizSets = async (): Promise<QuizSet[]> => {
-    if (!isFirebaseConfigured() || !db) return MOCK_QUIZ_SETS;
-    try {
-        const snapshot = await getDocs(collection(db!, "quizSets"));
-        if (snapshot.empty) {
-            console.warn("No quiz sets found in Firestore, returning mock data.");
-            return MOCK_QUIZ_SETS;
-        }
-        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
-        return sets;
-    } catch (error: any) {
-        console.error("Error fetching quiz sets:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch quiz sets: ${error.message}`, variant: "destructive" });
-        return MOCK_QUIZ_SETS;
+  if (!isFirebaseConfigured() || !db) return MOCK_QUIZ_SETS;
+  try {
+    const snapshot = await getDocs(collection(db!, "quizSets"));
+    if (snapshot.empty) {
+      console.warn("No quiz sets found in Firestore, returning mock data.");
+      return MOCK_QUIZ_SETS;
     }
+    const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
+    return sets;
+  } catch (error: any) {
+      console.error("Error fetching quiz sets:", error);
+      toast({ title: "Data Fetch Error", description: `Could not fetch quiz sets: ${error.message}`, variant: "destructive" });
+      return MOCK_QUIZ_SETS;
+  }
 };
 
 
 export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
-    if (!db) return [];
-    try {
-        const q = query(
-            collection(db, "users"),
-            where("approvalStatus", "==", "Approved"),
-            where("subscriptionPlan", "==", "Trainer")
+  if (!db) return [];
+  try {
+    const q = query(
+      collection(db, "users"),
+      where("approvalStatus", "==", "Approved"),
+      where("subscriptionPlan", "==", "Trainer")
+    );
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
+        .filter(u =>
+            (!filters.location || u.location === filters.location) &&
+            (!filters.gender || u.gender === filters.gender)
         );
-        const querySnapshot = await getDocs(q);
-
-        return querySnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-            .filter(u =>
-                (!filters.location || u.location === filters.location) &&
-                (!filters.gender || u.gender === filters.gender)
-            );
-    } catch (error: any) {
-        console.error("Error fetching approved instructors:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
-        return [];
-    }
+  } catch (error: any) {
+    console.error("Error fetching approved instructors:", error);
+    toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
+    return [];
+  }
 };
 
 export const fetchReferralsByUserId = async (userId: string | undefined): Promise<Referral[]> => {
-    if (!db || !userId) return [];
-    try {
-        const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
-        const querySnapshot = await getDocs(q);
+  if (!db || !userId) return [];
+  try {
+    const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
+    const querySnapshot = await getDocs(q);
+    
+    const referrals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
 
-        const referrals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
+    if (referrals.length === 0) return [];
+    
+    const refereeIds = referrals.map(r => r.refereeId);
+    if(refereeIds.length === 0) return referrals;
 
-        if (referrals.length === 0) return [];
+    const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', refereeIds));
+    const usersSnapshot = await getDocs(usersQuery);
+    const usersMap = new Map<string, UserProfile>();
+    usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
 
-        const refereeIds = referrals.map(r => r.refereeId);
-        if(refereeIds.length === 0) return referrals;
-
-        const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', refereeIds));
-        const usersSnapshot = await getDocs(usersQuery);
-        const usersMap = new Map<string, UserProfile>();
-        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
-
-        return referrals.map(ref => {
-            const referee = usersMap.get(ref.refereeId);
-            return {
-                ...ref,
-                refereeUniqueId: referee?.uniqueId,
-                refereeSubscriptionPlan: referee?.subscriptionPlan,
-                refereeApprovalStatus: referee?.approvalStatus,
-            };
-        });
-    } catch (error: any) {
-        console.error("Error fetching user referrals:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch referrals: ${error.message}`, variant: "destructive" });
-        return [];
-    }
+    return referrals.map(ref => {
+      const referee = usersMap.get(ref.refereeId);
+      return {
+        ...ref,
+        refereeUniqueId: referee?.uniqueId,
+        refereeSubscriptionPlan: referee?.subscriptionPlan,
+        refereeApprovalStatus: referee?.approvalStatus,
+      };
+    });
+  } catch (error: any) {
+    console.error("Error fetching user referrals:", error);
+    toast({ title: "Data Fetch Error", description: `Could not fetch referrals: ${error.message}`, variant: "destructive" });
+    return [];
+  }
 };
 
-
+    

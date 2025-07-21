@@ -51,7 +51,7 @@ export const UserProfileSchema = z.object({
   myReferralCode: z.string().optional(),
   photoURL: z.string().optional(),
   gender: z.string(),
-
+  
   // Customer specific
   flatHouseNumber: z.string().optional(),
   street: z.string().optional(),
@@ -63,6 +63,7 @@ export const UserProfileSchema = z.object({
   dlTypeHeld: z.string().optional(),
   photoIdType: z.string().optional(),
   photoIdNumber: z.string().optional(),
+  photoIdUrl: z.string().optional(),
   trainerPreference: z.string().optional(),
   assignedTrainerId: z.string().optional(),
   assignedTrainerName: z.string().optional(),
@@ -80,30 +81,31 @@ export const UserProfileSchema = z.object({
   // Trainer specific
   specialization: z.string().optional(),
   yearsOfExperience: z.number().optional(),
+  trainerCertificateUrl: z.string().optional(),
+  drivingLicenseUrl: z.string().optional(),
+  aadhaarCardUrl: z.string().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approvalStatus>;
 
 // Registration Forms
 const requiredFileSchema = z
-    .any()
-    .refine((file): file is File => file instanceof File, "File is required.")
-    .refine((file) => file.size > 0, "File is required.")
-    .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
+  .instanceof(File, { message: "File is required." })
+  .refine((file) => file.size > 0, "File cannot be empty.")
+  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
 
 const optionalFileSchema = z
-    .any()
-    .refine((file): file is File => file === undefined || file instanceof File, "Invalid file type.")
-    .refine((file) => file === undefined || file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
-    .optional();
+  .instanceof(File)
+  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
+  .optional();
 
 
 const passwordSchema = z.string()
-    .min(8, { message: "Password must be at least 8 characters long." })
-    .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
-    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter." })
-    .regex(/[0-9]/, { message: "Password must contain at least one number." })
-    .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character." });
+  .min(8, { message: "Password must be at least 8 characters long." })
+  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter." })
+  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter." })
+  .regex(/[0-9]/, { message: "Password must contain at least one number." })
+  .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character." });
 
 const baseRegistrationSchema = z.object({
   userRole: z.enum(['customer', 'trainer']),
@@ -116,33 +118,18 @@ const baseRegistrationSchema = z.object({
   gender: z.enum(GenderOptions),
 });
 
-export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
+export const InitialCustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
-  vehiclePreference: z.enum(VehiclePreferenceOptions),
-  subscriptionPlan: z.enum(SubscriptionPlans),
-  trainerPreference: z.enum(TrainerPreferenceOptions),
-  flatHouseNumber: z.string().min(1, 'This field is required.'),
-  street: z.string().min(1, 'This field is required.'),
-  district: z.string().min(1, 'District is required.'),
-  state: z.string().min(1, 'State is required.'),
-  pincode: z.string().length(6, 'Pincode must be 6 digits.'),
-  dlStatus: z.enum(DLStatusOptions),
-  dlNumber: z.string().optional(),
-  dlTypeHeld: z.string().optional(),
-  photoIdType: z.enum(PhotoIdTypeOptions),
-  photoIdNumber: z.string().min(1, 'ID number is required.'),
-  photoIdFile: requiredFileSchema,
-  subscriptionStartDate: z.date({ required_error: "Please select a start date." }),
-  referralCode: z.string().optional(),
+  // No other fields needed for initial sign up
 });
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
   location: z.enum(Locations),
-  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative."),
-  specialization: z.enum(SpecializationOptions),
-  trainerVehicleType: z.enum(TrainerVehicleTypeOptions),
-  fuelType: z.enum(FuelTypeOptions),
+  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative.").optional(),
+  specialization: z.enum(SpecializationOptions).optional(),
+  trainerVehicleType: z.enum(TrainerVehicleTypeOptions).optional(),
+  fuelType: z.enum(FuelTypeOptions).optional(),
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   trainerCertificateNumber: z.string().min(1, 'Certificate number is required.'),
   aadhaarCardNumber: z.string().min(1, 'Aadhaar number is required.'),
@@ -153,16 +140,46 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
-  CustomerRegistrationFormSchema,
+  InitialCustomerRegistrationFormSchema,
   TrainerRegistrationFormSchema
 ]).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
-export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
+export type CustomerRegistrationFormValues = z.infer<typeof InitialCustomerRegistrationFormSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
+
+
+// This schema is for the second step of customer registration (during payment)
+export const FullCustomerDetailsSchema = z.object({
+    subscriptionPlan: z.enum(SubscriptionPlans),
+    vehiclePreference: z.enum(VehiclePreferenceOptions),
+    trainerPreference: z.enum(TrainerPreferenceOptions),
+    flatHouseNumber: z.string().min(1, 'This field is required.'),
+    street: z.string().min(1, 'This field is required.'),
+    district: z.string().min(1, 'District is required.'),
+    state: z.string().min(1, 'State is required.'),
+    pincode: z.string().length(6, 'Pincode must be 6 digits.'),
+    dlStatus: z.enum(DLStatusOptions),
+    dlNumber: z.string().optional(),
+    dlTypeHeld: z.string().optional(),
+    photoIdType: z.enum(PhotoIdTypeOptions),
+    photoIdNumber: z.string().min(1, 'ID number is required.'),
+    photoIdFile: requiredFileSchema,
+    subscriptionStartDate: z.date({ required_error: "Please select a start date." }),
+    referralCode: z.string().optional(),
+}).refine((data) => {
+    if (data.dlStatus === 'Already Have DL') {
+        return !!data.dlNumber && !!data.dlTypeHeld;
+    }
+    return true;
+}, {
+    message: "DL Number and Type are required if you already have a license.",
+    path: ['dlNumber'],
+});
+export type FullCustomerDetailsValues = z.infer<typeof FullCustomerDetailsSchema>;
 
 
 // Profile Update Forms
@@ -306,13 +323,13 @@ export interface Course {
 }
 
 export interface RescheduleRequest {
-  id: string;
-  userId: string;
-  customerName: string;
-  originalLessonDate: string;
-  requestedRescheduleDate: string;
-  status: RescheduleRequestStatusType;
-  requestTimestamp: string;
+    id: string;
+    userId: string;
+    customerName: string;
+    originalLessonDate: string;
+    requestedRescheduleDate: string;
+    status: RescheduleRequestStatusType;
+    requestTimestamp: string;
 }
 export type RescheduleRequestStatusType = (typeof RescheduleRequestStatusOptions)[number];
 
@@ -336,29 +353,29 @@ export interface Feedback {
 }
 
 export interface LessonProgressData {
-  studentId: string;
-  studentName: string;
-  trainerName: string;
-  subscriptionPlan: string;
-  totalLessons: number;
-  completedLessons: number;
-  remainingLessons: number;
+    studentId: string;
+    studentName: string;
+    trainerName: string;
+    subscriptionPlan: string;
+    totalLessons: number;
+    completedLessons: number;
+    remainingLessons: number;
 }
 
 export interface Referral {
-  id: string;
-  referrerId: string;
-  referrerName: string;
-  refereeId: string;
-  refereeName: string;
-  status: 'Successful' | 'Pending';
-  pointsEarned: number;
-  payoutStatus: PayoutStatusType;
-  timestamp: string;
-  // These are joined in from the User table for display
-  refereeUniqueId?: string;
-  refereeSubscriptionPlan?: string;
-  refereeApprovalStatus?: ApprovalStatusType;
+    id: string;
+    referrerId: string;
+    referrerName: string;
+    refereeId: string;
+    refereeName: string;
+    status: 'Successful' | 'Pending';
+    pointsEarned: number;
+    payoutStatus: PayoutStatusType;
+    timestamp: string;
+    // These are joined in from the User table for display
+    refereeUniqueId?: string;
+    refereeSubscriptionPlan?: string;
+    refereeApprovalStatus?: ApprovalStatusType;
 }
 export type PayoutStatusType = (typeof PayoutStatusOptions)[number];
 
@@ -395,38 +412,38 @@ export interface BlogPost {
 }
 
 export interface JobOpening {
-  id: string;
-  title: string;
-  location: string;
-  type: 'Full-time' | 'Part-time' | 'Contract';
-  description: string;
-  requirements: string[];
+    id: string;
+    title: string;
+    location: string;
+    type: 'Full-time' | 'Part-time' | 'Contract';
+    description: string;
+    requirements: string[];
 }
 export const JobOpenings: JobOpening[] = [
-  {
-    id: 'job-1',
-    title: 'Senior Driving Instructor',
-    location: 'Gurugram',
-    type: 'Full-time',
-    description: 'Lead a team of instructors and develop training curriculum.',
-    requirements: ['5+ years of experience', 'Official Trainer Certification', 'Excellent communication skills'],
-  },
-  {
-    id: 'job-2',
-    title: 'Customer Support Executive',
-    location: 'Remote',
-    type: 'Full-time',
-    description: 'Assist customers with queries and provide platform support.',
-    requirements: ['1+ year in customer service', 'Proficiency in English and Hindi', 'Strong problem-solving skills'],
-  },
-  {
-    id: 'job-3',
-    title: 'Marketing Manager',
-    location: 'Noida',
-    type: 'Full-time',
-    description: 'Plan and execute marketing campaigns to drive growth.',
-    requirements: ['3+ years in digital marketing', 'Experience with social media ads', 'Strong analytical skills'],
-  }
+    {
+        id: 'job-1',
+        title: 'Senior Driving Instructor',
+        location: 'Gurugram',
+        type: 'Full-time',
+        description: 'Lead a team of instructors and develop training curriculum.',
+        requirements: ['5+ years of experience', 'Official Trainer Certification', 'Excellent communication skills'],
+    },
+    {
+        id: 'job-2',
+        title: 'Customer Support Executive',
+        location: 'Remote',
+        type: 'Full-time',
+        description: 'Assist customers with queries and provide platform support.',
+        requirements: ['1+ year in customer service', 'Proficiency in English and Hindi', 'Strong problem-solving skills'],
+    },
+    {
+        id: 'job-3',
+        title: 'Marketing Manager',
+        location: 'Noida',
+        type: 'Full-time',
+        description: 'Plan and execute marketing campaigns to drive growth.',
+        requirements: ['3+ years in digital marketing', 'Experience with social media ads', 'Strong analytical skills'],
+    }
 ];
 
 export interface SiteBanner {

@@ -2,6 +2,7 @@
 'use client';
 
 import Image from 'next/image';
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import {
   Accordion,
@@ -19,6 +20,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { CareerFormSchema, type CareerFormValues, JobOpenings } from '@/types';
+
+export const metadata: Metadata = {
+  title: 'Careers at Drivergy',
+  description: 'Join our team! Explore open positions for driving instructors, customer support, and marketing roles at Drivergy.',
+};
 
 export default function CareerPage() {
     const { toast } = useToast();
