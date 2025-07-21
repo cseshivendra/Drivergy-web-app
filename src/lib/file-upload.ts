@@ -15,6 +15,12 @@ import streamifier from 'streamifier';
  * @throws An error if the upload fails.
  */
 export async function uploadFile(file: File, folder: string): Promise<string> {
+    // Direct check for environment variables to provide a clearer error.
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        console.error("Cloudinary environment variables are not set.");
+        throw new Error("Cannot upload file: Server storage is not configured. Please contact support.");
+    }
+
     // This will throw an error if config is missing, which will be caught by the calling function.
     await cloudinaryConfig();
 
