@@ -103,8 +103,8 @@ export default function AdminDashboard() {
   
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {
-      // Always include users with a 'Pending' status, regardless of filters.
-      if (user.approvalStatus === 'Pending') {
+      // Always include users with a 'Pending' or 'In Progress' status, regardless of filters.
+      if (user.approvalStatus === 'Pending' || user.approvalStatus === 'In Progress') {
         return true;
       }
       
