@@ -582,6 +582,9 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
             };
         });
         callback(enrichedReferrals);
+    }, (error) => {
+        console.error(`Error listening to referrals:`, error);
+        toast({ title: "Connection Error", description: `Could not sync referrals.`, variant: "destructive" });
     });
 };
 export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
@@ -645,16 +648,16 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
             const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
             const feedback = feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback));
             callback(students, feedback);
-        });
-    });
+        }).catch(err => console.error("Error fetching trainer student data:", err));
+    }, (err) => console.error("Student listener error:", err));
 
     const unsubFeedback = onSnapshot(feedbackQuery, () => {
         Promise.all([getDocs(studentsQuery), getDocs(feedbackQuery)]).then(([studentsSnap, feedbackSnap]) => {
             const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
             const feedback = feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback));
             callback(students, feedback);
-        });
-    });
+        }).catch(err => console.error("Error fetching trainer feedback data:", err));
+    }, (err) => console.error("Feedback listener error:", err));
 
     return () => {
         unsubStudents();
@@ -683,14 +686,20 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
         }, 0);
 
         callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings });
+    }, (error) => {
+      console.error("Error listening to users for summary:", error);
     });
 
     const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRequests: snap.size }));
+    }, (error) => {
+      console.error("Error listening to lessonRequests for summary:", error);
     });
 
     const rescheduleUnsub = onSnapshot(query(collection(db!, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRescheduleRequests: snap.size }));
+    }, (error) => {
+      console.error("Error listening to rescheduleRequests for summary:", error);
     });
 
     return () => {
@@ -719,6 +728,8 @@ export const listenToCustomerLessonProgress = (callback: (data: LessonProgressDa
         })).sort((a, b) => a.remainingLessons - b.remainingLessons);
 
         callback(progressData);
+    }, (error) => {
+      console.error("Error listening to lesson progress:", error);
     });
 };
 

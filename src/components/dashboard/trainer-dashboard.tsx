@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -59,7 +60,10 @@ export default function TrainerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
 
     const unsubs = [
@@ -82,12 +86,14 @@ export default function TrainerDashboard() {
         };
         setSummary(summaryData);
       }),
-    ];
+    ].filter(Boolean);
     
     const loadingTimeout = setTimeout(() => setLoading(false), 2000);
 
     return () => {
-      unsubs.forEach(unsub => unsub());
+      unsubs.forEach(unsub => {
+        if (unsub) unsub();
+      });
       clearTimeout(loadingTimeout);
     };
   }, [user]);

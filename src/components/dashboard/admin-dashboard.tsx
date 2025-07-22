@@ -86,14 +86,16 @@ export default function AdminDashboard() {
       listenToBlogPosts(setBlogPosts),
       listenToSiteBanners(setSiteBanners),
       listenToPromotionalPosters(setPromotionalPosters),
-    ];
+    ].filter(Boolean); // Filter out any undefined unsubscribe functions
     
     // A simple mechanism to hide the main loader once all initial data has likely arrived.
     const loadingTimeout = setTimeout(() => setLoading(false), 2500);
 
     // Cleanup listeners on component unmount
     return () => {
-      subscriptions.forEach(unsubscribe => unsubscribe());
+      subscriptions.forEach(unsubscribe => {
+        if (unsubscribe) unsubscribe();
+      });
       clearTimeout(loadingTimeout);
     };
   }, [user]);
