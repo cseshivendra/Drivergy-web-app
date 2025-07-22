@@ -109,18 +109,19 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
     const isTrainer = user.uniqueId.startsWith('TR');
     
-    // For customers, the "Approve" action is handled via the assignment dialog.
-    // Only "Reject" is a direct action here.
+    // For customers, "Approve" is part of the assignment flow. This function handles direct status changes.
+    // This is primarily for Trainers (Approve/Reject) and rejecting Customers.
     if (!isTrainer && newStatus === 'Approved') {
         toast({
           title: "Action Required",
-          description: "Please use the 'Approve & Assign' button to approve and assign a trainer to this customer.",
+          description: "Please use the 'Approve & Assign' button to approve customers. This assigns a trainer at the same time.",
           variant: 'destructive',
         });
         return;
     }
 
     try {
+      // Use the secure server action for ALL status updates.
       const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
 
       if (result.success) {
@@ -128,7 +129,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
           title: `User ${newStatus}`,
           description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
         });
-        onUserActioned(); 
+        // onUserActioned is called automatically by the real-time listener, no need to call it here.
       } else {
         toast({
           title: "Update Failed",

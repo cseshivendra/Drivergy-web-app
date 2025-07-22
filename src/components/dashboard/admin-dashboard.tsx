@@ -73,7 +73,7 @@ export default function AdminDashboard() {
       listenToSummaryData(setSummaryData),
       listenToAllUsers(setAllUsers),
       listenToAllLessonRequests(setAllLessonRequests),
-      listenToAllFeedback(setFeedback),
+      listenToAllFeedback(setAllFeedback),
       listenToAllReferrals(setReferrals),
       listenToCustomerLessonProgress(setLessonProgress),
       listenToCourses(setCourses),
@@ -99,13 +99,7 @@ export default function AdminDashboard() {
   
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {
-      // Always include users with a 'Pending' or 'In Progress' status, regardless of filters.
-      if (user.approvalStatus === 'Pending' || user.approvalStatus === 'In Progress') {
-        return true;
-      }
-      
-      const locationMatch = !filters.location || user.location === filters.location;
-      const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
+      const isPending = user.approvalStatus === 'Pending' || user.approvalStatus === 'In Progress';
       
       const searchTermMatch = !searchTerm || (
           user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,7 +107,17 @@ export default function AdminDashboard() {
           (user.contact && user.contact.toLowerCase().includes(searchTerm.toLowerCase()))
       );
 
-      return locationMatch && subscriptionMatch && searchTermMatch;
+      // If a search term is present, only match against that.
+      if (searchTerm) return searchTermMatch;
+
+      // If user is pending, always show them.
+      if (isPending) return true;
+      
+      // For non-pending users, apply filters.
+      const locationMatch = !filters.location || user.location === filters.location;
+      const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
+      
+      return locationMatch && subscriptionMatch;
     });
   }, [allUsers, filters, searchTerm]);
 
