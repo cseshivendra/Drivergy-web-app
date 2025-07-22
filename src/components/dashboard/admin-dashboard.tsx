@@ -103,16 +103,21 @@ export default function AdminDashboard() {
   
   const filteredUsers = useMemo(() => {
     return allUsers.filter(user => {
-        const locationMatch = !filters.location || user.location === filters.location;
-        const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
-        
-        const searchTermMatch = !searchTerm || (
-            user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.contact.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+      // Always include users with a 'Pending' status, regardless of filters.
+      if (user.approvalStatus === 'Pending') {
+        return true;
+      }
+      
+      const locationMatch = !filters.location || user.location === filters.location;
+      const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
+      
+      const searchTermMatch = !searchTerm || (
+          user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user.contact && user.contact.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
 
-        return locationMatch && subscriptionMatch && searchTermMatch;
+      return locationMatch && subscriptionMatch && searchTermMatch;
     });
   }, [allUsers, filters, searchTerm]);
 
