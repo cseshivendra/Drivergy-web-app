@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -309,6 +310,13 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
     const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
 
     try {
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            throw new Error("User profile not found.");
+        }
+        const user = userSnap.data();
+
         const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
         const profileData = {
             subscriptionPlan: data.subscriptionPlan,
@@ -332,12 +340,24 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
             approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
         };
 
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, profileData);
+        const batch = writeBatch(db);
+        batch.update(userRef, profileData);
+
+        // Create the initial lesson request for the admin
+        const newRequestData: Omit<LessonRequest, 'id'> = {
+            customerId: userId,
+            customerName: user.name,
+            vehicleType: data.vehiclePreference as VehicleType,
+            status: 'Pending',
+            requestTimestamp: new Date().toISOString(),
+        };
+        const newRequestRef = doc(collection(db, 'lessonRequests'));
+        batch.set(newRequestRef, newRequestData);
+
+        await batch.commit();
         return true;
     } catch (error: any) {
         console.error("Error completing customer profile:", error);
-        // Throw a more specific error to be caught in the form component
         if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
             throw new Error("Cannot upload file: Server storage is not configured. Please contact support.");
         }
@@ -1095,5 +1115,6 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
+
 
 
