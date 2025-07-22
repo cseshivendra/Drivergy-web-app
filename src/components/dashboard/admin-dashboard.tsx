@@ -11,7 +11,6 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import {
   listenToSummaryData,
-  listenToAllUsers,
   listenToAllLessonRequests,
   listenToAllFeedback,
   listenToCustomerLessonProgress,
@@ -35,6 +34,9 @@ import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot } from 'firebase/firestore';
+
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -61,39 +63,46 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState('');
   
-  const setupListeners = useCallback(() => {
-    if (!user) return () => {};
+  useEffect(() => {
+    if (!user) {
+        setLoading(false);
+        return;
+    }
 
+    setLoading(true);
+    
     const subscriptions = [
-      listenToSummaryData(setSummaryData),
-      listenToAllUsers(setAllUsers),
-      listenToAllLessonRequests(setAllLessonRequests),
-      listenToAllFeedback(setAllFeedback),
-      listenToAllReferrals(setReferrals),
-      listenToCustomerLessonProgress(setLessonProgress),
-      listenToCourses(setCourses),
-      listenToQuizSets(setQuizSets),
-      listenToFaqs(setFaqs),
-      listenToBlogPosts(setBlogPosts),
-      listenToSiteBanners(setSiteBanners),
-      listenToPromotionalPosters(setPromotionalPosters),
+        listenToSummaryData(setSummaryData),
+        listenToAllLessonRequests(setAllLessonRequests),
+        listenToAllFeedback(setFeedback),
+        listenToAllReferrals(setReferrals),
+        listenToCustomerLessonProgress(setLessonProgress),
+        listenToCourses(setCourses),
+        listenToQuizSets(setQuizSets),
+        listenToFaqs(setFaqs),
+        listenToBlogPosts(setBlogPosts),
+        listenToSiteBanners(setSiteBanners),
+        listenToPromotionalPosters(setPromotionalPosters),
+        // Centralize the user listener here
+        db ? onSnapshot(collection(db, 'users'), snapshot => {
+            const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+            setAllUsers(users);
+        }) : () => {},
     ].filter(Boolean);
     
-    const loadingTimeout = setTimeout(() => setLoading(false), 2000);
+    // Unified loading state management
+    const loadingTimeout = setTimeout(() => {
+        setLoading(false);
+    }, 2500); // Increased timeout to allow all listeners to establish
 
+    // Cleanup function
     return () => {
-      subscriptions.forEach(unsubscribe => {
-        if (unsubscribe) unsubscribe();
-      });
-      clearTimeout(loadingTimeout);
+        subscriptions.forEach(unsubscribe => {
+            if (unsubscribe) unsubscribe();
+        });
+        clearTimeout(loadingTimeout);
     };
   }, [user]);
-
-  useEffect(() => {
-    setLoading(true);
-    const cleanup = setupListeners();
-    return cleanup;
-  }, [setupListeners]);
 
   
   const filteredUsers = useMemo(() => {
@@ -109,7 +118,7 @@ export default function AdminDashboard() {
       // If a search term is present, only match against that.
       if (searchTerm) return searchTermMatch;
 
-      // If user is pending, always show them.
+      // If user is pending, always show them regardless of filters.
       if (isPending) return true;
       
       // For non-pending users, apply filters.
