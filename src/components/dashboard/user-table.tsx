@@ -111,16 +111,13 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     
     // For customers, the "Approve" action is handled via the assignment dialog.
     // Only "Reject" is a direct action here.
-    if (!isTrainer) {
-      if (newStatus === 'Approved') {
+    if (!isTrainer && newStatus === 'Approved') {
         toast({
           title: "Action Required",
           description: "Please use the 'Approve & Assign' button to approve and assign a trainer to this customer.",
           variant: 'destructive',
         });
         return;
-      }
-      // For rejecting a customer, we can proceed.
     }
 
     try {
