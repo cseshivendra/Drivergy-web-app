@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
@@ -61,13 +61,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [tempSearchTerm, setTempSearchTerm] = useState('');
   
-  // Real-time data listeners
-  useEffect(() => {
-    if (!user) {
-        setLoading(false); // If no user, no need to load data
-        return;
-    }
-    setLoading(true);
+  const setupListeners = useCallback(() => {
+    if (!user) return () => {};
 
     const subscriptions = [
       listenToSummaryData(setSummaryData),
@@ -82,12 +77,10 @@ export default function AdminDashboard() {
       listenToBlogPosts(setBlogPosts),
       listenToSiteBanners(setSiteBanners),
       listenToPromotionalPosters(setPromotionalPosters),
-    ].filter(Boolean); // Filter out any undefined unsubscribe functions
+    ].filter(Boolean);
     
-    // A simple mechanism to hide the main loader once all initial data has likely arrived.
-    const loadingTimeout = setTimeout(() => setLoading(false), 2500);
+    const loadingTimeout = setTimeout(() => setLoading(false), 2000);
 
-    // Cleanup listeners on component unmount
     return () => {
       subscriptions.forEach(unsubscribe => {
         if (unsubscribe) unsubscribe();
@@ -95,6 +88,12 @@ export default function AdminDashboard() {
       clearTimeout(loadingTimeout);
     };
   }, [user]);
+
+  useEffect(() => {
+    setLoading(true);
+    const cleanup = setupListeners();
+    return cleanup;
+  }, [setupListeners]);
 
   
   const filteredUsers = useMemo(() => {
@@ -134,10 +133,10 @@ export default function AdminDashboard() {
     setSearchTerm(tempSearchTerm.trim());
   };
 
-  const handleActioned = () => {
-    // With real-time listeners, we no longer need to manually trigger a data refresh.
-    // The UI will update automatically.
-  };
+  const handleActioned = useCallback(() => {
+    // This function is now just a placeholder.
+    // Real-time listeners automatically update the UI.
+  }, []);
 
   const renderDashboardView = () => (
     <>
