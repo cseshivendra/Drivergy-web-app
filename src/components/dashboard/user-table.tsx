@@ -11,8 +11,7 @@ import { Locations, GenderOptions } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { fetchApprovedInstructors, assignTrainerToCustomer } from '@/lib/mock-data';
-import { updateUserApprovalStatus } from '@/lib/server-actions';
+import { fetchApprovedInstructors, assignTrainerToCustomer, updateUserApprovalStatus } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -121,19 +120,17 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     }
 
     try {
-      // Use the secure server action for ALL status updates.
-      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
-
-      if (result.success) {
+      const success = await updateUserApprovalStatus(user.id, newStatus);
+      if (success) {
         toast({
           title: `User ${newStatus}`,
           description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
         });
-        // onUserActioned is called automatically by the real-time listener, no need to call it here.
+        onUserActioned();
       } else {
         toast({
           title: "Update Failed",
-          description: result.error || `Could not update status for ${user.name}.`,
+          description: `Could not update status for ${user.name}.`,
           variant: "destructive",
         });
       }

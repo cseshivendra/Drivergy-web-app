@@ -273,6 +273,23 @@ export const changeUserPassword = async (userId: string, currentPassword: string
     }
 };
 
+export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
+    if (!db) return false;
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, { approvalStatus: newStatus });
+        return true;
+    } catch (error: any) {
+        console.error(`Error updating user ${userId} status:`, error);
+        toast({
+            title: "Update Failed",
+            description: `Could not update status for user ${userId}.`,
+            variant: "destructive",
+        });
+        return false;
+    }
+};
+
 export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile | null> => {
     if (!db) return null;
 
