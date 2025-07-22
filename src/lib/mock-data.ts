@@ -1,5 +1,4 @@
 
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -403,20 +402,6 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
             throw new Error("Server configuration error. Cannot upload documents. Please contact support.");
         }
         throw new Error(error.message || "An unexpected error occurred during registration.");
-    }
-};
-
-export const updateUserApprovalStatus = async (userToUpdate: UserProfile, newStatus: ApprovalStatusType): Promise<boolean> => {
-    if (!db) return false;
-    try {
-        const userRef = doc(db, 'users', userToUpdate.id);
-        await updateDoc(userRef, { approvalStatus: newStatus });
-        return true;
-    } catch (error: any)
-    {
-        console.error(`Error updating user ${userToUpdate.id} status:`, error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
-        return false;
     }
 };
 
@@ -1114,10 +1099,3 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
-
-
-
-
-
-    
-    

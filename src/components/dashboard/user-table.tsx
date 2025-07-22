@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -11,7 +10,8 @@ import { Locations, GenderOptions } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { updateUserApprovalStatus, fetchApprovedInstructors, assignTrainerToCustomer } from '@/lib/mock-data';
+import { fetchApprovedInstructors, assignTrainerToCustomer } from '@/lib/mock-data';
+import { updateUserApprovalStatus } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -119,8 +119,9 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
         return;
       }
       
-      const success = await updateUserApprovalStatus(user, newStatus);
-      if (success) {
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
+
+      if (result.success) {
         toast({
           title: `User ${newStatus}`,
           description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
@@ -129,7 +130,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
       } else {
         toast({
           title: "Update Failed",
-          description: `Could not update status for ${user.name}.`,
+          description: result.error || `Could not update status for ${user.name}.`,
           variant: "destructive",
         });
       }
