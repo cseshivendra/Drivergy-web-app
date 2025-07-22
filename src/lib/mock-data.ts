@@ -340,10 +340,9 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
             approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
         };
 
-        const batch = writeBatch(db);
-        batch.update(userRef, profileData);
+        await updateDoc(userRef, profileData);
 
-        // Create the initial lesson request for the admin
+        // Create the lesson request for the admin
         const newRequestData: Omit<LessonRequest, 'id'> = {
             customerId: userId,
             customerName: user.name,
@@ -352,9 +351,7 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
             requestTimestamp: new Date().toISOString(),
         };
         const newRequestRef = doc(collection(db, 'lessonRequests'));
-        batch.set(newRequestRef, newRequestData);
-
-        await batch.commit();
+        await setDoc(newRequestRef, newRequestData);
         return true;
     } catch (error: any) {
         console.error("Error completing customer profile:", error);
@@ -437,27 +434,12 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
         const customerData = customerSnap.data() as UserProfile;
         const trainerData = trainerSnap.data() as UserProfile;
 
-        const batch = writeBatch(db);
-
         // Update customer to 'In Progress' and assign trainer details
-        batch.update(customerRef, {
+        await updateDoc(customerRef, {
             approvalStatus: 'In Progress',
             assignedTrainerId: trainerId,
             assignedTrainerName: trainerData.name
         });
-
-        // Create the lesson request now that the customer is assigned
-        const newRequestData: Omit<LessonRequest, 'id'> = {
-            customerId: customerId,
-            customerName: customerData.name,
-            vehicleType: customerData.vehicleInfo as VehicleType,
-            status: 'Pending', // This is pending for the trainer to accept
-            requestTimestamp: new Date().toISOString(),
-        };
-        const newRequestRef = doc(collection(db, 'lessonRequests'));
-        batch.set(newRequestRef, newRequestData);
-
-        await batch.commit();
         return true;
     } catch (error: any) {
         console.error("Error assigning trainer:", error);
@@ -1118,3 +1100,6 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
 
 
 
+
+
+    
