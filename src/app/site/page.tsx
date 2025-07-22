@@ -61,7 +61,14 @@ const coursesData = [
     title: "Comprehensive Car Program",
     description: "Our flagship car driving program takes you from zero to hero. Learn essential car controls, traffic navigation, parking, and on-road practice with expert instructors.",
     imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_zcrb88zcrb88zcrb_s6hlap.png",
-    imageHint: "car driving lesson student"
+    imageHint: "car driving lesson student",
+    details: [
+        "1-on-1 Personalized Training",
+        "Manual & Automatic Options",
+        "Highway Driving Practice",
+        "Night Driving Session",
+        "Basic Vehicle Maintenance"
+    ]
   },
   {
     id: "motorcycle-course",
@@ -69,7 +76,14 @@ const coursesData = [
     title: "Motorcycle Rider Course",
     description: "Become a skilled and safe motorcycle rider. Our course covers bike handling, balance, safety gear importance, and real-world riding scenarios.",
     imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_4j07z44j07z44j07_nhtkry.png",
-    imageHint: "motorcycle training bike rider"
+    imageHint: "motorcycle training bike rider",
+    details: [
+        "Scooter & Geared Bike Training",
+        "Advanced Braking Techniques",
+        "Slalom & Cone Weaving Drills",
+        "Group Riding Etiquette",
+        "All Safety Gear Provided"
+    ]
   },
   {
     id: "rto-assistance",
@@ -77,7 +91,14 @@ const coursesData = [
     title: "RTO License Assistance",
     description: "Successfully navigate the RTO licensing process. We provide guidance for learners' and permanent licenses, including documentation support and test preparation.",
     imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
-    imageHint: "license test exam RTO"
+    imageHint: "license test exam RTO",
+    details: [
+        "Learner's License Application Help",
+        "Permanent License Slot Booking",
+        "RTO Mock Test Simulation",
+        "Documentation Checklist",
+        "Test Day Guidance"
+    ]
   }
 ];
 
@@ -113,6 +134,7 @@ export default function PortfolioSitePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [heroSlides, setHeroSlides] = useState<SiteBanner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -248,47 +270,70 @@ export default function PortfolioSitePage() {
       </section>
 
       {/* Courses Section */}
-      <section id="courses" className="py-16 md:py-24 bg-muted/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
-          <div className="text-center mb-12">
-            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
-            <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-              Enroll in our top-rated driving courses designed for all skill levels. Get certified and drive with confidence.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {coursesData.map((course) => (
-              <Card key={course.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
-                <div className="relative h-48 w-full">
-                  <Image 
-                    src={course.imageSrc} 
-                    alt={course.title} 
-                    layout="fill" 
-                    objectFit="cover" 
-                    data-ai-hint={course.imageHint}
-                  />
+        <section id="courses" className="py-16 md:py-24 bg-muted/20">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+                <div className="text-center mb-12">
+                    <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
+                    <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+                        Enroll in our top-rated driving courses designed for all skill levels. Get certified and drive with confidence.
+                    </p>
                 </div>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center mb-2">
-                    <div className="p-2 bg-primary/10 rounded-md mr-3">
-                      <course.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <p className="text-muted-foreground text-sm">{course.description}</p>
-                </CardContent>
-                <CardFooter className="mt-auto pt-4 border-t border-border/50">
-                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                    View Details
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {coursesData.map((course) => (
+                        <div key={course.id} className="perspective-1000 h-[28rem]">
+                            <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === course.id })}>
+                                {/* Front of the Card */}
+                                <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
+                                    <div className="relative h-48 w-full">
+                                        <Image src={course.imageSrc} alt={course.title} layout="fill" objectFit="cover" data-ai-hint={course.imageHint} />
+                                    </div>
+                                    <CardHeader className="pb-3">
+                                        <div className="flex items-center mb-2">
+                                            <div className="p-2 bg-primary/10 rounded-md mr-3">
+                                                <course.icon className="h-6 w-6 text-primary" />
+                                            </div>
+                                            <CardTitle className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow">
+                                        <p className="text-muted-foreground text-sm">{course.description}</p>
+                                    </CardContent>
+                                    <CardFooter className="mt-auto pt-4 border-t border-border/50">
+                                        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setFlippedCardId(course.id)}>
+                                            View Details
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+
+                                {/* Back of the Card */}
+                                <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
+                                    <CardHeader>
+                                        <CardTitle className="font-headline text-xl font-semibold">{course.title}</CardTitle>
+                                        <CardDescription className="text-primary-foreground/80">Key Features</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow">
+                                        <ul className="space-y-3">
+                                            {course.details.map((detail, index) => (
+                                                <li key={index} className="flex items-start">
+                                                    <Check className="h-5 w-5 mr-3 mt-0.5 shrink-0" />
+                                                    <span>{detail}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Button className="w-full" variant="secondary" onClick={() => setFlippedCardId(null)}>
+                                            Flip Back
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
 
       {/* Subscription Plans Section */}
       <section id="subscriptions" className="py-16 md:py-24 bg-background">
