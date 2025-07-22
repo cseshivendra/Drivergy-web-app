@@ -60,7 +60,7 @@ const coursesData = [
     icon: Car,
     title: "Comprehensive Car Program",
     description: "Our flagship car driving program takes you from zero to hero. Learn essential car controls, traffic navigation, parking, and on-road practice with expert instructors.",
-    imageSrc: "https://placehold.co/600x400/f87171/ffffff.png",
+    imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_zcrb88zcrb88zcrb_s6hlap.png",
     imageHint: "car driving lesson student"
   },
   {
@@ -68,7 +68,7 @@ const coursesData = [
     icon: Bike,
     title: "Motorcycle Rider Course",
     description: "Become a skilled and safe motorcycle rider. Our course covers bike handling, balance, safety gear importance, and real-world riding scenarios.",
-    imageSrc: "https://placehold.co/600x400/60a5fa/ffffff.png",
+    imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_4j07z44j07z44j07_nhtkry.png",
     imageHint: "motorcycle training bike rider"
   },
   {
@@ -76,7 +76,7 @@ const coursesData = [
     icon: ClipboardCheck,
     title: "RTO License Assistance",
     description: "Successfully navigate the RTO licensing process. We provide guidance for learners' and permanent licenses, including documentation support and test preparation.",
-    imageSrc: "https://placehold.co/600x400/fbbf24/ffffff.png",
+    imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
     imageHint: "license test exam RTO"
   }
 ];
