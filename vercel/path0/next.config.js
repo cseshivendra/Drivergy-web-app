@@ -43,16 +43,6 @@ const nextConfig = {
       }
     ],
   },
-  // Redirects for simplified URLs and SEO
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/site',
-        permanent: true,
-      },
-    ]
-  },
 };
 
 module.exports = nextConfig;
