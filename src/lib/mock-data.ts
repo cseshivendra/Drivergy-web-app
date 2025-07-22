@@ -545,7 +545,6 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
 
 export const listenToAllUsers = (callback: (data: UserProfile[]) => void) => createListener('users', callback, 'registrationTimestamp');
 export const listenToAllLessonRequests = (callback: (data: LessonRequest[]) => void) => createListener('lessonRequests', callback, 'requestTimestamp');
-export const listenToRescheduleRequests = (callback: (data: RescheduleRequest[]) => void) => createListener('rescheduleRequests', callback, 'requestTimestamp');
 export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => createListener('feedback', callback, 'submissionDate');
 export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
     if (!isFirebaseConfigured() || !db) return () => {};

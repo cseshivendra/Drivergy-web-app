@@ -7,14 +7,12 @@ import SummaryMetrics from '@/components/dashboard/summary-metrics';
 import FilterControls from '@/components/dashboard/filter-controls';
 import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
-import RescheduleRequestTable from '@/components/dashboard/reschedule-request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import {
   listenToSummaryData,
   listenToAllUsers,
   listenToAllLessonRequests,
-  listenToRescheduleRequests,
   listenToAllFeedback,
   listenToCustomerLessonProgress,
   listenToQuizSets,
@@ -46,7 +44,6 @@ export default function AdminDashboard() {
   const [summaryData, setSummaryData] = useState<Partial<SummaryData>>({});
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
-  const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -76,7 +73,6 @@ export default function AdminDashboard() {
       listenToSummaryData(setSummaryData),
       listenToAllUsers(setAllUsers),
       listenToAllLessonRequests(setAllLessonRequests),
-      listenToRescheduleRequests(setRescheduleRequests),
       listenToAllFeedback(setFeedback),
       listenToAllReferrals(setReferrals),
       listenToCustomerLessonProgress(setLessonProgress),
@@ -175,12 +171,6 @@ export default function AdminDashboard() {
             title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
             requests={allLessonRequests} 
             isLoading={loading} 
-          />
-          <RescheduleRequestTable
-            title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Reschedule Requests</>}
-            requests={rescheduleRequests}
-            isLoading={loading}
-            onActioned={handleActioned}
           />
         </TabsContent>
         <TabsContent value="progress" className="space-y-8">
