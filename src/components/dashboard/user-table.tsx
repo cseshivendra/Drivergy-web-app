@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -108,17 +109,17 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
     const isTrainer = user.uniqueId.startsWith('TR');
 
+    // Special handling for approving a customer - must use the assign flow
+    if (!isTrainer && newStatus === 'Approved') {
+      toast({
+        title: "Action Required",
+        description: "Please use the 'Approve & Assign' button to approve and assign a trainer to this customer.",
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      // The "Assign" button flow is only for customers. Trainers can be approved directly.
-      if (!isTrainer && newStatus === 'Approved') {
-        toast({
-          title: "Action Required",
-          description: "Please use the 'Approve & Assign' button to approve and assign a trainer to this customer.",
-          variant: 'destructive',
-        });
-        return;
-      }
-      
       const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
 
       if (result.success) {
