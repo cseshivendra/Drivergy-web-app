@@ -226,21 +226,21 @@ export default function PortfolioSitePage() {
               icon={Navigation}
               title="Expert Driving Lessons"
               description="Tailored one-on-one training sessions with certified instructors for both two-wheelers and four-wheelers. Learn at your own pace, focusing on your specific needs and building confidence behind the wheel."
-              imageSrc="https://placehold.co/600x400/f87171/ffffff.png"
+              imageSrc="https://res.cloudinary.com/dssbgilba/image/upload/v1753184436/ChatGPT_Image_Jul_22_2025_05_10_07_PM_of3qij.png"
               imageHint="driving lesson car instructor"
             />
             <ServiceCard
               icon={BookOpen}
               title="RTO Exam Preparation"
               description="Ace your RTO exam with our comprehensive preparation module. We cover theory, traffic rules, and provide mock tests to ensure you're fully prepared for your driving license."
-              imageSrc="https://placehold.co/600x400/60a5fa/ffffff.png"
+              imageSrc="https://res.cloudinary.com/dssbgilba/image/upload/v1753185386/WhatsApp_Image_2025-07-22_at_17.24.27_cfa7cd37_nqwyhb.jpg"
               imageHint="exam preparation book test"
             />
             <ServiceCard
               icon={ShieldCheck}
               title="Defensive Driving Courses"
               description="Master advanced driving techniques to navigate challenging road conditions and anticipate hazards. Our defensive driving course enhances your safety and awareness on the road."
-              imageSrc="https://placehold.co/600x400/34d399/ffffff.png"
+              imageSrc="https://res.cloudinary.com/dssbgilba/image/upload/v1753180602/Gemini_Generated_Image_3vqnhu3vqnhu3vqn_bzdhmq.png"
               imageHint="safe driving shield road"
             />
           </div>
