@@ -605,7 +605,28 @@ export const listenToCourses = (callback: (data: Course[]) => void) => createLis
 
 export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
 export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => createListener('siteBanners', callback);
+
+export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
+    if (!isFirebaseConfigured() || !db) {
+        callback(MOCK_SITE_BANNERS);
+        return () => {}; // Return an empty unsubscribe function
+    }
+
+    const q = query(collection(db, 'siteBanners'));
+
+    return onSnapshot(q, (snapshot) => {
+        if (snapshot.empty) {
+            callback(MOCK_SITE_BANNERS); // Fallback if Firestore collection is empty
+            return;
+        }
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
+        callback(data);
+    }, (error) => {
+        console.error(`Error listening to siteBanners:`, error);
+        toast({ title: "Connection Error", description: `Could not sync siteBanners.`, variant: "destructive" });
+        callback(MOCK_SITE_BANNERS); // Fallback on error
+    });
+};
 
 
 export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
