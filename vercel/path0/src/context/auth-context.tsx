@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: `Login Successful!`,
         description: 'Redirecting to your dashboard...',
       });
-      router.push('/app');
+      router.push('/');
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       // Don't show toast for user-closed popup
@@ -115,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: `Welcome, ${userProfile.name}!`,
         description: 'You are now logged in.',
       });
-      router.push('/app');
+      router.push('/');
     }
   };
 

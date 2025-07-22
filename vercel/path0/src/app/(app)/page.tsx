@@ -9,7 +9,7 @@ import TrainerDashboard from '@/components/dashboard/trainer-dashboard';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function DashboardPage() {
+export default function AuthenticatedRootPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 

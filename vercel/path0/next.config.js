@@ -51,11 +51,6 @@ const nextConfig = {
         destination: '/site',
         permanent: true,
       },
-       {
-        source: '/app',
-        destination: '/app',
-        permanent: true,
-      },
     ]
   },
 };

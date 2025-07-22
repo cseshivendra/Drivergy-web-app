@@ -29,7 +29,7 @@ export default function LoginPage() {
   useEffect(() => {
     setIsMounted(true);
     if (user && !loading) {
-      router.push(redirect || '/app'); // Redirect to intended page or app dashboard
+      router.push(redirect || '/'); // Redirect to intended page or app dashboard
     }
   }, [user, loading, router, redirect]);
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
     }
     const loggedIn = await signInWithCredentials(username, password);
     if (loggedIn) {
-        router.push(redirect || '/app');
+        router.push(redirect || '/');
     }
   };
 
