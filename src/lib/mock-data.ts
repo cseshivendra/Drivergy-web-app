@@ -1042,7 +1042,7 @@ export const fetchQuizSets = async (): Promise<QuizSet[]> => {
             console.warn("No quiz sets found in Firestore, returning mock data.");
             return MOCK_QUIZ_SETS;
         }
-        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
+        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as QuizSet));
         return sets;
     } catch (error: any) {
         console.error("Error fetching quiz sets:", error);
