@@ -487,9 +487,9 @@ export default function PortfolioSitePage() {
                 </div>
 
                 {/* Premium Plan */}
-                <div className="perspective-1000 h-[30rem] transform md:scale-105 z-10">
+                <div className="perspective-1000 h-[30rem] z-10">
                      <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === 'premium-plan' })}>
-                        <Card className="absolute w-full h-full backface-hidden shadow-xl hover:shadow-2xl border-2 border-primary relative overflow-hidden flex flex-col bg-card transition-transform duration-300 hover:-translate-y-2">
+                        <Card className="absolute w-full h-full backface-hidden shadow-xl hover:shadow-2xl border-2 border-primary relative overflow-hidden flex flex-col bg-card transition-transform duration-300 hover:-translate-y-2 md:scale-105">
                             <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center"><Star className="h-3 w-3 mr-1.5" /> POPULAR</div>
                             <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Premium</CardTitle><CardDescription>Our most comprehensive package.</CardDescription></CardHeader>
                             <CardContent className="flex-grow space-y-4">
