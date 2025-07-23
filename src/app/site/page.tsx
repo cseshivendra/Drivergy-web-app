@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
-import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn } from 'lucide-react';
+import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn, Clock, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { listenToSiteBanners } from '@/lib/mock-data';
 import type { SiteBanner } from '@/types';
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useState, useEffect } from 'react';
 import PromotionalPopup from '@/components/popups/promotional-popup';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 interface ServiceCardProps {
@@ -127,7 +128,72 @@ const testimonialsData = [
       testimonial: "I was nervous about driving in a big city, but the defensive driving course gave me the confidence I needed. The app is user-friendly and the support team is very responsive.",
       rating: 4,
     },
-  ];
+];
+
+const skillModules = [
+    {
+        title: "City Driving",
+        bgColor: "bg-purple-100 dark:bg-purple-900/30",
+        textColor: "text-purple-800 dark:text-purple-200",
+        borderColor: "border-purple-300 dark:border-purple-700",
+        logoColor: "text-purple-600",
+        skills: [
+            "Bumper to bumper traffic",
+            "Navigating flyovers, intersections and roundabouts",
+            "Maintaining and changing lanes",
+            "Evening driving",
+        ],
+        duration: "4 hours"
+    },
+    {
+        title: "Flyover Driving",
+        bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
+        textColor: "text-yellow-800 dark:text-yellow-200",
+        borderColor: "border-yellow-300 dark:border-yellow-700",
+        logoColor: "text-yellow-600",
+        skills: [
+            "Flyover entry/exit with maintaining speed limit",
+            "Changing lanes",
+            "Safe overtaking",
+            "Steering on curves",
+        ],
+        duration: "2 hours"
+    },
+    {
+        title: "Parking",
+        bgColor: "bg-cyan-100 dark:bg-cyan-900/30",
+        textColor: "text-cyan-800 dark:text-cyan-200",
+        borderColor: "border-cyan-300 dark:border-cyan-700",
+        logoColor: "text-cyan-600",
+        skills: [
+            "Entry/exit parking spots",
+            "Parallel parking",
+            "Perpendicular parking",
+            "On-road parking",
+        ],
+        duration: "4 hours" // As per image, parking is not specified, assuming 4
+    },
+    {
+        title: "Driving on slopes",
+        bgColor: "bg-pink-100 dark:bg-pink-900/30",
+        textColor: "text-pink-800 dark:text-pink-200",
+        borderColor: "border-pink-300 dark:border-pink-700",
+        logoColor: "text-pink-600",
+        skills: [
+            "Uphill and downhill driving",
+            "Speed control on slopes",
+            "Driving through bends",
+        ],
+        duration: "2 hours"
+    },
+];
+
+const DrivergyLogoMini = ({className} : {className?: string}) => (
+    <div className={cn("inline-flex items-center justify-center p-1 rounded-full bg-white/80 shadow-inner", className)}>
+        <Car className="h-4 w-4 text-primary" />
+    </div>
+);
+
 
 export default function PortfolioSitePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -282,8 +348,53 @@ export default function PortfolioSitePage() {
         </div>
       </section>
 
-      {/* Courses Section */}
-        <section id="courses" className="py-16 md:py-24 bg-muted/20">
+      {/* New Skills Section */}
+      <section id="skills" className="py-16 md:py-24 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+            <div className="text-center mb-12">
+                <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">What You'll Master</h2>
+                <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+                    Our curriculum is designed to build your confidence by focusing on real-world driving skills.
+                </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {skillModules.map((mod) => (
+                    <Card key={mod.title} className={cn("shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 overflow-hidden", mod.bgColor)}>
+                        <CardHeader>
+                            <CardTitle className={cn("flex items-center gap-3 font-headline text-2xl font-bold", mod.textColor)}>
+                                <DrivergyLogoMini className={mod.logoColor} />
+                                {mod.title}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Accordion type="single" collapsible defaultValue="item-1">
+                                <AccordionItem value="item-1" className={cn("border rounded-md px-4", mod.borderColor)}>
+                                    <AccordionTrigger className={cn("py-2.5 font-semibold hover:no-underline", mod.textColor)}>
+                                      What will we ace together?
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-2 pb-2">
+                                        <ul className={cn("space-y-2 list-disc pl-5", mod.textColor)}>
+                                            {mod.skills.map((skill, i) => (
+                                                <li key={i}>{skill}</li>
+                                            ))}
+                                        </ul>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                             <div className={cn("flex items-center justify-center gap-2 pt-2", mod.textColor)}>
+                                <Clock className="h-6 w-6 opacity-70" />
+                                <span className="font-semibold">Duration:</span>
+                                <span className="font-bold text-lg">{mod.duration}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    </section>
+
+    {/* Courses Section */}
+        <section id="courses" className="py-16 md:py-24 bg-background">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
                 <div className="text-center mb-12">
                     <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
@@ -349,7 +460,7 @@ export default function PortfolioSitePage() {
 
 
       {/* Subscription Plans Section */}
-      <section id="subscriptions" className="py-16 md:py-24 bg-background">
+      <section id="subscriptions" className="py-16 md:py-24 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
           <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Flexible Subscription Plans</h2>
           <p className="text-lg text-muted-foreground mb-12 max-w-xl mx-auto">
@@ -533,3 +644,4 @@ export default function PortfolioSitePage() {
     </>
   );
 }
+
