@@ -15,7 +15,7 @@ const MOCK_SITE_BANNERS: SiteBanner[] = [
         id: "banner-1",
         title: "Start Your Driving Journey Today",
         description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
-        imageSrc: "https://placehold.co/1920x1080/dc2626/ffffff.png",
+        imageSrc: "https://placehold.co/1920x1080/16a34a/ffffff.png",
         imageHint: "driving road car sunset",
     },
     {
