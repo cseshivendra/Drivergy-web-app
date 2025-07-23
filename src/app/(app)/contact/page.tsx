@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +20,16 @@ import { ComplaintFormSchema, type ComplaintFormValues } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquareText } from 'lucide-react'; 
 import Image from 'next/image';
+import type { Metadata } from 'next';
+
+// This is a client component, so we can't export metadata directly.
+// However, adding a <head> tag helps with SEO for client-rendered pages.
+const PageHead = () => (
+    <head>
+        <title>Contact Support | Drivergy</title>
+        <meta name="description" content="Have an issue or feedback? Contact the Drivergy support team. We're here to help you with your driving lesson queries and platform issues." />
+    </head>
+);
 
 export default function ContactPage() {
   const { toast } = useToast();
@@ -44,12 +55,14 @@ export default function ContactPage() {
   }
 
   return (
+    <>
+    <PageHead />
     <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-lg overflow-hidden">
         <div className="relative h-56 w-full bg-primary/10">
             <Image
                 src="https://placehold.co/800x300/E53E3E/ffffff.png"
-                alt="Contact us banner"
+                alt="A customer support representative ready to help"
                 layout="fill"
                 objectFit="cover"
                 data-ai-hint="support customer service"
@@ -135,5 +148,6 @@ export default function ContactPage() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

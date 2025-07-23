@@ -2,6 +2,12 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Info, Users, Target, Car } from 'lucide-react';
 import Image from 'next/image';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'About Drivergy | Our Mission for Safer Roads',
+    description: 'Learn about Drivergy, our mission to revolutionize driving education in India, and our commitment to creating safe, confident drivers for both men and women.',
+};
 
 export default function AboutPage() {
   return (
@@ -10,7 +16,7 @@ export default function AboutPage() {
         <div className="relative h-48 w-full sm:h-64">
           <Image 
             src="https://placehold.co/1200x400/dc2626/ffffff.png" 
-            alt="Driving school banner" 
+            alt="An open road representing the journey of learning to drive with Drivergy" 
             layout="fill" 
             objectFit="cover"
             data-ai-hint="driving school road"
@@ -44,9 +50,9 @@ export default function AboutPage() {
             </h2>
             <p className="text-foreground leading-relaxed">
               Drivergy is a dedicated team of technology enthusiasts and road safety advocates.
-              We believe that learning to drive should be an accessible and positive experience.
+              We believe that learning to drive should be an accessible and positive experience for everyone, regardless of gender.
               Our platform is built with cutting-edge technology to connect aspiring drivers
-              with qualified instructors, simplifying the journey from beginner to licensed driver.
+              with qualified male and female instructors, simplifying the journey from beginner to licensed driver.
             </p>
           </section>
           
@@ -56,12 +62,12 @@ export default function AboutPage() {
               What We Offer
             </h2>
             <ul className="list-disc list-inside space-y-2 text-foreground leading-relaxed">
-              <li>Easy scheduling and booking of driving lessons.</li>
-              <li>Verified and professional driving instructors.</li>
-              <li>Comprehensive tracking of progress for students.</li>
-              <li>A user-friendly dashboard for instructors to manage their bookings and students.</li>
-              <li>Secure payment processing and subscription management.</li>
-              <li>Dedicated support for all users of the platform.</li>
+              <li>Easy scheduling and booking of driving lessons for cars and motorcycles.</li>
+              <li>Verified and professional driving instructors, including female trainers for women.</li>
+              <li>Comprehensive tracking of progress for students through our modern dashboard.</li>
+              <li>A user-friendly platform for instructors to manage their bookings and students.</li>
+              <li>Secure payment processing and flexible subscription management.</li>
+              <li>Dedicated support for all users on their journey to becoming safe drivers.</li>
             </ul>
           </section>
 

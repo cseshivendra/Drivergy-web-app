@@ -67,7 +67,7 @@ export default function BlogPage() {
             <div className="relative h-56 w-full bg-primary/10">
                 <Image 
                     src="https://placehold.co/1200x300/dc2626/ffffff.png" 
-                    alt="Banner for blog page with driving theme" 
+                    alt="Banner with books and driving manuals for the Drivergy blog" 
                     layout="fill" 
                     objectFit="cover"
                     data-ai-hint="library books driving manual"
@@ -76,9 +76,9 @@ export default function BlogPage() {
                     <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
                         <BookText className="h-10 w-10 text-primary" />
                     </div>
-                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Drivergy Blog</h1>
+                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">The Drivergy Blog</h1>
                     <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                        Your source for RTO exam tips, expert driving tricks, and road safety advice.
+                        Your expert source for RTO exam tips, safe driving tricks, and road safety news in India.
                     </p>
                 </div>
             </div>

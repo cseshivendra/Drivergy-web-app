@@ -54,7 +54,7 @@ export default function CoursesPage() {
         </div>
         <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Explore Our Driving Courses</h1>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Whether you're a beginner or looking to ace your RTO exam, we have the perfect course for you.
+          Whether you're a beginner or looking to ace your RTO exam, we have the perfect driving course for you.
         </p>
       </header>
       
@@ -87,7 +87,7 @@ export default function CoursesPage() {
                 </div>
               )}
               <CardHeader className="pb-3">
-                <CardTitle className="font-headline text-2xl font-semibold text-primary">{course.title}</CardTitle>
+                <CardTitle as="h2" className="font-headline text-2xl font-semibold text-primary">{course.title}</CardTitle>
                 <CardDescription className="text-sm text-muted-foreground pt-1 min-h-[3.5rem]">{course.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5 flex-grow">

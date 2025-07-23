@@ -40,6 +40,16 @@ import Image from 'next/image';
 import { fetchQuizSets } from '@/lib/mock-data';
 import type { Question, QuizSet } from '@/types';
 import { availableLanguages } from '@/types';
+import type { Metadata } from 'next';
+
+// This is a client component, so we can't export metadata directly.
+// However, adding a <head> tag helps with SEO for client-rendered pages.
+const PageHead = () => (
+    <head>
+        <title>RTO Mock Test Quiz | Drivergy</title>
+        <meta name="description" content="Practice for your official RTO driving license exam with our free mock tests. Available in multiple languages for all learners in India." />
+    </head>
+);
 
 // A component to render a single quiz set
 const QuizSetComponent = ({ quizSet, onStart, selectedLanguage }: { quizSet: QuizSet; onStart: () => void; selectedLanguage: string }) => {
@@ -301,6 +311,7 @@ export default function AppRtoQuizPage() {
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
+      <PageHead />
       <Card className="shadow-xl overflow-hidden">
         <CardHeader>
              <div className="flex items-center gap-4">
@@ -308,7 +319,7 @@ export default function AppRtoQuizPage() {
                     <ClipboardCheck className="h-7 w-7 text-primary" />
                 </div>
                 <div>
-                    <CardTitle className="font-headline text-2xl">RTO Test Quiz</CardTitle>
+                    <CardTitle as="h1" className="font-headline text-2xl">RTO Mock Test Quiz</CardTitle>
                     <CardDescription>Prepare for your RTO screening test. Select a set and start the quiz.</CardDescription>
                 </div>
             </div>

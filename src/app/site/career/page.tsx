@@ -50,7 +50,7 @@ export default function CareerPage() {
                 <div className="relative h-56 w-full bg-primary/10">
                     <Image
                         src="https://placehold.co/1200x300/3b82f6/ffffff.png"
-                        alt="Banner for career page"
+                        alt="A diverse team collaborating in a modern office, representing career opportunities at Drivergy"
                         layout="fill"
                         objectFit="cover"
                         data-ai-hint="office team meeting"
@@ -59,9 +59,9 @@ export default function CareerPage() {
                         <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
                             <Briefcase className="h-10 w-10 text-primary" />
                         </div>
-                        <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Join Our Team</h1>
+                        <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Careers at Drivergy</h1>
                         <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                            Be a part of a team that's revolutionizing driving education in India.
+                            Join a passionate team that's revolutionizing driving education in India. Drive your career forward with us.
                         </p>
                     </div>
                 </div>

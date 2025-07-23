@@ -44,7 +44,7 @@ export default function FaqPage() {
                 <div className="relative h-56 w-full bg-primary/10">
                     <Image
                         src="https://placehold.co/1200x300/f97316/ffffff.png"
-                        alt="Banner for FAQ page"
+                        alt="A large question mark representing frequently asked questions about driving lessons"
                         layout="fill"
                         objectFit="cover"
                         data-ai-hint="question mark help"
@@ -55,7 +55,7 @@ export default function FaqPage() {
                         </div>
                         <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Frequently Asked Questions</h1>
                         <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                            Find answers to common questions about our services and platform.
+                            Find answers to common questions about our driving courses, RTO services, and platform features.
                         </p>
                     </div>
                 </div>

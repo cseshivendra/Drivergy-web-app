@@ -24,8 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Drivergy</title>
-        <meta name="description" content="Drivergy is a modern platform for driving education in India, connecting students with qualified instructors for car and motorcycle training, RTO assistance, and more." />
+        <title>Drivergy: India's #1 Safe Driving School for All</title>
+        <meta name="description" content="Drivergy is India's top-rated driving school for men and women. Offering safe car and motorcycle training, RTO test prep, and expert instructors in Gurugram, Noida, and Delhi." />
+        <meta name="keywords" content="driving school, learn to drive, safe driving, driving lessons, car training, motorcycle training, RTO test, driving instructor, driving school for women, driving school for men, Gurugram, Noida, Delhi" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />

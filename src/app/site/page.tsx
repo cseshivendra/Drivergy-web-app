@@ -44,7 +44,7 @@ function ServiceCard({ icon: Icon, title, description, imageSrc, imageHint }: Se
           <div className="p-2 bg-primary/10 rounded-md mr-3">
             <Icon className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="font-headline text-xl font-semibold text-primary">{title}</CardTitle>
+          <CardTitle as="h3" className="font-headline text-xl font-semibold text-primary">{title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -107,7 +107,7 @@ const testimonialsData = [
       name: "Priya Sharma",
       role: "Customer, Bangalore",
       avatar: "https://placehold.co/100x100/f472b6/ffffff.png",
-      avatarHint: "woman portrait",
+      avatarHint: "happy female driver",
       testimonial: "Drivergy made learning to drive so easy! My instructor was patient and professional. The scheduling system is fantastic. I passed my test on the first try. Highly recommended!",
       rating: 5,
     },
@@ -115,7 +115,7 @@ const testimonialsData = [
       name: "Rohan Verma",
       role: "Trainer, Mumbai",
       avatar: "https://placehold.co/100x100/818cf8/ffffff.png",
-      avatarHint: "man portrait",
+      avatarHint: "professional driving instructor",
       testimonial: "As an instructor, Drivergy's platform has streamlined my business. I can manage my bookings, track student progress, and receive payments all in one place. It lets me focus on what I do best - teaching.",
       rating: 5,
     },
@@ -123,7 +123,7 @@ const testimonialsData = [
       name: "Anjali Mehta",
       role: "Customer, Delhi",
       avatar: "https://placehold.co/100x100/a78bfa/ffffff.png",
-      avatarHint: "female driver",
+      avatarHint: "confident woman driver",
       testimonial: "I was nervous about driving in a big city, but the defensive driving course gave me the confidence I needed. The app is user-friendly and the support team is very responsive.",
       rating: 4,
     },
@@ -139,7 +139,20 @@ export default function PortfolioSitePage() {
   useEffect(() => {
     setLoading(true);
     const unsubscribe = listenToSiteBanners((data) => {
-      setHeroSlides(data);
+      // SEO Enhancement: Fallback to a default, strong banner if DB is empty
+      if (data && data.length > 0) {
+        setHeroSlides(data);
+      } else {
+        setHeroSlides([
+          {
+            id: 'default-banner',
+            title: "India's Safest Driving School for All",
+            description: "Learn to drive with confidence. We offer expert, certified male and female instructors for car and motorcycle training.",
+            imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
+            imageHint: 'safe driving on Indian road',
+          }
+        ]);
+      }
       setLoading(false);
     });
 
@@ -183,7 +196,7 @@ export default function PortfolioSitePage() {
                   className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
                   style={{ backgroundImage: `url(${slide.imageSrc})` }}
                   role="img"
-                  aria-label={slide.title}
+                  aria-label={slide.description}
               />
           ))}
           {/* Overlay */}
@@ -238,9 +251,9 @@ export default function PortfolioSitePage() {
       <section id="services" className="py-8 md:py-12 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
           <div className="text-center mb-12">
-            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Services</h2>
+            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Your Journey to Safe Driving Starts Here</h2>
             <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-              We offer a range of services tailored to meet your driving needs, from beginner lessons to advanced techniques.
+              We offer a complete range of driving services, including lessons for women and men, RTO assistance, and advanced defensive driving.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -292,7 +305,7 @@ export default function PortfolioSitePage() {
                                             <div className="p-2 bg-primary/10 rounded-md mr-3">
                                                 <course.icon className="h-6 w-6 text-primary" />
                                             </div>
-                                            <CardTitle className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
+                                            <CardTitle as="h3" className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
                                         </div>
                                     </CardHeader>
                                     <CardContent className="flex-grow">
@@ -308,7 +321,7 @@ export default function PortfolioSitePage() {
                                 {/* Back of the Card */}
                                 <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                                     <CardHeader>
-                                        <CardTitle className="font-headline text-xl font-semibold">{course.title}</CardTitle>
+                                        <CardTitle as="h3" className="font-headline text-xl font-semibold">{course.title}</CardTitle>
                                         <CardDescription className="text-primary-foreground/80">Key Features</CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex-grow">
@@ -346,7 +359,7 @@ export default function PortfolioSitePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <Card className="shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
                     <CardHeader className="pb-4">
-                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                        <CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">
                           Basic
                         </CardTitle>
                         <CardDescription>Perfect for beginners to get started.</CardDescription>
@@ -381,7 +394,7 @@ export default function PortfolioSitePage() {
                         <Star className="h-3 w-3 mr-1.5" /> POPULAR
                     </div>
                     <CardHeader className="pb-4">
-                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                        <CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">
                             Premium
                         </CardTitle>
                         <CardDescription>Our most comprehensive package.</CardDescription>
@@ -414,7 +427,7 @@ export default function PortfolioSitePage() {
                 </Card>
                 <Card className="shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
                     <CardHeader className="pb-4">
-                        <CardTitle className="text-2xl text-primary flex items-center justify-center">
+                        <CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">
                           Gold
                         </CardTitle>
                         <CardDescription>Excellent value with extra benefits.</CardDescription>
@@ -468,7 +481,7 @@ export default function PortfolioSitePage() {
                   <CardFooter className="flex items-center gap-4 mt-auto pt-4 border-t">
                       <Image 
                           src={testimonial.avatar} 
-                          alt={testimonial.name}
+                          alt={testimonial.avatarHint}
                           width={40}
                           height={40}
                           className="rounded-full"
@@ -520,5 +533,3 @@ export default function PortfolioSitePage() {
     </>
   );
 }
-
-    
