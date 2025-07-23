@@ -73,6 +73,7 @@ const navLinks: NavLink[] = [
       { href: '/site/blog', label: 'Blogs' },
     ],
   },
+  { href: '/site/about', label: 'About Us' },
   { href: '/site/career', label: 'Careers' },
   { href: '/site#contact', label: 'Support' },
 ];
