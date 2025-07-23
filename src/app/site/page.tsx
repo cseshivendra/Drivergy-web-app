@@ -171,7 +171,7 @@ const skillModules = [
             "Perpendicular parking",
             "On-road parking",
         ],
-        duration: "4 hours" // As per image, parking is not specified, assuming 4
+        duration: "4 hours"
     },
     {
         title: "Driving on slopes",
@@ -485,8 +485,8 @@ export default function PortfolioSitePage() {
                 </div>
 
                 {/* Premium Plan - Corrected */}
-                <div className="relative z-10 transform md:scale-105">
-                    <div className="perspective-1000 h-[30rem]">
+                <div className="relative z-10">
+                  <div className="perspective-1000 h-[30rem] w-full transform md:scale-105">
                         <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === 'premium-plan' })}>
                             {/* Front */}
                             <Card className="absolute w-full h-full backface-hidden shadow-xl hover:shadow-2xl border-2 border-primary overflow-hidden flex flex-col bg-card transition-transform duration-300 hover:-translate-y-2">
