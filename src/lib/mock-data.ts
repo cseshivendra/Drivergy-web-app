@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -1007,35 +1008,50 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
     if (!db) return false;
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
-        if(data.imageFile) {
+        if (data.imageFile) {
             updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
         }
-        delete updateData.imageFile;
-        await updateDoc(doc(db, 'siteBanners', id), updateData as any);
+        delete updateData.imageFile; // Always remove the file object before updating DB
+
+        // Ensure all fields are included in the update
+        await updateDoc(doc(db, 'siteBanners', id), {
+            title: updateData.title,
+            description: updateData.description,
+            imageSrc: updateData.imageSrc,
+            imageHint: updateData.imageHint,
+        });
         return true;
-    } catch(error: any) {
+    } catch (error: any) {
         console.error("Error updating site banner:", error);
         toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
-}
+};
 
 export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
     if (!db) return false;
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
-        if(data.imageFile) {
+        if (data.imageFile) {
             updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
         }
         delete updateData.imageFile;
-        await updateDoc(doc(db, 'promotionalPosters', id), updateData as any);
+
+        // Ensure all fields are included in the update
+        await updateDoc(doc(db, 'promotionalPosters', id), {
+            title: updateData.title,
+            description: updateData.description,
+            imageSrc: updateData.imageSrc,
+            imageHint: updateData.imageHint,
+            href: updateData.href,
+        });
         return true;
-    } catch(error: any) {
+    } catch (error: any) {
         console.error("Error updating promotional poster:", error);
         toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
-}
+};
 
 // This one-time fetch is still needed for pages that don't need real-time updates.
 export const fetchCourses = async (): Promise<Course[]> => {
@@ -1059,7 +1075,7 @@ export const fetchQuizSets = async (): Promise<QuizSet[]> => {
             console.warn("No quiz sets found in Firestore, returning mock data.");
             return MOCK_QUIZ_SETS;
         }
-        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as QuizSet));
+        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as QuizSet);
         return sets;
     } catch (error: any) {
         console.error("Error fetching quiz sets:", error);
@@ -1125,3 +1141,6 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         return [];
     }
 };
+
+
+    
