@@ -251,10 +251,10 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={pathname === '/about'}
+              isActive={pathname === '/site/about'}
               tooltip={{ children: "About Us", side: "right", align: "center" }}
             >
-              <Link href="/about">
+              <Link href="/site/about">
                 <Info />
                 <span>About Us</span>
               </Link>
