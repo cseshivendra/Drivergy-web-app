@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, fetchUserById, getOrCreateGoogleUser } from '@/lib/mock-data';
+import { authenticateUserByCredentials, getOrCreateGoogleUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 
@@ -43,13 +43,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await firebaseSignOut(auth);
         }
       } else {
-        setUser(null);
+        // Only set user to null if they are not already logged in via credentials
+        if (!user) {
+          setUser(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]); // Add user to dependency array
   
   const signInWithGoogle = async () => {
     if (!auth) {
