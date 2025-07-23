@@ -2,12 +2,12 @@
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { db, isFirebaseConfigured } from './firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { uploadFile } from './file-upload';
-import { updateUserApprovalStatus as updateUserApprovalStatusServerAction } from './server-actions';
+import { uploadFile } from '@/lib/file-upload';
+import { updateUserApprovalStatus as updateUserApprovalStatusServerAction } from '@/lib/server-actions';
 
 
 // Default mock data for when Firebase is not connected
