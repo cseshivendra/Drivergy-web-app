@@ -1,5 +1,7 @@
 
 
+'use server';
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -31,8 +33,8 @@ const MOCK_SITE_BANNERS: SiteBanner[] = [
         description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
         imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
         imageHint: "city traffic modern car",
-    },
-];
+    }
+  ];
 
 const MOCK_BLOG_POSTS: BlogPost[] = [
     {
@@ -193,7 +195,7 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
-export const getOrCreateGoogleUser = async (firebaseUser: FirebaseUser): Promise<UserProfile | null> => {
+export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
     if (!db) return null;
     const userRef = doc(db, "users", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
@@ -227,9 +229,35 @@ export const getOrCreateGoogleUser = async (firebaseUser: FirebaseUser): Promise
     }
 };
 
-export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
     try {
+        // Special case to create a default admin if it doesn't exist
+        if (username === 'admin' && password === 'admin') {
+            const adminQuery = query(collection(db, "users"), where("username", "==", "admin"), limit(1));
+            const adminSnapshot = await getDocs(adminQuery);
+            if (adminSnapshot.empty) {
+                const adminId = 'admin_user_01'; // Use a predictable ID
+                const adminRef = doc(db, "users", adminId);
+                const newAdmin: Omit<UserProfile, 'id'> = {
+                    uniqueId: "AD-000001",
+                    name: "Admin",
+                    username: "admin",
+                    password: "admin", // In a real app, this would be hashed
+                    contact: "admin@drivergy.com",
+                    phone: "1234567890",
+                    gender: "Prefer not to say",
+                    location: "Gurugram",
+                    subscriptionPlan: "Admin",
+                    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+                    approvalStatus: 'Approved',
+                };
+                await setDoc(adminRef, newAdmin);
+                console.log("Default admin user created successfully.");
+                return { id: adminRef.id, ...newAdmin };
+            }
+        }
+        
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
@@ -245,7 +273,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
     }
 };
 
-export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
+export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!db || !userId) return null;
     try {
         let userQuery;
@@ -297,7 +325,7 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
 };
 
 
-export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
+export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
     if (!db) return null;
     try {
         const updateData: { [key: string]: any } = {
@@ -328,7 +356,7 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
     }
 };
 
-export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
     if (!db) return false;
     try {
         const userRef = doc(db, "users", userId);
@@ -345,7 +373,7 @@ export const changeUserPassword = async (userId: string, currentPassword: string
     }
 };
 
-export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<boolean> => {
+export async function updateUserApprovalStatus(userId: string, newStatus: ApprovalStatusType): Promise<boolean> {
     if (!db) return false;
     try {
         const userRef = doc(db, 'users', userId);
@@ -362,7 +390,7 @@ export const updateUserApprovalStatus = async (userId: string, newStatus: Approv
     }
 };
 
-export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile | null> => {
+export async function addCustomer(data: CustomerRegistrationFormValues): Promise<UserProfile | null> {
     if (!db) return null;
 
     const newUser: Omit<UserProfile, 'id'> = {
@@ -393,7 +421,7 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
     }
 };
 
-export const completeCustomerProfile = async (userId: string, data: FullCustomerDetailsValues): Promise<boolean> => {
+export async function completeCustomerProfile(userId: string, data: FullCustomerDetailsValues): Promise<boolean> {
     if (!db) return false;
     const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
 
@@ -450,7 +478,7 @@ export const completeCustomerProfile = async (userId: string, data: FullCustomer
     }
 };
 
-export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
+export async function addTrainer(data: TrainerRegistrationFormValues): Promise<UserProfile | null> {
     if (!db) return null;
 
     try {
@@ -494,7 +522,7 @@ export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<U
     }
 };
 
-export const assignTrainerToCustomer = async (customerId: string, trainerId: string): Promise<boolean> => {
+export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!db) return false;
     try {
         const customerRef = doc(db, "users", customerId);
@@ -523,7 +551,7 @@ export const assignTrainerToCustomer = async (customerId: string, trainerId: str
 };
 
 
-export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
+export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
     if (!db) return false;
     try {
         const customerRef = doc(db, "users", customerId);
@@ -561,7 +589,7 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
     }
 };
 
-export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
+export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
     if (!db) return false;
     try {
         const studentRef = doc(db, "users", studentId);
@@ -584,7 +612,7 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
     }
 };
 
-export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
+export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
     if (!db) return null;
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
@@ -632,9 +660,9 @@ const createListener = <T>(collectionName: string, callback: (data: T[]) => void
     });
 };
 
-export const listenToAllLessonRequests = (callback: (data: LessonRequest[]) => void) => createListener('lessonRequests', callback, 'requestTimestamp');
-export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => createListener('feedback', callback, 'submissionDate');
-export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
+export async function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) { createListener('lessonRequests', callback, 'requestTimestamp'); }
+export async function listenToAllFeedback(callback: (data: Feedback[]) => void) { createListener('feedback', callback, 'submissionDate'); }
+export async function listenToAllReferrals(callback: (data: Referral[]) => void) {
     if (!isFirebaseConfigured() || !db) return () => {};
     const q = query(collection(db, "referrals"), orderBy("timestamp", "desc"));
     return onSnapshot(q, async (snapshot) => {
@@ -674,14 +702,14 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
         toast({ title: "Connection Error", description: `Could not sync referrals.`, variant: "destructive" });
     });
 };
-export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
-export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
-export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback);
+export async function listenToQuizSets(callback: (data: QuizSet[]) => void) { createListener('quizSets', callback); }
+export async function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) { createListener('promotionalPosters', callback); }
+export async function listenToCourses(callback: (data: Course[]) => void) { createListener('courses', callback); }
 
-export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
+export async function listenToFaqs(callback: (data: FaqItem[]) => void) { createListener('faqs', callback, undefined, 'asc'); }
+export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) { createListener('blogPosts', callback, 'date', 'desc'); }
 
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
+export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
     if (!isFirebaseConfigured() || !db) {
         callback(MOCK_SITE_BANNERS);
         return () => {}; // Return an empty unsubscribe function
@@ -704,7 +732,7 @@ export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
 };
 
 
-export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
+export async function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
     if (!isFirebaseConfigured() || !db) return () => {};
     return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
@@ -725,7 +753,7 @@ export const listenToUser = (userId: string, callback: (data: UserProfile | null
     });
 };
 
-export const listenToTrainerStudents = (trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) => {
+export async function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) {
     if (!isFirebaseConfigured() || !db) return () => {};
     const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
     const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
@@ -757,7 +785,7 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
 // CALCULATED/AGGREGATED DATA LISTENERS
 // =================================================================
 
-export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => void) => {
+export async function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
     if (!isFirebaseConfigured() || !db) return () => {};
     const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
@@ -796,7 +824,7 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
     };
 };
 
-export const listenToCustomerLessonProgress = (callback: (data: LessonProgressData[]) => void) => {
+export async function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
     if (!isFirebaseConfigured() || !db) return () => {};
     const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
@@ -824,7 +852,7 @@ export const listenToCustomerLessonProgress = (callback: (data: LessonProgressDa
 // WRITE OPERATIONS (No changes needed for real-time, they trigger listeners)
 // =================================================================
 
-export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> => {
+export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
     if (!db) return null;
     const newRequest = {
         userId, customerName,
@@ -844,7 +872,7 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
     }
 };
 
-export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
+export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
     if (!db) return false;
     try {
         const requestRef = doc(db, 'rescheduleRequests', requestId);
@@ -863,7 +891,7 @@ export const updateRescheduleRequestStatus = async (requestId: string, newStatus
     }
 };
 
-export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
+export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
     if (!db) return false;
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
     try {
@@ -877,7 +905,7 @@ export const addFeedback = async (customerId: string, customerName: string, trai
     }
 };
 
-export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
+export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
     if (!db) return false;
     try {
         await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
@@ -890,7 +918,7 @@ export const updateReferralPayoutStatus = async (referralId: string, status: Pay
 };
 
 
-export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
+export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
     if (!db) return null;
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -908,7 +936,7 @@ export const addCourseModule = async (courseId: string, moduleData: Omit<CourseM
     }
 };
 
-export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> => {
+export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
     if (!db) return null;
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -925,7 +953,7 @@ export const updateCourseModule = async (courseId: string, moduleId: string, mod
     }
 };
 
-export const deleteCourseModule = async (courseId: string, moduleId: string): Promise<boolean> => {
+export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
     if (!db) return false;
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -942,7 +970,7 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
     }
 };
 
-export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
+export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
     if (!db) return null;
     try {
         const setRef = doc(db, 'quizSets', quizSetId);
@@ -970,7 +998,7 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
 };
 
 
-export const addFaq = async (data: FaqFormValues): Promise<FaqItem | null> => {
+export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
     if (!db) return null;
     try {
         const docRef = await addDoc(collection(db, 'faqs'), data);
@@ -982,7 +1010,7 @@ export const addFaq = async (data: FaqFormValues): Promise<FaqItem | null> => {
     }
 }
 
-export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolean> => {
+export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         await updateDoc(doc(db, 'faqs', id), data);
@@ -994,7 +1022,7 @@ export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolea
     }
 }
 
-export const deleteFaq = async (id: string): Promise<boolean> => {
+export async function deleteFaq(id: string): Promise<boolean> {
     if (!db) return false;
     try {
         await deleteDoc(doc(db, 'faqs', id));
@@ -1006,7 +1034,7 @@ export const deleteFaq = async (id: string): Promise<boolean> => {
     }
 }
 
-export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
+export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
     if (!db) return null;
     let imageUrl = 'https://placehold.co/1200x800.png';
     if(data.imageFile) {
@@ -1028,7 +1056,7 @@ export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | 
     }
 };
 
-export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
+export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
     if (!isFirebaseConfigured() || !db) {
         return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
     }
@@ -1044,7 +1072,7 @@ export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null
     }
 };
 
-export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
+export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         const docRef = doc(db, 'blogPosts', slug);
@@ -1063,7 +1091,7 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
     }
 }
 
-export const deleteBlogPost = async (slug: string): Promise<boolean> => {
+export async function deleteBlogPost(slug: string): Promise<boolean> {
     if (!db) return false;
     try {
         await deleteDoc(doc(db, 'blogPosts', slug));
@@ -1075,7 +1103,7 @@ export const deleteBlogPost = async (slug: string): Promise<boolean> => {
     }
 }
 
-export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
@@ -1099,7 +1127,7 @@ export const updateSiteBanner = async (id: string, data: VisualContentFormValues
     }
 };
 
-export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
@@ -1125,7 +1153,7 @@ export const updatePromotionalPoster = async (id: string, data: VisualContentFor
 };
 
 // This one-time fetch is still needed for pages that don't need real-time updates.
-export const fetchCourses = async (): Promise<Course[]> => {
+export async function fetchCourses(): Promise<Course[]> {
     if (!isFirebaseConfigured() || !db) return [];
     try {
         const snapshot = await getDocs(collection(db!, "courses"));
@@ -1138,7 +1166,7 @@ export const fetchCourses = async (): Promise<Course[]> => {
     }
 };
 
-export const fetchQuizSets = async (): Promise<QuizSet[]> => {
+export async function fetchQuizSets(): Promise<QuizSet[]> {
     if (!isFirebaseConfigured() || !db) return MOCK_QUIZ_SETS;
     try {
         const snapshot = await getDocs(collection(db!, "quizSets"));
@@ -1156,7 +1184,7 @@ export const fetchQuizSets = async (): Promise<QuizSet[]> => {
 };
 
 
-export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
+export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
     if (!db) return [];
     try {
         const q = query(
@@ -1179,7 +1207,7 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
     }
 };
 
-export const fetchReferralsByUserId = async (userId: string | undefined): Promise<Referral[]> => {
+export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
     if (!db || !userId) return [];
     try {
         const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
@@ -1215,3 +1243,4 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
 
 
     
+
