@@ -2,7 +2,7 @@
 'use server';
 
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './firebase';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import type { ApprovalStatusType } from '@/types';
 import { revalidatePath } from 'next/cache';
 
