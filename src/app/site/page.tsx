@@ -486,23 +486,27 @@ export default function PortfolioSitePage() {
                     </div>
                 </div>
 
-                {/* Premium Plan */}
-                <div className="perspective-1000 h-[30rem] z-10">
-                     <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === 'premium-plan' })}>
-                        <Card className="absolute w-full h-full backface-hidden shadow-xl hover:shadow-2xl border-2 border-primary relative overflow-hidden flex flex-col bg-card transition-transform duration-300 hover:-translate-y-2 md:scale-105">
-                            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center"><Star className="h-3 w-3 mr-1.5" /> POPULAR</div>
-                            <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Premium</CardTitle><CardDescription>Our most comprehensive package.</CardDescription></CardHeader>
-                            <CardContent className="flex-grow space-y-4">
-                                <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹9,999</p><p className="text-xl font-medium text-muted-foreground line-through">₹10,999</p></div>
-                                <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li></ul>
-                            </CardContent>
-                            <CardFooter className="mt-auto pt-6 grid grid-cols-2 gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('premium-plan')}>Details</Button><Button className="w-full bg-primary hover:bg-primary/90" asChild><Link href="/site/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
-                        </Card>
-                         <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
-                            <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Premium Plan Details</CardTitle></CardHeader>
-                            <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>For those who want to master driving.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes advanced safety techniques.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Full RTO and test support.</li></ul></CardContent>
-                            <CardFooter className="grid grid-cols-2 gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/site/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
-                        </Card>
+                {/* Premium Plan - Corrected */}
+                <div className="relative z-10 transform md:scale-105">
+                    <div className="perspective-1000 h-[30rem]">
+                        <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === 'premium-plan' })}>
+                            {/* Front */}
+                            <Card className="absolute w-full h-full backface-hidden shadow-xl hover:shadow-2xl border-2 border-primary overflow-hidden flex flex-col bg-card transition-transform duration-300 hover:-translate-y-2">
+                                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center"><Star className="h-3 w-3 mr-1.5" /> POPULAR</div>
+                                <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Premium</CardTitle><CardDescription>Our most comprehensive package.</CardDescription></CardHeader>
+                                <CardContent className="flex-grow space-y-4">
+                                    <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹9,999</p><p className="text-xl font-medium text-muted-foreground line-through">₹10,999</p></div>
+                                    <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li></ul>
+                                </CardContent>
+                                <CardFooter className="mt-auto pt-6 grid grid-cols-2 gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('premium-plan')}>Details</Button><Button className="w-full bg-primary hover:bg-primary/90" asChild><Link href="/site/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
+                            </Card>
+                            {/* Back */}
+                            <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
+                                <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Premium Plan Details</CardTitle></CardHeader>
+                                <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>For those who want to master driving.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes advanced safety techniques.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Full RTO and test support.</li></ul></CardContent>
+                                <CardFooter className="grid grid-cols-2 gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/site/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
+                            </Card>
+                        </div>
                     </div>
                 </div>
 
