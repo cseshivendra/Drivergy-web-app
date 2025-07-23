@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Info, Users, Target, Car, UserCircle } from 'lucide-react';
+import { Info, Users, Target, Car, UserCircle, Linkedin, Instagram } from 'lucide-react';
 import Image from 'next/image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -80,11 +80,16 @@ export default function AboutPage() {
               Drivergy was founded by <span className="font-semibold text-foreground">Er. Shivendra Singh</span>, a visionary technologist with a passion for solving real-world problems. As a Senior Software Engineer, Shivendra has a wealth of experience working with leading global financial institutions like <span className="font-semibold">DBS Bank</span> and <span className="font-semibold">First Abu Dhabi Bank (FAB)</span> in Dubai. His expertise in building robust, scalable systems inspired him to create Drivergy—a platform designed to bring efficiency, transparency, and safety to driving education in India.
             </p>
              <p className="text-foreground leading-relaxed mt-4">
-              You can learn more about his professional journey on {' '}
-              <Link href="https://www.linkedin.com/in/skyshivendra/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">
-                his LinkedIn profile
-              </Link>.
+              Connect with him on social media:
             </p>
+             <div className="flex items-center gap-4 mt-2">
+                <Link href="https://www.linkedin.com/in/skyshivendra/" target="_blank" rel="noopener noreferrer" className="flex items-center text-primary hover:underline font-semibold">
+                    <Linkedin className="mr-2 h-5 w-5" /> LinkedIn
+                </Link>
+                 <Link href="https://www.instagram.com/skyshivendra/" target="_blank" rel="noopener noreferrer" className="flex items-center text-primary hover:underline font-semibold">
+                    <Instagram className="mr-2 h-5 w-5" /> Instagram
+                </Link>
+            </div>
           </section>
 
            <section className="text-center pt-4">
