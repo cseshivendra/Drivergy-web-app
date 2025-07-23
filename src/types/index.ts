@@ -118,7 +118,7 @@ const baseRegistrationSchema = z.object({
   gender: z.enum(GenderOptions),
 });
 
-export const InitialCustomerRegistrationFormSchema = baseRegistrationSchema.extend({
+export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
   // No other fields needed for initial sign up
 });
@@ -126,10 +126,10 @@ export const InitialCustomerRegistrationFormSchema = baseRegistrationSchema.exte
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
   location: z.enum(Locations),
-  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative.").optional(),
-  specialization: z.enum(SpecializationOptions).optional(),
-  trainerVehicleType: z.enum(TrainerVehicleTypeOptions).optional(),
-  fuelType: z.enum(FuelTypeOptions).optional(),
+  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative."),
+  specialization: z.enum(SpecializationOptions),
+  trainerVehicleType: z.enum(TrainerVehicleTypeOptions),
+  fuelType: z.enum(FuelTypeOptions),
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   trainerCertificateNumber: z.string().min(1, 'Certificate number is required.'),
   aadhaarCardNumber: z.string().min(1, 'Aadhaar number is required.'),
@@ -140,14 +140,14 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
-  InitialCustomerRegistrationFormSchema,
+  CustomerRegistrationFormSchema,
   TrainerRegistrationFormSchema
 ]).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
-export type CustomerRegistrationFormValues = z.infer<typeof InitialCustomerRegistrationFormSchema>;
+export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 
@@ -462,3 +462,5 @@ export interface PromotionalPoster {
   title: string;
   description: string;
 }
+
+    
