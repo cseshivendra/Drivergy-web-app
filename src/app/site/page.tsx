@@ -198,44 +198,42 @@ const DrivergyLogoMini = ({className} : {className?: string}) => (
 export default function PortfolioSitePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [heroSlides, setHeroSlides] = useState<SiteBanner[]>([]);
-  const [loading, setLoading] = useState(true);
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = listenToSiteBanners((data) => {
-      // SEO Enhancement: Fallback to a default, strong banner if DB is empty
-      if (data && data.length > 0) {
-        setHeroSlides(data);
-      } else {
-        setHeroSlides([
-          {
-            id: 'default-banner',
-            title: "India's Safest Driving School for All",
-            description: "Learn to drive with confidence. We offer expert, certified male and female instructors for car and motorcycle training.",
-            imageSrc: 'https://placehold.co/1920x1080/dc2626/ffffff.png',
-            imageHint: 'safe driving on Indian road',
-          }
-        ]);
-      }
-      setLoading(false);
-    });
+  const heroSlides: SiteBanner[] = [
+    {
+        id: "banner-1",
+        title: "Start Your Driving Journey Today",
+        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
+        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_zcrb88zcrb88zcrb_s6hlap.png",
+        imageHint: "driving road car sunset",
+    },
+    {
+        id: "banner-2",
+        title: "Become a Certified Driving Trainer",
+        description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
+        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_4j07z44j07z44j07_nhtkry.png",
+        imageHint: "driving instructor teaching student",
+    },
+    {
+        id: "banner-3",
+        title: "Master the Roads with Confidence",
+        description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
+        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
+        imageHint: "city traffic modern car",
+    }
+  ];
 
+  useEffect(() => {
     const popupShown = sessionStorage.getItem('promotionalPopupShown');
     if (!popupShown) {
       const popupTimer = setTimeout(() => {
         setIsPopupOpen(true);
         sessionStorage.setItem('promotionalPopupShown', 'true');
-      }, 2000); // Delay popup by 2 seconds
+      }, 2000); 
       
-      return () => {
-        clearTimeout(popupTimer);
-        unsubscribe(); // Cleanup listener
-      };
+      return () => clearTimeout(popupTimer);
     }
-    
-    return () => unsubscribe(); // Cleanup listener if popup was already shown
   }, []);
 
   useEffect(() => {
@@ -256,7 +254,7 @@ export default function PortfolioSitePage() {
         {/* Background container for images and overlay */}
         <div className="absolute inset-0">
           {/* Image Slideshow */}
-          {!loading && heroSlides.length > 0 && heroSlides.map((slide, index) => (
+          {heroSlides.length > 0 && heroSlides.map((slide, index) => (
               <div
                   key={slide.id}
                   className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
@@ -271,7 +269,7 @@ export default function PortfolioSitePage() {
         
         {/* Text Content */}
         <div className="relative z-10 p-4 container mx-auto flex flex-col justify-center items-center h-full">
-            {!loading && heroSlides.length > 0 && (
+            {heroSlides.length > 0 && (
             <div className="relative text-center w-full flex-grow flex flex-col items-center justify-center">
               {heroSlides.map((slide, index) => (
                 <div
