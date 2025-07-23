@@ -1,12 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Info, Users, Target, Car } from 'lucide-react';
+import { Info, Users, Target, Car, UserCircle } from 'lucide-react';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-    title: 'About Drivergy | Our Mission for Safer Roads',
-    description: 'Learn about Drivergy, our mission to revolutionize driving education in India, and our commitment to creating safe, confident drivers for both men and women.',
+    title: 'About Drivergy | Our Mission and Founder',
+    description: "Learn about Drivergy's mission to revolutionize driving education and our Founder & CEO, Shivendra Singh, a Senior Software Engineer with global experience.",
 };
 
 export default function AboutPage() {
@@ -15,7 +16,7 @@ export default function AboutPage() {
       <Card className="shadow-lg overflow-hidden">
         <div className="relative h-48 w-full sm:h-64">
           <Image 
-            src="https://placehold.co/1200x400/dc2626/ffffff.png" 
+            src="https://placehold.co/1200x400.png" 
             alt="An open road representing the journey of learning to drive with Drivergy" 
             layout="fill" 
             objectFit="cover"
@@ -50,9 +51,9 @@ export default function AboutPage() {
             </h2>
             <p className="text-foreground leading-relaxed">
               Drivergy is a dedicated team of technology enthusiasts and road safety advocates.
-              We believe that learning to drive should be an accessible and positive experience for everyone, regardless of gender.
+              We believe that learning to drive should be an accessible and positive experience for everyone.
               Our platform is built with cutting-edge technology to connect aspiring drivers
-              with qualified male and female instructors, simplifying the journey from beginner to licensed driver.
+              with qualified instructors, simplifying the journey from beginner to licensed driver.
             </p>
           </section>
           
@@ -62,13 +63,28 @@ export default function AboutPage() {
               What We Offer
             </h2>
             <ul className="list-disc list-inside space-y-2 text-foreground leading-relaxed">
-              <li>Easy scheduling and booking of driving lessons for cars and motorcycles.</li>
-              <li>Verified and professional driving instructors, including female trainers for women.</li>
-              <li>Comprehensive tracking of progress for students through our modern dashboard.</li>
-              <li>A user-friendly platform for instructors to manage their bookings and students.</li>
+              <li>Easy scheduling and booking of driving lessons.</li>
+              <li>Verified and professional driving instructors.</li>
+              <li>Comprehensive tracking of progress for students.</li>
+              <li>A user-friendly platform for instructors to manage their business.</li>
               <li>Secure payment processing and flexible subscription management.</li>
-              <li>Dedicated support for all users on their journey to becoming safe drivers.</li>
             </ul>
+          </section>
+          
+          <section>
+            <h2 className="font-headline text-2xl font-semibold text-primary mb-3 flex items-center">
+              <UserCircle className="mr-2 h-6 w-6" />
+              Our Founder
+            </h2>
+            <p className="text-foreground leading-relaxed">
+              Drivergy was founded by <span className="font-semibold text-foreground">Er. Shivendra Singh</span>, a visionary technologist with a passion for solving real-world problems. As a Senior Software Engineer, Shivendra has a wealth of experience working with leading global financial institutions like <span className="font-semibold">DBS Bank</span> and <span className="font-semibold">First Abu Dhabi Bank (FAB)</span> in Dubai. His expertise in building robust, scalable systems inspired him to create Drivergy—a platform designed to bring efficiency, transparency, and safety to driving education in India.
+            </p>
+             <p className="text-foreground leading-relaxed mt-4">
+              You can learn more about his professional journey on {' '}
+              <Link href="https://www.linkedin.com/in/skyshivendra/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">
+                his LinkedIn profile
+              </Link>.
+            </p>
           </section>
 
            <section className="text-center pt-4">
