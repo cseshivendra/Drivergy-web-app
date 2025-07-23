@@ -79,26 +79,97 @@ const MOCK_FAQS: FaqItem[] = [
     },
 ];
 
-const MOCK_QUIZ_SETS: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
-    id: `set${i + 1}`,
-    title: `Practice Set ${i + 1}`,
-    questions: Array.from({ length: 15 }, (_, j) => ({
-        id: `q${i * 15 + j + 1}`,
-        question: {
-            en: `This is English question number ${j + 1} for Set ${i + 1}. What should you do at a stop sign?`,
-            hi: `यह सेट ${i + 1} के लिए हिंदी प्रश्न संख्या ${j + 1} है। स्टॉप साइन पर आपको क्या करना चाहिए?`
-        },
-        options: {
-            en: ["Stop completely", "Slow down", "Honk", "Speed up"],
-            hi: ["पूरी तरह रुकें", "धीमे चलें", "हॉर्न बजाएं", "गति बढ़ाएं"]
-        },
-        correctAnswer: {
-            en: "Stop completely",
-            hi: "पूरी तरह रुकें"
-        }
-    }))
-}));
+const allMockQuestions: Omit<Question, 'id'>[] = [
+    {
+        question: { en: "What does a circular sign with a blue background indicate?", hi: "नीले बैकग्राउंड वाला गोलाकार चिह्न क्या दर्शाता है?" },
+        options: { en: ["A mandatory direction", "A warning", "An informational sign", "A parking zone"], hi: ["एक अनिवार्य दिशा", "एक चेतावनी", "एक सूचनात्मक चिह्न", "एक पार्किंग क्षेत्र"] },
+        correctAnswer: { en: "A mandatory direction", hi: "एक अनिवार्य दिशा" }
+    },
+    {
+        question: { en: "When approaching an intersection with a flashing yellow light, you should:", hi: "एक चमकती पीली बत्ती वाले चौराहे पर पहुँचते समय, आपको:" },
+        options: { en: ["Stop completely", "Proceed with caution", "Speed up", "Wait for it to turn green"], hi: ["पूरी तरह से रुकें", "सावधानी से आगे बढ़ें", "गति बढ़ाएँ", "इसके हरे होने की प्रतीक्षा करें"] },
+        correctAnswer: { en: "Proceed with caution", hi: "सावधानी से आगे बढ़ें" }
+    },
+    {
+        question: { en: "The 'No Parking' sign is what shape?", hi: "'नो पार्किंग' का चिह्न किस आकार का होता है?" },
+        options: { en: ["Circular", "Triangular", "Octagonal", "Square"], hi: ["गोलाकार", "त्रिकोणीय", "अष्टकोणीय", "वर्गाकार"] },
+        correctAnswer: { en: "Circular", hi: "गोलाकार" }
+    },
+    {
+        question: { en: "When are you allowed to use a horn?", hi: "आपको हॉर्न का उपयोग करने की अनुमति कब है?" },
+        options: { en: ["To greet a friend", "To express anger", "To prevent a potential accident", "At all times"], hi: ["एक दोस्त का अभिवादन करने के लिए", "गुस्सा व्यक्त करने के लिए", "एक संभावित दुर्घटना को रोकने के लिए", "हर समय"] },
+        correctAnswer: { en: "To prevent a potential accident", hi: "एक संभावित दुर्घटना को रोकने के लिए" }
+    },
+    {
+        question: { en: "What is the legal blood alcohol concentration (BAC) limit for driving in India?", hi: "भारत में ड्राइविंग के लिए कानूनी रक्त अल्कोहल सांद्रता (BAC) सीमा क्या है?" },
+        options: { en: ["0.05%", "0.08%", "0.03%", "0.1%"], hi: ["0.05%", "0.08%", "0.03%", "0.1%"] },
+        correctAnswer: { en: "0.03%", hi: "0.03%" }
+    },
+    {
+        question: { en: "A triangular sign with a red border indicates a:", hi: "लाल बॉर्डर वाला एक त्रिकोणीय चिह्न एक दर्शाता है:" },
+        options: { en: ["Warning sign", "Mandatory sign", "Informatory sign", "Stop sign"], hi: ["चेतावनी चिह्न", "अनिवार्य चिह्न", "सूचनात्मक चिह्न", "स्टॉप चिह्न"] },
+        correctAnswer: { en: "Warning sign", hi: "चेतावनी चिह्न" }
+    },
+    {
+        question: { en: "When can you overtake a vehicle from the left?", hi: "आप किसी वाहन को बाईं ओर से कब ओवरटेक कर सकते हैं?" },
+        options: { en: ["Never", "When the vehicle ahead is turning right and there is space", "On a one-way street", "On a highway"], hi: ["कभी नहीँ", "जब आगे वाला वाहन दाईं ओर मुड़ रहा हो और जगह हो", "एक-तरफ़ा सड़क पर", "राजमार्ग पर"] },
+        correctAnswer: { en: "When the vehicle ahead is turning right and there is space", hi: "जब आगे वाला वाहन दाईं ओर मुड़ रहा हो और जगह हो" }
+    },
+    {
+        question: { en: "What does the 'Stop' sign look like?", hi: "'स्टॉप' चिह्न कैसा दिखता है?" },
+        options: { en: ["A red octagon", "A red triangle", "A blue circle", "A red square"], hi: ["एक लाल अष्टकोण", "एक लाल त्रिकोण", "एक नीला गोला", "एक लाल वर्ग"] },
+        correctAnswer: { en: "A red octagon", hi: "एक लाल अष्टकोण" }
+    },
+    {
+        question: { en: "You should not use high-beam headlights when:", hi: "आपको हाई-बीम हेडलाइट्स का उपयोग कब नहीं करना चाहिए:" },
+        options: { en: ["Driving in fog", "A vehicle is approaching from the opposite direction", "On a dark, empty road", "During the day"], hi: ["कोहरे में गाड़ी चलाते समय", "विपरीत दिशा से कोई वाहन आ रहा हो", "एक अंधेरी, खाली सड़क पर", "दिन के दौरान"] },
+        correctAnswer: { en: "A vehicle is approaching from the opposite direction", hi: "विपरीत दिशा से कोई वाहन आ रहा हो" }
+    },
+    {
+        question: { en: "A continuous yellow line in the middle of the road means:", hi: "सड़क के बीच में एक सतत पीली रेखा का मतलब है:" },
+        options: { en: ["Overtaking is permitted", "Overtaking is permitted, but with caution", "Overtaking is strictly prohibited", "You can stop on this line"], hi: ["ओवरटेक करने की अनुमति है", "ओवरटेक करने की अनुमति है, लेकिन सावधानी के साथ", "ओवरटेक करना सख्त वर्जित है", "आप इस रेखा पर रुक सकते हैं"] },
+        correctAnswer: { en: "Overtaking is strictly prohibited", hi: "ओवरटेक करना सख्त वर्जित है" }
+    },
+     {
+        question: { en: "What is the purpose of a catalytic converter?", hi: "उत्प्रेरक कनवर्टर का उद्देश्य क्या है?" },
+        options: { en: ["To increase fuel efficiency", "To reduce harmful emissions", "To cool the engine", "To improve braking"], hi: ["ईंधन दक्षता बढ़ाने के लिए", "हानिकारक उत्सर्जन को कम करने के लिए", "इंजन को ठंडा करने के लिए", "ब्रेकिंग में सुधार करने के लिए"] },
+        correctAnswer: { en: "To reduce harmful emissions", hi: "हानिकारक उत्सर्जन को कम करने के लिए" }
+    },
+    {
+        question: { en: "Before changing lanes, you must:", hi: "लेन बदलने से पहले, आपको चाहिए:" },
+        options: { en: ["Honk your horn", "Check mirrors and blind spots", "Increase your speed", "Slow down significantly"], hi: ["अपना हॉर्न बजाएं", "आईने और ब्लाइंड स्पॉट की जाँच करें", "अपनी गति बढ़ाएं", "काफी धीमा करें"] },
+        correctAnswer: { en: "Check mirrors and blind spots", hi: "आईने और ब्लाइंड स्पॉट की जाँच करें" }
+    },
+    {
+        question: { en: "The sign for 'School Ahead' is:", hi: "'आगे स्कूल है' का चिह्न है:" },
+        options: { en: ["Triangular", "Circular", "Rectangular", "Square"], hi: ["त्रिकोणीय", "गोलाकार", "आयताकार", "वर्गाकार"] },
+        correctAnswer: { en: "Triangular", hi: "त्रिकोणीय" }
+    },
+    {
+        question: { en: "At a four-way intersection with stop signs, who has the right-of-way?", hi: "स्टॉप संकेतों वाले चार-तरफा चौराहे पर, किसका अधिकार है?" },
+        options: { en: ["The largest vehicle", "The vehicle that arrived first", "The vehicle on the right", "The vehicle that is going straight"], hi: ["सबसे बड़ा वाहन", "जो वाहन पहले आया", "दाईं ओर का वाहन", "जो वाहन सीधा जा रहा है"] },
+        correctAnswer: { en: "The vehicle that arrived first", hi: "जो वाहन पहले आया" }
+    },
+    {
+        question: { en: "What does a broken white line in the middle of the road indicate?", hi: "सड़क के बीच में एक टूटी हुई सफेद रेखा क्या दर्शाती है?" },
+        options: { en: ["No overtaking", "Overtaking is permitted if safe", "Lane ends", "Pedestrian crossing"], hi: ["कोई ओवरटेकिंग नहीं", "सुरक्षित होने पर ओवरटेकिंग की अनुमति है", "लेन समाप्त होती है", "पैदल यात्री क्रॉसिंग"] },
+        correctAnswer: { en: "Overtaking is permitted if safe", hi: "सुरक्षित होने पर ओवरटेकिंग की अनुमति है" }
+    }
+];
 
+const MOCK_QUIZ_SETS: QuizSet[] = Array.from({ length: 10 }, (_, i) => {
+    // Shuffle all questions for each set to make them unique
+    const shuffledQuestions = [...allMockQuestions].sort(() => 0.5 - Math.random());
+    
+    return {
+        id: `set${i + 1}`,
+        title: `Practice Set ${i + 1}`,
+        questions: shuffledQuestions.slice(0, 15).map((q, j) => ({
+            ...q,
+            id: `set${i + 1}-q${j + 1}`
+        }))
+    };
+});
 
 const generateId = () => {
     if (db) {
