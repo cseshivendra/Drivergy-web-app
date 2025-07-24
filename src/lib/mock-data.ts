@@ -117,7 +117,7 @@ const allMockQuestions: Omit<Question, 'id'>[] = [
         correctAnswer: { en: "When the vehicle ahead is turning right and there is space", hi: "जब आगे वाला वाहन दाईं ओर मुड़ रहा हो और जगह हो" }
     },
     {
-        question: { en: "What does the 'Stop' sign look like?", hi: "'स्टॉप' चिह्न कैसा दिखता है?" },
+        question: { en: "What does the 'Stop' sign look like?", hi: "'स्टॉप' का चिह्न कैसा दिखता है?" },
         options: { en: ["A red octagon", "A red triangle", "A blue circle", "A red square"], hi: ["एक लाल अष्टकोण", "एक लाल त्रिकोण", "एक नीला गोला", "एक लाल वर्ग"] },
         correctAnswer: { en: "A red octagon", hi: "एक लाल अष्टकोण" }
     },
@@ -240,7 +240,7 @@ export async function authenticateUserByCredentials(email: string, password: str
                 const newAdmin: Omit<UserProfile, 'id'> = {
                     uniqueId: "AD-000001",
                     name: "Admin",
-                    username: "admin",
+                    username: "admin@drivergy.com",
                     password: "admin", 
                     contact: "admin@drivergy.com",
                     phone: "1234567890",
@@ -257,7 +257,6 @@ export async function authenticateUserByCredentials(email: string, password: str
         }
         
         const usersRef = collection(db, "users");
-        // Query by email (stored in 'contact' field) and password
         const q = query(usersRef, where("contact", "==", email), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
 
@@ -621,7 +620,7 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = async <T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc'): Promise<T[]> => {
+export async function createListener<T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc'): Promise<T[]> {
     if (!isFirebaseConfigured() || !db) {
         if (collectionName === 'faqs') return MOCK_FAQS as any;
         if (collectionName === 'blogPosts') return MOCK_BLOG_POSTS as any;
@@ -1221,3 +1220,6 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
     }
 };
 
+
+
+    
