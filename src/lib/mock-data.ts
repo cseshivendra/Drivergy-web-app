@@ -232,14 +232,14 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
 export async function authenticateUserByCredentials(email: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
     try {
-        // Special case to create a default admin if it doesn't exist
+        // Special case to create a default admin if it doesn't exist and credentials match
         if (email === 'admin@drivergy.com' && password === 'admin') {
             const adminQuery = query(collection(db, "users"), where("contact", "==", "admin@drivergy.com"), limit(1));
             const adminSnapshot = await getDocs(adminQuery);
             if (adminSnapshot.empty) {
-                const adminId = 'admin_user_01'; // Use a predictable ID
+                const adminId = 'admin_user_01';
                 const adminRef = doc(db, "users", adminId);
-                const newAdmin: Omit<UserProfile, 'id'|'password'> & {password: string} = {
+                const newAdmin: Omit<UserProfile, 'id'> = {
                     uniqueId: "AD-000001",
                     name: "Admin",
                     username: "admin",
@@ -269,7 +269,7 @@ export async function authenticateUserByCredentials(email: string, password: str
         return { id: userDoc.id, ...userDoc.data() } as UserProfile;
     } catch (error: any) {
         console.error("Error authenticating user:", error);
-        toast({ title: "Authentication Error", description: error.message, variant: "destructive" });
+        // Do not toast here, let the calling function handle UI feedback
         return null;
     }
 };
@@ -1244,6 +1244,7 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 
 
     
+
 
 
 
