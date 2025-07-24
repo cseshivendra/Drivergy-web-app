@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Mail } from 'lucide-react';
+import { KeyRound, Mail, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { sendPasswordResetLink } from '@/lib/server-actions';
 
 const ForgotPasswordSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -31,17 +32,22 @@ export default function ForgotPasswordPage() {
 
   const { formState: { isSubmitting } } = form;
 
-  function onSubmit(data: ForgotPasswordValues) {
-    // Simulate API call for password reset
-    console.log('Password reset requested for:', data.email);
-    
-    // Always show a generic success message to prevent user enumeration
-    toast({
-      title: 'Password Reset Requested',
-      description: `If an account with the email ${data.email} exists, a password reset link has been sent.`,
-    });
+  async function onSubmit(data: ForgotPasswordValues) {
+    const result = await sendPasswordResetLink(data.email);
 
-    form.reset();
+    if (result.success) {
+      toast({
+        title: 'Password Reset Requested',
+        description: `If an account with the email ${data.email} exists, a password reset link has been sent.`,
+      });
+      form.reset();
+    } else {
+      toast({
+        title: "Request Failed",
+        description: result.error || "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -79,7 +85,7 @@ export default function ForgotPasswordPage() {
                 )}
               />
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
+                {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Sending...</> : 'Send Reset Link'}
               </Button>
             </form>
           </Form>
