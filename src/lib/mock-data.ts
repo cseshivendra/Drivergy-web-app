@@ -637,34 +637,56 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
-    if (!isFirebaseConfigured() || !db) {
-        if (collectionName === 'faqs') callback(MOCK_FAQS as any);
-        else if (collectionName === 'blogPosts') callback(MOCK_BLOG_POSTS as any);
-        else if (collectionName === 'quizSets') callback(MOCK_QUIZ_SETS as any);
-        else if (collectionName === 'siteBanners') callback(MOCK_SITE_BANNERS as any);
-        else callback([]);
-        return () => {};
-    }
+const createListener = async <T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc'): Promise<() => void> => {
+    return new Promise((resolve, reject) => {
+        if (!isFirebaseConfigured() || !db) {
+            let mockData: any[] = [];
+            if (collectionName === 'faqs') mockData = MOCK_FAQS;
+            else if (collectionName === 'blogPosts') mockData = MOCK_BLOG_POSTS;
+            else if (collectionName === 'quizSets') mockData = MOCK_QUIZ_SETS;
+            else if (collectionName === 'siteBanners') mockData = MOCK_SITE_BANNERS;
+            
+            // This part is tricky because we can't directly use a client-side callback.
+            // The calling component needs to handle this. For now, we'll just resolve an empty unsub function.
+            resolve(() => {});
+            return;
+        }
 
-    let q = query(collection(db, collectionName));
-    if (orderField) {
-        q = query(q, orderBy(orderField, orderDirection));
-    }
+        let q = query(collection(db, collectionName));
+        if (orderField) {
+            q = query(q, orderBy(orderField, orderDirection));
+        }
 
-    return onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
-        callback(data);
-    }, (error) => {
-        console.error(`Error listening to ${collectionName}:`, error);
-        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            // This is now just a listener. The data must be fetched differently.
+        }, (error) => {
+            console.error(`Error listening to ${collectionName}:`, error);
+            // Can't use toast here as it's a client hook.
+            reject(error);
+        });
+
+        resolve(unsubscribe);
     });
 };
 
-export async function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) { createListener('lessonRequests', callback, 'requestTimestamp'); }
-export async function listenToAllFeedback(callback: (data: Feedback[]) => void) { createListener('feedback', callback, 'submissionDate'); }
+export async function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback([]);
+    const q = query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonRequest)));
+    });
+}
+
+export async function listenToAllFeedback(callback: (data: Feedback[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback([]);
+    const q = query(collection(db, 'feedback'), orderBy('submissionDate', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback)));
+    });
+}
+
 export async function listenToAllReferrals(callback: (data: Referral[]) => void) {
-    if (!isFirebaseConfigured() || !db) return () => {};
+    if (!isFirebaseConfigured() || !db) return callback([]);
     const q = query(collection(db, "referrals"), orderBy("timestamp", "desc"));
     return onSnapshot(q, async (snapshot) => {
         const referrals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
@@ -680,7 +702,6 @@ export async function listenToAllReferrals(callback: (data: Referral[]) => void)
         }
 
         const usersMap = new Map<string, UserProfile>();
-        // Firestore 'in' query supports up to 30 items. We need to batch if there are more.
         for (let i = 0; i < refereeIds.length; i += 30) {
             const batchIds = refereeIds.slice(i, i + 30);
             const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', batchIds));
@@ -698,43 +719,53 @@ export async function listenToAllReferrals(callback: (data: Referral[]) => void)
             };
         });
         callback(enrichedReferrals);
-    }, (error) => {
-        console.error(`Error listening to referrals:`, error);
-        toast({ title: "Connection Error", description: `Could not sync referrals.`, variant: "destructive" });
     });
 };
-export async function listenToQuizSets(callback: (data: QuizSet[]) => void) { createListener('quizSets', callback); }
-export async function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) { createListener('promotionalPosters', callback); }
-export async function listenToCourses(callback: (data: Course[]) => void) { createListener('courses', callback); }
-
-export async function listenToFaqs(callback: (data: FaqItem[]) => void) { createListener('faqs', callback, undefined, 'asc'); }
-export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) { createListener('blogPosts', callback, 'date', 'desc'); }
-
-export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-        callback(MOCK_SITE_BANNERS);
-        return () => {}; // Return an empty unsubscribe function
-    }
-
-    const q = query(collection(db, 'siteBanners'));
-
+export async function listenToQuizSets(callback: (data: QuizSet[]) => void) { 
+    if (!isFirebaseConfigured() || !db) return callback(MOCK_QUIZ_SETS);
+    return onSnapshot(collection(db, 'quizSets'), (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
+    });
+}
+export async function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback([]);
+    return onSnapshot(collection(db, 'promotionalPosters'), (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromotionalPoster)));
+    });
+}
+export async function listenToCourses(callback: (data: Course[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback([]);
+    return onSnapshot(collection(db, 'courses'), (snapshot) => {
+        const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+        callback(reAssignCourseIcons(courses));
+    });
+}
+export async function listenToFaqs(callback: (data: FaqItem[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback(MOCK_FAQS);
+    return onSnapshot(collection(db, 'faqs'), (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FaqItem)));
+    });
+}
+export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback(MOCK_BLOG_POSTS);
+    const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
     return onSnapshot(q, (snapshot) => {
-        if (snapshot.empty) {
-            callback(MOCK_SITE_BANNERS); // Fallback if Firestore collection is empty
+        callback(snapshot.docs.map(doc => ({...doc.data(), slug: doc.id } as BlogPost)));
+    });
+}
+export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
+    if (!isFirebaseConfigured() || !db) return callback(MOCK_SITE_BANNERS);
+    return onSnapshot(collection(db, 'siteBanners'), (snapshot) => {
+        if(snapshot.empty) {
+            callback(MOCK_SITE_BANNERS);
             return;
         }
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
-        callback(data);
-    }, (error) => {
-        console.error(`Error listening to siteBanners:`, error);
-        toast({ title: "Connection Error", description: `Could not sync siteBanners.`, variant: "destructive" });
-        callback(MOCK_SITE_BANNERS); // Fallback on error
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteBanner)));
     });
-};
-
+}
 
 export async function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
-    if (!isFirebaseConfigured() || !db) return () => {};
+    if (!isFirebaseConfigured() || !db) return callback(null);
     return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
             callback(null);
@@ -755,7 +786,7 @@ export async function listenToUser(userId: string, callback: (data: UserProfile 
 };
 
 export async function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) {
-    if (!isFirebaseConfigured() || !db) return () => {};
+    if (!isFirebaseConfigured() || !db) return callback([], []);
     const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
     const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
 
@@ -787,7 +818,7 @@ export async function listenToTrainerStudents(trainerId: string, callback: (stud
 // =================================================================
 
 export async function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
-    if (!isFirebaseConfigured() || !db) return () => {};
+    if (!isFirebaseConfigured() || !db) return callback({});
     const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
         const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
@@ -826,7 +857,7 @@ export async function listenToSummaryData(callback: (data: Partial<SummaryData>)
 };
 
 export async function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
-    if (!isFirebaseConfigured() || !db) return () => {};
+    if (!isFirebaseConfigured() || !db) return callback([]);
     const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
         const users = snapshot.docs
@@ -1244,6 +1275,7 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 
 
     
+
 
 
 
