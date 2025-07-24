@@ -235,9 +235,10 @@ export async function authenticateUserByCredentials(username: string, password: 
             const adminQuery = query(collection(db, "users"), where("username", "==", "admin"), limit(1));
             const adminSnapshot = await getDocs(adminQuery);
             if (adminSnapshot.empty) {
-                const adminId = 'admin_user_01';
+                const adminId = 'default_admin_user_id_001';
                 const adminRef = doc(db, "users", adminId);
-                const newAdmin: Omit<UserProfile, 'id'> = {
+                const newAdmin: Omit<UserProfile, 'id' | 'uniqueId'> & { uniqueId: string } = {
+                    id: adminId,
                     uniqueId: "AD-000001",
                     name: "Admin",
                     username: "admin",
@@ -252,10 +253,18 @@ export async function authenticateUserByCredentials(username: string, password: 
                 };
                 await setDoc(adminRef, newAdmin);
                 console.log("Default admin user created successfully.");
-                return { id: adminRef.id, ...newAdmin };
+                return newAdmin as UserProfile;
+            } else {
+                 const userDoc = adminSnapshot.docs[0];
+                 const user = userDoc.data();
+                 if (user.password === password) {
+                     return { id: userDoc.id, ...user } as UserProfile;
+                 }
+                 return null;
             }
         }
         
+        // Regular user authentication
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
