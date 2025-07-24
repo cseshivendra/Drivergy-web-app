@@ -227,12 +227,12 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
     }
 };
 
-export async function authenticateUserByCredentials(email: string, password: string): Promise<UserProfile | null> {
+export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
     try {
         // Special case to create a default admin if it doesn't exist and credentials match
-        if (email === 'admin@drivergy.com' && password === 'admin') {
-            const adminQuery = query(collection(db, "users"), where("contact", "==", "admin@drivergy.com"), limit(1));
+        if (username === 'admin' && password === 'admin') {
+            const adminQuery = query(collection(db, "users"), where("username", "==", "admin"), limit(1));
             const adminSnapshot = await getDocs(adminQuery);
             if (adminSnapshot.empty) {
                 const adminId = 'admin_user_01';
@@ -240,7 +240,7 @@ export async function authenticateUserByCredentials(email: string, password: str
                 const newAdmin: Omit<UserProfile, 'id'> = {
                     uniqueId: "AD-000001",
                     name: "Admin",
-                    username: "admin@drivergy.com",
+                    username: "admin",
                     password: "admin", 
                     contact: "admin@drivergy.com",
                     phone: "1234567890",
@@ -257,7 +257,7 @@ export async function authenticateUserByCredentials(email: string, password: str
         }
         
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("contact", "==", email), where("password", "==", password), limit(1));
+        const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) return null;

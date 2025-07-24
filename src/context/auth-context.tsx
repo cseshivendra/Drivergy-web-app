@@ -14,7 +14,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithCredentials: (email: string, password: string) => Promise<boolean>;
+  signInWithCredentials: (username: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -79,9 +79,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const signInWithCredentials = async (email: string, password: string): Promise<boolean> => {
+  const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
-    const userProfile = await authenticateUserByCredentials(email, password);
+    const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
       logInUser(userProfile, true); 
       return true;
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
     toast({
       title: 'Login Failed',
-      description: 'Invalid email or password.',
+      description: 'Invalid username or password.',
       variant: 'destructive',
     });
     return false;

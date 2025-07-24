@@ -22,7 +22,7 @@ export default function LoginPage() {
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
 
@@ -35,11 +35,11 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-        toast({ title: 'Error', description: 'Please enter both email and password.', variant: 'destructive' });
+    if (!username || !password) {
+        toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
-    const loggedIn = await signInWithCredentials(email, password);
+    const loggedIn = await signInWithCredentials(username, password);
     if (loggedIn) {
         router.push(redirect || '/');
     }
@@ -118,15 +118,15 @@ export default function LoginPage() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username" 
+                  type="text" 
+                  placeholder="Enter your username" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
-                  autoComplete="email"
+                  autoComplete="username"
                 />
               </div>
               <div>
