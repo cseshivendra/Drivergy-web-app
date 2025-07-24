@@ -229,11 +229,11 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
     }
 };
 
-export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
+export async function authenticateUserByCredentials(email: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
     try {
         // Special case to create a default admin if it doesn't exist
-        if (username === 'admin' && password === 'admin') {
+        if (email === 'admin@drivergy.com' && password === 'admin') {
             const adminQuery = query(collection(db, "users"), where("username", "==", "admin"), limit(1));
             const adminSnapshot = await getDocs(adminQuery);
             if (adminSnapshot.empty) {
@@ -259,7 +259,7 @@ export async function authenticateUserByCredentials(username: string, password: 
         }
         
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
+        const q = query(usersRef, where("contact", "==", email), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) return null;
@@ -1243,4 +1243,5 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 
 
     
+
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -14,7 +15,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithCredentials: (username: string, password: string) => Promise<boolean>;
+  signInWithCredentials: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -79,9 +80,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
+  const signInWithCredentials = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
-    const userProfile = await authenticateUserByCredentials(username, password);
+    const userProfile = await authenticateUserByCredentials(email, password);
     if (userProfile) {
       logInUser(userProfile, true); 
       return true;
@@ -89,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
     toast({
       title: 'Login Failed',
-      description: 'Invalid username or password.',
+      description: 'Invalid email or password.',
       variant: 'destructive',
     });
     return false;

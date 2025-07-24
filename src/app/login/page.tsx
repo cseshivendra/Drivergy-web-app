@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -22,7 +23,7 @@ export default function LoginPage() {
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
 
@@ -35,11 +36,11 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-        toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
+    if (!email || !password) {
+        toast({ title: 'Error', description: 'Please enter both email and password.', variant: 'destructive' });
         return;
     }
-    const loggedIn = await signInWithCredentials(username, password);
+    const loggedIn = await signInWithCredentials(email, password);
     if (loggedIn) {
         router.push(redirect || '/');
     }
@@ -118,13 +119,13 @@ export default function LoginPage() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input 
-                  id="username" 
-                  type="text" 
-                  placeholder="Enter your username" 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="email" 
+                  type="email" 
+                  placeholder="Enter your email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                 />
               </div>
@@ -182,3 +183,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
