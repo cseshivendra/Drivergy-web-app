@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
@@ -7,7 +6,6 @@ import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
-import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { uploadFile } from './file-upload';
 
@@ -223,7 +221,6 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
             return { id: userRef.id, ...newUser };
         } catch(error: any) {
             console.error("Error creating new Google user:", error);
-            toast({ title: "User Creation Failed", description: error.message, variant: "destructive" });
             return null;
         }
     }
@@ -269,7 +266,6 @@ export async function authenticateUserByCredentials(email: string, password: str
         return { id: userDoc.id, ...userDoc.data() } as UserProfile;
     } catch (error: any) {
         console.error("Error authenticating user:", error);
-        // Do not toast here, let the calling function handle UI feedback
         return null;
     }
 };
@@ -320,7 +316,6 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
         return user;
     } catch(error: any) {
         console.error(`Error fetching user ${userId}:`, error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch user profile: ${error.message}`, variant: "destructive" });
         return null;
     }
 };
@@ -352,7 +347,6 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
         return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
     } catch (error: any) {
         console.error("Error updating user profile:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -369,7 +363,6 @@ export async function changeUserPassword(userId: string, currentPassword: string
         return true;
     } catch (error: any) {
         console.error("Error changing password:", error);
-        toast({ title: "Error", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -382,11 +375,6 @@ export async function updateUserApprovalStatus(userId: string, newStatus: Approv
         return true;
     } catch (error: any) {
         console.error(`Error updating user ${userId} status:`, error);
-        toast({
-            title: "Update Failed",
-            description: `Could not update status for user ${userId}.`,
-            variant: "destructive",
-        });
         return false;
     }
 };
@@ -417,7 +405,6 @@ export async function addCustomer(data: CustomerRegistrationFormValues): Promise
         return { id: userRef.id, ...newUser };
     } catch (error: any) {
         console.error("Error adding customer:", error);
-        toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -546,7 +533,6 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         return true;
     } catch (error: any) {
         console.error("Error assigning trainer:", error);
-        toast({ title: "Assignment Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -585,7 +571,6 @@ export async function updateAssignmentStatusByTrainer(customerId: string, newSta
         return true;
     } catch (error: any) {
         console.error("Error updating assignment by trainer:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -608,7 +593,6 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
         return true;
     } catch(error: any) {
         console.error("Error updating attendance:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -628,7 +612,6 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
         return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
     } catch(error: any) {
         console.error("Error updating start date:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 }
@@ -637,36 +620,21 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = async <T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc'): Promise<() => void> => {
-    return new Promise((resolve, reject) => {
-        if (!isFirebaseConfigured() || !db) {
-            let mockData: any[] = [];
-            if (collectionName === 'faqs') mockData = MOCK_FAQS;
-            else if (collectionName === 'blogPosts') mockData = MOCK_BLOG_POSTS;
-            else if (collectionName === 'quizSets') mockData = MOCK_QUIZ_SETS;
-            else if (collectionName === 'siteBanners') mockData = MOCK_SITE_BANNERS;
-            
-            // This part is tricky because we can't directly use a client-side callback.
-            // The calling component needs to handle this. For now, we'll just resolve an empty unsub function.
-            resolve(() => {});
-            return;
-        }
+const createListener = async <T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc'): Promise<T[]> => {
+    if (!isFirebaseConfigured() || !db) {
+        if (collectionName === 'faqs') return MOCK_FAQS as any;
+        if (collectionName === 'blogPosts') return MOCK_BLOG_POSTS as any;
+        if (collectionName === 'quizSets') return MOCK_QUIZ_SETS as any;
+        if (collectionName === 'siteBanners') return MOCK_SITE_BANNERS as any;
+        return [];
+    }
 
-        let q = query(collection(db, collectionName));
-        if (orderField) {
-            q = query(q, orderBy(orderField, orderDirection));
-        }
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            // This is now just a listener. The data must be fetched differently.
-        }, (error) => {
-            console.error(`Error listening to ${collectionName}:`, error);
-            // Can't use toast here as it's a client hook.
-            reject(error);
-        });
-
-        resolve(unsubscribe);
-    });
+    let q = query(collection(db, collectionName));
+    if (orderField) {
+        q = query(q, orderBy(orderField, orderDirection));
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
 };
 
 export async function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
@@ -899,7 +867,6 @@ export async function addRescheduleRequest(userId: string, customerName: string,
         return { id: docRef.id, ...newRequest };
     } catch(error: any) {
         console.error("Error adding reschedule request:", error);
-        toast({ title: "Request Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -918,7 +885,6 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
         return true;
     } catch(error: any) {
         console.error("Error updating reschedule request:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -932,7 +898,6 @@ export async function addFeedback(customerId: string, customerName: string, trai
         return true;
     } catch(error: any) {
         console.error("Error adding feedback:", error);
-        toast({ title: "Submit Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -944,7 +909,6 @@ export async function updateReferralPayoutStatus(referralId: string, status: Pay
         return true;
     } catch(error: any) {
         console.error("Error updating referral status:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -963,7 +927,6 @@ export async function addCourseModule(courseId: string, moduleData: Omit<CourseM
         return { ...course, modules: updatedModules, id: courseId };
     } catch (error: any) {
         console.error("Error adding course module:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -980,7 +943,6 @@ export async function updateCourseModule(courseId: string, moduleId: string, mod
         return { ...course, modules: updatedModules, id: courseId };
     } catch (error: any) {
         console.error("Error updating course module:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -997,7 +959,6 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
         return true;
     } catch(error: any) {
         console.error("Error deleting course module:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -1024,7 +985,6 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
         return { ...quizSet, questions: updatedQuestions, id: quizSetId };
     } catch(error: any) {
         console.error("Error updating quiz question:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -1037,7 +997,6 @@ export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
         return { id: docRef.id, ...data };
     } catch (error: any) {
         console.error("Error adding FAQ:", error);
-        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
         return null;
     }
 }
@@ -1049,7 +1008,6 @@ export async function updateFaq(id: string, data: FaqFormValues): Promise<boolea
         return true;
     } catch (error: any) {
         console.error("Error updating FAQ:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
@@ -1061,7 +1019,6 @@ export async function deleteFaq(id: string): Promise<boolean> {
         return true;
     } catch(error: any) {
         console.error("Error deleting FAQ:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
@@ -1083,7 +1040,6 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
         return newPost;
     } catch(error: any) {
         console.error("Error adding blog post:", error);
-        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
@@ -1099,7 +1055,6 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
         return snapshot.data() as BlogPost;
     } catch (error: any) {
         console.error("Error fetching blog post by slug:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch post: ${error.message}`, variant: "destructive" });
         return null;
     }
 };
@@ -1118,7 +1073,6 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
         return true;
     } catch(error: any) {
         console.error("Error updating blog post:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
@@ -1130,7 +1084,6 @@ export async function deleteBlogPost(slug: string): Promise<boolean> {
         return true;
     } catch(error: any) {
         console.error("Error deleting blog post:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
@@ -1154,7 +1107,6 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
         return true;
     } catch (error: any) {
         console.error("Error updating site banner:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -1179,7 +1131,6 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
         return true;
     } catch (error: any) {
         console.error("Error updating promotional poster:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
@@ -1193,7 +1144,6 @@ export async function fetchCourses(): Promise<Course[]> {
         return reAssignCourseIcons(courses);
     } catch (error: any) {
         console.error("Error fetching courses:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch courses: ${error.message}`, variant: "destructive" });
         return [];
     }
 };
@@ -1210,7 +1160,6 @@ export async function fetchQuizSets(): Promise<QuizSet[]> {
         return sets;
     } catch (error: any) {
         console.error("Error fetching quiz sets:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch quiz sets: ${error.message}`, variant: "destructive" });
         return MOCK_QUIZ_SETS;
     }
 };
@@ -1234,7 +1183,6 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
             );
     } catch (error: any) {
         console.error("Error fetching approved instructors:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
         return [];
     }
 };
@@ -1268,15 +1216,6 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
         });
     } catch (error: any) {
         console.error("Error fetching user referrals:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch referrals: ${error.message}`, variant: "destructive" });
         return [];
     }
 };
-
-
-    
-
-
-
-
-
