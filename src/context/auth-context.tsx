@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         // Only set user to null if they are not already logged in via credentials
-        if (!user) {
+        if (user === null) {
           setUser(null);
         }
       }

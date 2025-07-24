@@ -234,16 +234,16 @@ export async function authenticateUserByCredentials(email: string, password: str
     try {
         // Special case to create a default admin if it doesn't exist
         if (email === 'admin@drivergy.com' && password === 'admin') {
-            const adminQuery = query(collection(db, "users"), where("username", "==", "admin"), limit(1));
+            const adminQuery = query(collection(db, "users"), where("contact", "==", "admin@drivergy.com"), limit(1));
             const adminSnapshot = await getDocs(adminQuery);
             if (adminSnapshot.empty) {
                 const adminId = 'admin_user_01'; // Use a predictable ID
                 const adminRef = doc(db, "users", adminId);
-                const newAdmin: Omit<UserProfile, 'id'> = {
+                const newAdmin: Omit<UserProfile, 'id'|'password'> & {password: string} = {
                     uniqueId: "AD-000001",
                     name: "Admin",
                     username: "admin",
-                    password: "admin", // In a real app, this would be hashed
+                    password: "admin", 
                     contact: "admin@drivergy.com",
                     phone: "1234567890",
                     gender: "Prefer not to say",
@@ -259,6 +259,7 @@ export async function authenticateUserByCredentials(email: string, password: str
         }
         
         const usersRef = collection(db, "users");
+        // Query by email (stored in 'contact' field) and password
         const q = query(usersRef, where("contact", "==", email), where("password", "==", password), limit(1));
         const querySnapshot = await getDocs(q);
 
@@ -1243,5 +1244,6 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 
 
     
+
 
 
