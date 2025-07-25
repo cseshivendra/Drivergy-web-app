@@ -85,13 +85,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (userProfile) {
         logInUser(userProfile, true); 
-        // No need to return here, logInUser handles navigation.
       } else {
          toast({
             title: 'Login Failed',
             description: 'Invalid username or password.',
             variant: 'destructive',
         });
+        setLoading(false); // Make sure to stop loading on failure
       }
     } catch (error) {
       console.error("Error in signInWithCredentials:", error);
@@ -100,8 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
-    } finally {
-        setLoading(false);
+      setLoading(false); // Stop loading on error
     }
   };
 
@@ -146,3 +145,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+    

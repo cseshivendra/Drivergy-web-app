@@ -40,6 +40,7 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
+    // The signInWithCredentials function in the context will now handle the redirect on success.
     await signInWithCredentials(username, password);
   };
 
@@ -197,3 +198,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

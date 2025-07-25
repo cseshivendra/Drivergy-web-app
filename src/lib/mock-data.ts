@@ -246,56 +246,61 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
 };
 
 export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
-    if (!db) return null;
-
+    if (!db) {
+      // Fallback for non-Firebase environment
+      if (username === 'admin' && password === 'admin') {
+        return MANUAL_ADMIN_USER;
+      }
+      return null;
+    }
+  
     // --- Admin Login Logic ---
     if (username === 'admin' && password === 'admin') {
-        const adminId = MANUAL_ADMIN_USER.id;
-        const adminRef = doc(db, "users", adminId);
-        const adminSnap = await getDoc(adminRef);
-
-        if (adminSnap.exists()) {
-            console.log("Found existing admin user in DB.");
-            return { id: adminSnap.id, ...adminSnap.data() } as UserProfile;
-        } else {
-            try {
-                console.log("Admin user not found in DB. Creating now...");
-                await setDoc(adminRef, MANUAL_ADMIN_USER);
-                console.log("Admin user created successfully in DB.");
-                return MANUAL_ADMIN_USER;
-            } catch (error) {
-                console.error("Failed to create admin user in DB:", error);
-                // Fallback to manual object if DB write fails, ensuring login
-                return MANUAL_ADMIN_USER;
-            }
+      const adminRef = doc(db, "users", MANUAL_ADMIN_USER.id);
+      const adminSnap = await getDoc(adminRef);
+  
+      if (adminSnap.exists()) {
+        console.log("Found existing admin user in DB.");
+        return { id: adminSnap.id, ...adminSnap.data() } as UserProfile;
+      } else {
+        try {
+          console.log("Admin user not found in DB. Creating now...");
+          await setDoc(adminRef, MANUAL_ADMIN_USER);
+          console.log("Admin user created successfully in DB.");
+          return MANUAL_ADMIN_USER;
+        } catch (error) {
+          console.error("Failed to create admin user in DB:", error);
+          // Fallback to manual object if DB write fails, ensuring login
+          return MANUAL_ADMIN_USER;
         }
+      }
     }
-
+  
     // --- Regular User Login Logic ---
     try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username), limit(1));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-            console.log(`Login failed: No user found with username '${username}'`);
-            return null;
-        }
-
-        const userDoc = querySnapshot.docs[0];
-        const user = userDoc.data();
-
-        if (user.password === password) {
-             return { id: userDoc.id, ...user } as UserProfile;
-        }
-       
-        console.log(`Login failed: Incorrect password for username '${username}'`);
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", username), limit(1));
+      const querySnapshot = await getDocs(q);
+  
+      if (querySnapshot.empty) {
+        console.log(`Login failed: No user found with username '${username}'`);
         return null;
+      }
+  
+      const userDoc = querySnapshot.docs[0];
+      const user = userDoc.data();
+  
+      if (user.password === password) {
+        return { id: userDoc.id, ...user } as UserProfile;
+      }
+  
+      console.log(`Login failed: Incorrect password for username '${username}'`);
+      return null;
     } catch (error: any) {
-        console.error("Error authenticating user:", error);
-        return null;
+      console.error("Error authenticating user:", error);
+      return null;
     }
-};
+  };
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!db || !userId) return null;
@@ -1246,3 +1251,5 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
         return [];
     }
 };
+
+    
