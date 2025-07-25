@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -52,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [user]); // Add user to dependency array
+  }, []); // Remove user dependency to prevent re-running on credential login
   
   const signInWithGoogle = async () => {
     if (!auth) {
@@ -68,7 +69,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: `Login Successful!`,
         description: 'Redirecting to your dashboard...',
       });
-      router.push('/');
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       // Don't show toast for user-closed popup
@@ -81,19 +81,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
-    const userProfile = await authenticateUserByCredentials(username, password);
-    setLoading(false);
-    if (userProfile) {
-      logInUser(userProfile, true); 
-      return true;
+    try {
+      const userProfile = await authenticateUserByCredentials(username, password);
+      setLoading(false);
+      if (userProfile) {
+        logInUser(userProfile, true); 
+        return true;
+      }
+      
+      toast({
+        title: 'Login Failed',
+        description: 'Invalid username or password.',
+        variant: 'destructive',
+      });
+      return false;
+    } catch (error) {
+      console.error("Error in signInWithCredentials:", error);
+      setLoading(false);
+      toast({
+        title: 'Login Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+      return false;
     }
-    
-    toast({
-      title: 'Login Failed',
-      description: 'Invalid username or password.',
-      variant: 'destructive',
-    });
-    return false;
   };
 
   const signOut = async () => {
@@ -137,3 +148,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+    

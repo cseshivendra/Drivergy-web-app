@@ -230,19 +230,28 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
 export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
     try {
-        // Special case to create a default admin if it doesn't exist and credentials match
+        // Special case for admin: check for username 'admin' and password 'admin'
         if (username === 'admin' && password === 'admin') {
-            const adminQuery = query(collection(db, "users"), where("username", "==", "admin"), limit(1));
-            const adminSnapshot = await getDocs(adminQuery);
-            if (adminSnapshot.empty) {
-                const adminId = 'default_admin_user_id_001';
-                const adminRef = doc(db, "users", adminId);
-                const newAdmin: Omit<UserProfile, 'id' | 'uniqueId'> & { uniqueId: string } = {
-                    id: adminId,
+            const adminId = 'default_admin_user_id_001';
+            const adminRef = doc(db, "users", adminId);
+            const adminSnap = await getDoc(adminRef);
+
+            if (adminSnap.exists()) {
+                // Admin exists, check password
+                const adminData = adminSnap.data();
+                if (adminData.password === password) {
+                    return { id: adminSnap.id, ...adminData } as UserProfile;
+                } else {
+                    return null; // Incorrect password for existing admin
+                }
+            } else {
+                // Admin does not exist, create it
+                console.log("Default admin user not found. Creating...");
+                const newAdmin: Omit<UserProfile, 'id'> = {
                     uniqueId: "AD-000001",
                     name: "Admin",
                     username: "admin",
-                    password: "admin", 
+                    password: "admin",
                     contact: "admin@drivergy.com",
                     phone: "1234567890",
                     gender: "Prefer not to say",
@@ -253,26 +262,29 @@ export async function authenticateUserByCredentials(username: string, password: 
                 };
                 await setDoc(adminRef, newAdmin);
                 console.log("Default admin user created successfully.");
-                return newAdmin as UserProfile;
-            } else {
-                 const userDoc = adminSnapshot.docs[0];
-                 const user = userDoc.data();
-                 if (user.password === password) {
-                     return { id: userDoc.id, ...user } as UserProfile;
-                 }
-                 return null;
+                return { id: adminRef.id, ...newAdmin } as UserProfile;
             }
         }
         
         // Regular user authentication
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
+        const q = query(usersRef, where("username", "==", username), limit(1));
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) return null;
+        if (querySnapshot.empty) {
+            console.log(`Login failed: No user found with username '${username}'`);
+            return null;
+        }
 
         const userDoc = querySnapshot.docs[0];
-        return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+        const user = userDoc.data();
+
+        if (user.password === password) {
+             return { id: userDoc.id, ...user } as UserProfile;
+        }
+       
+        console.log(`Login failed: Incorrect password for username '${username}'`);
+        return null;
     } catch (error: any) {
         console.error("Error authenticating user:", error);
         return null;
@@ -1230,5 +1242,7 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 };
 
 
+
+    
 
     
