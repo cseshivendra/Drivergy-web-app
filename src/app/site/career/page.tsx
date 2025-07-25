@@ -47,24 +47,15 @@ export default function CareerPage() {
     return (
         <div className="container mx-auto max-w-6xl p-4 py-8 sm:p-6 lg:p-8">
             <Card className="shadow-lg overflow-hidden mb-12">
-                <div className="relative h-56 w-full bg-primary/10">
-                    <Image
-                        src="https://placehold.co/1200x300/3b82f6/ffffff.png"
-                        alt="A diverse team collaborating in a modern office, representing career opportunities at Drivergy"
-                        layout="fill"
-                        objectFit="cover"
-                        data-ai-hint="office team meeting"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                        <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                            <Briefcase className="h-10 w-10 text-primary" />
-                        </div>
-                        <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Careers at Drivergy</h1>
-                        <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                            Join a passionate team that's revolutionizing driving education in India. Drive your career forward with us.
-                        </p>
+                <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
+                    <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">
+                        <Briefcase className="h-10 w-10 text-primary" />
                     </div>
-                </div>
+                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Careers at Drivergy</h1>
+                    <p className="mt-2 text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Join a passionate team that's revolutionizing driving education in India. Drive your career forward with us.
+                    </p>
+                </CardHeader>
             </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
