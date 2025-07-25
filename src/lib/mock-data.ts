@@ -9,6 +9,25 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 import type { User as FirebaseUser } from 'firebase/auth';
 import { uploadFile } from './file-upload';
 
+// =================================================================
+// MANUAL ADMIN USER DEFINITION
+// =================================================================
+const MANUAL_ADMIN_USER: UserProfile = {
+    id: 'default_admin_user_id_001',
+    uniqueId: "AD-000001",
+    name: "Admin",
+    username: "admin",
+    password: "admin",
+    contact: "admin@drivergy.com",
+    phone: "1234567890",
+    gender: "Prefer not to say",
+    location: "Gurugram",
+    subscriptionPlan: "Admin",
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+    approvalStatus: 'Approved',
+};
+
+
 // Default mock data for when Firebase is not connected
 const MOCK_SITE_BANNERS: SiteBanner[] = [
     {
@@ -229,38 +248,31 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
 export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
 
-    try {
-        // Handle special admin login
-        if (username === 'admin' && password === 'admin') {
-            const adminId = 'default_admin_user_id_001';
-            const adminRef = doc(db, "users", adminId);
-            const adminSnap = await getDoc(adminRef);
+    // --- Admin Login Logic ---
+    if (username === 'admin' && password === 'admin') {
+        const adminId = MANUAL_ADMIN_USER.id;
+        const adminRef = doc(db, "users", adminId);
+        const adminSnap = await getDoc(adminRef);
 
-            if (adminSnap.exists()) {
-                console.log("Found existing admin user.");
-                return { id: adminSnap.id, ...adminSnap.data() } as UserProfile;
-            } else {
-                console.log("Default admin user not found. Creating...");
-                const newAdmin: Omit<UserProfile, 'id'> = {
-                    uniqueId: "AD-000001",
-                    name: "Admin",
-                    username: "admin",
-                    password: "admin",
-                    contact: "admin@drivergy.com",
-                    phone: "1234567890",
-                    gender: "Prefer not to say",
-                    location: "Gurugram",
-                    subscriptionPlan: "Admin",
-                    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-                    approvalStatus: 'Approved',
-                };
-                await setDoc(adminRef, newAdmin);
-                console.log("Default admin user created successfully.");
-                return { id: adminRef.id, ...newAdmin } as UserProfile;
+        if (adminSnap.exists()) {
+            console.log("Found existing admin user in DB.");
+            return { id: adminSnap.id, ...adminSnap.data() } as UserProfile;
+        } else {
+            try {
+                console.log("Admin user not found in DB. Creating now...");
+                await setDoc(adminRef, MANUAL_ADMIN_USER);
+                console.log("Admin user created successfully in DB.");
+                return MANUAL_ADMIN_USER;
+            } catch (error) {
+                console.error("Failed to create admin user in DB:", error);
+                // Fallback to manual object if DB write fails, ensuring login
+                return MANUAL_ADMIN_USER;
             }
         }
-        
-        // Handle regular user login
+    }
+
+    // --- Regular User Login Logic ---
+    try {
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), limit(1));
         const querySnapshot = await getDocs(q);
