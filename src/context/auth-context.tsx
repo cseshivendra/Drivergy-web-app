@@ -83,12 +83,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const userProfile = await authenticateUserByCredentials(username, password);
-      setLoading(false);
+      
       if (userProfile) {
         logInUser(userProfile, true); 
+        setLoading(false);
         return true;
       }
       
+      setLoading(false);
       toast({
         title: 'Login Failed',
         description: 'Invalid username or password.',
