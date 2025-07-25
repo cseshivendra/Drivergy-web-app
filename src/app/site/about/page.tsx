@@ -14,22 +14,11 @@ export default function AboutPage() {
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-lg overflow-hidden">
-        <div className="relative h-48 w-full sm:h-64">
-          <Image 
-            src="https://placehold.co/1200x400.png" 
-            alt="An open road representing the journey of learning to drive with Drivergy" 
-            layout="fill" 
-            objectFit="cover"
-            data-ai-hint="driving school road"
-          />
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div className="text-center">
-              <Car className="h-16 w-16 text-primary mx-auto mb-2" />
-              <h1 className="font-headline text-4xl font-bold text-white">About Drivergy</h1>
-              <p className="text-lg text-primary-foreground/90 mt-1">Your Partner in Safe Driving Education</p>
-            </div>
-          </div>
-        </div>
+        <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
+          <Car className="h-16 w-16 text-primary mx-auto mb-2" />
+          <h1 className="font-headline text-4xl font-bold text-primary">About Drivergy</h1>
+          <p className="text-lg text-muted-foreground mt-1">Your Partner in Safe Driving Education</p>
+        </CardHeader>
         <CardContent className="p-6 space-y-8">
           <section>
             <h2 className="font-headline text-2xl font-semibold text-primary mb-3 flex items-center">

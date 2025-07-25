@@ -10,7 +10,7 @@ import {
     AccordionTrigger,
 } from '@/components/ui/accordion';
 import { HelpCircle, AlertCircle } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { listenToFaqs } from '@/lib/mock-data';
 import type { FaqItem } from '@/types';
@@ -41,24 +41,15 @@ export default function FaqPage() {
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
             <Card className="shadow-lg overflow-hidden mb-12">
-                <div className="relative h-56 w-full bg-primary/10">
-                    <Image
-                        src="https://placehold.co/1200x300/f97316/ffffff.png"
-                        alt="A large question mark representing frequently asked questions about driving lessons"
-                        layout="fill"
-                        objectFit="cover"
-                        data-ai-hint="question mark help"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                        <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                            <HelpCircle className="h-10 w-10 text-primary" />
-                        </div>
-                        <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Frequently Asked Questions</h1>
-                        <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                            Find answers to common questions about our driving courses, RTO services, and platform features.
-                        </p>
+                <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
+                    <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">
+                        <HelpCircle className="h-10 w-10 text-primary" />
                     </div>
-                </div>
+                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Frequently Asked Questions</h1>
+                    <p className="mt-2 text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Find answers to common questions about our driving courses, RTO services, and platform features.
+                    </p>
+                </CardHeader>
             </Card>
 
             {loading ? (

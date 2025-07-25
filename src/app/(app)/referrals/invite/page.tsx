@@ -89,24 +89,15 @@ export default function InviteReferralsPage() {
     return (
         <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8">
             <Card className="shadow-xl overflow-hidden">
-                <div className="relative h-56 w-full bg-primary/10">
-                    <Image
-                        src="https://placehold.co/800x300/f59e0b/ffffff.png"
-                        alt="Referral program banner"
-                        layout="fill"
-                        objectFit="cover"
-                        data-ai-hint="gift friends sharing"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                        <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                            <Gift className="h-10 w-10 text-primary" />
-                        </div>
-                        <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Refer & Earn</h1>
-                        <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                            Share your referral link with friends and earn points when they subscribe!
-                        </p>
+                <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
+                    <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">
+                        <Gift className="h-10 w-10 text-primary" />
                     </div>
-                </div>
+                    <h1 className="font-headline text-3xl font-bold text-primary">Refer & Earn</h1>
+                    <p className="mt-2 text-lg text-muted-foreground max-w-xl mx-auto">
+                        Share your referral link with friends and earn points when they subscribe!
+                    </p>
+                </CardHeader>
                 <CardContent className="p-6 text-center space-y-6">
                     <div className="space-y-2">
                         <p className="text-muted-foreground">Share your unique referral link:</p>
