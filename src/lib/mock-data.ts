@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
@@ -229,23 +228,18 @@ export async function getOrCreateGoogleUser(firebaseUser: FirebaseUser): Promise
 
 export async function authenticateUserByCredentials(username: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
+
     try {
-        // Special case for admin: check for username 'admin' and password 'admin'
+        // Handle special admin login
         if (username === 'admin' && password === 'admin') {
             const adminId = 'default_admin_user_id_001';
             const adminRef = doc(db, "users", adminId);
             const adminSnap = await getDoc(adminRef);
 
             if (adminSnap.exists()) {
-                // Admin exists, check password
-                const adminData = adminSnap.data();
-                if (adminData.password === password) {
-                    return { id: adminSnap.id, ...adminData } as UserProfile;
-                } else {
-                    return null; // Incorrect password for existing admin
-                }
+                console.log("Found existing admin user.");
+                return { id: adminSnap.id, ...adminSnap.data() } as UserProfile;
             } else {
-                // Admin does not exist, create it
                 console.log("Default admin user not found. Creating...");
                 const newAdmin: Omit<UserProfile, 'id'> = {
                     uniqueId: "AD-000001",
@@ -266,7 +260,7 @@ export async function authenticateUserByCredentials(username: string, password: 
             }
         }
         
-        // Regular user authentication
+        // Handle regular user login
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("username", "==", username), limit(1));
         const querySnapshot = await getDocs(q);
@@ -1240,9 +1234,3 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
         return [];
     }
 };
-
-
-
-    
-
-    

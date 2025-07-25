@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, ShieldAlert, Sun, Moon, Home, KeyRound } from 'lucide-react';
+import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ export default function LoginPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,15 +40,11 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
-    const loggedIn = await signInWithCredentials(username, password);
-    if (loggedIn) {
-        router.push(redirect || '/');
-    }
+    await signInWithCredentials(username, password);
   };
 
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
-    // The onAuthStateChanged listener in AuthContext will handle the redirect
   }
 
   const GoogleIcon = () => (
@@ -59,7 +56,7 @@ export default function LoginPage() {
   if (loading || (user && isMounted)) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <Car className="h-16 w-16 animate-pulse text-primary" />
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
       </div>
     );
   }
@@ -136,22 +133,33 @@ export default function LoginPage() {
                     <Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button>
                   </Link>
                 </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="Enter your password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                  autoComplete="current-password"
-                />
+                <div className="relative">
+                    <Input 
+                        id="password" 
+                        type={showPassword ? 'text' : 'password'} 
+                        placeholder="Enter your password" 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                        autoComplete="current-password"
+                        className="pr-10"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                 </div>
               </div>
               <Button
                 type="submit"
                 className="w-full h-12 text-base bg-primary hover:bg-primary/90"
                 disabled={loading}
               >
-                Sign In
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
               </Button>
             </form>
 

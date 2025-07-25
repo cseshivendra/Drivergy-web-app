@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -15,7 +14,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithCredentials: (username: string, password: string) => Promise<boolean>;
+  signInWithCredentials: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -53,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []); // Remove user dependency to prevent re-running on credential login
+  }, []); 
   
   const signInWithGoogle = async () => {
     if (!auth) {
@@ -79,33 +78,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
+  const signInWithCredentials = async (username: string, password: string): Promise<void> => {
     setLoading(true);
     try {
       const userProfile = await authenticateUserByCredentials(username, password);
       
       if (userProfile) {
         logInUser(userProfile, true); 
-        setLoading(false);
-        return true;
+        // No need to return here, logInUser handles navigation.
+      } else {
+         toast({
+            title: 'Login Failed',
+            description: 'Invalid username or password.',
+            variant: 'destructive',
+        });
       }
-      
-      setLoading(false);
-      toast({
-        title: 'Login Failed',
-        description: 'Invalid username or password.',
-        variant: 'destructive',
-      });
-      return false;
     } catch (error) {
       console.error("Error in signInWithCredentials:", error);
-      setLoading(false);
       toast({
         title: 'Login Error',
         description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
-      return false;
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -150,5 +146,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
-    
