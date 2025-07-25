@@ -77,7 +77,7 @@ export default function AboutPage() {
               Our Founders
             </h2>
             <p className="text-foreground leading-relaxed">
-              Drivergy was founded by a young couple from Allahabad, U.P., Shivendra Singh and Shreya Yadav. Shivendra, a visionary technologist and Senior Software Engineer, brings a wealth of experience from working with leading global financial institutions. Shreya is a young, enthusiastic, and incredibly cooperative partner whose supportive nature and shared love for the project were instrumental in making Drivergy a reality. Their combined passion and skills fuel Drivergy's mission to bring efficiency, transparency, and safety to driving education in India.
+              Drivergy was founded by a young couple from Allahabad, U.P., <strong className="font-semibold">Er. Shivendra Singh</strong> and <strong className="font-semibold">Miss Shreya Yadav</strong>. Shivendra, a visionary technologist and Senior Software Engineer, brings a wealth of experience from working with leading global financial institutions. Shreya is a young, enthusiastic, and incredibly cooperative partner whose supportive nature and shared love for the project were instrumental in making Drivergy a reality. Their combined passion and skills fuel Drivergy's mission to bring efficiency, transparency, and safety to driving education in India.
             </p>
              <p className="text-foreground leading-relaxed mt-4">
               Connect with Shivendra on social media:
