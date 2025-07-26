@@ -44,13 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await firebaseSignOut(auth);
         }
       } else {
-        setUser(null);
+        // Only set user to null if not already logged in as mock admin
+        if (user?.uniqueId !== 'AD-001') {
+          setUser(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast]); 
+  }, [toast, user]); 
   
   const signInWithGoogle = async () => {
     if (!auth) {
@@ -125,8 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/site');
   };
   
-  // This function is now mostly for cases where user data is updated elsewhere
-  // and we need to refresh the context state without a full login cycle.
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
     setUser(userProfile);
     setLoading(false);
