@@ -300,78 +300,103 @@ const MOCK_BLOG_POSTS: BlogPost[] = [
 const allMockQuestions: Omit<Question, 'id'>[] = [
     {
         question: { en: "What does a circular sign with a blue background indicate?", hi: "नीले बैकग्राउंड वाला गोलाकार चिह्न क्या दर्शाता है?" },
-        options: { en: ["A mandatory direction", "A warning", "An informational sign", "A parking zone"], hi: ["एक अनिवार्य दिशा", "एक चेतावनी", "एक सूचनात्मक चिह्न", "एक पार्किंग क्षेत्र"] },
-        correctAnswer: { en: "A mandatory direction", hi: "एक अनिवार्य दिशा" }
+        options: { en: ["A mandatory instruction", "A warning", "An informational sign", "A parking zone"], hi: ["एक अनिवार्य निर्देश", "एक चेतावनी", "एक सूचनात्मक चिह्न", "एक पार्किंग क्षेत्र"] },
+        correctAnswer: { en: "A mandatory instruction", hi: "एक अनिवार्य निर्देश" }
     },
     {
-        question: { en: "When approaching an intersection with a flashing yellow light, you should:", hi: "एक चमकती पीली बत्ती वाले चौराहे पर पहुँचते समय, आपको:" },
-        options: { en: ["Stop completely", "Proceed with caution", "Speed up", "Wait for it to turn green"], hi: ["पूरी तरह से रुकें", "सावधानी से आगे बढ़ें", "गति बढ़ाएँ", "इसके हरे होने की प्रतीक्षा करें"] },
-        correctAnswer: { en: "Proceed with caution", hi: "सावधानी से आगे बढ़ें" }
+        question: { en: "When approaching an intersection with a flashing yellow light, you should:", hi: "चमकती पीली बत्ती वाले चौराहे पर पहुँचते समय, आपको:" },
+        options: { en: ["Stop completely and proceed", "Slow down and proceed with caution", "Speed up to cross quickly", "Wait for it to turn green"], hi: ["पूरी तरह से रुकें और आगे बढ़ें", "धीमे चलें और सावधानी से आगे बढ़ें", "जल्दी पार करने के लिए गति बढ़ाएँ", "इसके हरे होने की प्रतीक्षा करें"] },
+        correctAnswer: { en: "Slow down and proceed with caution", hi: "धीमे चलें और सावधानी से आगे बढ़ें" }
     },
     {
-        question: { en: "The 'No Parking' sign is what shape?", hi: "'नो पार्किंग' का चिह्न किस आकार का होता है?" },
-        options: { en: ["Circular", "Triangular", "Octagonal", "Square"], hi: ["गोलाकार", "त्रिकोणीय", "अष्टकोणीय", "वर्गाकार"] },
-        correctAnswer: { en: "Circular", hi: "गोलाकार" }
-    },
-    {
-        question: { en: "When are you allowed to use a horn?", hi: "आपको हॉर्न का उपयोग करने की अनुमति कब है?" },
-        options: { en: ["To greet a friend", "To express anger", "To prevent a potential accident", "At all times"], hi: ["एक दोस्त का अभिवादन करने के लिए", "गुस्सा व्यक्त करने के लिए", "एक संभावित दुर्घटना को रोकने के लिए", "हर समय"] },
-        correctAnswer: { en: "To prevent a potential accident", hi: "एक संभावित दुर्घटना को रोकने के लिए" }
-    },
-    {
-        question: { en: "What is the legal blood alcohol concentration (BAC) limit for driving in India?", hi: "भारत में ड्राइविंग के लिए कानूनी रक्त अल्कोहल सांद्रता (BAC) सीमा क्या है?" },
-        options: { en: ["0.05%", "0.08%", "0.03%", "0.1%"], hi: ["0.05%", "0.08%", "0.03%", "0.1%"] },
-        correctAnswer: { en: "0.03%", hi: "0.03%" }
-    },
-    {
-        question: { en: "A triangular sign with a red border indicates a:", hi: "लाल बॉर्डर वाला एक त्रिकोणीय चिह्न एक दर्शाता है:" },
+        question: { en: "A triangular sign with a red border indicates a:", hi: "लाल बॉर्डर वाला एक त्रिकोणीय चिह्न क्या दर्शाता है?" },
         options: { en: ["Warning sign", "Mandatory sign", "Informatory sign", "Stop sign"], hi: ["चेतावनी चिह्न", "अनिवार्य चिह्न", "सूचनात्मक चिह्न", "स्टॉप चिह्न"] },
         correctAnswer: { en: "Warning sign", hi: "चेतावनी चिह्न" }
     },
     {
-        question: { en: "When can you overtake a vehicle from the left?", hi: "आप किसी वाहन को बाईं ओर से कब ओवरटेक कर सकते हैं?" },
-        options: { en: ["Never", "When the vehicle ahead is turning right and there is space", "On a one-way street", "On a highway"], hi: ["कभी नहीँ", "जब आगे वाला वाहन दाईं ओर मुड़ रहा हो और जगह हो", "एक-तरफ़ा सड़क पर", "राजमार्ग पर"] },
-        correctAnswer: { en: "When the vehicle ahead is turning right and there is space", hi: "जब आगे वाला वाहन दाईं ओर मुड़ रहा हो और जगह हो" }
+        question: { en: "Overtaking is prohibited when:", hi: "ओवरटेक करना कब प्रतिबंधित है?" },
+        options: { en: ["The road is wide", "The road ahead is not clearly visible", "Driving on a highway", "The vehicle in front is slow"], hi: ["जब सड़क चौड़ी हो", "जब आगे की सड़क स्पष्ट रूप से दिखाई न दे", "राजमार्ग पर गाड़ी चलाते समय", "जब आगे का वाहन धीमा हो"] },
+        correctAnswer: { en: "The road ahead is not clearly visible", hi: "जब आगे की सड़क स्पष्ट रूप से दिखाई न दे" }
     },
     {
-        question: { en: "What does the 'Stop' sign look like?", hi: "'स्टॉप' का चिह्न कैसा दिखता है?" },
-        options: { en: ["A red octagon", "A red triangle", "A blue circle", "A red square"], hi: ["एक लाल अष्टकोण", "एक लाल त्रिकोण", "एक नीला गोला", "एक लाल वर्ग"] },
-        correctAnswer: { en: "A red octagon", hi: "एक लाल अष्टकोण" }
+        question: { en: "What is the legal Blood Alcohol Concentration (BAC) limit for driving in India for a private vehicle driver?", hi: "भारत में एक निजी वाहन चालक के लिए कानूनी रक्त अल्कोहल सांद्रता (बीएसी) की सीमा क्या है?" },
+        options: { en: ["0.05%", "0.08%", "0.03%", "0.01%"], hi: ["0.05%", "0.08%", "0.03%", "0.01%"] },
+        correctAnswer: { en: "0.03%", hi: "0.03%" }
     },
     {
-        question: { en: "You should not use high-beam headlights when:", hi: "आपको हाई-बीम हेडलाइट्स का उपयोग कब नहीं करना चाहिए:" },
-        options: { en: ["Driving in fog", "A vehicle is approaching from the opposite direction", "On a dark, empty road", "During the day"], hi: ["कोहरे में गाड़ी चलाते समय", "विपरीत दिशा से कोई वाहन आ रहा हो", "एक अंधेरी, खाली सड़क पर", "दिन के दौरान"] },
-        correctAnswer: { en: "A vehicle is approaching from the opposite direction", hi: "विपरीत दिशा से कोई वाहन आ रहा हो" }
+        question: { en: "The 'Stop' sign is what shape and color?", hi: "'स्टॉप' चिह्न का आकार और रंग क्या है?" },
+        options: { en: ["Red Octagon", "Red Triangle", "Blue Circle", "Red Square"], hi: ["लाल अष्टकोण", "लाल त्रिकोण", "नीला वृत्त", "लाल वर्ग"] },
+        correctAnswer: { en: "Red Octagon", hi: "लाल अष्टकोण" }
+    },
+    {
+        question: { en: "When can you overtake a vehicle from the left side?", hi: "आप किसी वाहन को बाईं ओर से कब ओवरटेक कर सकते हैं?" },
+        options: { en: ["On any one-way street", "When the vehicle ahead is turning right and there is space", "When the road is empty", "Never"], hi: ["किसी भी एक-तरफ़ा सड़क पर", "जब आगे का वाहन दाईं ओर मुड़ रहा हो और जगह हो", "जब सड़क खाली हो", "कभी नहीँ"] },
+        correctAnswer: { en: "When the vehicle ahead is turning right and there is space", hi: "जब आगे का वाहन दाईं ओर मुड़ रहा हो और जगह हो" }
     },
     {
         question: { en: "A continuous yellow line in the middle of the road means:", hi: "सड़क के बीच में एक सतत पीली रेखा का मतलब है:" },
-        options: { en: ["Overtaking is permitted", "Overtaking is permitted, but with caution", "Overtaking is strictly prohibited", "You can stop on this line"], hi: ["ओवरटेक करने की अनुमति है", "ओवरटेक करने की अनुमति है, लेकिन सावधानी के साथ", "ओवरटेक करना सख्त वर्जित है", "आप इस रेखा पर रुक सकते हैं"] },
-        correctAnswer: { en: "Overtaking is strictly prohibited", hi: "ओवरटेक करना सख्त वर्जित है" }
-    },
-     {
-        question: { en: "What is the purpose of a catalytic converter?", hi: "उत्प्रेरक कनवर्टर का उद्देश्य क्या है?" },
-        options: { en: ["To increase fuel efficiency", "To reduce harmful emissions", "To cool the engine", "To improve braking"], hi: ["ईंधन दक्षता बढ़ाने के लिए", "हानिकारक उत्सर्जन को कम करने के लिए", "इंजन को ठंडा करने के लिए", "ब्रेकिंग में सुधार करने के लिए"] },
-        correctAnswer: { en: "To reduce harmful emissions", hi: "हानिकारक उत्सर्जन को कम करने के लिए" }
+        options: { en: ["Overtaking is permitted with caution", "You can take a U-turn", "Crossing the line is prohibited for overtaking", "Lane ends"], hi: ["सावधानी के साथ ओवरटेक करने की अनुमति है", "आप यू-टर्न ले सकते हैं", "ओवरटेक करने के लिए रेखा पार करना प्रतिबंधित है", "लेन समाप्त होती है"] },
+        correctAnswer: { en: "Crossing the line is prohibited for overtaking", hi: "ओवरटेक करने के लिए रेखा पार करना प्रतिबंधित है" }
     },
     {
-        question: { en: "Before changing lanes, you must:", hi: "लेन बदलने से पहले, आपको चाहिए:" },
-        options: { en: ["Honk your horn", "Check mirrors and blind spots", "Increase your speed", "Slow down significantly"], hi: ["अपना हॉर्न बजाएं", "आईने और ब्लाइंड स्पॉट की जाँच करें", "अपनी गति बढ़ाएं", "काफी धीमा करें"] },
-        correctAnswer: { en: "Check mirrors and blind spots", hi: "आईने और ब्लाइंड स्पॉट की जाँच करें" }
+        question: { en: "When should you use your vehicle's hazard lights?", hi: "आपको अपने वाहन की हैजर्ड लाइट का उपयोग कब करना चाहिए?" },
+        options: { en: ["When parking in a no-parking zone", "When driving in heavy rain", "When your vehicle has broken down and is a temporary obstruction", "To indicate you are going straight"], hi: ["नो-पार्किंग जोन में पार्किंग करते समय", "भारी बारिश में गाड़ी चलाते समय", "जब आपका वाहन खराब हो गया हो और एक अस्थायी बाधा हो", "यह इंगित करने के लिए कि आप सीधे जा रहे हैं"] },
+        correctAnswer: { en: "When your vehicle has broken down and is a temporary obstruction", hi: "जब आपका वाहन खराब हो गया हो और एक अस्थायी बाधा हो" }
     },
     {
-        question: { en: "The sign for 'School Ahead' is:", hi: "'आगे स्कूल है' का चिह्न है:" },
-        options: { en: ["Triangular", "Circular", "Rectangular", "Square"], hi: ["त्रिकोणीय", "गोलाकार", "आयताकार", "वर्गाकार"] },
-        correctAnswer: { en: "Triangular", hi: "त्रिकोणीय" }
+        question: { en: "What does a 'Give Way' sign mean?", hi: "'रास्ता दें' (Give Way) चिह्न का क्या अर्थ है?" },
+        options: { en: ["Stop and then proceed", "You have the right-of-way", "Slow down and be ready to stop to let other traffic pass", "The road ahead is closed"], hi: ["रुकें और फिर आगे बढ़ें", "आपका रास्ता पहले है", "धीमे चलें और अन्य यातायात को गुजरने देने के लिए रुकने के लिए तैयार रहें", "आगे की सड़क बंद है"] },
+        correctAnswer: { en: "Slow down and be ready to stop to let other traffic pass", hi: "धीमे चलें और अन्य यातायात को गुजरने देने के लिए रुकने के लिए तैयार रहें" }
     },
     {
-        question: { en: "At a four-way intersection with stop signs, who has the right-of-way?", hi: "स्टॉप संकेतों वाले चार-तरफा चौराहे पर, किसका अधिकार है?" },
-        options: { en: ["The largest vehicle", "The vehicle that arrived first", "The vehicle on the right", "The vehicle that is going straight"], hi: ["सबसे बड़ा वाहन", "जो वाहन पहले आया", "दाईं ओर का वाहन", "जो वाहन सीधा जा रहा है"] },
-        correctAnswer: { en: "The vehicle that arrived first", hi: "जो वाहन पहले आया" }
+        question: { en: "Validity of a Learner's License is:", hi: "लर्नर लाइसेंस की वैधता है:" },
+        options: { en: ["1 year", "Until you get a permanent license", "6 months", "3 months"], hi: ["1 वर्ष", "जब तक आपको स्थायी लाइसेंस नहीं मिल जाता", "6 महीने", "3 महीने"] },
+        correctAnswer: { en: "6 months", hi: "6 महीने" }
     },
     {
-        question: { en: "What does a broken white line in the middle of the road indicate?", hi: "सड़क के बीच में एक टूटी हुई सफेद रेखा क्या दर्शाती है?" },
-        options: { en: ["No overtaking", "Overtaking is permitted if safe", "Lane ends", "Pedestrian crossing"], hi: ["कोई ओवरटेकिंग नहीं", "सुरक्षित होने पर ओवरटेकिंग की अनुमति है", "लेन समाप्त होती है", "पैदल यात्री क्रॉसिंग"] },
-        correctAnswer: { en: "Overtaking is permitted if safe", hi: "सुरक्षित होने पर ओवरटेकिंग की अनुमति है" }
+        question: { en: "When parking on a hill facing downwards, you should turn your wheels:", hi: "ढलान पर नीचे की ओर पार्किंग करते समय, आपको अपने पहियों को मोड़ना चाहिए:" },
+        options: { en: ["Towards the curb/roadside", "Away from the curb/roadside", "Straight ahead", "It does not matter"], hi: ["फुटपाथ/सड़क के किनारे की ओर", "फुटपाथ/सड़क के किनारे से दूर", "सीधे आगे", "इससे कोई फर्क नहीं पड़ता"] },
+        correctAnswer: { en: "Towards the curb/roadside", hi: "फुटपाथ/सड़क के किनारे की ओर" }
+    },
+    {
+        question: { en: "Use of high-beam headlights is prohibited when:", hi: "हाई-बीम हेडलाइट्स का उपयोग कब प्रतिबंधित है?" },
+        options: { en: ["Driving on a well-lit street", "On a dark, empty highway", "During the day", "When it is foggy"], hi: ["अच्छी तरह से रोशनी वाली सड़क पर गाड़ी चलाते समय", "एक अंधेरे, खाली राजमार्ग पर", "दिन के दौरान", "जब कोहरा हो"] },
+        correctAnswer: { en: "Driving on a well-lit street", hi: "अच्छी तरह से रोशनी वाली सड़क पर गाड़ी चलाते समय" }
+    },
+    {
+        question: { en: "A broken white line in the middle of the road indicates:", hi: "सड़क के बीच में एक टूटी हुई सफेद रेखा क्या दर्शाती है?" },
+        options: { en: ["No overtaking", "You may change lanes if it is safe to do so", "Lane ends", "Pedestrian crossing ahead"], hi: ["कोई ओवरटेकिंग नहीं", "यदि ऐसा करना सुरक्षित है तो आप लेन बदल सकते हैं", "लेन समाप्त होती है", "आगे पैदल यात्री क्रॉसिंग है"] },
+        correctAnswer: { en: "You may change lanes if it is safe to do so", hi: "यदि ऐसा करना सुरक्षित है तो आप लेन बदल सकते हैं" }
+    },
+    {
+        question: { en: "What is defensive driving?", hi: "रक्षात्मक ड्राइविंग (Defensive driving) क्या है?" },
+        options: { en: ["Driving very slowly", "Driving aggressively to defend your lane", "Anticipating potential hazards and the mistakes of others", "Only driving during the day"], hi: ["बहुत धीरे गाड़ी चलाना", "अपनी लेन की रक्षा के लिए आक्रामक रूप से गाड़ी चलाना", "संभावित खतरों और दूसरों की गलतियों का अनुमान लगाना", "केवल दिन के दौरान गाड़ी चलाना"] },
+        correctAnswer: { en: "Anticipating potential hazards and the mistakes of others", hi: "संभावित खतरों और दूसरों की गलतियों का अनुमान लगाना" }
+    },
+    {
+        question: { en: "The sign for 'No Entry' is a:", hi: "'नो एंट्री' का चिह्न है:" },
+        options: { en: ["Circular sign with a red border and a horizontal bar", "Triangular sign", "Blue circular sign", "Square sign"], hi: ["लाल बॉर्डर और एक क्षैतिज पट्टी वाला गोलाकार चिह्न", "त्रिकोणीय चिह्न", "नीला गोलाकार चिह्न", "वर्गाकार चिह्न"] },
+        correctAnswer: { en: "Circular sign with a red border and a horizontal bar", hi: "लाल बॉर्डर और एक क्षैतिज पट्टी वाला गोलाकार चिह्न" }
+    },
+    {
+        question: { en: "At an unmanned railway crossing, you must:", hi: "एक मानव रहित रेलवे क्रॉसिंग पर, आपको:" },
+        options: { en: ["Stop, get down, look both ways and cross if no train is approaching", "Slow down and cross", "Honk and cross", "Wait for other vehicles to cross first"], hi: ["रुकें, नीचे उतरें, दोनों तरफ देखें और यदि कोई ट्रेन नहीं आ रही है तो पार करें", "धीमे चलें और पार करें", "हॉर्न बजाएं और पार करें", "पहले अन्य वाहनों के पार जाने की प्रतीक्षा करें"] },
+        correctAnswer: { en: "Stop, get down, look both ways and cross if no train is approaching", hi: "रुकें, नीचे उतरें, दोनों तरफ देखें और यदि कोई ट्रेन नहीं आ रही है तो पार करें" }
+    },
+    {
+        question: { en: "What is the '3-second rule' used for?", hi: "'3-सेकंड का नियम' किसके लिए उपयोग किया जाता है?" },
+        options: { en: ["Timing your start at a traffic light", "Measuring a safe following distance", "The time it takes to park", "The time to hold the horn"], hi: ["ट्रैफिक लाइट पर अपना स्टार्ट टाइम करने के लिए", "एक सुरक्षित निम्नलिखित दूरी मापने के लिए", "पार्क करने में लगने वाला समय", "हॉर्न बजाने का समय"] },
+        correctAnswer: { en: "Measuring a safe following distance", hi: "एक सुरक्षित निम्नलिखित दूरी मापने के लिए" }
+    },
+    {
+        question: { en: "A rectangular sign provides:", hi: "एक आयताकार चिह्न प्रदान करता है:" },
+        options: { en: ["A warning", "A mandatory rule", "Information", "A prohibition"], hi: ["एक चेतावनी", "एक अनिवार्य नियम", "जानकारी", "एक निषेध"] },
+        correctAnswer: { en: "Information", hi: "जानकारी" }
+    },
+    {
+        question: { en: "You are approaching a narrow bridge, and another vehicle is about to enter from the opposite side. You should:", hi: "आप एक संकरे पुल पर पहुँच रहे हैं, और एक अन्य वाहन विपरीत दिशा से प्रवेश करने वाला है। आपको:" },
+        options: { en: ["Speed up to cross first", "Turn on high-beam headlights", "Wait for the other vehicle to cross before proceeding", "Honk continuously"], hi: ["पहले पार करने के लिए गति बढ़ाएँ", "हाई-बीम हेडलाइट्स चालू करें", "आगे बढ़ने से पहले दूसरे वाहन के पार जाने की प्रतीक्षा करें", "लगातार हॉर्न बजाएं"] },
+        correctAnswer: { en: "Wait for the other vehicle to cross before proceeding", hi: "आगे बढ़ने से पहले दूसरे वाहन के पार जाने की प्रतीक्षा करें" }
     }
 ];
 
@@ -1458,3 +1483,6 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
         return [];
     }
 };
+
+
+    
