@@ -27,32 +27,6 @@ const MANUAL_ADMIN_USER: UserProfile = {
     approvalStatus: 'Approved',
 };
 
-
-// Default mock data for when Firebase is not connected
-const MOCK_SITE_BANNERS: SiteBanner[] = [
-    {
-        id: "banner-1",
-        title: "Start Your Driving Journey Today",
-        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
-        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_zcrb88zcrb88zcrb_s6hlap.png",
-        imageHint: "driving road car sunset",
-    },
-    {
-        id: "banner-2",
-        title: "Become a Certified Driving Trainer",
-        description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
-        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_4j07z44j07z44j07_nhtkry.png",
-        imageHint: "driving instructor teaching student",
-    },
-    {
-        id: "banner-3",
-        title: "Master the Roads with Confidence",
-        description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
-        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
-        imageHint: "city traffic modern car",
-    }
-  ];
-
 const allMockQuestions: Omit<Question, 'id'>[] = [
     // Traffic Signs & Signals (40 questions)
     { question: { en: "What does this sign mean? (Image of Stop Sign)", hi: "इस चिह्न का क्या अर्थ है? (स्टॉप साइन की छवि)" }, options: { en: ["Stop", "Give Way", "No Entry", "Hospital Ahead"], hi: ["रुकें", "रास्ता दें", "प्रवेश निषेध", "आगे अस्पताल है"] }, correctAnswer: { en: "Stop", hi: "रुकें" } },
@@ -249,268 +223,6 @@ if (isFirebaseConfigured()) {
     seedInitialQuizSets();
 }
 
-
-const MOCK_BLOG_POSTS: BlogPost[] = [
-    {
-        slug: "10-common-mistakes-to-avoid-during-driving-test",
-        title: "10 Common Mistakes to Avoid During Your Driving Test",
-        category: "RTO Exams",
-        excerpt: "Passing your driving test is a major milestone. Avoid these common pitfalls to ensure you get your license on the first try.",
-        content: "Your driving test is the final hurdle to getting your license. Don't let simple mistakes trip you up. Here are 10 common errors to avoid: 1. Forgetting to check mirrors. 2. Not using turn signals correctly. 3. Poor speed control. 4. Failing to yield the right-of-way. 5. Incorrect lane changes. 6. Stalling the vehicle. 7. Poor parallel parking. 8. Not stopping completely at stop signs. 9. Following too closely. 10. Showing signs of nervousness like jerky movements. Practice these points, stay calm, and you'll do great!",
-        author: "Rohan Verma",
-        date: "September 05, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "driving test car",
-        tags: "driving test, RTO, mistakes, tips",
-    },
-    {
-        slug: "understanding-indian-road-signs-a-comprehensive-guide",
-        title: "Understanding Indian Road Signs: A Comprehensive Guide",
-        category: "Road Safety",
-        excerpt: "From mandatory signs to cautionary warnings, this guide breaks down the most important Indian road signs you need to know.",
-        content: "Indian roads have a unique set of traffic signs. Understanding them is crucial for safety. They are broadly categorized into three types: Mandatory/Regulatory Signs (circular), Cautionary/Warning Signs (triangular), and Informatory Signs (rectangular). This post provides a visual guide to the most common signs in each category, helping you become a more aware and safer driver.",
-        author: "Priya Sharma",
-        date: "September 04, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "road signs traffic",
-        tags: "road signs, traffic rules, safety, India",
-    },
-    {
-        slug: "how-to-parallel-park-perfectly-every-time",
-        title: "How to Parallel Park Perfectly Every Time",
-        category: "Driving Tips",
-        excerpt: "Parallel parking can be daunting, but with our step-by-step method, you can master this essential skill and park with confidence.",
-        content: "Follow our simple steps for perfect parallel parking: 1. Find a space at least 1.5 times the length of your car. 2. Pull up alongside the car in front of the space. 3. Check your mirrors and begin reversing slowly. 4. Turn the steering wheel fully towards the curb. 5. When your car is at a 45-degree angle, straighten the wheel and continue reversing. 6. Once your front bumper clears the rear bumper of the car in front, turn the wheel fully away from the curb. 7. Straighten up and center your car in the space. It's all about reference points and practice!",
-        author: "Amit Singh",
-        date: "September 03, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "parallel parking car",
-        tags: "parking, parallel parking, driving skills, tutorial",
-    },
-    {
-        slug: "complete-guide-to-getting-your-learners-license-in-india",
-        title: "The Complete Guide to Getting Your Learner's License in India",
-        category: "RTO Exams",
-        excerpt: "Getting your Learner's License is the first step to driving legally. Here's everything you need to know about the process.",
-        content: "Applying for a Learner's License in India involves a few key steps. First, gather your documents: proof of age, proof of address, and passport-sized photographs. Next, fill out the application form online via the Parivahan Sewa portal. You'll then need to book a slot for the learner's test, which is a computer-based test of your knowledge of traffic rules and signs. Pass the test, and you'll be issued your Learner's License, which is valid for 6 months.",
-        author: "Sunita Reddy",
-        date: "September 02, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "license document application",
-        tags: "learner's license, RTO, documents, application",
-    },
-    {
-        slug: "essential-pre-drive-car-checklist-for-every-driver",
-        title: "Essential Pre-Drive Car Checklist for Every Driver",
-        category: "Vehicle Maintenance",
-        excerpt: "A quick 2-minute check before you drive can save you from a lot of trouble on the road. Here's a simple checklist to follow.",
-        content: "Before starting your journey, perform these quick checks (often remembered by the acronym POWER): P - Petrol (check fuel level), O - Oil (check engine oil level weekly), W - Water (check coolant and windshield washer fluid), E - Electrics (check lights, indicators, horn), R - Rubber (check tire pressure and condition). This simple routine enhances your safety and keeps your car in good health.",
-        author: "Rohan Verma",
-        date: "September 01, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "car checklist maintenance",
-        tags: "car maintenance, checklist, safety, pre-drive",
-    },
-    {
-        slug: "navigating-night-driving-tips-for-safety-and-confidence",
-        title: "Navigating Night Driving: Tips for Safety and Confidence",
-        category: "Driving Tips",
-        excerpt: "Reduced visibility makes night driving challenging. These tips will help you stay safe and confident on the road after dark.",
-        content: "Driving at night requires extra caution. Ensure your headlights, taillights, and signal lights are clean and working. Use your high beams on empty roads but dim them for oncoming traffic. Reduce your speed and increase your following distance. Also, keep your windshield clean inside and out to reduce glare. Taking frequent breaks on long drives helps combat fatigue.",
-        author: "Anjali Mehta",
-        date: "August 30, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "night driving road",
-        tags: "night driving, safety, visibility, tips",
-    },
-    {
-        slug: "monsoon-driving-101-how-to-stay-safe-on-wet-roads",
-        title: "Monsoon Driving 101: How to Stay Safe on Wet Roads",
-        category: "Road Safety",
-        excerpt: "Rainy season brings slippery roads and poor visibility. Learn how to adapt your driving to stay safe during the monsoon.",
-        content: "Driving in the monsoon demands special skills. Check your tires, wipers, and brakes before the season starts. Slow down, as braking distances increase on wet roads. Avoid sudden braking or accelerating. Be wary of waterlogged areas and if you must drive through water, do so slowly in a low gear. Maintain a safe distance from the vehicle ahead.",
-        author: "Priya Sharma",
-        date: "August 28, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "rainy road car",
-        tags: "monsoon, rain, safety, driving tips",
-    },
-    {
-        slug: "what-to-do-after-a-minor-car-accident",
-        title: "What to Do After a Minor Car Accident",
-        category: "Road Safety",
-        excerpt: "Even a small fender bender can be stressful. Knowing the right steps to take can protect you legally and financially.",
-        content: "If you're in a minor accident: 1. Stop your vehicle safely and turn on your hazard lights. 2. Check for injuries. 3. If it's safe, move your vehicles out of traffic. 4. Exchange information with the other driver: name, address, phone number, insurance details, and license plate number. 5. Take photos of the damage to both vehicles and the accident scene. 6. Report the accident to your insurance company. Avoid admitting fault at the scene.",
-        author: "Vikram Kumar",
-        date: "August 26, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "car accident traffic",
-        tags: "accident, safety, insurance, legal",
-    },
-    {
-        slug: "choosing-the-right-driving-school-what-to-look-for",
-        title: "Choosing the Right Driving School: What to Look For",
-        category: "Driving Tips",
-        excerpt: "The right driving school can make all the difference. Here are key factors to consider before you enroll.",
-        content: "When choosing a driving school, look for: 1. Certified and experienced instructors. 2. A structured curriculum that covers both theory and practicals. 3. Well-maintained training vehicles. 4. Flexible scheduling options. 5. Positive reviews and testimonials from past students. 6. Transparent pricing with no hidden costs. A good school like Drivergy invests in your success and safety.",
-        author: "Rohan Verma",
-        date: "August 24, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "driving school instructor",
-        tags: "driving school, instructor, learning, tips",
-    },
-    {
-        slug: "defensive-driving-techniques-that-can-save-your-life",
-        title: "Defensive Driving Techniques That Can Save Your Life",
-        category: "Road Safety",
-        excerpt: "Defensive driving is about anticipating danger and staying one step ahead. Learn these techniques to become a safer driver.",
-        content: "Defensive driving means driving to save lives, time, and money, in spite of the conditions around you and the actions of others. Key techniques include: maintaining a safe following distance (the 3-second rule), constantly scanning your surroundings, being aware of blind spots, and having an escape route in mind. It's a proactive mindset that significantly reduces your risk of an accident.",
-        author: "Amit Singh",
-        date: "August 22, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "safe driving shield",
-        tags: "defensive driving, safety, road safety, skills",
-    },
-    {
-        slug: "how-to-get-an-international-driving-permit-in-india",
-        title: "How to Get an International Driving Permit (IDP) in India",
-        category: "RTO Services",
-        excerpt: "Planning to drive abroad? An International Driving Permit is essential. Here's a guide to obtaining one from your local RTO.",
-        content: "An IDP is a translation of your Indian driving license, allowing you to drive in many foreign countries. To get one, you need a valid Indian license, passport, visa, and flight tickets. Apply at your local RTO or through the Parivahan portal. The permit is typically valid for one year. It's a must-have for any international road trip.",
-        author: "Sunita Reddy",
-        date: "August 20, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "passport travel globe",
-        tags: "IDP, RTO, international driving, travel",
-    },
-    {
-        slug: "basic-car-maintenance-you-can-do-yourself",
-        title: "Basic Car Maintenance You Can Do Yourself",
-        category: "Vehicle Maintenance",
-        excerpt: "You don't have to be a mechanic to keep your car in good shape. Learn these simple DIY maintenance tasks.",
-        content: "Save money and keep your car reliable with these DIY tasks: 1. Checking and topping up fluids (engine oil, coolant, windshield washer). 2. Inspecting and cleaning your battery terminals. 3. Replacing your engine air filter. 4. Changing your windshield wiper blades. 5. Checking your tire pressure. These simple checks can prevent major problems down the road.",
-        author: "Vikram Kumar",
-        date: "August 18, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "car engine maintenance",
-        tags: "car maintenance, DIY, vehicle care, tips",
-    },
-    {
-        slug: "the-importance-of-lane-discipline-on-indian-roads",
-        title: "The Importance of Lane Discipline on Indian Roads",
-        category: "Road Safety",
-        excerpt: "Sticking to your lane is one of the simplest yet most effective ways to improve traffic flow and prevent accidents.",
-        content: "Lane discipline is crucial for road safety. It involves staying within your marked lane and changing lanes only when it's safe to do so, using your indicators. Weaving between lanes increases the risk of collisions and causes traffic jams. The leftmost lane is generally for slower-moving traffic, while the right lanes are for overtaking. Following this simple rule makes driving safer for everyone.",
-        author: "Priya Sharma",
-        date: "August 16, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "highway traffic lanes",
-        tags: "lane discipline, safety, traffic, rules",
-    },
-    {
-        slug: "rto-computer-test-questions-and-answers",
-        title: "RTO Computer Test: Sample Questions and Answers",
-        category: "RTO Exams",
-        excerpt: "Practice with these sample questions to get a feel for what to expect on your RTO Learner's License computer test.",
-        content: "The RTO computer test assesses your knowledge of traffic signs and rules. Questions often include: 'What does this sign mean?' (with an image), 'When should you not use your horn?', and 'What is the correct procedure for overtaking?'. Drivergy's RTO Quiz section provides numerous practice sets to help you prepare thoroughly and pass with flying colors.",
-        author: "Rohan Verma",
-        date: "August 14, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "computer test exam",
-        tags: "RTO, computer test, mock test, questions",
-    },
-    {
-        slug: "how-to-handle-a-tire-blowout-while-driving",
-        title: "How to Handle a Tire Blowout While Driving",
-        category: "Road Safety",
-        excerpt: "A tire blowout is a scary experience, but knowing how to react can prevent a serious accident. Here’s what to do.",
-        content: "If you have a tire blowout: 1. Do not slam on the brakes. 2. Grip the steering wheel firmly. 3. Gently ease your foot off the accelerator. 4. Let the car slow down gradually. 5. Steer gently towards the side of the road once you have control. 6. Turn on your hazard lights. Staying calm and avoiding sudden inputs is key.",
-        author: "Amit Singh",
-        date: "August 12, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "flat tire car",
-        tags: "tire blowout, safety, emergency, driving",
-    },
-    {
-        slug: "understanding-your-cars-dashboard-warning-lights",
-        title: "Understanding Your Car's Dashboard Warning Lights",
-        category: "Vehicle Maintenance",
-        excerpt: "Those little symbols on your dashboard are important. This guide explains what the most common warning lights mean.",
-        content: "Don't ignore your dashboard warning lights. The Check Engine light can indicate anything from a loose gas cap to a serious engine issue. The Battery light means there's a problem with the charging system. The Oil Pressure light is a critical warning to stop the engine immediately. Familiarize yourself with your car's manual to understand what each light signifies.",
-        author: "Vikram Kumar",
-        date: "August 10, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "car dashboard lights",
-        tags: "warning lights, dashboard, maintenance, car care",
-    },
-    {
-        slug: "the-rules-of-traffic-circles-and-roundabouts-in-india",
-        title: "The Rules of Traffic Circles and Roundabouts in India",
-        category: "Driving Tips",
-        excerpt: "Roundabouts are designed to improve traffic flow, but they can be confusing. Learn the correct way to navigate them.",
-        content: "When approaching a roundabout, slow down and yield to traffic already in the circle. Traffic in the roundabout always has the right-of-way. Enter when there is a safe gap. Use your indicators to signal your exit. Stay in the correct lane based on your intended exit—typically, the left lane for turning left or going straight, and the right lane for turning right or making a U-turn.",
-        author: "Priya Sharma",
-        date: "August 08, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "roundabout traffic aerial",
-        tags: "roundabout, traffic circle, rules, driving",
-    },
-    {
-        slug: "how-to-renew-your-driving-license-online",
-        title: "How to Renew Your Driving License Online",
-        category: "RTO Services",
-        excerpt: "Your driving license is valid for a limited time. Learn how to renew it easily online through the Parivahan portal.",
-        content: "Renewing your driving license is now a simple online process. You can apply for renewal up to one year before expiry or within one year after expiry. Visit the Parivahan Sarathi website, fill out the renewal application form, upload scanned copies of your documents (like your old license and Form 1A medical certificate if applicable), and pay the fee online. You may need to book a slot for a visit to the RTO for biometric verification.",
-        author: "Sunita Reddy",
-        date: "August 06, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "online form computer",
-        tags: "license renewal, RTO, online, documents",
-    },
-    {
-        slug: "driving-in-heavy-city-traffic-a-survival-guide",
-        title: "Driving in Heavy City Traffic: A Survival Guide",
-        category: "Driving Tips",
-        excerpt: "Bumper-to-bumper traffic can be stressful. These tips will help you navigate the chaos of city driving like a pro.",
-        content: "To survive heavy traffic: 1. Stay calm and patient. 2. Maintain a safe distance, even at low speeds. 3. Avoid constant lane changes. 4. Be aware of two-wheelers and pedestrians. 5. Use your horn sparingly. 6. Anticipate the flow of traffic ahead instead of just looking at the car in front of you. A smooth and steady approach is much safer and less stressful than aggressive driving.",
-        author: "Rohan Verma",
-        date: "August 04, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "city traffic jam",
-        tags: "city driving, traffic, safety, tips",
-    },
-    {
-        slug: "the-consequences-of-drowsy-driving",
-        title: "The Consequences of Drowsy Driving and How to Prevent It",
-        category: "Road Safety",
-        excerpt: "Driving while tired can be as dangerous as driving drunk. Learn to recognize the signs and prevent drowsy driving.",
-        content: "Drowsy driving impairs your judgment, slows reaction time, and can lead to fatal accidents. Signs of fatigue include frequent yawning, difficulty focusing, and drifting from your lane. To prevent it, get adequate sleep before a long drive, take breaks every two hours, and avoid driving during late-night hours when your body is naturally inclined to sleep. If you feel tired, pull over and rest.",
-        author: "Anjali Mehta",
-        date: "August 02, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "tired driver yawning",
-        tags: "drowsy driving, fatigue, safety, accident prevention",
-    },
-];
-
-const generateId = () => {
-    if (db) {
-        return doc(collection(db, 'id-generator')).id;
-    }
-    return Math.random().toString(36).substring(2, 15);
-};
-
-// Helper to re-hydrate icons after fetching from DB
-const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
-    return coursesToHydrate.map(course => {
-        let newIcon;
-        if (course.id === 'course1') newIcon = Car;
-        else if (course.id === 'course2') newIcon = Bike;
-        else if (course.id === 'course3') newIcon = FileText;
-        else newIcon = FileText; // Default icon
-        return { ...course, icon: newIcon };
-    });
-};
 
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
@@ -1063,16 +775,16 @@ export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
     });
 }
 export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
-    if (!isFirebaseConfigured() || !db) return callback(MOCK_SITE_BANNERS);
+    if (!isFirebaseConfigured() || !db) return callback([]);
     return onSnapshot(collection(db, 'siteBanners'), (snapshot) => {
         if(snapshot.empty) {
-            callback(MOCK_SITE_BANNERS);
+            callback([]);
             return;
         }
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteBanner)));
     }, (error) => {
         console.error("Error listening to site banners:", error);
-        callback(MOCK_SITE_BANNERS);
+        callback([]);
     });
 }
 
@@ -1377,7 +1089,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
     } else if (data.imageSrc) {
         imageUrl = data.imageSrc;
     }
-    const newPost: BlogPost = { ...data, imageSrc: imageUrl };
+    const newPost: BlogPost = { ...data, imageSrc: imageUrl, date: format(new Date(), 'LLL d, yyyy') };
     try {
         const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
         const existing = await getDocs(q);

@@ -44,15 +44,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         // Only set user to null if they are not already logged in via credentials
-        if (user === null) {
-          setUser(null);
+        // This check prevents a logged-in credential user from being logged out on hot-reload
+        const isCredentialUser = user && !user.photoURL?.includes('googleusercontent');
+        if (!isCredentialUser) {
+           setUser(null);
         }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []); 
+  }, [user, toast]); 
   
   const signInWithGoogle = async () => {
     if (!auth) {

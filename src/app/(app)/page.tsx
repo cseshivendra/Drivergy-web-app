@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -13,16 +14,22 @@ export default function AuthenticatedRootPage() {
     return <Loading />;
   }
 
-  // The layout already protects this route, so we can assume user exists.
-  // We check their role to render the correct dashboard.
-  if (user?.uniqueId?.startsWith('CU')) {
+  // The layout already protects this route, so we can assume user exists if not loading.
+  if (!user) {
+    // This case should ideally not be reached due to layout protection,
+    // but as a fallback, show loading or redirect.
+    return <Loading />;
+  }
+
+  // Check their role to render the correct dashboard.
+  if (user.uniqueId?.startsWith('CU')) {
     return <CustomerDashboard />;
   }
 
-  if (user?.uniqueId?.startsWith('TR')) {
+  if (user.uniqueId?.startsWith('TR')) {
     return <TrainerDashboard />;
   }
 
-  // Default to Admin Dashboard for any other authenticated user type.
+  // Default to Admin Dashboard for any other authenticated user type (like the manual admin).
   return <AdminDashboard />;
 }
