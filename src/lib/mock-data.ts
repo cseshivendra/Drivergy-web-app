@@ -1,3 +1,4 @@
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -211,63 +212,6 @@ export async function addCustomer(data: CustomerRegistrationFormValues): Promise
     } catch (error: any) {
         console.error("Error adding customer:", error);
         return null;
-    }
-};
-
-export async function completeCustomerProfile(userId: string, data: FullCustomerDetailsValues): Promise<boolean> {
-    if (!db) return false;
-    const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
-
-    try {
-        const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-            throw new Error("User profile not found.");
-        }
-        const user = userSnap.data();
-
-        const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
-        const profileData = {
-            subscriptionPlan: data.subscriptionPlan,
-            vehicleInfo: data.vehiclePreference,
-            trainerPreference: data.trainerPreference,
-            flatHouseNumber: data.flatHouseNumber,
-            street: data.street,
-            district: data.district,
-            state: data.state,
-            pincode: data.pincode,
-            location: data.district, // Set primary location from district
-            dlStatus: data.dlStatus,
-            dlNumber: data.dlNumber || '',
-            dlTypeHeld: data.dlTypeHeld || '',
-            photoIdType: data.photoIdType,
-            photoIdNumber: data.photoIdNumber,
-            photoIdUrl: photoIdUrl,
-            subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
-            totalLessons: getLessonsForPlan(data.subscriptionPlan),
-            completedLessons: 0,
-            approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
-        };
-
-        await updateDoc(userRef, profileData);
-
-        // Create the lesson request for the admin
-        const newRequestData: Omit<LessonRequest, 'id'> = {
-            customerId: userId,
-            customerName: user.name,
-            vehicleType: data.vehiclePreference as VehicleType,
-            status: 'Pending',
-            requestTimestamp: new Date().toISOString(),
-        };
-        const newRequestRef = doc(collection(db, 'lessonRequests'));
-        await setDoc(newRequestRef, newRequestData);
-        return true;
-    } catch (error: any) {
-        console.error("Error completing customer profile:", error);
-        if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
-            throw new Error("Cannot upload file: Server storage is not configured. Please contact support.");
-        }
-        throw new Error("An unexpected error occurred during profile update.");
     }
 };
 
@@ -1068,3 +1012,5 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
         return { ...course, icon: newIcon };
     });
 };
+
+    

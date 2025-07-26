@@ -1,9 +1,9 @@
 
 'use server';
 
-import { doc, updateDoc, getDoc, collection, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, addDoc, setDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
-import type { ApprovalStatusType, TrainerRegistrationFormValues } from '@/types';
+import type { ApprovalStatusType, TrainerRegistrationFormValues, FullCustomerDetailsValues, VehicleType } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
@@ -123,7 +123,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
 }
 
 
-export async function registerTrainerAction(formData: FormData): Promise<{ success: boolean, error?: string }> {
+export const registerTrainerAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!isFirebaseConfigured() || !db) {
         return { success: false, error: 'Database not configured.' };
     }
@@ -183,3 +183,71 @@ export async function registerTrainerAction(formData: FormData): Promise<{ succe
         return { success: false, error: errorMessage };
     }
 }
+
+
+export const completeCustomerProfileAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
+    if (!db) {
+        return { success: false, error: 'Database not configured.' };
+    }
+
+    const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
+
+    try {
+        const data = Object.fromEntries(formData.entries());
+        const userId = data.userId as string;
+        const userName = data.userName as string;
+        const photoIdFile = formData.get('photoIdFile') as File | null;
+
+        if (!userId || !photoIdFile) {
+            return { success: false, error: 'User ID or Photo ID file is missing.' };
+        }
+
+        const photoIdUrl = await uploadFile(photoIdFile, `user_documents/${userId}`);
+        const profileData = {
+            subscriptionPlan: data.subscriptionPlan as string,
+            vehicleInfo: data.vehiclePreference as string,
+            trainerPreference: data.trainerPreference as string,
+            flatHouseNumber: data.flatHouseNumber as string,
+            street: data.street as string,
+            district: data.district as string,
+            state: data.state as string,
+            pincode: data.pincode as string,
+            location: data.district as string, // Set primary location from district
+            dlStatus: data.dlStatus as string,
+            dlNumber: (data.dlNumber as string) || '',
+            dlTypeHeld: (data.dlTypeHeld as string) || '',
+            photoIdType: data.photoIdType as string,
+            photoIdNumber: data.photoIdNumber as string,
+            photoIdUrl: photoIdUrl,
+            subscriptionStartDate: format(new Date(data.subscriptionStartDate as string), 'MMM dd, yyyy'),
+            totalLessons: getLessonsForPlan(data.subscriptionPlan as string),
+            completedLessons: 0,
+            approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
+        };
+
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, profileData);
+
+        const newRequestData = {
+            customerId: userId,
+            customerName: userName,
+            vehicleType: data.vehiclePreference as VehicleType,
+            status: 'Pending',
+            requestTimestamp: new Date().toISOString(),
+        };
+
+        await addDoc(collection(db, 'lessonRequests'), newRequestData);
+        
+        revalidatePath('/site/payment');
+        revalidatePath('/');
+        
+        return { success: true };
+    } catch (error) {
+        console.error("Error completing customer profile:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during profile update.";
+        return { success: false, error: errorMessage };
+    }
+};
+
+
+    
