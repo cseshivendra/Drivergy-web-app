@@ -96,6 +96,31 @@ const MOCK_FAQS: FaqItem[] = [
         question: "How do I book a driving lesson slot?",
         answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
     },
+    {
+        id: "faq4",
+        question: "What types of vehicles are available for training?",
+        answer: "We offer training for both two-wheelers (scooters, motorcycles) and four-wheelers (manual and automatic cars). You can select your vehicle preference during registration.",
+    },
+    {
+        id: "faq5",
+        question: "What if I need to cancel or reschedule a lesson?",
+        answer: "You can manage your bookings through your dashboard. Please refer to our cancellation policy for details on timelines to avoid any charges. We recommend rescheduling at least 24 hours in advance.",
+    },
+    {
+        id: "faq6",
+        question: "How do I redeem a coupon code?",
+        answer: "You can apply a coupon or referral code on the payment page when you subscribe to a plan. Look for the 'Referral/Discount Code' field, enter your code, and click 'Apply' to see the discount on your total amount.",
+    },
+    {
+        id: "faq7",
+        question: "How can I use the points earned from referrals?",
+        answer: "Referral points you earn can be used to get discounts on your subscription renewals or for other services within the Drivergy platform. Currently, points cannot be withdrawn as cash but offer great value towards your learning journey.",
+    },
+    {
+        id: "faq8",
+        question: "Is our driving school completion certificate valid at the RTO?",
+        answer: "Drivergy Certificates are valid at RTO office as we are authorized partner.",
+    }
 ];
 
 const allMockQuestions: Omit<Question, 'id'>[] = [
