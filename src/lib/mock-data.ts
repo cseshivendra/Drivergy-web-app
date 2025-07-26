@@ -7,11 +7,11 @@ import type { User as FirebaseUser } from 'firebase/auth';
 
 // NOTE: This function is now DEPRECATED. The actual logic has been moved to a server action.
 // This is kept to avoid breaking imports but should not be used for new functionality.
-import { uploadFile } from './server-actions'; 
+import { uploadFile as uploadFileAction } from './server-actions'; 
 
-const uploadFileAction = async (...args: Parameters<typeof uploadFile>) => {
+const uploadFile = async (...args: Parameters<typeof uploadFileAction>) => {
     console.warn("DEPRECATED: `uploadFile` is being called from `mock-data.ts`. This function has been moved to `server-actions.ts` to prevent circular dependencies. Please update your imports.");
-    return uploadFile(...args);
+    return uploadFileAction(...args);
 }
 
 // =================================================================
@@ -65,6 +65,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
             registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
             location: 'HQ',
             gender: 'Other',
+            isAdmin: true,
         };
         return adminUser;
     }
@@ -153,9 +154,7 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
         };
 
         if (data.photo) {
-            // This is deprecated, but we'll leave the call here to avoid breaking changes.
-            // The actual implementation is now in the server action.
-            updateData.photoURL = await uploadFileAction(data.photo, `user_photos/${userId}`);
+            updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
         }
 
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -181,18 +180,6 @@ export async function changeUserPassword(userId: string, currentPassword: string
         return true;
     } catch (error: any) {
         console.error("Error changing password:", error);
-        return false;
-    }
-};
-
-export async function updateUserApprovalStatus(userId: string, newStatus: ApprovalStatusType): Promise<boolean> {
-    if (!db) return false;
-    try {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, { approvalStatus: newStatus });
-        return true;
-    } catch (error: any) {
-        console.error(`Error updating user ${userId} status:`, error);
         return false;
     }
 };
@@ -239,7 +226,7 @@ export async function completeCustomerProfile(userId: string, data: FullCustomer
         }
         const user = userSnap.data();
 
-        const photoIdUrl = await uploadFileAction(data.photoIdFile, `user_documents/${userId}`);
+        const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
         const profileData = {
             subscriptionPlan: data.subscriptionPlan,
             vehicleInfo: data.vehiclePreference,
@@ -283,15 +270,6 @@ export async function completeCustomerProfile(userId: string, data: FullCustomer
         throw new Error("An unexpected error occurred during profile update.");
     }
 };
-
-export async function addTrainer(data: TrainerRegistrationFormValues): Promise<UserProfile | null> {
-    // This function is now deprecated in favor of the server action.
-    // It's kept here to avoid breaking changes if it's imported somewhere else,
-    // but it will simply return null.
-    console.warn("addTrainer from mock-data is deprecated. Use registerTrainerAction server action instead.");
-    return null;
-};
-
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!db) return false;
@@ -859,20 +837,39 @@ export async function deleteFaq(id: string): Promise<boolean> {
 
 export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
     if (!db) return null;
-    let imageUrl = 'https://placehold.co/1200x800.png';
-    if(data.imageFile) {
-        imageUrl = await uploadFileAction(data.imageFile, 'blog_images');
-    } else if (data.imageSrc) {
-        imageUrl = data.imageSrc;
-    }
-    const newPost: BlogPost = { ...data, imageSrc: imageUrl, date: format(new Date(), 'LLL d, yyyy') };
     try {
-        const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
-        const existing = await getDocs(q);
-        if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
-        await setDoc(doc(db, 'blogPosts', newPost.slug), newPost);
-        return newPost;
-    } catch(error: any) {
+        let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
+        if (data.imageFile) {
+            imageUrl = await uploadFile(data.imageFile, 'blog_images');
+        }
+
+        const newPostData: Omit<BlogPost, 'slug'> = {
+            title: data.title,
+            category: data.category,
+            excerpt: data.excerpt,
+            content: data.content,
+            author: data.author,
+            date: format(new Date(), 'LLL d, yyyy'),
+            imageSrc: imageUrl,
+            imageHint: data.imageHint,
+            tags: data.tags,
+        };
+        
+        const docRef = doc(db, 'blogPosts', data.slug);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            throw new Error("A blog post with this slug already exists.");
+        }
+
+        await setDoc(docRef, newPostData);
+        
+        return {
+            slug: docRef.id,
+            ...newPostData
+        };
+
+    } catch (error: any) {
         console.error("Error adding blog post:", error);
         return null;
     }
@@ -884,7 +881,7 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
         const docRef = doc(db!, 'blogPosts', slug);
         const snapshot = await getDoc(docRef);
         if (!snapshot.exists()) return null;
-        return snapshot.data() as BlogPost;
+        return { slug: snapshot.id, ...snapshot.data() } as BlogPost;
     } catch (error: any) {
         console.error("Error fetching blog post by slug:", error);
         return null;
@@ -897,7 +894,7 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
         const docRef = doc(db, 'blogPosts', slug);
         const updateData: Partial<BlogPostFormValues> = { ...data };
         if(data.imageFile) {
-            updateData.imageSrc = await uploadFileAction(data.imageFile, 'blog_images');
+            updateData.imageSrc = await uploadFile(data.imageFile, 'blog_images');
         }
         delete updateData.imageFile;
 
@@ -925,7 +922,7 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
         if (data.imageFile) {
-            updateData.imageSrc = await uploadFileAction(data.imageFile, 'site_visuals');
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
         }
         delete updateData.imageFile; // Always remove the file object before updating DB
 
@@ -948,7 +945,7 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
         if (data.imageFile) {
-            updateData.imageSrc = await uploadFileAction(data.imageFile, 'site_visuals');
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
         }
         delete updateData.imageFile;
 
