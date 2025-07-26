@@ -17,17 +17,18 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
     const userRef = doc(db, "users", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
 
-    const isAdmin = firebaseUser.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-
     if (userSnap.exists()) {
         const userProfile = { id: userSnap.id, ...userSnap.data() } as UserProfile;
-        if (isAdmin && !userProfile.isAdmin) {
+        // Check if the user's email matches the admin email and update if necessary.
+        if (userProfile.contact === process.env.NEXT_PUBLIC_ADMIN_EMAIL && !userProfile.isAdmin) {
             await updateDoc(userRef, { isAdmin: true });
             userProfile.isAdmin = true;
         }
         return userProfile;
     } else {
-        const newUser: Omit<UserProfile, 'id'> = {
+        // This path is ONLY for Google Sign-In, which doesn't have a password.
+        const isAdmin = firebaseUser.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+        const newUser: Omit<UserProfile, 'id' | 'password'> = {
             uniqueId: isAdmin ? `AD-${generateId().slice(-6).toUpperCase()}` : `CU-${generateId().slice(-6).toUpperCase()}`,
             name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
             username: firebaseUser.email || '',
@@ -53,9 +54,9 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
     }
 };
 
-export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+export const authenticateUserByCredentials = async (email: string, password: string): Promise<UserProfile | null> => {
     // This is a mock authentication for the sample admin user.
-    if (username === 'admin' && password === 'admin') {
+    if (email === 'admin' && password === 'admin') {
         const adminUser: UserProfile = {
             id: 'admin-user-id',
             uniqueId: 'AD-001',
@@ -72,16 +73,15 @@ export const authenticateUserByCredentials = async (username: string, password: 
         return adminUser;
     }
     
-    // Fallback to Firebase for other users if needed (or keep it separate)
     if (!db) return null;
     try {
         const usersRef = collection(db, "users");
-        // Step 1: Query for the user by username first.
-        const q = query(usersRef, where("username", "==", username), limit(1));
+        // Step 1: Query for the user by email (stored in 'contact' field).
+        const q = query(usersRef, where("contact", "==", email), limit(1));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            // No user found with that username
+            // No user found with that email
             return null;
         }
 
