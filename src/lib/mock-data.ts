@@ -1,12 +1,18 @@
-
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { uploadFile } from './file-upload';
+
+// NOTE: This function is now DEPRECATED. The actual logic has been moved to a server action.
+// This is kept to avoid breaking imports but should not be used for new functionality.
+import { uploadFile } from './server-actions'; 
+
+const uploadFileAction = async (...args: Parameters<typeof uploadFile>) => {
+    console.warn("DEPRECATED: `uploadFile` is being called from `mock-data.ts`. This function has been moved to `server-actions.ts` to prevent circular dependencies. Please update your imports.");
+    return uploadFile(...args);
+}
 
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
@@ -147,7 +153,9 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
         };
 
         if (data.photo) {
-            updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
+            // This is deprecated, but we'll leave the call here to avoid breaking changes.
+            // The actual implementation is now in the server action.
+            updateData.photoURL = await uploadFileAction(data.photo, `user_photos/${userId}`);
         }
 
         Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
@@ -231,7 +239,7 @@ export async function completeCustomerProfile(userId: string, data: FullCustomer
         }
         const user = userSnap.data();
 
-        const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
+        const photoIdUrl = await uploadFileAction(data.photoIdFile, `user_documents/${userId}`);
         const profileData = {
             subscriptionPlan: data.subscriptionPlan,
             vehicleInfo: data.vehiclePreference,
@@ -853,7 +861,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
     if (!db) return null;
     let imageUrl = 'https://placehold.co/1200x800.png';
     if(data.imageFile) {
-        imageUrl = await uploadFile(data.imageFile, 'blog_images');
+        imageUrl = await uploadFileAction(data.imageFile, 'blog_images');
     } else if (data.imageSrc) {
         imageUrl = data.imageSrc;
     }
@@ -889,7 +897,7 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
         const docRef = doc(db, 'blogPosts', slug);
         const updateData: Partial<BlogPostFormValues> = { ...data };
         if(data.imageFile) {
-            updateData.imageSrc = await uploadFile(data.imageFile, 'blog_images');
+            updateData.imageSrc = await uploadFileAction(data.imageFile, 'blog_images');
         }
         delete updateData.imageFile;
 
@@ -917,7 +925,7 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
         if (data.imageFile) {
-            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+            updateData.imageSrc = await uploadFileAction(data.imageFile, 'site_visuals');
         }
         delete updateData.imageFile; // Always remove the file object before updating DB
 
@@ -940,7 +948,7 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
         if (data.imageFile) {
-            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+            updateData.imageSrc = await uploadFileAction(data.imageFile, 'site_visuals');
         }
         delete updateData.imageFile;
 

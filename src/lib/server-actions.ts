@@ -3,11 +3,49 @@
 
 import { doc, updateDoc, query, collection, where, getDocs, limit, setDoc, addDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
-import type { ApprovalStatusType, TrainerRegistrationFormValues, UserProfile } from '@/types';
+import type { ApprovalStatusType, UserProfile } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
-import { uploadFile } from './file-upload';
+import { cloudinaryConfig } from './cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
+
+
+// This needs to be in a server-action file because it uses server-only packages (cloudinary, streamifier)
+export async function uploadFile(file: File, folder: string): Promise<string> {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+        console.error("Cloudinary environment variables are not set.");
+        throw new Error("Cannot upload file: Server storage is not configured. Please contact support.");
+    }
+
+    await cloudinaryConfig();
+
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: folder, resource_type: "auto" },
+            (error, result) => {
+                if (error) {
+                    console.error('Cloudinary upload error:', error);
+                    reject(new Error('File upload to Cloudinary failed.'));
+                } else if (result) {
+                    resolve(result.secure_url);
+                } else {
+                    reject(new Error('File upload failed: No result from Cloudinary.'));
+                }
+            }
+        );
+        file.arrayBuffer()
+            .then(buffer => {
+                streamifier.createReadStream(Buffer.from(buffer)).pipe(stream);
+            })
+            .catch(error => {
+                console.error('Error converting file to buffer:', error);
+                reject(new Error('Failed to read file for upload.'));
+            });
+    });
+}
+
 
 interface UpdateStatusArgs {
     userId: string;
@@ -50,8 +88,6 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            // To prevent user enumeration attacks, we don't reveal if the user exists.
-            // We just return success and the frontend shows a generic message.
             console.log(`Password reset requested for non-existent email: ${email}`);
             return { success: true };
         }
@@ -59,9 +95,6 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         const userDoc = querySnapshot.docs[0];
         const user = { id: userDoc.id, ...userDoc.data() };
 
-        // In a real application, you would generate a secure, single-use token,
-        // store its hash in the database with an expiry date, and create a reset URL.
-        // For this prototype, we'll simulate the link.
         const resetToken = `simulated-token-${Date.now()}`;
         const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/site/reset-password?token=${resetToken}&userId=${user.id}`;
 
