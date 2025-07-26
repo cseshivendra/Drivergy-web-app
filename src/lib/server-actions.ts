@@ -88,7 +88,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
 }
 
 
-export async function registerTrainerAction(formData: FormData): Promise<{ success: boolean, error?: string }> {
+export const registerTrainerAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!isFirebaseConfigured() || !db) {
         return { success: false, error: 'Database not configured.' };
     }
