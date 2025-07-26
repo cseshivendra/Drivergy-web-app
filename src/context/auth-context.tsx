@@ -73,6 +73,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
+
+    // This is the direct, mocked admin login for the live site.
+    if (username === 'admin' && password === 'admin') {
+        const adminUser: UserProfile = {
+            id: 'admin-user-id',
+            uniqueId: 'AD-001',
+            name: 'Admin User',
+            username: 'admin',
+            contact: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@drivergy.in',
+            subscriptionPlan: 'Admin',
+            approvalStatus: 'Approved',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            location: 'HQ',
+            gender: 'Other',
+            isAdmin: true,
+        };
+        logInUser(adminUser, true);
+        return true;
+    }
+    
+    // For all other users, authenticate against Firebase.
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
       logInUser(userProfile, true); 

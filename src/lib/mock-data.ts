@@ -26,7 +26,6 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
         }
         return userProfile;
     } else {
-        // This path is ONLY for Google Sign-In, which doesn't have a password.
         const isAdmin = firebaseUser.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
         const newUser: Omit<UserProfile, 'id' | 'password'> = {
             uniqueId: isAdmin ? `AD-${generateId().slice(-6).toUpperCase()}` : `CU-${generateId().slice(-6).toUpperCase()}`,
@@ -55,24 +54,6 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
 };
 
 export const authenticateUserByCredentials = async (email: string, password: string): Promise<UserProfile | null> => {
-    // This is a mock authentication for the sample admin user.
-    if (email === 'admin' && password === 'admin') {
-        const adminUser: UserProfile = {
-            id: 'admin-user-id',
-            uniqueId: 'AD-001',
-            name: 'Admin User',
-            username: 'admin',
-            contact: 'admin@drivergy.in',
-            subscriptionPlan: 'Admin',
-            approvalStatus: 'Approved',
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            location: 'HQ',
-            gender: 'Other',
-            isAdmin: true,
-        };
-        return adminUser;
-    }
-    
     if (!db) return null;
     try {
         const usersRef = collection(db, "users");
@@ -1087,3 +1068,4 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
 
 
     
+
