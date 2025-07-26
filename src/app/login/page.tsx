@@ -36,7 +36,11 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
-    await signInWithCredentials(username, password);
+    const success = await signInWithCredentials(username, password);
+    if (success) {
+      const redirect = searchParams.get('redirect');
+      router.push(redirect || '/');
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -181,7 +185,7 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
              <p className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
-                <Link href="/site/register" className="font-semibold text-primary hover:underline">
+                <Link href="/site/register" className="text-primary font-semibold hover:underline">
                     Sign Up
                 </Link>
             </p>
