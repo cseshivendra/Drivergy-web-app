@@ -25,7 +25,7 @@ export default function AuthenticatedRootPage() {
   if (user.isAdmin) {
     return <AdminDashboard />;
   }
-  
+
   // Check their role based on unique ID to render the correct dashboard.
   if (user.uniqueId?.startsWith('CU')) {
     return <CustomerDashboard />;

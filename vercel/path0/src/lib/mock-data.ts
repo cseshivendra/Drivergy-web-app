@@ -5,7 +5,7 @@ import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { uploadFile } from './server-actions'; 
+import { uploadFile } from './server-actions';
 
 
 // =================================================================
@@ -63,7 +63,7 @@ export const authenticateUserByCredentials = async (username: string, password: 
         };
         return adminUser;
     }
-    
+
     // Fallback to Firebase for other users if needed (or keep it separate)
     if (!db) return null;
     try {
@@ -321,8 +321,8 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 
 export function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     const q = query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc'));
     return onSnapshot(q, (snapshot) => {
@@ -334,8 +334,8 @@ export function listenToAllLessonRequests(callback: (data: LessonRequest[]) => v
 
 export function listenToAllFeedback(callback: (data: Feedback[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     const q = query(collection(db, 'feedback'), orderBy('submissionDate', 'desc'));
     return onSnapshot(q, (snapshot) => {
@@ -347,8 +347,8 @@ export function listenToAllFeedback(callback: (data: Feedback[]) => void) {
 
 export function listenToAllReferrals(callback: (data: Referral[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     const q = query(collection(db, "referrals"), orderBy("timestamp", "desc"));
     return onSnapshot(q, async (snapshot) => {
@@ -389,15 +389,15 @@ export function listenToAllReferrals(callback: (data: Referral[]) => void) {
 
 export function listenToQuizSets(callback: (data: QuizSet[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     return onSnapshot(collection(db, 'quizSets'), (snapshot) => {
-      if (snapshot.empty) {
-        callback([]);
-      } else {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
-      }
+        if (snapshot.empty) {
+            callback([]);
+        } else {
+            callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
+        }
     }, (error) => {
         console.error("Error listening to quiz sets:", error);
         callback([]);
@@ -405,8 +405,8 @@ export function listenToQuizSets(callback: (data: QuizSet[]) => void) {
 }
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     return onSnapshot(collection(db, 'promotionalPosters'), (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromotionalPoster)));
@@ -416,8 +416,8 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
 }
 export function listenToCourses(callback: (data: Course[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     return onSnapshot(collection(db, 'courses'), (snapshot) => {
         const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
@@ -429,8 +429,8 @@ export function listenToCourses(callback: (data: Course[]) => void) {
 
 export function listenToFaqs(callback: (data: FaqItem[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     return onSnapshot(collection(db, 'faqs'), (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FaqItem)));
@@ -441,8 +441,8 @@ export function listenToFaqs(callback: (data: FaqItem[]) => void) {
 
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
     return onSnapshot(q, (snapshot) => {
@@ -453,8 +453,8 @@ export function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
 }
 export function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     return onSnapshot(collection(db, 'siteBanners'), (snapshot) => {
         if(snapshot.empty) {
@@ -470,8 +470,8 @@ export function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback(null);
-      return () => {};
+        callback(null);
+        return () => {};
     }
     return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
@@ -496,8 +496,8 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
 
 export function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([], []);
-      return () => {};
+        callback([], []);
+        return () => {};
     }
     const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
     const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
@@ -531,8 +531,8 @@ export function listenToTrainerStudents(trainerId: string, callback: (students: 
 
 export function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback({});
-      return () => {};
+        callback({});
+        return () => {};
     }
     const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
@@ -549,19 +549,19 @@ export function listenToSummaryData(callback: (data: Partial<SummaryData>) => vo
 
         callback({ totalCustomers, totalInstructors, activeSubscriptions, totalCertifiedTrainers, totalEarnings });
     }, (error) => {
-      console.error("Error listening to users for summary:", error);
+        console.error("Error listening to users for summary:", error);
     });
 
     const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRequests: snap.size }));
     }, (error) => {
-      console.error("Error listening to lessonRequests for summary:", error);
+        console.error("Error listening to lessonRequests for summary:", error);
     });
 
     const rescheduleUnsub = onSnapshot(query(collection(db!, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
         callback(prev => ({ ...prev, pendingRescheduleRequests: snap.size }));
     }, (error) => {
-      console.error("Error listening to rescheduleRequests for summary:", error);
+        console.error("Error listening to rescheduleRequests for summary:", error);
     });
 
     return () => {
@@ -573,8 +573,8 @@ export function listenToSummaryData(callback: (data: Partial<SummaryData>) => vo
 
 export function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
+        callback([]);
+        return () => {};
     }
     const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
@@ -594,7 +594,7 @@ export function listenToCustomerLessonProgress(callback: (data: LessonProgressDa
 
         callback(progressData);
     }, (error) => {
-      console.error("Error listening to lesson progress:", error);
+        console.error("Error listening to lesson progress:", error);
     });
 };
 
@@ -792,7 +792,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
             imageHint: data.imageHint,
             tags: data.tags,
         };
-        
+
         const docRef = doc(db, 'blogPosts', data.slug);
         const docSnap = await getDoc(docRef);
 
@@ -801,7 +801,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
         }
 
         await setDoc(docRef, newPostData);
-        
+
         return {
             slug: docRef.id,
             ...newPostData
@@ -905,7 +905,7 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
 // This one-time fetch is still needed for pages that don't need real-time updates.
 export async function fetchCourses(): Promise<Course[]> {
     if (!isFirebaseConfigured() || !db) {
-      return [];
+        return [];
     }
     try {
         const snapshot = await getDocs(collection(db!, "courses"));
@@ -919,7 +919,7 @@ export async function fetchCourses(): Promise<Course[]> {
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
     if (!isFirebaseConfigured() || !db) {
-      return [];
+        return [];
     }
     try {
         const snapshot = await getDocs(collection(db!, "quizSets"));
@@ -1007,6 +1007,6 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
     });
 };
 
-    
 
-    
+
+
