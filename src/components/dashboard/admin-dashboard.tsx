@@ -72,6 +72,26 @@ export default function AdminDashboard() {
     }
 
     setLoading(true);
+
+    // If it's the mock admin, don't try to fetch from Firebase.
+    // This prevents the permission errors and allows the dashboard to render.
+    if (user.uniqueId === 'AD-001') {
+        setSummaryData({ totalCustomers: 0, totalInstructors: 0, activeSubscriptions: 0, pendingRequests: 0, pendingRescheduleRequests: 0, totalEarnings: 0, totalCertifiedTrainers: 0});
+        setAllCustomers([]);
+        setAllTrainers([]);
+        setAllLessonRequests([]);
+        setFeedback([]);
+        setReferrals([]);
+        setLessonProgress([]);
+        setCourses([]);
+        setQuizSets([]);
+        setFaqs([]);
+        setBlogPosts([]);
+        setSiteBanners([]);
+        setPromotionalPosters([]);
+        setLoading(false);
+        return;
+    }
     
     const subscriptions = [
         listenToSummaryData(setSummaryData),
