@@ -1,11 +1,12 @@
+
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { getOrCreateUser } from '@/lib/mock-data';
+import { authenticateUserByCredentials, getOrCreateUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 
@@ -74,37 +75,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const signInWithCredentials = async (email: string, password: string): Promise<void> => {
-    if (!auth) {
-      toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
-      return;
-    }
+  const signInWithCredentials = async (username: string, password: string): Promise<void> => {
     setLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will fetch the profile and set the user state.
-      // We just need to show a success message and let the effect handle the redirect.
-      if (userCredential.user) {
-        toast({
-            title: `Welcome back!`,
-            description: 'You are now logged in.',
-        });
-        router.push('/');
-      }
-    } catch (error: any) {
-        console.error("Credential Sign-In Error:", error);
-        let description = 'An unexpected error occurred.';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            description = 'Invalid email or password. Please try again.';
-        } else if (error.code === 'auth/invalid-email') {
-            description = 'Please enter a valid email address.';
-        }
-        toast({
-            title: 'Login Failed',
-            description,
-            variant: 'destructive',
-        });
-        setLoading(false); // Make sure to stop loading on failure
+    const userProfile = await authenticateUserByCredentials(username, password);
+    if (userProfile) {
+      logInUser(userProfile, true); 
+    } else {
+      setLoading(false);
+      toast({
+        title: 'Login Failed',
+        description: 'Invalid username or password.',
+        variant: 'destructive',
+      });
     }
   };
 

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
@@ -43,6 +44,41 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
             console.error("Error creating new user in Firestore:", error);
             return null;
         }
+    }
+};
+
+export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+    // This is a mock authentication for the sample admin user.
+    if (username === 'admin' && password === 'admin') {
+        const adminUser: UserProfile = {
+            id: 'admin-user-id',
+            uniqueId: 'AD-001',
+            name: 'Admin User',
+            username: 'admin',
+            contact: 'admin@drivergy.in',
+            subscriptionPlan: 'Admin',
+            approvalStatus: 'Approved',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            location: 'HQ',
+            gender: 'Other',
+        };
+        return adminUser;
+    }
+    
+    // Fallback to Firebase for other users if needed (or keep it separate)
+    if (!db) return null;
+    try {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) return null;
+
+        const userDoc = querySnapshot.docs[0];
+        return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+    } catch (error: any) {
+        console.error("Error authenticating user:", error);
+        return null;
     }
 };
 
@@ -396,7 +432,7 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-export async function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
+export function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -409,7 +445,7 @@ export async function listenToAllLessonRequests(callback: (data: LessonRequest[]
     });
 }
 
-export async function listenToAllFeedback(callback: (data: Feedback[]) => void) {
+export function listenToAllFeedback(callback: (data: Feedback[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -422,7 +458,7 @@ export async function listenToAllFeedback(callback: (data: Feedback[]) => void) 
     });
 }
 
-export async function listenToAllReferrals(callback: (data: Referral[]) => void) {
+export function listenToAllReferrals(callback: (data: Referral[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -464,7 +500,7 @@ export async function listenToAllReferrals(callback: (data: Referral[]) => void)
     });
 };
 
-export async function listenToQuizSets(callback: (data: QuizSet[]) => void) {
+export function listenToQuizSets(callback: (data: QuizSet[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -480,7 +516,7 @@ export async function listenToQuizSets(callback: (data: QuizSet[]) => void) {
         callback([]);
     });
 }
-export async function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
+export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -491,7 +527,7 @@ export async function listenToPromotionalPosters(callback: (data: PromotionalPos
         console.error("Error listening to promotional posters:", error);
     });
 }
-export async function listenToCourses(callback: (data: Course[]) => void) {
+export function listenToCourses(callback: (data: Course[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -504,7 +540,7 @@ export async function listenToCourses(callback: (data: Course[]) => void) {
     });
 }
 
-export async function listenToFaqs(callback: (data: FaqItem[]) => void) {
+export function listenToFaqs(callback: (data: FaqItem[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -516,7 +552,7 @@ export async function listenToFaqs(callback: (data: FaqItem[]) => void) {
     });
 }
 
-export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
+export function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -528,7 +564,7 @@ export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
         console.error("Error listening to blog posts:", error);
     });
 }
-export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
+export function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
@@ -545,7 +581,7 @@ export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void
     });
 }
 
-export async function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
+export function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback(null);
       return () => {};
@@ -571,7 +607,7 @@ export async function listenToUser(userId: string, callback: (data: UserProfile 
     });
 };
 
-export async function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) {
+export function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([], []);
       return () => {};
@@ -606,7 +642,7 @@ export async function listenToTrainerStudents(trainerId: string, callback: (stud
 // CALCULATED/AGGREGATED DATA LISTENERS
 // =================================================================
 
-export async function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
+export function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback({});
       return () => {};
@@ -648,7 +684,7 @@ export async function listenToSummaryData(callback: (data: Partial<SummaryData>)
     };
 };
 
-export async function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
+export function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
     if (!isFirebaseConfigured() || !db) {
       callback([]);
       return () => {};
