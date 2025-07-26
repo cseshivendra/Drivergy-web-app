@@ -29,10 +29,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // This effect runs once on mount to check the auth state.
+    
+    // First, check for the mock admin session. This is the highest priority.
+    if (sessionStorage.getItem('mockAdmin') === 'true') {
+        const adminUser: UserProfile = {
+            id: 'admin-user-id',
+            uniqueId: 'AD-001',
+            name: 'Admin User',
+            username: 'admin',
+            contact: 'admin@drivergy.in',
+            subscriptionPlan: 'Admin',
+            approvalStatus: 'Approved',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            location: 'HQ',
+            gender: 'Other',
+            isAdmin: true,
+        };
+        setUser(adminUser);
+        setLoading(false);
+        return; // Exit early if we're in a mock admin session
+    }
+
+    // If not a mock admin, proceed with Firebase auth state listener.
     if (!auth) {
       setLoading(false);
       return;
     }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const profile = await getOrCreateUser(firebaseUser);
@@ -43,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
             await firebaseSignOut(auth);
         }
-      } else if (sessionStorage.getItem('mockAdmin') !== 'true') {
+      } else {
         setUser(null);
       }
       setLoading(false);
