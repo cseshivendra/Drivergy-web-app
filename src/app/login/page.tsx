@@ -36,11 +36,8 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
-    const success = await signInWithCredentials(username, password);
-    if (success) {
-      const redirect = searchParams.get('redirect');
-      router.push(redirect || '/');
-    }
+    // The signInWithCredentials function now handles the redirect on success
+    await signInWithCredentials(username, password);
   };
 
   const handleGoogleSignIn = async () => {
