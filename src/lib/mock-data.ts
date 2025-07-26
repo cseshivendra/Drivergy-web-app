@@ -195,21 +195,25 @@ export async function changeUserPassword(userId: string, currentPassword: string
 export async function addCustomer(data: CustomerRegistrationFormValues): Promise<UserProfile | null> {
     if (!db) return null;
 
+    const isAdmin = data.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
     const newUser: Omit<UserProfile, 'id'> = {
-        uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
+        uniqueId: isAdmin ? `AD-${generateId().slice(-6).toUpperCase()}` : `CU-${generateId().slice(-6).toUpperCase()}`,
         name: data.name,
         username: data.username,
         password: data.password,
         contact: data.email,
         phone: data.phone,
         gender: data.gender,
-        location: "TBD", // To be determined
-        subscriptionPlan: "None", // Start with no plan
+        location: isAdmin ? 'HQ' : 'TBD',
+        subscriptionPlan: isAdmin ? 'Admin' : 'None',
         registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-        approvalStatus: 'Pending', // Pending profile completion
+        approvalStatus: 'Approved',
         myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
         photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
         totalReferralPoints: 0,
+        isAdmin: isAdmin,
+        trainerPreference: data.trainerPreference,
     };
 
     try {
@@ -217,7 +221,7 @@ export async function addCustomer(data: CustomerRegistrationFormValues): Promise
         await setDoc(userRef, newUser);
         return { id: userRef.id, ...newUser };
     } catch (error: any) {
-        console.error("Error adding customer:", error);
+        console.error("Error adding customer/admin:", error);
         return null;
     }
 };
@@ -1068,3 +1072,6 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
     
 
 
+
+
+    
