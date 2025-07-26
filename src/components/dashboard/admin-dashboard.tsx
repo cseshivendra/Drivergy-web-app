@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -143,8 +144,8 @@ export default function AdminDashboard() {
   };
 
   const handleActioned = useCallback(() => {
-    // This function is now just a placeholder.
-    // Real-time listeners automatically update the UI.
+    // This function can be used to manually trigger re-fetches if needed,
+    // but with real-time listeners, it's often not necessary.
   }, []);
 
   const renderDashboardView = () => (

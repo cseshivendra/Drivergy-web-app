@@ -851,27 +851,13 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-export async function createListener<T>(collectionName: string, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc'): Promise<T[]> {
-    if (!isFirebaseConfigured() || !db) {
-        if (collectionName === 'blogPosts') return MOCK_BLOG_POSTS as any;
-        if (collectionName === 'quizSets') return MOCK_QUIZ_SETS as any;
-        if (collectionName === 'siteBanners') return MOCK_SITE_BANNERS as any;
-        return [];
-    }
-
-    let q = query(collection(db, collectionName));
-    if (orderField) {
-        q = query(q, orderBy(orderField, orderDirection));
-    }
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
-};
-
 export async function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
     if (!isFirebaseConfigured() || !db) return callback([]);
     const q = query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc'));
     return onSnapshot(q, (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonRequest)));
+    }, (error) => {
+        console.error("Error listening to lesson requests:", error);
     });
 }
 
@@ -880,6 +866,8 @@ export async function listenToAllFeedback(callback: (data: Feedback[]) => void) 
     const q = query(collection(db, 'feedback'), orderBy('submissionDate', 'desc'));
     return onSnapshot(q, (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback)));
+    }, (error) => {
+        console.error("Error listening to feedback:", error);
     });
 }
 
@@ -917,18 +905,25 @@ export async function listenToAllReferrals(callback: (data: Referral[]) => void)
             };
         });
         callback(enrichedReferrals);
+    }, (error) => {
+        console.error("Error listening to referrals:", error);
     });
 };
 export async function listenToQuizSets(callback: (data: QuizSet[]) => void) { 
     if (!isFirebaseConfigured() || !db) return callback(MOCK_QUIZ_SETS);
     return onSnapshot(collection(db, 'quizSets'), (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
+    }, (error) => {
+        console.error("Error listening to quiz sets:", error);
+        callback(MOCK_QUIZ_SETS);
     });
 }
 export async function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
     if (!isFirebaseConfigured() || !db) return callback([]);
     return onSnapshot(collection(db, 'promotionalPosters'), (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromotionalPoster)));
+    }, (error) => {
+        console.error("Error listening to promotional posters:", error);
     });
 }
 export async function listenToCourses(callback: (data: Course[]) => void) {
@@ -936,6 +931,8 @@ export async function listenToCourses(callback: (data: Course[]) => void) {
     return onSnapshot(collection(db, 'courses'), (snapshot) => {
         const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
         callback(reAssignCourseIcons(courses));
+    }, (error) => {
+        console.error("Error listening to courses:", error);
     });
 }
 
@@ -943,6 +940,8 @@ export async function listenToFaqs(callback: (data: FaqItem[]) => void) {
     if (!isFirebaseConfigured() || !db) return callback([]);
     return onSnapshot(collection(db, 'faqs'), (snapshot) => {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FaqItem)));
+    }, (error) => {
+        console.error("Error listening to faqs:", error);
     });
 }
 
@@ -951,6 +950,9 @@ export async function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
     const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
     return onSnapshot(q, (snapshot) => {
         callback(snapshot.docs.map(doc => ({...doc.data(), slug: doc.id } as BlogPost)));
+    }, (error) => {
+        console.error("Error listening to blog posts:", error);
+        callback(MOCK_BLOG_POSTS);
     });
 }
 export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
@@ -961,6 +963,9 @@ export async function listenToSiteBanners(callback: (data: SiteBanner[]) => void
             return;
         }
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteBanner)));
+    }, (error) => {
+        console.error("Error listening to site banners:", error);
+        callback(MOCK_SITE_BANNERS);
     });
 }
 
@@ -982,6 +987,8 @@ export async function listenToUser(userId: string, callback: (data: UserProfile 
             }
         }
         callback(user);
+    }, (error) => {
+        console.error(`Error listening to user ${userId}:`, error);
     });
 };
 
@@ -1451,5 +1458,3 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
         return [];
     }
 };
-
-    
