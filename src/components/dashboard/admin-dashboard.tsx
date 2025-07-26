@@ -143,7 +143,7 @@ export default function AdminDashboard() {
   const interestedCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
   const pendingVerificationCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
   const pendingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress'), [filteredTrainers]);
-  const existingInstructors = useMemo(() => filteredTrainers.filter(u => ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredTrainers]);
+  const existingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredTrainers]);
 
 
   const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
