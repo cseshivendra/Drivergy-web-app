@@ -1,13 +1,13 @@
 
 'use server';
 
-import { doc, updateDoc, getDoc, collection, addDoc, setDoc } from 'firebase/firestore';
-import { db, isFirebaseConfigured } from './firebase';
+import { doc, updateDoc, getDoc, collection, addDoc, setDoc, query, where, limit, getDocs } from 'firebase/firestore';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import type { ApprovalStatusType, TrainerRegistrationFormValues, VehicleType, FullCustomerDetailsValues } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { sendEmail } from './email';
+import { sendEmail } from '@/lib/email';
 import { format } from 'date-fns';
-import { cloudinaryConfig } from './cloudinary';
+import { cloudinaryConfig } from '@/lib/cloudinary';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 
@@ -168,11 +168,10 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
             drivingLicenseNumber: data.drivingLicenseNumber as string,
             aadhaarCardNumber: data.aadhaarCardNumber as string,
         };
-
-        // Use a generated ID for the new document in the 'trainers' collection
+        
         const trainerDocRef = doc(collection(db, 'trainers'));
         await setDoc(trainerDocRef, newTrainerData);
-        
+
         revalidatePath('/site/register');
         revalidatePath('/');
         return { success: true };
