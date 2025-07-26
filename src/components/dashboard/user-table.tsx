@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -25,12 +26,13 @@ interface UserTableProps {
   title: ReactNode;
   users: UserProfile[];
   isLoading: boolean;
-  onUserActioned: () => void; // Callback to refresh data on parent
+  onUserActioned: () => void;
+  collectionName: 'users' | 'trainers';
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function UserTable({ title, users, isLoading, onUserActioned }: UserTableProps) {
+export default function UserTable({ title, users, isLoading, onUserActioned, collectionName }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   
@@ -108,9 +110,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   };
 
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
-    const isTrainer = user.uniqueId.startsWith('TR');
-    
-    if (!isTrainer && newStatus === 'Approved') {
+    if (collectionName === 'users' && newStatus === 'Approved') {
         toast({
           title: "Action Required",
           description: "Please use the 'Approve & Assign' button to approve customers. This assigns a trainer at the same time.",
@@ -120,7 +120,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     }
 
     try {
-      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus, collectionName });
       if (result.success) {
         toast({
           title: `User ${newStatus}`,
@@ -141,7 +141,9 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   };
 
   const handleViewDetails = (user: UserProfile) => {
-    window.open(`/users/${user.id}`, '_blank'); // Opens in a new tab
+    // Determine the correct path based on the collection name
+    const viewPath = collectionName === 'trainers' ? `/trainers/${user.id}` : `/users/${user.id}`;
+    window.open(viewPath, '_blank');
     toast({ 
       title: "Opening Details",
       description: `Opening details for ${user.name} in a new tab.`,
@@ -200,7 +202,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
                   paginatedUsers.map((user) => {
-                    const isTrainer = user.uniqueId.startsWith('TR');
+                    const isTrainer = collectionName === 'trainers';
                     return (
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
@@ -434,3 +436,4 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
       </Dialog>
     </>
   );
+}

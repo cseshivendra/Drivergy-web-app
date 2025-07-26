@@ -1,9 +1,9 @@
 
 'use server';
 
-import { doc, updateDoc, getDoc, collection, addDoc, query, where, getDocs, limit, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, addDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
-import type { ApprovalStatusType, UserProfile, TrainerRegistrationFormValues } from '@/types';
+import type { ApprovalStatusType, TrainerRegistrationFormValues } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
@@ -12,7 +12,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 
 
-// This needs to be in a server-action file because it uses server-only packages (cloudinary, streamifier)
 export async function uploadFile(file: File, folder: string): Promise<string> {
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
         console.error("Cloudinary environment variables are not set.");
@@ -50,34 +49,37 @@ export async function uploadFile(file: File, folder: string): Promise<string> {
 interface UpdateStatusArgs {
     userId: string;
     newStatus: ApprovalStatusType;
+    collectionName: 'users' | 'trainers';
 }
 
 const generateId = (): string => {
     return Math.random().toString(36).substring(2, 10);
 };
 
-export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs) {
+export async function updateUserApprovalStatus({ userId, newStatus, collectionName }: UpdateStatusArgs) {
     if (!isFirebaseConfigured() || !db) {
         console.error("Firebase not configured. Cannot update user status.");
         return { success: false, error: 'Database not configured.' };
     }
 
-    if (!userId) {
-        return { success: false, error: 'User ID is missing.' };
+    if (!userId || !collectionName) {
+        return { success: false, error: 'User ID or collection name is missing.' };
     }
 
     try {
-        const userRef = doc(db, 'users', userId);
+        const userRef = doc(db, collectionName, userId);
         await updateDoc(userRef, { approvalStatus: newStatus });
         revalidatePath('/'); // Revalidate the dashboard page to show new data
         return { success: true };
     } catch (error: any) {
-        console.error(`Error updating user ${userId} status on server:`, error);
+        console.error(`Error updating user ${userId} in ${collectionName} status on server:`, error);
         return { success: false, error: error.message || 'An unexpected server error occurred.' };
     }
 }
 
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
+    // This function can remain as is, assuming password reset is for the 'users' collection (customers).
+    // If trainers need password reset, this would need modification to check the 'trainers' collection too.
     if (!isFirebaseConfigured() || !db) {
         return { success: false, error: 'Database not configured.' };
     }
@@ -121,7 +123,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
 }
 
 
-export const registerTrainerAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
+export async function registerTrainerAction(formData: FormData): Promise<{ success: boolean, error?: string }> {
     if (!isFirebaseConfigured() || !db) {
         return { success: false, error: 'Database not configured.' };
     }
@@ -143,7 +145,7 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
             uploadFile(aadhaarFile, 'trainer_documents'),
         ]);
 
-        const newTrainer: Omit<UserProfile, 'id'> = {
+        const newTrainerData = {
             uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
             name: data.name as string,
             username: data.username as string,
@@ -163,7 +165,6 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
             trainerCertificateUrl: certUrl,
             drivingLicenseUrl: dlUrl,
             aadhaarCardUrl: aadhaarUrl,
-            // Include other trainer-specific fields from form
             vehicleNumber: data.vehicleNumber as string,
             fuelType: data.fuelType as string,
             trainerCertificateNumber: data.trainerCertificateNumber as string,
@@ -171,8 +172,9 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
             aadhaarCardNumber: data.aadhaarCardNumber as string,
         };
 
-        await addDoc(collection(db, 'users'), newTrainer);
+        await addDoc(collection(db, 'trainers'), newTrainerData);
         revalidatePath('/site/register');
+        revalidatePath('/');
         return { success: true };
 
     } catch (error) {

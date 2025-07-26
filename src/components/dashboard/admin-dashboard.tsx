@@ -45,7 +45,8 @@ export default function AdminDashboard() {
   const activeTab = searchParams.get('tab');
 
   const [summaryData, setSummaryData] = useState<Partial<SummaryData>>({});
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+  const [allCustomers, setAllCustomers] = useState<UserProfile[]>([]);
+  const [allTrainers, setAllTrainers] = useState<UserProfile[]>([]);
   const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
@@ -84,10 +85,15 @@ export default function AdminDashboard() {
         listenToBlogPosts(setBlogPosts),
         listenToSiteBanners(setSiteBanners),
         listenToPromotionalPosters(setPromotionalPosters),
-        // Centralize the user listener here
+        // Listener for customers
         db ? onSnapshot(collection(db, 'users'), snapshot => {
             const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-            setAllUsers(users);
+            setAllCustomers(users);
+        }) : () => {},
+        // Listener for trainers
+        db ? onSnapshot(collection(db, 'trainers'), snapshot => {
+            const trainers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+            setAllTrainers(trainers);
         }) : () => {},
     ].filter(Boolean);
     
@@ -106,10 +112,8 @@ export default function AdminDashboard() {
   }, [user]);
 
   
-  const filteredUsers = useMemo(() => {
-    return allUsers.filter(user => {
-      const isPending = user.approvalStatus === 'Pending' || user.approvalStatus === 'In Progress';
-      
+  const filteredCustomers = useMemo(() => {
+    return allCustomers.filter(user => {
       const searchTermMatch = !searchTerm || (
           user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,21 +122,34 @@ export default function AdminDashboard() {
 
       // If a search term is present, only match against that.
       if (searchTerm) return searchTermMatch;
-
-      // If user is pending, always show them regardless of filters.
-      if (isPending) return true;
       
-      // For non-pending users, apply filters.
       const locationMatch = !filters.location || user.location === filters.location;
       const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
       
       return locationMatch && subscriptionMatch;
     });
-  }, [allUsers, filters, searchTerm]);
+  }, [allCustomers, filters, searchTerm]);
+  
+  const filteredTrainers = useMemo(() => {
+    return allTrainers.filter(user => {
+      const searchTermMatch = !searchTerm || (
+          user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (user.contact && user.contact.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
 
-  const customers = useMemo(() => filteredUsers.filter(u => u.uniqueId.startsWith('CU') && u.approvalStatus === 'Pending'), [filteredUsers]);
-  const instructors = useMemo(() => filteredUsers.filter(u => u.uniqueId.startsWith('TR') && ['Pending', 'In Progress'].includes(u.approvalStatus)), [filteredUsers]);
-  const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId.startsWith('TR') && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
+      // If a search term is present, only match against that.
+      if (searchTerm) return searchTermMatch;
+      
+      const locationMatch = !filters.location || user.location === filters.location;
+      
+      return locationMatch;
+    });
+  }, [allTrainers, filters, searchTerm]);
+
+  const pendingCustomers = useMemo(() => filteredCustomers.filter(u => u.approvalStatus === 'Pending'), [filteredCustomers]);
+  const pendingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress'), [filteredTrainers]);
+  const existingInstructors = useMemo(() => filteredTrainers.filter(u => ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredTrainers]);
 
 
   const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
@@ -162,19 +179,22 @@ export default function AdminDashboard() {
         <TabsContent value="verifications" className="space-y-8">
           <UserTable 
             title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>} 
-            users={customers} 
+            users={pendingCustomers}
+            collectionName="users"
             isLoading={loading} 
             onUserActioned={handleActioned}
           />
           <UserTable 
             title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>} 
-            users={instructors} 
+            users={pendingInstructors} 
+            collectionName="trainers"
             isLoading={loading} 
             onUserActioned={handleActioned}
           />
           <UserTable 
             title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>} 
-            users={existingInstructors} 
+            users={existingInstructors}
+            collectionName="trainers"
             isLoading={loading} 
             onUserActioned={handleActioned}
           />
@@ -294,3 +314,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
