@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -14,7 +15,7 @@ import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
+  const { user, signInWithGoogle, signInWithCredentials, loading } from useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
@@ -28,10 +29,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    if (user && !loading) {
-      router.push(redirect || '/'); // Redirect to intended page or dashboard after login
-    }
-  }, [user, loading, router, redirect]);
+    // The redirect logic is now handled more robustly by the AuthenticatedAppLayout
+    // and the AuthProvider, making this check redundant and a source of potential conflicts.
+    // if (user && !loading) {
+    //   router.push(redirect || '/'); 
+    // }
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

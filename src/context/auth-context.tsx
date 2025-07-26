@@ -36,14 +36,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // If a Firebase user is detected, fetch or create their profile.
-        const profile = await getOrCreateUser(firebaseUser);
-        if (profile) {
-            setUser(profile);
-        } else {
-            // This case handles errors during profile creation
-            setUser(null);
-            toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
-            await firebaseSignOut(auth);
+        // This handles session persistence across reloads.
+        if (!user) { // Only fetch if user is not already set by a direct login action
+            const profile = await getOrCreateUser(firebaseUser);
+            if (profile) {
+                setUser(profile);
+            } else {
+                setUser(null);
+                toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
+                await firebaseSignOut(auth);
+            }
         }
       } else if (sessionStorage.getItem('mockAdmin') !== 'true') {
         // If no Firebase user and not a mock admin, clear the user.
@@ -53,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [toast]); 
+  }, []); 
   
   const signInWithGoogle = async () => {
     if (!auth) {
@@ -63,12 +65,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle setting the user and redirecting.
-       toast({
-        title: `Login Successful!`,
-        description: 'Redirecting to your dashboard...',
-      });
+      const result = await signInWithPopup(auth, provider);
+      // After popup, proactively fetch profile to avoid race condition
+      const profile = await getOrCreateUser(result.user);
+      if (profile) {
+        logInUser(profile, true); // Use logInUser to set state and redirect
+      } else {
+        throw new Error("Failed to get or create user profile after Google sign-in.");
+      }
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       // Don't show toast for user-closed popup
