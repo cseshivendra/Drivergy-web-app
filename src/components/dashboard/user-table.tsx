@@ -28,11 +28,12 @@ interface UserTableProps {
   isLoading: boolean;
   onUserActioned: () => void;
   collectionName: 'users' | 'trainers';
+  isInterestedList?: boolean;
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function UserTable({ title, users, isLoading, onUserActioned, collectionName }: UserTableProps) {
+export default function UserTable({ title, users, isLoading, onUserActioned, collectionName, isInterestedList = false }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   
@@ -196,7 +197,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                   <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
                   <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
                   <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>
-                  <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Verification</TableHead>
+                  <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -207,14 +208,14 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
                         <TableCell>{user.name}</TableCell>
-                        <TableCell>{user.phone || 'N/A'}</TableCell>
+                        <TableCell>{user.phone || user.contact}</TableCell>
                         <TableCell>{user.location}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
                             user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
                             user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
-                            'bg-muted text-muted-foreground' // Basic plan
+                            'bg-muted text-muted-foreground' // Basic or None
                           }`}>
                             {user.subscriptionPlan}
                           </span>
@@ -261,6 +262,18 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
+                          ) : isInterestedList ? (
+                              <div className="flex items-center justify-center">
+                                <Button 
+                                  variant="outline" size="sm" 
+                                  onClick={() => handleViewDetails(user)}
+                                  className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
+                                  aria-label={`View details for ${user.name}`}
+                                >
+                                  <Eye className="h-3.5 w-3.5" />
+                                  <span className="ml-1.5 hidden sm:inline">View Details</span>
+                                </Button>
+                              </div>
                           ) : (
                             <div className="flex items-center justify-center space-x-1.5">
                               <Button 
@@ -304,8 +317,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                     <TableCell colSpan={9} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                        <p className="text-lg">No pending enrollments found.</p>
-                        <p className="text-sm">Check back later or adjust filters if applicable.</p>
+                        <p className="text-lg">No {isInterestedList ? 'interested customers' : 'pending enrollments'} found.</p>
+                        <p className="text-sm">{isInterestedList ? 'New sign-ups will appear here.' : 'Check back later or adjust filters.'}</p>
                       </div>
                     </TableCell>
                   </TableRow>

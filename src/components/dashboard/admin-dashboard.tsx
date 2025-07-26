@@ -22,9 +22,11 @@ import {
   listenToPromotionalPosters,
   listenToAllReferrals,
   listenToCourses,
+  listenToAllUsers,
+  listenToAllTrainers,
 } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral } from '@/types';
-import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift } from 'lucide-react';
+import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,8 +37,6 @@ import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
-import { db } from '@/lib/firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
 
 
 export default function AdminDashboard() {
@@ -85,16 +85,8 @@ export default function AdminDashboard() {
         listenToBlogPosts(setBlogPosts),
         listenToSiteBanners(setSiteBanners),
         listenToPromotionalPosters(setPromotionalPosters),
-        // Listener for customers
-        db ? onSnapshot(collection(db, 'users'), snapshot => {
-            const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-            setAllCustomers(users);
-        }) : () => {},
-        // Listener for trainers
-        db ? onSnapshot(collection(db, 'trainers'), snapshot => {
-            const trainers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
-            setAllTrainers(trainers);
-        }) : () => {},
+        listenToAllUsers(setAllCustomers),
+        listenToAllTrainers(setAllTrainers),
     ].filter(Boolean);
     
     // Unified loading state management
@@ -147,7 +139,9 @@ export default function AdminDashboard() {
     });
   }, [allTrainers, filters, searchTerm]);
 
-  const pendingCustomers = useMemo(() => filteredCustomers.filter(u => u.approvalStatus === 'Pending'), [filteredCustomers]);
+  // Separate lists for different customer states
+  const interestedCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
+  const pendingVerificationCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
   const pendingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress'), [filteredTrainers]);
   const existingInstructors = useMemo(() => filteredTrainers.filter(u => ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredTrainers]);
 
@@ -177,9 +171,17 @@ export default function AdminDashboard() {
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
         <TabsContent value="verifications" className="space-y-8">
+           <UserTable 
+            title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Interested Customers</>} 
+            users={interestedCustomers}
+            collectionName="users"
+            isLoading={loading} 
+            onUserActioned={handleActioned}
+            isInterestedList={true}
+          />
           <UserTable 
             title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>} 
-            users={pendingCustomers}
+            users={pendingVerificationCustomers}
             collectionName="users"
             isLoading={loading} 
             onUserActioned={handleActioned}
@@ -314,4 +316,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

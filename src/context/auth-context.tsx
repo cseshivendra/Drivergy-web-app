@@ -35,25 +35,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // If a Firebase user is detected, fetch or create their profile.
         const profile = await getOrCreateUser(firebaseUser);
         if (profile) {
             setUser(profile);
         } else {
+            // This case handles errors during profile creation
             setUser(null);
             toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
             await firebaseSignOut(auth);
         }
-      } else {
-        // Only set user to null if not already logged in as mock admin
-        if (user?.uniqueId !== 'AD-001') {
-          setUser(null);
-        }
+      } else if (sessionStorage.getItem('mockAdmin') !== 'true') {
+        // If no Firebase user and not a mock admin, clear the user.
+        setUser(null);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast, user]); 
+  }, [toast]); 
   
   const signInWithGoogle = async () => {
     if (!auth) {
@@ -97,6 +97,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             gender: 'Other',
             isAdmin: true,
         };
+        // Use a session storage flag for the mock admin
+        sessionStorage.setItem('mockAdmin', 'true');
         logInUser(adminUser, true);
         return;
     }
@@ -119,6 +121,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (auth?.currentUser) {
         await firebaseSignOut(auth);
     }
+    // Clear the mock admin flag on any sign out
+    sessionStorage.removeItem('mockAdmin');
     setUser(null); 
     setLoading(false);
     toast({
