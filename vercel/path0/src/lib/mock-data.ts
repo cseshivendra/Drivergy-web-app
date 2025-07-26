@@ -2,128 +2,16 @@
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { db, isFirebaseConfigured } from './firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
-import { toast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { uploadFile } from '@/lib/file-upload';
-import { updateUserApprovalStatus as updateUserApprovalStatusServerAction } from '@/lib/server-actions';
+import { uploadFile } from './server-actions'; 
 
-
-// Default mock data for when Firebase is not connected
-const MOCK_SITE_BANNERS: SiteBanner[] = [
-    {
-        id: "banner-1",
-        title: "Start Your Driving Journey Today",
-        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
-        imageSrc: "https://placehold.co/1920x1080/dc2626/ffffff.png",
-        imageHint: "driving road car sunset",
-    },
-    {
-        id: "banner-2",
-        title: "Become a Certified Driving Trainer",
-        description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
-        imageSrc: "https://placehold.co/1920x1080/1d4ed8/ffffff.png",
-        imageHint: "driving instructor teaching student",
-    },
-    {
-        id: "banner-3",
-        title: "Master the Roads with Confidence",
-        description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
-        imageSrc: "https://placehold.co/1920x1080/16a34a/ffffff.png",
-        imageHint: "city traffic modern car",
-    },
-];
-
-const MOCK_BLOG_POSTS: BlogPost[] = [
-    {
-        slug: "mastering-the-three-point-turn",
-        title: "Mastering the Three-Point Turn: A Step-by-Step Guide",
-        category: "Driving Tips",
-        excerpt: "The three-point turn is a fundamental driving maneuver. This guide breaks it down into simple, easy-to-follow steps.",
-        content: "The three-point turn can be intimidating, but it's an essential skill for every driver. It allows you to turn a vehicle around in a narrow space. Here's how to do it safely: 1. Signal and pull over to the right side of the road. 2. Signal left, check mirrors and blind spots. 3. Turn the steering wheel fully to the left and move forward slowly until you are close to the opposite curb. 4. Put the car in reverse, turn the wheel fully to the right, and back up until you have enough space to move forward. 5. Shift to drive, turn the wheel left, and straighten out in your new direction of travel. Practice makes perfect!",
-        author: "Priya Sharma",
-        date: "August 15, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "driving maneuver car",
-        tags: "driving, tips, maneuver, test",
-    },
-    {
-        slug: "passing-your-rto-exam",
-        title: "Top 5 Tips for Passing Your RTO Exam on the First Try",
-        category: "RTO Exams",
-        excerpt: "Don't let the RTO exam intimidate you. Follow these five expert tips to ensure you're fully prepared for success.",
-        content: "Passing your RTO exam is your ticket to freedom on the road. To boost your chances: 1. Study the official manual thoroughly. 2. Take as many mock tests as you can, like the ones offered by Drivergy. 3. Understand traffic signs and signals completely, not just memorize them. 4. On the day of the test, stay calm and get a good night's sleep. 5. During the practical test, remember to check your mirrors frequently and use your signals for every turn.",
-        author: "Rohan Verma",
-        date: "August 10, 2024",
-        imageSrc: "https://placehold.co/1200x800.png",
-        imageHint: "exam test paper",
-        tags: "rto, exam, license, driving test",
-    },
-];
-
-const MOCK_FAQS: FaqItem[] = [
-    {
-        id: "faq1",
-        question: "What documents do I need to enroll?",
-        answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
-    },
-    {
-        id: "faq2",
-        question: "Can I choose my instructor?",
-        answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
-    },
-    {
-        id: "faq3",
-        question: "How do I book a driving lesson slot?",
-        answer: "Once your registration is approved and you have an active subscription, you can log in to your customer dashboard. From there, you'll be able to view available slots for your chosen instructor and book them according to your convenience.",
-    },
-];
-
-const MOCK_QUIZ_SETS: QuizSet[] = Array.from({ length: 10 }, (_, i) => ({
-    id: `set${i + 1}`,
-    title: `Practice Set ${i + 1}`,
-    questions: Array.from({ length: 15 }, (_, j) => ({
-        id: `q${i * 15 + j + 1}`,
-        question: {
-            en: `This is English question number ${j + 1} for Set ${i + 1}. What should you do at a stop sign?`,
-            hi: `यह सेट ${i + 1} के लिए हिंदी प्रश्न संख्या ${j + 1} है। स्टॉप साइन पर आपको क्या करना चाहिए?`
-        },
-        options: {
-            en: ["Stop completely", "Slow down", "Honk", "Speed up"],
-            hi: ["पूरी तरह रुकें", "धीमे चलें", "हॉर्न बजाएं", "गति बढ़ाएं"]
-        },
-        correctAnswer: {
-            en: "Stop completely",
-            hi: "पूरी तरह रुकें"
-        }
-    }))
-}));
-
-
-const generateId = () => {
-    if (db) {
-        return doc(collection(db, 'id-generator')).id;
-    }
-    return Math.random().toString(36).substring(2, 15);
-};
-
-// Helper to re-hydrate icons after fetching from DB
-const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
-    return coursesToHydrate.map(course => {
-        let newIcon;
-        if (course.id === 'course1') newIcon = Car;
-        else if (course.id === 'course2') newIcon = Bike;
-        else if (course.id === 'course3') newIcon = FileText;
-        else newIcon = FileText; // Default icon
-        return { ...course, icon: newIcon };
-    });
-};
 
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
-export const getOrCreateGoogleUser = async (firebaseUser: FirebaseUser): Promise<UserProfile | null> => {
+export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
     if (!db) return null;
     const userRef = doc(db, "users", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
@@ -131,9 +19,10 @@ export const getOrCreateGoogleUser = async (firebaseUser: FirebaseUser): Promise
     if (userSnap.exists()) {
         return { id: userSnap.id, ...userSnap.data() } as UserProfile;
     } else {
+        // This path is for brand new users, typically from Google Sign-In for the first time
         const newUser: Omit<UserProfile, 'id'> = {
             uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
-            name: firebaseUser.displayName || 'Google User',
+            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
             username: firebaseUser.email || '',
             contact: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
@@ -150,14 +39,32 @@ export const getOrCreateGoogleUser = async (firebaseUser: FirebaseUser): Promise
             await setDoc(userRef, newUser);
             return { id: userRef.id, ...newUser };
         } catch(error: any) {
-            console.error("Error creating new Google user:", error);
-            toast({ title: "User Creation Failed", description: error.message, variant: "destructive" });
+            console.error("Error creating new user in Firestore:", error);
             return null;
         }
     }
 };
 
 export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
+    // This is a mock authentication for the sample admin user.
+    if (username === 'admin' && password === 'admin') {
+        const adminUser: UserProfile = {
+            id: 'admin-user-id',
+            uniqueId: 'AD-001',
+            name: 'Admin User',
+            username: 'admin',
+            contact: 'admin@drivergy.in',
+            subscriptionPlan: 'Admin',
+            approvalStatus: 'Approved',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            location: 'HQ',
+            gender: 'Other',
+            isAdmin: true,
+        };
+        return adminUser;
+    }
+    
+    // Fallback to Firebase for other users if needed (or keep it separate)
     if (!db) return null;
     try {
         const usersRef = collection(db, "users");
@@ -170,17 +77,16 @@ export const authenticateUserByCredentials = async (username: string, password: 
         return { id: userDoc.id, ...userDoc.data() } as UserProfile;
     } catch (error: any) {
         console.error("Error authenticating user:", error);
-        toast({ title: "Authentication Error", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const fetchUserById = async (userId: string): Promise<UserProfile | null> => {
+export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!db || !userId) return null;
     try {
         let userQuery;
         // Check if the ID is a Firebase Auth UID or a Drivergy uniqueId
-        if (userId.startsWith('CU-') || userId.startsWith('TR-')) {
+        if (userId.startsWith('CU-') || userId.startsWith('TR-') || userId.startsWith('AD-')) {
             userQuery = query(collection(db, 'users'), where('uniqueId', '==', userId), limit(1));
         } else {
             // Assume it's a Firestore document ID (which is the Firebase Auth UID)
@@ -221,13 +127,12 @@ export const fetchUserById = async (userId: string): Promise<UserProfile | null>
         return user;
     } catch(error: any) {
         console.error(`Error fetching user ${userId}:`, error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch user profile: ${error.message}`, variant: "destructive" });
         return null;
     }
 };
 
 
-export const updateUserProfile = async (userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> => {
+export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
     if (!db) return null;
     try {
         const updateData: { [key: string]: any } = {
@@ -253,12 +158,11 @@ export const updateUserProfile = async (userId: string, data: UserProfileUpdateV
         return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
     } catch (error: any) {
         console.error("Error updating user profile:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const changeUserPassword = async (userId: string, currentPassword: string, newPassword: string): Promise<boolean> => {
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
     if (!db) return false;
     try {
         const userRef = doc(db, "users", userId);
@@ -270,32 +174,11 @@ export const changeUserPassword = async (userId: string, currentPassword: string
         return true;
     } catch (error: any) {
         console.error("Error changing password:", error);
-        toast({ title: "Error", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
-export const updateUserApprovalStatus = async (userId: string, newStatus: ApprovalStatusType): Promise<{success: boolean, error?: string}> => {
-    if (!isFirebaseConfigured() || !db) {
-        console.error("Firebase not configured. Cannot update user status.");
-        return { success: false, error: 'Database not configured.' };
-    }
-    
-    if (!userId) {
-        return { success: false, error: 'User ID is missing.' };
-    }
-
-    try {
-        const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, { approvalStatus: newStatus });
-        return { success: true };
-    } catch (error: any) {
-        console.error(`Error updating user ${userId} status on server:`, error);
-        return { success: false, error: error.message || 'An unexpected server error occurred.' };
-    }
-};
-
-export const addCustomer = async (data: CustomerRegistrationFormValues): Promise<UserProfile | null> => {
+export async function addCustomer(data: CustomerRegistrationFormValues): Promise<UserProfile | null> {
     if (!db) return null;
 
     const newUser: Omit<UserProfile, 'id'> = {
@@ -321,113 +204,40 @@ export const addCustomer = async (data: CustomerRegistrationFormValues): Promise
         return { id: userRef.id, ...newUser };
     } catch (error: any) {
         console.error("Error adding customer:", error);
-        toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const completeCustomerProfile = async (userId: string, data: FullCustomerDetailsValues): Promise<boolean> => {
+
+export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!db) return false;
-    const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
-
     try {
-        const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-            throw new Error("User profile not found.");
+        const customerRef = doc(db, "users", customerId);
+        const customerSnap = await getDoc(customerRef);
+        const trainerSnap = await getDoc(doc(db, "users", trainerId));
+
+        if (!customerSnap.exists() || !trainerSnap.exists()) {
+            throw new Error("Assign Trainer Error: Customer or Trainer document not found.");
         }
-        const user = userSnap.data();
 
-        const photoIdUrl = await uploadFile(data.photoIdFile, `user_documents/${userId}`);
-        const profileData = {
-            subscriptionPlan: data.subscriptionPlan,
-            vehicleInfo: data.vehiclePreference,
-            trainerPreference: data.trainerPreference,
-            flatHouseNumber: data.flatHouseNumber,
-            street: data.street,
-            district: data.district,
-            state: data.state,
-            pincode: data.pincode,
-            location: data.district, // Set primary location from district
-            dlStatus: data.dlStatus,
-            dlNumber: data.dlNumber || '',
-            dlTypeHeld: data.dlTypeHeld || '',
-            photoIdType: data.photoIdType,
-            photoIdNumber: data.photoIdNumber,
-            photoIdUrl: photoIdUrl,
-            subscriptionStartDate: format(data.subscriptionStartDate, 'MMM dd, yyyy'),
-            totalLessons: getLessonsForPlan(data.subscriptionPlan),
-            completedLessons: 0,
-            approvalStatus: 'Pending' as ApprovalStatusType, // Now pending admin assignment
-        };
+        const customerData = customerSnap.data() as UserProfile;
+        const trainerData = trainerSnap.data() as UserProfile;
 
-        await updateDoc(userRef, profileData);
-
-        // Create the lesson request for the admin
-        const newRequestData: Omit<LessonRequest, 'id'> = {
-            customerId: userId,
-            customerName: user.name,
-            vehicleType: data.vehiclePreference as VehicleType,
-            status: 'Pending',
-            requestTimestamp: new Date().toISOString(),
-        };
-        const newRequestRef = doc(collection(db, 'lessonRequests'));
-        await setDoc(newRequestRef, newRequestData);
+        // Update customer to 'In Progress' and assign trainer details
+        await updateDoc(customerRef, {
+            approvalStatus: 'In Progress',
+            assignedTrainerId: trainerId,
+            assignedTrainerName: trainerData.name
+        });
         return true;
     } catch (error: any) {
-        console.error("Error completing customer profile:", error);
-        if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
-            throw new Error("Cannot upload file: Server storage is not configured. Please contact support.");
-        }
-        throw new Error("An unexpected error occurred during profile update.");
+        console.error("Error assigning trainer:", error);
+        return false;
     }
 };
 
-export const addTrainer = async (data: TrainerRegistrationFormValues): Promise<UserProfile | null> => {
-    if (!db) return null;
 
-    try {
-        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-            uploadFile(data.trainerCertificateFile, 'trainer_documents'),
-            uploadFile(data.drivingLicenseFile, 'trainer_documents'),
-            uploadFile(data.aadhaarCardFile, 'trainer_documents'),
-        ]);
-
-        const newTrainer: Omit<UserProfile, 'id'> = {
-            uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
-            name: data.name,
-            username: data.username,
-            password: data.password,
-            contact: data.email,
-            phone: data.phone,
-            location: data.location,
-            gender: data.gender,
-            subscriptionPlan: "Trainer",
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            vehicleInfo: data.trainerVehicleType,
-            approvalStatus: 'Pending',
-            myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-            photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-            specialization: data.specialization,
-            yearsOfExperience: data.yearsOfExperience,
-            trainerCertificateUrl: certUrl,
-            drivingLicenseUrl: dlUrl,
-            aadhaarCardUrl: aadhaarUrl,
-        };
-
-        const userRef = doc(collection(db, 'users'));
-        await setDoc(userRef, newTrainer);
-        return { id: userRef.id, ...newTrainer };
-    } catch (error: any) {
-        console.error("Error adding trainer:", error);
-        if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
-            throw new Error("Server configuration error. Cannot upload documents. Please contact support.");
-        }
-        throw new Error(error.message || "An unexpected error occurred during registration.");
-    }
-};
-
-export const updateAssignmentStatusByTrainer = async (customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> => {
+export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
     if (!db) return false;
     try {
         const customerRef = doc(db, "users", customerId);
@@ -460,12 +270,11 @@ export const updateAssignmentStatusByTrainer = async (customerId: string, newSta
         return true;
     } catch (error: any) {
         console.error("Error updating assignment by trainer:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
-export const updateUserAttendance = async (studentId: string, status: 'Present' | 'Absent'): Promise<boolean> => {
+export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
     if (!db) return false;
     try {
         const studentRef = doc(db, "users", studentId);
@@ -483,12 +292,11 @@ export const updateUserAttendance = async (studentId: string, status: 'Present' 
         return true;
     } catch(error: any) {
         console.error("Error updating attendance:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
-export const updateSubscriptionStartDate = async (customerId: string, newDate: Date): Promise<UserProfile | null> => {
+export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
     if (!db) return null;
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
@@ -503,7 +311,6 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
         return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
     } catch(error: any) {
         console.error("Error updating start date:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 }
@@ -512,34 +319,37 @@ export const updateSubscriptionStartDate = async (customerId: string, newDate: D
 // REAL-TIME LISTENERS
 // =================================================================
 
-const createListener = <T>(collectionName: string, callback: (data: T[]) => void, orderField?: string, orderDirection: 'asc' | 'desc' = 'asc') => {
+export function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-        if (collectionName === 'faqs') callback(MOCK_FAQS as any);
-        else if (collectionName === 'blogPosts') callback(MOCK_BLOG_POSTS as any);
-        else if (collectionName === 'quizSets') callback(MOCK_QUIZ_SETS as any);
-        else if (collectionName === 'siteBanners') callback(MOCK_SITE_BANNERS as any);
-        else callback([]);
-        return () => {};
+      callback([]);
+      return () => {};
     }
-
-    let q = query(collection(db, collectionName));
-    if (orderField) {
-        q = query(q, orderBy(orderField, orderDirection));
-    }
-
+    const q = query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc'));
     return onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as T[];
-        callback(data);
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonRequest)));
     }, (error) => {
-        console.error(`Error listening to ${collectionName}:`, error);
-        toast({ title: "Connection Error", description: `Could not sync ${collectionName}.`, variant: "destructive" });
+        console.error("Error listening to lesson requests:", error);
     });
-};
+}
 
-export const listenToAllLessonRequests = (callback: (data: LessonRequest[]) => void) => createListener('lessonRequests', callback, 'requestTimestamp');
-export const listenToAllFeedback = (callback: (data: Feedback[]) => void) => createListener('feedback', callback, 'submissionDate');
-export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
-    if (!isFirebaseConfigured() || !db) return () => {};
+export function listenToAllFeedback(callback: (data: Feedback[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    const q = query(collection(db, 'feedback'), orderBy('submissionDate', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback)));
+    }, (error) => {
+        console.error("Error listening to feedback:", error);
+    });
+}
+
+export function listenToAllReferrals(callback: (data: Referral[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
     const q = query(collection(db, "referrals"), orderBy("timestamp", "desc"));
     return onSnapshot(q, async (snapshot) => {
         const referrals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
@@ -555,7 +365,6 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
         }
 
         const usersMap = new Map<string, UserProfile>();
-        // Firestore 'in' query supports up to 30 items. We need to batch if there are more.
         for (let i = 0; i < refereeIds.length; i += 30) {
             const batchIds = refereeIds.slice(i, i + 30);
             const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', batchIds));
@@ -574,42 +383,96 @@ export const listenToAllReferrals = (callback: (data: Referral[]) => void) => {
         });
         callback(enrichedReferrals);
     }, (error) => {
-        console.error(`Error listening to referrals:`, error);
-        toast({ title: "Connection Error", description: `Could not sync referrals.`, variant: "destructive" });
+        console.error("Error listening to referrals:", error);
     });
 };
-export const listenToQuizSets = (callback: (data: QuizSet[]) => void) => createListener('quizSets', callback);
-export const listenToPromotionalPosters = (callback: (data: PromotionalPoster[]) => void) => createListener('promotionalPosters', callback);
-export const listenToCourses = (callback: (data: Course[]) => void) => createListener('courses', callback);
 
-export const listenToFaqs = (callback: (data: FaqItem[]) => void) => createListener('faqs', callback, undefined, 'asc');
-export const listenToBlogPosts = (callback: (data: BlogPost[]) => void) => createListener('blogPosts', callback, 'date', 'desc');
-
-export const listenToSiteBanners = (callback: (data: SiteBanner[]) => void) => {
+export function listenToQuizSets(callback: (data: QuizSet[]) => void) {
     if (!isFirebaseConfigured() || !db) {
-        callback(MOCK_SITE_BANNERS);
-        return () => {}; // Return an empty unsubscribe function
+      callback([]);
+      return () => {};
     }
+    return onSnapshot(collection(db, 'quizSets'), (snapshot) => {
+      if (snapshot.empty) {
+        callback([]);
+      } else {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
+      }
+    }, (error) => {
+        console.error("Error listening to quiz sets:", error);
+        callback([]);
+    });
+}
+export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'promotionalPosters'), (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromotionalPoster)));
+    }, (error) => {
+        console.error("Error listening to promotional posters:", error);
+    });
+}
+export function listenToCourses(callback: (data: Course[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'courses'), (snapshot) => {
+        const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+        callback(reAssignCourseIcons(courses));
+    }, (error) => {
+        console.error("Error listening to courses:", error);
+    });
+}
 
-    const q = query(collection(db, 'siteBanners'));
+export function listenToFaqs(callback: (data: FaqItem[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'faqs'), (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FaqItem)));
+    }, (error) => {
+        console.error("Error listening to faqs:", error);
+    });
+}
 
+export function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
     return onSnapshot(q, (snapshot) => {
-        if (snapshot.empty) {
-            callback(MOCK_SITE_BANNERS); // Fallback if Firestore collection is empty
+        callback(snapshot.docs.map(doc => ({...doc.data(), slug: doc.id } as BlogPost)));
+    }, (error) => {
+        console.error("Error listening to blog posts:", error);
+    });
+}
+export function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'siteBanners'), (snapshot) => {
+        if(snapshot.empty) {
+            callback([]);
             return;
         }
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SiteBanner[];
-        callback(data);
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteBanner)));
     }, (error) => {
-        console.error(`Error listening to siteBanners:`, error);
-        toast({ title: "Connection Error", description: `Could not sync siteBanners.`, variant: "destructive" });
-        callback(MOCK_SITE_BANNERS); // Fallback on error
+        console.error("Error listening to site banners:", error);
+        callback([]);
     });
-};
+}
 
-
-export const listenToUser = (userId: string, callback: (data: UserProfile | null) => void) => {
-    if (!isFirebaseConfigured() || !db) return () => {};
+export function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback(null);
+      return () => {};
+    }
     return onSnapshot(doc(db!, 'users', userId), async (snap) => {
         if (!snap.exists()) {
             callback(null);
@@ -626,11 +489,16 @@ export const listenToUser = (userId: string, callback: (data: UserProfile | null
             }
         }
         callback(user);
+    }, (error) => {
+        console.error(`Error listening to user ${userId}:`, error);
     });
 };
 
-export const listenToTrainerStudents = (trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) => {
-    if (!isFirebaseConfigured() || !db) return () => {};
+export function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([], []);
+      return () => {};
+    }
     const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
     const feedbackQuery = query(collection(db!, 'feedback'), where('trainerId', '==', trainerId));
 
@@ -661,8 +529,11 @@ export const listenToTrainerStudents = (trainerId: string, callback: (students: 
 // CALCULATED/AGGREGATED DATA LISTENERS
 // =================================================================
 
-export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => void) => {
-    if (!isFirebaseConfigured() || !db) return () => {};
+export function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback({});
+      return () => {};
+    }
     const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
         const users = snap.docs.map(doc => doc.data() as UserProfile);
         const totalCustomers = users.filter(u => u.uniqueId?.startsWith('CU')).length;
@@ -700,8 +571,11 @@ export const listenToSummaryData = (callback: (data: Partial<SummaryData>) => vo
     };
 };
 
-export const listenToCustomerLessonProgress = (callback: (data: LessonProgressData[]) => void) => {
-    if (!isFirebaseConfigured() || !db) return () => {};
+export function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
     const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
     return onSnapshot(q, (snapshot) => {
         const users = snapshot.docs
@@ -728,7 +602,7 @@ export const listenToCustomerLessonProgress = (callback: (data: LessonProgressDa
 // WRITE OPERATIONS (No changes needed for real-time, they trigger listeners)
 // =================================================================
 
-export const addRescheduleRequest = async (userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> => {
+export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
     if (!db) return null;
     const newRequest = {
         userId, customerName,
@@ -743,12 +617,11 @@ export const addRescheduleRequest = async (userId: string, customerName: string,
         return { id: docRef.id, ...newRequest };
     } catch(error: any) {
         console.error("Error adding reschedule request:", error);
-        toast({ title: "Request Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const updateRescheduleRequestStatus = async (requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> => {
+export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
     if (!db) return false;
     try {
         const requestRef = doc(db, 'rescheduleRequests', requestId);
@@ -762,12 +635,11 @@ export const updateRescheduleRequestStatus = async (requestId: string, newStatus
         return true;
     } catch(error: any) {
         console.error("Error updating reschedule request:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
-export const addFeedback = async (customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> => {
+export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
     if (!db) return false;
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
     try {
@@ -776,25 +648,23 @@ export const addFeedback = async (customerId: string, customerName: string, trai
         return true;
     } catch(error: any) {
         console.error("Error adding feedback:", error);
-        toast({ title: "Submit Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
-export const updateReferralPayoutStatus = async (referralId: string, status: PayoutStatusType): Promise<boolean> => {
+export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
     if (!db) return false;
     try {
         await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
         return true;
     } catch(error: any) {
         console.error("Error updating referral status:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
 
-export const addCourseModule = async (courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> => {
+export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
     if (!db) return null;
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -807,12 +677,11 @@ export const addCourseModule = async (courseId: string, moduleData: Omit<CourseM
         return { ...course, modules: updatedModules, id: courseId };
     } catch (error: any) {
         console.error("Error adding course module:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> => {
+export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
     if (!db) return null;
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -824,12 +693,11 @@ export const updateCourseModule = async (courseId: string, moduleId: string, mod
         return { ...course, modules: updatedModules, id: courseId };
     } catch (error: any) {
         console.error("Error updating course module:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const deleteCourseModule = async (courseId: string, moduleId: string): Promise<boolean> => {
+export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
     if (!db) return false;
     try {
         const courseRef = doc(db, 'courses', courseId);
@@ -841,12 +709,11 @@ export const deleteCourseModule = async (courseId: string, moduleId: string): Pr
         return true;
     } catch(error: any) {
         console.error("Error deleting course module:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
         return false;
     }
 };
 
-export const updateQuizQuestion = async (quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> => {
+export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
     if (!db) return null;
     try {
         const setRef = doc(db, 'quizSets', quizSetId);
@@ -868,87 +735,98 @@ export const updateQuizQuestion = async (quizSetId: string, questionId: string, 
         return { ...quizSet, questions: updatedQuestions, id: quizSetId };
     } catch(error: any) {
         console.error("Error updating quiz question:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
 
-export const addFaq = async (data: FaqFormValues): Promise<FaqItem | null> => {
+export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
     if (!db) return null;
     try {
         const docRef = await addDoc(collection(db, 'faqs'), data);
         return { id: docRef.id, ...data };
     } catch (error: any) {
         console.error("Error adding FAQ:", error);
-        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
         return null;
     }
 }
 
-export const updateFaq = async (id: string, data: FaqFormValues): Promise<boolean> => {
+export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         await updateDoc(doc(db, 'faqs', id), data);
         return true;
     } catch (error: any) {
         console.error("Error updating FAQ:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
 
-export const deleteFaq = async (id: string): Promise<boolean> => {
+export async function deleteFaq(id: string): Promise<boolean> {
     if (!db) return false;
     try {
         await deleteDoc(doc(db, 'faqs', id));
         return true;
     } catch(error: any) {
         console.error("Error deleting FAQ:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
 
-export const addBlogPost = async (data: BlogPostFormValues): Promise<BlogPost | null> => {
+export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
     if (!db) return null;
-    let imageUrl = 'https://placehold.co/1200x800.png';
-    if(data.imageFile) {
-        imageUrl = await uploadFile(data.imageFile, 'blog_images');
-    } else if (data.imageSrc) {
-        imageUrl = data.imageSrc;
-    }
-    const newPost: BlogPost = { ...data, imageSrc: imageUrl };
     try {
-        const q = query(collection(db, 'blogPosts'), where('slug', '==', newPost.slug));
-        const existing = await getDocs(q);
-        if (!existing.empty) { throw new Error("A blog post with this slug already exists."); }
-        await setDoc(doc(db, 'blogPosts', newPost.slug), newPost);
-        return newPost;
-    } catch(error: any) {
+        let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
+        if (data.imageFile) {
+            imageUrl = await uploadFile(data.imageFile, 'blog_images');
+        }
+
+        const newPostData: Omit<BlogPost, 'slug'> = {
+            title: data.title,
+            category: data.category,
+            excerpt: data.excerpt,
+            content: data.content,
+            author: data.author,
+            date: format(new Date(), 'LLL d, yyyy'),
+            imageSrc: imageUrl,
+            imageHint: data.imageHint,
+            tags: data.tags,
+        };
+        
+        const docRef = doc(db, 'blogPosts', data.slug);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            throw new Error("A blog post with this slug already exists.");
+        }
+
+        await setDoc(docRef, newPostData);
+        
+        return {
+            slug: docRef.id,
+            ...newPostData
+        };
+
+    } catch (error: any) {
         console.error("Error adding blog post:", error);
-        toast({ title: "Save Failed", description: error.message, variant: "destructive" });
         return null;
     }
 };
 
-export const fetchBlogPostBySlug = async (slug: string): Promise<BlogPost | null> => {
-    if (!isFirebaseConfigured() || !db) {
-        return MOCK_BLOG_POSTS.find(p => p.slug === slug) || null;
-    }
+export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+    if (!isFirebaseConfigured() || !db) return null;
     try {
         const docRef = doc(db!, 'blogPosts', slug);
         const snapshot = await getDoc(docRef);
         if (!snapshot.exists()) return null;
-        return snapshot.data() as BlogPost;
+        return { slug: snapshot.id, ...snapshot.data() } as BlogPost;
     } catch (error: any) {
         console.error("Error fetching blog post by slug:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch post: ${error.message}`, variant: "destructive" });
         return null;
     }
 };
 
-export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Promise<boolean> => {
+export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         const docRef = doc(db, 'blogPosts', slug);
@@ -962,90 +840,102 @@ export const updateBlogPost = async (slug: string, data: BlogPostFormValues): Pr
         return true;
     } catch(error: any) {
         console.error("Error updating blog post:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
 
-export const deleteBlogPost = async (slug: string): Promise<boolean> => {
+export async function deleteBlogPost(slug: string): Promise<boolean> {
     if (!db) return false;
     try {
         await deleteDoc(doc(db, 'blogPosts', slug));
         return true;
     } catch(error: any) {
         console.error("Error deleting blog post:", error);
-        toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
         return false;
     }
 }
 
-export const updateSiteBanner = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
-        if(data.imageFile) {
+        if (data.imageFile) {
             updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
         }
-        delete updateData.imageFile;
-        await updateDoc(doc(db, 'siteBanners', id), updateData as any);
+        delete updateData.imageFile; // Always remove the file object before updating DB
+
+        // Ensure all fields are included in the update
+        await updateDoc(doc(db, 'siteBanners', id), {
+            title: updateData.title,
+            description: updateData.description,
+            imageSrc: updateData.imageSrc,
+            imageHint: updateData.imageHint,
+        });
         return true;
-    } catch(error: any) {
+    } catch (error: any) {
         console.error("Error updating site banner:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
-}
+};
 
-export const updatePromotionalPoster = async (id: string, data: VisualContentFormValues): Promise<boolean> => {
+export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
     if (!db) return false;
     try {
         const updateData: Partial<VisualContentFormValues> = { ...data };
-        if(data.imageFile) {
+        if (data.imageFile) {
             updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
         }
         delete updateData.imageFile;
-        await updateDoc(doc(db, 'promotionalPosters', id), updateData as any);
+
+        // Ensure all fields are included in the update
+        await updateDoc(doc(db, 'promotionalPosters', id), {
+            title: updateData.title,
+            description: updateData.description,
+            imageSrc: updateData.imageSrc,
+            imageHint: updateData.imageHint,
+            href: updateData.href,
+        });
         return true;
-    } catch(error: any) {
+    } catch (error: any) {
         console.error("Error updating promotional poster:", error);
-        toast({ title: "Update Failed", description: error.message, variant: "destructive" });
         return false;
     }
-}
+};
 
 // This one-time fetch is still needed for pages that don't need real-time updates.
-export const fetchCourses = async (): Promise<Course[]> => {
-    if (!isFirebaseConfigured() || !db) return [];
+export async function fetchCourses(): Promise<Course[]> {
+    if (!isFirebaseConfigured() || !db) {
+      return [];
+    }
     try {
         const snapshot = await getDocs(collection(db!, "courses"));
         const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Course);
         return reAssignCourseIcons(courses);
     } catch (error: any) {
         console.error("Error fetching courses:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch courses: ${error.message}`, variant: "destructive" });
         return [];
     }
 };
 
-export const fetchQuizSets = async (): Promise<QuizSet[]> => {
-    if (!isFirebaseConfigured() || !db) return MOCK_QUIZ_SETS;
+export async function fetchQuizSets(): Promise<QuizSet[]> {
+    if (!isFirebaseConfigured() || !db) {
+      return [];
+    }
     try {
         const snapshot = await getDocs(collection(db!, "quizSets"));
         if (snapshot.empty) {
-            console.warn("No quiz sets found in Firestore, returning mock data.");
-            return MOCK_QUIZ_SETS;
+            return [];
         }
         const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as QuizSet);
         return sets;
     } catch (error: any) {
         console.error("Error fetching quiz sets:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch quiz sets: ${error.message}`, variant: "destructive" });
-        return MOCK_QUIZ_SETS;
+        return [];
     }
 };
 
 
-export const fetchApprovedInstructors = async (filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> => {
+export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
     if (!db) return [];
     try {
         const q = query(
@@ -1063,12 +953,11 @@ export const fetchApprovedInstructors = async (filters: { location?: string; gen
             );
     } catch (error: any) {
         console.error("Error fetching approved instructors:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch trainers: ${error.message}`, variant: "destructive" });
         return [];
     }
 };
 
-export const fetchReferralsByUserId = async (userId: string | undefined): Promise<Referral[]> => {
+export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
     if (!db || !userId) return [];
     try {
         const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
@@ -1097,7 +986,27 @@ export const fetchReferralsByUserId = async (userId: string | undefined): Promis
         });
     } catch (error: any) {
         console.error("Error fetching user referrals:", error);
-        toast({ title: "Data Fetch Error", description: `Could not fetch referrals: ${error.message}`, variant: "destructive" });
         return [];
     }
 };
+// =================================================================
+// UTILITY & MOCK HELPERS
+// =================================================================
+const generateId = (): string => {
+    return Math.random().toString(36).substring(2, 10);
+};
+
+const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
+    return coursesToHydrate.map(course => {
+        let newIcon;
+        if (course.id === 'course1') newIcon = Car;
+        else if (course.id === 'course2') newIcon = Bike;
+        else if (course.id === 'course3') newIcon = FileText;
+        else newIcon = FileText; // Default icon
+        return { ...course, icon: newIcon };
+    });
+};
+
+    
+
+    

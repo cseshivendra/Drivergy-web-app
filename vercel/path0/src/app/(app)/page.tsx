@@ -6,36 +6,37 @@ import Loading from '@/app/loading';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
 import CustomerDashboard from '@/components/dashboard/customer-dashboard';
 import TrainerDashboard from '@/components/dashboard/trainer-dashboard';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 export default function AuthenticatedRootPage() {
   const { user, loading } = useAuth();
-  const router = useRouter();
 
-  // This effect ensures that if this page is accessed directly,
-  // it behaves correctly based on the auth state.
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-
-  if (loading || !user) {
+  if (loading) {
     return <Loading />;
   }
 
-  // Check if the uniqueId starts with 'CU' to show customer dashboard
-  if (user.uniqueId && user.uniqueId.startsWith('CU')) {
-    return <CustomerDashboard />;
+  // The layout already protects this route, so we can assume user exists if not loading.
+  if (!user) {
+    // This case should ideally not be reached due to layout protection,
+    // but as a fallback, show loading or redirect.
+    return <Loading />;
+  }
+
+  // Check for admin role first. This is the most reliable check.
+  if (user.isAdmin) {
+    return <AdminDashboard />;
   }
   
-  // Check if the uniqueId starts with 'TR' to show trainer dashboard
-  if (user.uniqueId && user.uniqueId.startsWith('TR')) {
+  // Check their role based on unique ID to render the correct dashboard.
+  if (user.uniqueId?.startsWith('CU')) {
+    return <CustomerDashboard />;
+  }
+
+  if (user.uniqueId?.startsWith('TR')) {
     return <TrainerDashboard />;
   }
 
-  // Default to Admin Dashboard for guests, Google sign-ins, or other non-customer/trainer roles
+  // Fallback for any other authenticated but role-less user.
+  // This could be a user signed in with Google who hasn't completed registration.
+  // Showing them the admin dashboard is a safe default to avoid errors.
   return <AdminDashboard />;
 }

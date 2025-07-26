@@ -11,25 +11,27 @@ import { Locations, GenderOptions } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { fetchApprovedInstructors, updateUserApprovalStatus } from '@/lib/mock-data';
+import { fetchApprovedInstructors } from '@/lib/mock-data';
+import { updateUserApprovalStatus } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { assignTrainerToCustomer } from '@/lib/server-actions';
+import { assignTrainerToCustomer as assignTrainerToCustomerAction } from '@/lib/mock-data';
 
 
 interface UserTableProps {
   title: ReactNode;
   users: UserProfile[];
   isLoading: boolean;
-  onUserActioned: () => void; // Callback to refresh data on parent
+  onUserActioned: () => void;
+  collectionName: 'users' | 'trainers';
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function UserTable({ title, users, isLoading, onUserActioned }: UserTableProps) {
+export default function UserTable({ title, users, isLoading, onUserActioned, collectionName }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   
@@ -87,12 +89,9 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     }
     
     setIsAssigning(true);
-    const result = await assignTrainerToCustomer({
-        customerId: selectedUserForAssignment.id,
-        trainerId: selectedTrainerId
-    });
+    const success = await assignTrainerToCustomerAction(selectedUserForAssignment.id, selectedTrainerId);
     
-    if (result.success) {
+    if (success) {
       toast({
         title: "Assignment Successful",
         description: `${selectedUserForAssignment.name} has been assigned a trainer.`,
@@ -102,7 +101,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     } else {
       toast({
         title: "Assignment Failed",
-        description: result.error || "Could not complete the assignment. Please try again.",
+        description: "Could not complete the assignment. Please try again.",
         variant: "destructive",
       });
     }
@@ -110,38 +109,40 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   };
 
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
-    // This function should now primarily handle non-customer approval, like for trainers, or rejections.
-    const isTrainer = user.uniqueId.startsWith('TR');
-    
-    if (!isTrainer && newStatus === 'Approved') {
+    if (collectionName === 'users' && newStatus === 'Approved') {
         toast({
-            title: "Action Required",
-            description: "Please use the 'Approve & Assign' button to approve customers.",
-            variant: 'destructive',
+          title: "Action Required",
+          description: "Please use the 'Approve & Assign' button to approve customers. This assigns a trainer at the same time.",
+          variant: 'destructive',
         });
         return;
     }
-    
-    const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
 
-    if (result.success) {
+    try {
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus, collectionName });
+      if (result.success) {
         toast({
-            title: `User ${newStatus}`,
-            description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
+          title: `User ${newStatus}`,
+          description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
         });
         onUserActioned();
-    } else {
-        toast({
-            title: "Update Failed",
-            description: result.error || `Could not update status for ${user.name}.`,
-            variant: "destructive",
-        });
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error(`Error updating user ${user.id} status:`, error);
+      toast({
+        title: "Update Failed",
+        description: error instanceof Error ? error.message : `Could not update status for ${user.name}.`,
+        variant: "destructive",
+      });
     }
   };
 
-
   const handleViewDetails = (user: UserProfile) => {
-    window.open(`/users/${user.id}`, '_blank'); // Opens in a new tab
+    // Determine the correct path based on the collection name
+    const viewPath = collectionName === 'trainers' ? `/trainers/${user.id}` : `/users/${user.id}`;
+    window.open(viewPath, '_blank');
     toast({ 
       title: "Opening Details",
       description: `Opening details for ${user.name} in a new tab.`,
@@ -200,7 +201,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
                   paginatedUsers.map((user) => {
-                    const isTrainer = user.uniqueId.startsWith('TR');
+                    const isTrainer = collectionName === 'trainers';
                     return (
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>

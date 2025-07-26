@@ -6,15 +6,16 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, fetchUserById, getOrCreateGoogleUser } from '@/lib/mock-data';
+import { authenticateUserByCredentials, getOrCreateUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
+import { format } from 'date-fns';
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithCredentials: (username: string, password: string) => Promise<boolean>;
+  signInWithCredentials: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -34,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const profile = await getOrCreateGoogleUser(firebaseUser);
+        const profile = await getOrCreateUser(firebaseUser);
         if (profile) {
             setUser(profile);
         } else {
@@ -43,13 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await firebaseSignOut(auth);
         }
       } else {
-        setUser(null);
+        // Only set user to null if not already logged in as mock admin
+        if (user?.uniqueId !== 'AD-001') {
+          setUser(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [toast, user]); 
   
   const signInWithGoogle = async () => {
     if (!auth) {
@@ -65,31 +69,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: `Login Successful!`,
         description: 'Redirecting to your dashboard...',
       });
-      router.push('/');
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       // Don't show toast for user-closed popup
       if (error.code !== 'auth/popup-closed-by-user') {
-          toast({ title: "Sign-In Failed", description: error.message, variant: "destructive" });
+          toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
       }
       setLoading(false);
     }
   };
   
-  const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
+  const signInWithCredentials = async (username: string, password: string): Promise<void> => {
     setLoading(true);
+
+    // Hardcoded admin check
+    if (username === 'admin' && password === 'admin') {
+        const adminUser: UserProfile = {
+            id: 'admin-user-id',
+            uniqueId: 'AD-001',
+            name: 'Admin User',
+            username: 'admin',
+            contact: 'admin@drivergy.in',
+            subscriptionPlan: 'Admin',
+            approvalStatus: 'Approved',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            location: 'HQ',
+            gender: 'Other',
+            isAdmin: true,
+        };
+        logInUser(adminUser, true);
+        return;
+    }
+
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
       logInUser(userProfile, true); 
-      return true;
+    } else {
+      setLoading(false);
+      toast({
+        title: 'Login Failed',
+        description: 'Invalid username or password.',
+        variant: 'destructive',
+      });
     }
-    setLoading(false);
-    toast({
-      title: 'Login Failed',
-      description: 'Invalid username or password.',
-      variant: 'destructive',
-    });
-    return false;
   };
 
   const signOut = async () => {
