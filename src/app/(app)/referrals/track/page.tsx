@@ -70,26 +70,14 @@ export default function TrackReferralsPage() {
   return (
       <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
         <Card className="shadow-xl overflow-hidden">
-          <div className="relative h-56 w-full bg-primary/10">
-            <Image
-                src="https://placehold.co/800x300/10b981/ffffff.png"
-                alt="Track referrals banner"
-                layout="fill"
-                objectFit="cover"
-                data-ai-hint="dashboard chart growth"
-            />
-            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-              <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                <BarChart3 className="h-10 w-10 text-primary" />
-              </div>
-              <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Track Your Referrals</h1>
-              <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                See the status of your invites and the points you've earned.
-              </p>
-            </div>
-          </div>
           <CardHeader className="flex-row items-center justify-between border-b bg-muted/50 p-4">
-            <CardTitle className="text-xl">My Referral History</CardTitle>
+            <div>
+                <CardTitle className="text-xl flex items-center gap-3">
+                    <BarChart3 className="h-6 w-6 text-primary" />
+                    My Referral History
+                </CardTitle>
+                <CardDescription>See the status of your invites and the points you've earned.</CardDescription>
+            </div>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Total Points Earned</p>
               <p className="text-2xl font-bold text-primary">{totalPoints}</p>
