@@ -29,11 +29,6 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    // The redirect logic is now handled more robustly by the AuthenticatedAppLayout
-    // and the AuthProvider, making this check redundant and a source of potential conflicts.
-    // if (user && !loading) {
-    //   router.push(redirect || '/'); 
-    // }
   }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -42,7 +37,6 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
         return;
     }
-    // The signInWithCredentials function in the context will now handle the redirect on success.
     await signInWithCredentials(username, password);
   };
 
