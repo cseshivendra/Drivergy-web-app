@@ -18,7 +18,6 @@ export default function LoginPage() {
   const { user, signInWithGoogle, signInWithCredentials, loading } from useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect');
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
@@ -50,6 +49,7 @@ export default function LoginPage() {
     </svg>
   );
 
+  // The main layout handles redirects now, so we just show a loader here.
   if (loading || (user && isMounted)) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
