@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ComplaintFormSchema, type ComplaintFormValues } from '@/types';
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquareText } from 'lucide-react'; 
@@ -59,24 +59,15 @@ export default function ContactPage() {
     <PageHead />
     <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-lg overflow-hidden">
-        <div className="relative h-56 w-full bg-primary/10">
-            <Image
-                src="https://placehold.co/800x300/E53E3E/ffffff.png"
-                alt="A customer support representative ready to help"
-                layout="fill"
-                objectFit="cover"
-                data-ai-hint="support customer service"
-            />
-            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                    <MessageSquareText className="h-10 w-10 text-primary" />
-                </div>
-                <h1 className="font-headline text-4xl font-bold text-white drop-shadow-md">Contact Us</h1>
-                <p className="mt-2 text-lg text-white/90 max-w-xl mx-auto drop-shadow-sm">
-                    Have an issue or a suggestion? Let us know by filling out the form below.
-                </p>
+        <CardHeader className="text-center p-6 bg-muted/30">
+            <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">
+                <MessageSquareText className="h-10 w-10 text-primary" />
             </div>
-        </div>
+            <h1 className="font-headline text-4xl font-bold text-primary">Contact Us</h1>
+            <p className="mt-2 text-lg text-muted-foreground max-w-xl mx-auto">
+                Have an issue or a suggestion? Let us know by filling out the form below.
+            </p>
+        </CardHeader>
         <CardContent className="p-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
