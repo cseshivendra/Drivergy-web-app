@@ -15,7 +15,7 @@ interface AuthContextType {
     user: UserProfile | null;
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
-    signInWithCredentials: (email: string, password: string) => Promise<void>;
+    signInWithCredentials: (email: string, password: string) => Promise<boolean>;
     signOut: () => Promise<void>;
     logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -35,25 +35,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                const profile = await getOrCreateUser(firebaseUser);
-                if (profile) {
-                    setUser(profile);
-                } else {
-                    setUser(null);
-                    toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
-                    await firebaseSignOut(auth);
+                // If a Firebase user is detected, fetch or create their profile.
+                // This handles session persistence across reloads.
+                if (!user) { // Only fetch if user is not already set by a direct login action
+                    const profile = await getOrCreateUser(firebaseUser);
+                    if (profile) {
+                        setUser(profile);
+                    } else {
+                        setUser(null);
+                        toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
+                        await firebaseSignOut(auth);
+                    }
                 }
-            } else {
-                // Only set user to null if not already logged in as mock admin
-                if (user?.uniqueId !== 'AD-001') {
-                    setUser(null);
-                }
+            } else if (sessionStorage.getItem('mockAdmin') !== 'true') {
+                // If no Firebase user and not a mock admin, clear the user.
+                setUser(null);
             }
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [toast, user]);
+    }, [user, toast]);
 
     const signInWithGoogle = async () => {
         if (!auth) {
@@ -63,12 +65,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(true);
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(auth, provider);
-            // onAuthStateChanged will handle setting the user and redirecting.
-            toast({
-                title: `Login Successful!`,
-                description: 'Redirecting to your dashboard...',
-            });
+            const result = await signInWithPopup(auth, provider);
+            // After popup, proactively fetch profile to avoid race condition
+            const profile = await getOrCreateUser(result.user);
+            if (profile) {
+                logInUser(profile, true); // Use logInUser to set state and redirect
+            } else {
+                throw new Error("Failed to get or create user profile after Google sign-in.");
+            }
         } catch (error: any) {
             console.error("Google Sign-In Error:", error);
             // Don't show toast for user-closed popup
@@ -79,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const signInWithCredentials = async (username: string, password: string): Promise<void> => {
+    const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
         setLoading(true);
 
         // Hardcoded admin check
@@ -97,13 +101,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 gender: 'Other',
                 isAdmin: true,
             };
+            // Use a session storage flag for the mock admin
+            sessionStorage.setItem('mockAdmin', 'true');
             logInUser(adminUser, true);
-            return;
+            return true;
         }
 
         const userProfile = await authenticateUserByCredentials(username, password);
         if (userProfile) {
             logInUser(userProfile, true);
+            return true;
         } else {
             setLoading(false);
             toast({
@@ -111,14 +118,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 description: 'Invalid username or password.',
                 variant: 'destructive',
             });
+            return false;
         }
     };
+
 
     const signOut = async () => {
         setLoading(true);
         if (auth?.currentUser) {
             await firebaseSignOut(auth);
         }
+        // Clear the mock admin flag on any sign out
+        sessionStorage.removeItem('mockAdmin');
         setUser(null);
         setLoading(false);
         toast({
