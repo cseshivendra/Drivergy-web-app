@@ -120,7 +120,7 @@ const baseRegistrationSchema = z.object({
 
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
-  // No other fields needed for initial sign up
+  trainerPreference: z.string().optional(),
 });
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({

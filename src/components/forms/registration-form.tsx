@@ -26,10 +26,11 @@ import {
   type TrainerRegistrationFormValues,
   type UserProfile,
   type CustomerRegistrationFormValues,
+  TrainerPreferenceOptions,
 } from '@/types';
 import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2 } from 'lucide-react'; 
-import { useMemo, useState } from 'react';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react'; 
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface RegistrationFormProps {
@@ -54,7 +55,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       gender: '', 
     };
     if (userRole === 'customer') {
-      return base as CustomerRegistrationFormValues;
+      return {
+        ...base,
+        trainerPreference: '',
+      } as CustomerRegistrationFormValues;
     } else { // trainer
       return {
         ...base,
@@ -79,6 +83,28 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     defaultValues,
     mode: 'onChange', 
   });
+  
+  const selectedGender = form.watch('gender');
+
+  const trainerOptions = useMemo(() => {
+    if (userRole === 'customer') {
+        if (selectedGender === 'Male') {
+            return ['Male'];
+        }
+        // For Female, 'Other', 'Prefer not to say', show all options
+        return TrainerPreferenceOptions.slice(); // Return a copy of the original array
+    }
+    return [];
+  }, [selectedGender, userRole]);
+  
+  useEffect(() => {
+    if (userRole === 'customer') {
+      const currentPreference = form.getValues('trainerPreference');
+      if (currentPreference && !trainerOptions.includes(currentPreference)) {
+        form.setValue('trainerPreference', ''); // Reset if current option is invalid
+      }
+    }
+  }, [selectedGender, trainerOptions, form, userRole]);
 
   async function onSubmit(data: RegistrationFormValues) {
     try {
@@ -263,6 +289,30 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               </FormItem>
             )}
           />
+           {userRole === 'customer' && (
+             <FormField
+                control={form.control}
+                name="trainerPreference"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={!selectedGender}>
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select trainer preference" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {trainerOptions.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+           )}
         </div>
 
         {userRole === 'trainer' && (
