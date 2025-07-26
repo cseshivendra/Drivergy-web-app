@@ -60,7 +60,7 @@ export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps)
       <SummaryCard title="Pending Reschedules" value={data.pendingRescheduleRequests} icon={Repeat} description="Awaiting admin approval" />
       <SummaryCard 
         title="Total Earning" 
-        value={`₹${data.totalEarnings.toLocaleString('en-IN')}`} 
+        value={`₹${(data.totalEarnings ?? 0).toLocaleString('en-IN')}`} 
         icon={RupeeIconSvg}
         description="Gross revenue generated" 
       />
