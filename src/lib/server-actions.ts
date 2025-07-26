@@ -3,7 +3,7 @@
 
 import { doc, updateDoc, getDoc, collection, addDoc, setDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
-import type { ApprovalStatusType, TrainerRegistrationFormValues, VehicleType } from '@/types';
+import type { ApprovalStatusType, TrainerRegistrationFormValues, VehicleType, FullCustomerDetailsValues } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
@@ -78,8 +78,6 @@ export async function updateUserApprovalStatus({ userId, newStatus, collectionNa
 }
 
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
-    // This function can remain as is, assuming password reset is for the 'users' collection (customers).
-    // If trainers need password reset, this would need modification to check the 'trainers' collection too.
     if (!isFirebaseConfigured() || !db) {
         return { success: false, error: 'Database not configured.' };
     }
@@ -121,7 +119,6 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         return { success: false, error: "Failed to send reset email. Please try again later." };
     }
 }
-
 
 export const registerTrainerAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!isFirebaseConfigured() || !db) {
@@ -183,5 +180,75 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
         return { success: false, error: errorMessage };
     }
 }
+
+
+export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
+    if (!isFirebaseConfigured() || !db) {
+        return { success: false, error: 'Database not configured.' };
+    }
+     if (!userId) {
+        return { success: false, error: 'User ID is missing.' };
+    }
+
+    const data = Object.fromEntries(formData.entries());
+    const photoIdFile = formData.get('photoIdFile') as File | null;
+    
+    if (!photoIdFile || photoIdFile.size === 0) {
+        return { success: false, error: 'Photo ID file is required and cannot be empty.' };
+    }
+
+    const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
+
+    try {
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            throw new Error("User profile not found.");
+        }
+        const user = userSnap.data();
+
+        const photoIdUrl = await uploadFile(photoIdFile, `user_documents/${userId}`);
+        
+        const profileData = {
+            subscriptionPlan: data.subscriptionPlan as string,
+            vehicleInfo: data.vehiclePreference as string,
+            trainerPreference: data.trainerPreference as string,
+            flatHouseNumber: data.flatHouseNumber as string,
+            street: data.street as string,
+            district: data.district as string,
+            state: data.state as string,
+            pincode: data.pincode as string,
+            location: data.district as string,
+            dlStatus: data.dlStatus as string,
+            dlNumber: (data.dlNumber as string) || '',
+            dlTypeHeld: (data.dlTypeHeld as string) || '',
+            photoIdType: data.photoIdType as string,
+            photoIdNumber: data.photoIdNumber as string,
+            photoIdUrl: photoIdUrl,
+            subscriptionStartDate: data.subscriptionStartDate as string,
+            totalLessons: getLessonsForPlan(data.subscriptionPlan as string),
+            completedLessons: 0,
+            approvalStatus: 'Pending' as ApprovalStatusType,
+        };
+
+        await updateDoc(userRef, profileData);
+
+        const newRequestData: Omit<LessonRequest, 'id'> = {
+            customerId: userId,
+            customerName: user.name,
+            vehicleType: data.vehiclePreference as VehicleType,
+            status: 'Pending',
+            requestTimestamp: new Date().toISOString(),
+        };
+        const newRequestRef = doc(collection(db, 'lessonRequests'));
+        await setDoc(newRequestRef, newRequestData);
+        
+        revalidatePath('/site/payment');
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error completing customer profile:", error);
+        return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
+    }
+};
 
     
