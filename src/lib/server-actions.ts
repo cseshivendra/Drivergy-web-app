@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, updateDoc, query, collection, where, getDocs, limit, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, query, collection, where, getDocs, limit, setDoc, addDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import type { ApprovalStatusType, TrainerRegistrationFormValues, UserProfile } from '@/types';
 import { revalidatePath } from 'next/cache';
