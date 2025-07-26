@@ -76,13 +76,25 @@ export const authenticateUserByCredentials = async (username: string, password: 
     if (!db) return null;
     try {
         const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
+        // Step 1: Query for the user by username first.
+        const q = query(usersRef, where("username", "==", username), limit(1));
         const querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) return null;
+        if (querySnapshot.empty) {
+            // No user found with that username
+            return null;
+        }
 
         const userDoc = querySnapshot.docs[0];
-        return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+        const userData = userDoc.data();
+
+        // Step 2: Manually check if the password matches.
+        if (userData.password === password) {
+            return { id: userDoc.id, ...userData } as UserProfile;
+        } else {
+            // Password does not match
+            return null;
+        }
     } catch (error: any) {
         console.error("Error authenticating user:", error);
         return null;
