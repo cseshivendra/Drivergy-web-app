@@ -162,7 +162,7 @@ export default function AdminDashboard() {
   // Separate lists for different customer states
   const interestedCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
   const pendingVerificationCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
-  const pendingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress'), [filteredTrainers]);
+  const pendingInstructors = useMemo(() => filteredTrainers.filter(u => !u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress'), [filteredTrainers]);
   const existingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredTrainers]);
 
 
@@ -191,14 +191,6 @@ export default function AdminDashboard() {
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
         </TabsList>
         <TabsContent value="verifications" className="space-y-8">
-           <UserTable 
-            title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Interested Customers</>} 
-            users={interestedCustomers}
-            collectionName="users"
-            isLoading={loading} 
-            onUserActioned={handleActioned}
-            isInterestedList={true}
-          />
           <UserTable 
             title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>} 
             users={pendingVerificationCustomers}
@@ -222,6 +214,14 @@ export default function AdminDashboard() {
           />
         </TabsContent>
         <TabsContent value="requests" className="space-y-8">
+          <UserTable 
+            title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Interested Customers</>} 
+            users={interestedCustomers}
+            collectionName="users"
+            isLoading={loading} 
+            onUserActioned={handleActioned}
+            isInterestedList={true}
+          />
           <RequestTable 
             title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>} 
             requests={allLessonRequests} 

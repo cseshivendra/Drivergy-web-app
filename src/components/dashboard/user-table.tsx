@@ -143,7 +143,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
 
   const handleViewDetails = (user: UserProfile) => {
     // Determine the correct path based on the collection name
-    const viewPath = collectionName === 'trainers' ? `/trainers/${user.id}` : `/users/${user.id}`;
+    const viewPath = `/users/${user.id}`;
     window.open(viewPath, '_blank');
     toast({ 
       title: "Opening Details",
@@ -170,9 +170,13 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
         <TableCell><Skeleton className="h-5 w-36" /></TableCell>
         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-        <TableCell><Skeleton className="h-5 w-24" /></TableCell> 
-        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+        {!isInterestedList && (
+           <>
+            <TableCell><Skeleton className="h-5 w-24" /></TableCell> 
+            <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+           </>
+        )}
         <TableCell><Skeleton className="h-9 w-[160px]" /></TableCell> 
       </TableRow>
     ))
@@ -192,11 +196,15 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                   <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
                   <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
                   <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
-                  <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
-                  <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
-                  <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
+                  {!isInterestedList && (
+                    <>
+                    <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
+                    <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
+                    <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead> 
+                    </>
+                  )}
                   <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
-                  <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>
+                  {!isInterestedList && <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>}
                   <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -209,24 +217,30 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
                         <TableCell>{user.name}</TableCell>
                         <TableCell>{user.phone || user.contact}</TableCell>
-                        <TableCell>{user.location}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
-                            user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
-                            user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
-                            'bg-muted text-muted-foreground' // Basic or None
-                          }`}>
-                            {user.subscriptionPlan}
-                          </span>
-                        </TableCell>
-                        <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
+                        {!isInterestedList && (
+                            <>
+                                <TableCell>{user.location}</TableCell>
+                                <TableCell>
+                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                    user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
+                                    user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
+                                    user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
+                                    'bg-muted text-muted-foreground' // Basic or None
+                                }`}>
+                                    {user.subscriptionPlan}
+                                </span>
+                                </TableCell>
+                                <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
+                            </>
+                        )}
                         <TableCell>{user.registrationTimestamp}</TableCell>
-                        <TableCell>
-                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus)}`}>
-                            {user.approvalStatus}
-                          </span>
-                        </TableCell>
+                        {!isInterestedList && (
+                            <TableCell>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus)}`}>
+                                {user.approvalStatus}
+                            </span>
+                            </TableCell>
+                        )}
                         <TableCell>
                            {isTrainer ? (
                             <div className="flex items-center justify-center space-x-1.5">
@@ -314,7 +328,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center"> 
+                    <TableCell colSpan={isInterestedList ? 5 : 9} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                         <p className="text-lg">No {isInterestedList ? 'interested customers' : 'pending enrollments'} found.</p>
