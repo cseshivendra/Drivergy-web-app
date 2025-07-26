@@ -17,24 +17,15 @@ export default function RtoServicesPage() {
                 <title>Online RTO Services - Drivergy</title>
                 <meta name="description" content="Access official Indian RTO services like applying for a driving license, checking challan status, paying fines, and more, directly via Drivergy." />
             </head>
-            <Card className="shadow-lg overflow-hidden mb-12">
-                <div className="relative h-56 w-full bg-primary/10">
-                    <Image
-                        src="https://placehold.co/1200x300/16a34a/ffffff.png"
-                        alt="An Indian government building representing RTO services"
-                        layout="fill"
-                        objectFit="cover"
-                        data-ai-hint="government building india"
-                    />
-                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
-                        <div className="p-3 bg-background/80 rounded-full mb-3 backdrop-blur-sm">
-                            <Car className="h-10 w-10 text-primary" />
-                        </div>
-                        <h1 className="font-headline text-4xl md:text-5xl font-bold text-white drop-shadow-md">Online RTO Services</h1>
-                        <p className="mt-2 text-lg text-white/90 max-w-2xl mx-auto drop-shadow-sm">
-                            Access official RTO services directly from the Parivahan Sewa portal.
-                        </p>
+            <Card className="shadow-lg overflow-hidden mb-12 bg-muted/30">
+                <div className="flex flex-col items-center justify-center text-center p-6">
+                    <div className="p-3 bg-background rounded-full mb-3 shadow-md">
+                        <Car className="h-10 w-10 text-primary" />
                     </div>
+                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Online RTO Services</h1>
+                    <p className="mt-2 text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Access official RTO services directly from the Parivahan Sewa portal.
+                    </p>
                 </div>
             </Card>
 
