@@ -17,24 +17,31 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
     const userRef = doc(db, "users", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
 
+    const isAdmin = firebaseUser.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
     if (userSnap.exists()) {
-        return { id: userSnap.id, ...userSnap.data() } as UserProfile;
+        const userProfile = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+        if (isAdmin && !userProfile.isAdmin) {
+            await updateDoc(userRef, { isAdmin: true });
+            userProfile.isAdmin = true;
+        }
+        return userProfile;
     } else {
-        // This path is for brand new users, typically from Google Sign-In for the first time
         const newUser: Omit<UserProfile, 'id'> = {
-            uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
+            uniqueId: isAdmin ? `AD-${generateId().slice(-6).toUpperCase()}` : `CU-${generateId().slice(-6).toUpperCase()}`,
             name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
             username: firebaseUser.email || '',
             contact: firebaseUser.email || '',
             phone: firebaseUser.phoneNumber || '',
             gender: 'Prefer not to say',
-            location: 'TBD',
-            subscriptionPlan: 'None',
+            location: isAdmin ? 'HQ' : 'TBD',
+            subscriptionPlan: isAdmin ? 'Admin' : 'None',
             registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            approvalStatus: 'Pending',
+            approvalStatus: 'Approved',
             myReferralCode: `${(firebaseUser.displayName || 'USER').split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
             photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${(firebaseUser.displayName || 'U').charAt(0)}`,
             totalReferralPoints: 0,
+            isAdmin: isAdmin,
         };
         try {
             await setDoc(userRef, newUser);
@@ -1059,4 +1066,5 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
     
 
     
+
 

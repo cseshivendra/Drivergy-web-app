@@ -29,13 +29,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect runs once on mount to check the REAL Firebase auth state.
-    // It no longer handles the mock admin state.
     if (!auth) {
       setLoading(false);
       return;
     }
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const profile = await getOrCreateUser(firebaseUser);
@@ -47,11 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await firebaseSignOut(auth);
         }
       } else {
-        // Only set user to null if it's not our mock admin.
-        // The mock admin state is handled outside this listener.
-        if (user && !user.isAdmin) {
-          setUser(null);
-        }
+        setUser(null);
       }
       setLoading(false);
     });
@@ -80,28 +73,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const signInWithCredentials = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
-
-    // This is the single point of truth for the mock admin login.
-    if (username === 'admin' && password === 'admin') {
-        const adminUser: UserProfile = {
-            id: 'admin-user-id',
-            uniqueId: 'AD-001',
-            name: 'Admin User',
-            username: 'admin',
-            contact: 'admin@drivergy.in',
-            subscriptionPlan: 'Admin',
-            approvalStatus: 'Approved',
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            location: 'HQ',
-            gender: 'Other',
-            isAdmin: true,
-        };
-        sessionStorage.setItem('mockAdmin', 'true');
-        logInUser(adminUser, true);
-        return true;
-    }
-
-    // This path is for real users.
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
       logInUser(userProfile, true); 
@@ -122,7 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (auth?.currentUser) {
         await firebaseSignOut(auth);
     }
-    sessionStorage.removeItem('mockAdmin'); // Always clear the mock admin flag
     setUser(null); 
     setLoading(false);
     toast({

@@ -41,6 +41,11 @@ To connect the application to your own Firebase backend and enable AI features, 
     # Google AI (for Genkit Chatbot)
     # Get this from Google AI Studio: https://aistudio.google.com/app/apikey
     GOOGLE_API_KEY=YOUR_GOOGLE_AI_API_KEY
+    
+    # Admin User Configuration
+    # The email address for the user who will have admin privileges.
+    # Sign up with this email to access the admin dashboard.
+    NEXT_PUBLIC_ADMIN_EMAIL=your-admin-email@example.com
     ```
 
 **Important:** If these keys are not provided, the app will run in a local-only "mock" mode, which is useful for UI development but will not connect to a live database.
