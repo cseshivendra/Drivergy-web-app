@@ -11,12 +11,14 @@ import { Locations, GenderOptions } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { fetchApprovedInstructors, assignTrainerToCustomer, updateUserApprovalStatus } from '@/lib/mock-data';
+import { fetchApprovedInstructors } from '@/lib/mock-data';
+import { updateUserApprovalStatus } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
+import { assignTrainerToCustomer as assignTrainerToCustomerAction } from '@/lib/mock-data';
 
 
 interface UserTableProps {
@@ -86,7 +88,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     }
     
     setIsAssigning(true);
-    const success = await assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
+    const success = await assignTrainerToCustomerAction(selectedUserForAssignment.id, selectedTrainerId);
     
     if (success) {
       toast({
@@ -108,8 +110,6 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
     const isTrainer = user.uniqueId.startsWith('TR');
     
-    // For customers, "Approve" is part of the assignment flow. This function handles direct status changes.
-    // This is primarily for Trainers (Approve/Reject) and rejecting Customers.
     if (!isTrainer && newStatus === 'Approved') {
         toast({
           title: "Action Required",
@@ -120,25 +120,21 @@ export default function UserTable({ title, users, isLoading, onUserActioned }: U
     }
 
     try {
-      const success = await updateUserApprovalStatus(user.id, newStatus);
-      if (success) {
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
+      if (result.success) {
         toast({
           title: `User ${newStatus}`,
           description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
         });
         onUserActioned();
       } else {
-        toast({
-          title: "Update Failed",
-          description: `Could not update status for ${user.name}.`,
-          variant: "destructive",
-        });
+        throw new Error(result.error);
       }
     } catch (error) {
       console.error(`Error updating user ${user.id} status:`, error);
       toast({
-        title: "Error",
-        description: `An error occurred while updating ${user.name}'s status.`,
+        title: "Update Failed",
+        description: error instanceof Error ? error.message : `Could not update status for ${user.name}.`,
         variant: "destructive",
       });
     }
