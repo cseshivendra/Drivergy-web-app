@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,8 +27,9 @@ import {
   type CustomerRegistrationFormValues,
   TrainerPreferenceOptions,
 } from '@/types';
-import { addCustomer, addTrainer } from '@/lib/mock-data'; 
-import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react'; 
+import { addCustomer } from '@/lib/mock-data';
+import { registerTrainerAction } from '@/lib/server-actions';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -52,7 +52,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       name: '',
       email: '',
       phone: '',
-      gender: '', 
+      gender: '',
     };
     if (userRole === 'customer') {
       return {
@@ -63,9 +63,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       return {
         ...base,
         location: '',
-        yearsOfExperience: undefined, 
-        specialization: undefined, 
-        trainerVehicleType: undefined, 
+        yearsOfExperience: undefined,
+        specialization: undefined,
+        trainerVehicleType: undefined,
         fuelType: undefined,
         vehicleNumber: '',
         trainerCertificateNumber: '',
@@ -81,9 +81,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues,
-    mode: 'onChange', 
+    mode: 'onChange',
   });
-  
+
   const selectedGender = form.watch('gender');
 
   const trainerOptions = useMemo(() => {
@@ -96,7 +96,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     }
     return [];
   }, [selectedGender, userRole]);
-  
+
   useEffect(() => {
     if (userRole === 'customer') {
       const currentPreference = form.getValues('trainerPreference');
@@ -108,22 +108,38 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   async function onSubmit(data: RegistrationFormValues) {
     try {
-      let newUser: UserProfile | null = null;
-
       if (data.userRole === 'customer') {
-        newUser = await addCustomer(data as CustomerRegistrationFormValues);
+        const newUser = await addCustomer(data as CustomerRegistrationFormValues);
+        if (newUser) {
+          toast({
+            title: "Registration Successful!",
+            description: "Your account has been created. Please log in to continue.",
+          });
+          router.push('/login');
+        } else {
+          throw new Error("Registration failed: No user data returned.");
+        }
       } else if (data.userRole === 'trainer') {
-        newUser = await addTrainer(data as TrainerRegistrationFormValues);
-      }
-
-      if (newUser) {
-        toast({
-          title: "Registration Successful!",
-          description: "Your account has been created. Please log in to continue.",
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+          if (value instanceof File) {
+            formData.append(key, value);
+          } else if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+          }
         });
-        router.push('/login');
-      } else {
-        throw new Error("Registration failed: No user data returned.");
+        
+        const result = await registerTrainerAction(formData);
+
+        if (result.success) {
+           toast({
+            title: "Registration Successful!",
+            description: "Your account has been created and is pending verification.",
+          });
+          router.push('/login');
+        } else {
+          throw new Error(result.error || "An unknown error occurred during trainer registration.");
+        }
       }
     } catch (error) {
       console.error('Registration failed:', error);
@@ -252,10 +268,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     +91
                   </span>
                   <FormControl>
-                    <Input 
-                      type="tel" 
-                      placeholder="Enter 10-digit number" 
-                      {...field} 
+                    <Input
+                      type="tel"
+                      placeholder="Enter 10-digit number"
+                      {...field}
                       className="rounded-l-none"
                       value={field.value || ''} // Ensure value is controlled, handles undefined
                     />
@@ -438,7 +454,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     )}
                 />
             </div>
-            
+
 
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
             <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>

@@ -277,48 +277,13 @@ export async function completeCustomerProfile(userId: string, data: FullCustomer
 };
 
 export async function addTrainer(data: TrainerRegistrationFormValues): Promise<UserProfile | null> {
-    if (!db) return null;
-
-    try {
-        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-            uploadFile(data.trainerCertificateFile, 'trainer_documents'),
-            uploadFile(data.drivingLicenseFile, 'trainer_documents'),
-            uploadFile(data.aadhaarCardFile, 'trainer_documents'),
-        ]);
-
-        const newTrainer: Omit<UserProfile, 'id'> = {
-            uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`,
-            name: data.name,
-            username: data.username,
-            password: data.password,
-            contact: data.email,
-            phone: data.phone,
-            location: data.location,
-            gender: data.gender,
-            subscriptionPlan: "Trainer",
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            vehicleInfo: data.trainerVehicleType,
-            approvalStatus: 'Pending',
-            myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-            photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-            specialization: data.specialization,
-            yearsOfExperience: data.yearsOfExperience,
-            trainerCertificateUrl: certUrl,
-            drivingLicenseUrl: dlUrl,
-            aadhaarCardUrl: aadhaarUrl,
-        };
-
-        const userRef = doc(collection(db, 'users'));
-        await setDoc(userRef, newTrainer);
-        return { id: userRef.id, ...newTrainer };
-    } catch (error: any) {
-        console.error("Error adding trainer:", error);
-        if (error instanceof Error && error.message.includes("Cloudinary configuration")) {
-            throw new Error("Server configuration error. Cannot upload documents. Please contact support.");
-        }
-        throw new Error(error.message || "An unexpected error occurred during registration.");
-    }
+    // This function is now deprecated in favor of the server action.
+    // It's kept here to avoid breaking changes if it's imported somewhere else,
+    // but it will simply return null.
+    console.warn("addTrainer from mock-data is deprecated. Use registerTrainerAction server action instead.");
+    return null;
 };
+
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!db) return false;
