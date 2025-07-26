@@ -21,6 +21,11 @@ export default function AuthenticatedRootPage() {
     return <Loading />;
   }
 
+  // Check for admin role first.
+  if (user.isAdmin) {
+    return <AdminDashboard />;
+  }
+  
   // Check their role to render the correct dashboard.
   if (user.uniqueId?.startsWith('CU')) {
     return <CustomerDashboard />;
@@ -30,6 +35,7 @@ export default function AuthenticatedRootPage() {
     return <TrainerDashboard />;
   }
 
-  // Default to Admin Dashboard for any other authenticated user type (like the manual admin).
+  // Fallback for any other authenticated but non-admin/customer/trainer user.
+  // This could be a user signed in with Google who hasn't completed registration.
   return <AdminDashboard />;
 }
