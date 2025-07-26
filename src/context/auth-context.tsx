@@ -9,6 +9,7 @@ import type { UserProfile } from '@/types';
 import { authenticateUserByCredentials, getOrCreateUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
+import { format } from 'date-fns';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -77,6 +78,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const signInWithCredentials = async (username: string, password: string): Promise<void> => {
     setLoading(true);
+
+    // Hardcoded admin check
+    if (username === 'admin' && password === 'admin') {
+        const adminUser: UserProfile = {
+            id: 'admin-user-id',
+            uniqueId: 'AD-001',
+            name: 'Admin User',
+            username: 'admin',
+            contact: 'admin@drivergy.in',
+            subscriptionPlan: 'Admin',
+            approvalStatus: 'Approved',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            location: 'HQ',
+            gender: 'Other',
+            isAdmin: true,
+        };
+        logInUser(adminUser, true);
+        return;
+    }
+
     const userProfile = await authenticateUserByCredentials(username, password);
     if (userProfile) {
       logInUser(userProfile, true); 
