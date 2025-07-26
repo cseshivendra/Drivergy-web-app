@@ -28,7 +28,7 @@ import {
   DistrictsByState,
   type UserProfile,
 } from '@/types';
-import { completeCustomerProfileAction } from '@/lib/server-actions';
+import { completeCustomerProfile } from '@/lib/mock-data';
 import { UserCheck as UserCheckIcon, Home, MapPin, CalendarIcon, Loader2, Gift, Car, Bike, BadgePercent, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -86,31 +86,16 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   }, [selectedState, form, availableDistricts]);
 
   async function onSubmit(data: FullCustomerDetailsValues) {
-    const formData = new FormData();
-    // Append all form data to FormData object
-    Object.entries(data).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (value instanceof Date) {
-        formData.append(key, value.toISOString());
-      } else if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-    formData.append('userId', user.id);
-    formData.append('userName', user.name);
-
-
     try {
-      const result = await completeCustomerProfileAction(formData);
-      if (result.success) {
+      const success = await completeCustomerProfile(user.id, data);
+      if (success) {
         toast({
           title: "Profile Complete!",
           description: "Your details have been saved. You can now proceed to payment.",
         });
         onFormSubmit();
       } else {
-        throw new Error(result.error || "Failed to update profile.");
+        throw new Error("Failed to update profile.");
       }
     } catch (error) {
       console.error('Profile completion failed:', error);
@@ -486,5 +471,6 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
     </Form>
   );
 }
+    
 
     
