@@ -21,15 +21,19 @@ export default function AuthenticatedAppLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // If authentication is done and there's no user, redirect to login.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
+  // Immediately show loading state if auth is loading or if there's no user yet.
+  // This prevents rendering the dashboard for a split second before the redirect can happen.
   if (loading || !user) {
     return <Loading />;
   }
 
+  // Only render the full authenticated layout if the user is confirmed.
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen bg-background">
