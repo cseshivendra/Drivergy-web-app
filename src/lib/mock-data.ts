@@ -505,7 +505,7 @@ export function listenToQuizSets(callback: (data: QuizSet[]) => void) {
     }
     return onSnapshot(collection(db, 'quizSets'), (snapshot) => {
       if (snapshot.empty) {
-        callback([]); // Let the seeding logic handle it
+        callback([]);
       } else {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
       }

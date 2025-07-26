@@ -1,6 +1,5 @@
 
 
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -9,12 +8,9 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Lightbulb, Globe, ClipboardCheck } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Lightbulb, ClipboardCheck } from 'lucide-react';
 import { fetchQuizSets } from '@/lib/mock-data';
 import type { QuizSet } from '@/types';
-import { availableLanguages } from '@/types';
 import RtoQuizClientPage from './rto-quiz-client-page';
 import type { Metadata } from 'next';
 
@@ -51,6 +47,3 @@ export default async function AppRtoQuizPage() {
     </div>
   );
 }
-
-
-    
