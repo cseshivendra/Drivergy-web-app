@@ -15,7 +15,7 @@ import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInWithCredentials, loading } from useAuth();
+  const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
