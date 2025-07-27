@@ -67,9 +67,8 @@ export default function AdminDashboard() {
     const [tempSearchTerm, setTempSearchTerm] = useState('');
 
     useEffect(() => {
-        // If it's the mock admin and Firebase is not configured (e.g., local dev without keys),
-        // use mock data and stop. This allows the dashboard to render without errors.
-        if (user?.uniqueId === 'AD-001' && !isFirebaseConfigured()) {
+        // If it's the mock admin, use mock data and stop to prevent live permission errors.
+        if (user?.uniqueId === 'AD-001') {
             console.log("Running in local mock admin mode.");
             setSummaryData({ totalCustomers: 0, totalInstructors: 0, activeSubscriptions: 0, pendingRequests: 0, pendingRescheduleRequests: 0, totalEarnings: 0, totalCertifiedTrainers: 0});
             setAllCustomers([]);
@@ -87,8 +86,13 @@ export default function AdminDashboard() {
             setLoading(false);
             return;
         }
+        
+        // For all other cases (real users), set up listeners if firebase is configured.
+        if (!isFirebaseConfigured()) {
+            setLoading(false);
+            return;
+        }
 
-        // For all other cases (real users or mock admin on live site), set up listeners.
         setLoading(true);
         const subscriptions = [
             listenToSummaryData(setSummaryData),
