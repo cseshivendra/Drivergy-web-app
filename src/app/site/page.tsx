@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -377,70 +376,58 @@ export default function PortfolioSitePage() {
         </section>
 
     {/* Courses Section */}
-        <section id="courses" className="py-16 md:py-24 bg-background">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
-                <div className="text-center mb-12">
-                    <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
-                    <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
-                        Enroll in our top-rated driving courses designed for all skill levels. Get certified and drive with confidence.
-                    </p>
+    <section id="courses" className="py-16 md:py-24 bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in-up">
+        <div className="text-center mb-12">
+          <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary">Our Driving School Courses</h2>
+          <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+            Enroll in our top-rated driving courses designed for all skill levels. Get certified and drive with confidence.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {coursesData.map((course) => (
+            <Card key={course.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
+              <div className="relative h-48 w-full">
+                <Image src={course.imageSrc} alt={course.title} layout="fill" objectFit="cover" data-ai-hint={course.imageHint} />
+              </div>
+              <CardHeader className="pb-3">
+                <div className="flex items-center mb-2">
+                  <div className="p-2 bg-primary/10 rounded-md mr-3">
+                    <course.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle as="h3" className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {coursesData.map((course) => (
-                        <div key={course.id} className="perspective-1000 h-[28rem]">
-                            <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === course.id })}>
-                                {/* Front of the Card */}
-                                <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden flex flex-col">
-                                    <div className="relative h-48 w-full">
-                                        <Image src={course.imageSrc} alt={course.title} layout="fill" objectFit="cover" data-ai-hint={course.imageHint} />
-                                    </div>
-                                    <CardHeader className="pb-3">
-                                        <div className="flex items-center mb-2">
-                                            <div className="p-2 bg-primary/10 rounded-md mr-3">
-                                                <course.icon className="h-6 w-6 text-primary" />
-                                            </div>
-                                            <CardTitle as="h3" className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow">
-                                        <p className="text-muted-foreground text-sm">{course.description}</p>
-                                    </CardContent>
-                                    <CardFooter className="mt-auto pt-4 border-t border-border/50">
-                                        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setFlippedCardId(course.id)}>
-                                            View Details
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-
-                                {/* Back of the Card */}
-                                <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
-                                    <CardHeader>
-                                        <CardTitle as="h3" className="font-headline text-xl font-semibold">{course.title}</CardTitle>
-                                        <CardDescription className="text-primary-foreground/80">Key Features</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-grow">
-                                        <ul className="space-y-3">
-                                            {course.details.map((detail, index) => (
-                                                <li key={index} className="flex items-start">
-                                                    <Check className="h-5 w-5 mr-3 mt-0.5 shrink-0" />
-                                                    <span>{detail}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button className="w-full" variant="secondary" onClick={() => setFlippedCardId(null)}>
-                                            Flip Back
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-
+                 <CardDescription>{course.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                 <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="details" className="border-b-0">
+                        <AccordionTrigger className="text-sm font-semibold hover:no-underline py-2">
+                            View Course Details
+                        </AccordionTrigger>
+                        <AccordionContent className="text-sm px-1 pb-3">
+                           <ul className="space-y-2 text-muted-foreground">
+                              {course.details.map((detail, index) => (
+                                <li key={index} className="flex items-center">
+                                    <Check className="h-4 w-4 mr-2 text-green-500 shrink-0" />
+                                    <span>{detail}</span>
+                                </li>
+                               ))}
+                            </ul>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+              </CardContent>
+              <CardFooter className="mt-auto pt-4 border-t border-border/50">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
+                  <Link href="/site/register">Enroll Now</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
 
       {/* Subscription Plans Section */}
         <section id="subscriptions" className="py-16 md:py-24 bg-muted/30">
