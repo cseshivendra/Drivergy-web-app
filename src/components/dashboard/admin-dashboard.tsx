@@ -37,6 +37,7 @@ import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
+import { isFirebaseConfigured } from '@/lib/firebase';
 
 
 export default function AdminDashboard() {
@@ -66,16 +67,10 @@ export default function AdminDashboard() {
     const [tempSearchTerm, setTempSearchTerm] = useState('');
 
     useEffect(() => {
-        if (!user) {
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-
-        // If it's the mock admin, don't try to fetch from Firebase.
-        // This prevents the permission errors and allows the dashboard to render.
-        if (user.uniqueId === 'AD-001') {
+        // If it's the mock admin and Firebase is not configured (e.g., local dev without keys),
+        // use mock data and stop. This allows the dashboard to render without errors.
+        if (user?.uniqueId === 'AD-001' && !isFirebaseConfigured()) {
+            console.log("Running in local mock admin mode.");
             setSummaryData({ totalCustomers: 0, totalInstructors: 0, activeSubscriptions: 0, pendingRequests: 0, pendingRescheduleRequests: 0, totalEarnings: 0, totalCertifiedTrainers: 0});
             setAllCustomers([]);
             setAllTrainers([]);
@@ -93,6 +88,8 @@ export default function AdminDashboard() {
             return;
         }
 
+        // For all other cases (real users or mock admin on live site), set up listeners.
+        setLoading(true);
         const subscriptions = [
             listenToSummaryData(setSummaryData),
             listenToAllLessonRequests(setAllLessonRequests),
