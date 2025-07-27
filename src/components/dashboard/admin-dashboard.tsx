@@ -88,7 +88,7 @@ export default function AdminDashboard() {
         }
         
         // For all other cases (real users), set up listeners if firebase is configured.
-        if (!isFirebaseConfigured()) {
+        if (!isFirebaseConfigured() || !user) {
             setLoading(false);
             return;
         }
