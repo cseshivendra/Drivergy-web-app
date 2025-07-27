@@ -23,7 +23,6 @@ import {
     listenToAllReferrals,
     listenToCourses,
     listenToAllUsers,
-    listenToAllTrainers,
 } from '@/lib/mock-data';
 import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral } from '@/types';
 import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users } from 'lucide-react';
@@ -98,7 +97,7 @@ export default function AdminDashboard() {
             listenToSummaryData(setSummaryData),
             listenToAllLessonRequests(setAllLessonRequests),
             listenToAllFeedback(setFeedback),
-            listenToAllReferrals(setReferrals),
+            listenToAllReferrals(setAllReferrals),
             listenToCustomerLessonProgress(setLessonProgress),
             listenToCourses(setCourses),
             listenToQuizSets(setQuizSets),
@@ -106,8 +105,10 @@ export default function AdminDashboard() {
             listenToBlogPosts(setBlogPosts),
             listenToSiteBanners(setSiteBanners),
             listenToPromotionalPosters(setPromotionalPosters),
-            listenToAllUsers(setAllCustomers),
-            listenToAllTrainers(setAllTrainers),
+            listenToAllUsers((allUsers) => {
+                setAllCustomers(allUsers.filter(u => u.uniqueId?.startsWith('CU')));
+                setAllTrainers(allUsers.filter(u => u.uniqueId?.startsWith('TR')));
+            }),
         ].filter(Boolean);
 
         // Unified loading state management
@@ -337,3 +338,5 @@ export default function AdminDashboard() {
         </div>
     );
 }
+
+    

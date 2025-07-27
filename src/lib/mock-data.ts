@@ -85,20 +85,18 @@ export const authenticateUserByCredentials = async (username: string, password: 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!db || !userId) return null;
     try {
-        let userQuery;
-        // Check if the ID is a Firebase Auth UID or a Drivergy uniqueId
-        if (userId.startsWith('CU-') || userId.startsWith('TR-') || userId.startsWith('AD-')) {
-            const collectionName = userId.startsWith('TR-') ? 'trainers' : 'users';
-            userQuery = query(collection(db, collectionName), where('uniqueId', '==', userId), limit(1));
-        } else {
-            // Assume it's a Firestore document ID (which is the Firebase Auth UID)
-             const collectionsToSearch = ['users', 'trainers'];
-            for (const collectionName of collectionsToSearch) {
+        const collectionsToSearch = ['users', 'trainers'];
+        for (const collectionName of collectionsToSearch) {
+            let userQuery;
+            if (userId.startsWith('CU-') || userId.startsWith('TR-') || userId.startsWith('AD-')) {
+                userQuery = query(collection(db, collectionName), where('uniqueId', '==', userId), limit(1));
+            } else {
                 const userRef = doc(db, collectionName, userId);
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists()) {
                     const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
-                     if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+                    // Logic to fetch trainer details for a customer
+                    if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
                         const trainerSnap = await getDoc(doc(db, "trainers", user.assignedTrainerId));
                         if (trainerSnap.exists()) {
                             const trainer = trainerSnap.data() as UserProfile;
@@ -109,29 +107,28 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
                     }
                     return user;
                 }
+                continue; 
             }
-            return null; // Not found in any collection
-        }
 
-        const querySnapshot = await getDocs(userQuery);
-        if (querySnapshot.empty) {
-            return null;
-        }
-
-        const userDoc = querySnapshot.docs[0];
-        const user = { id: userDoc.id, ...userDoc.data() } as UserProfile;
-
-        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerRef = doc(db, "trainers", user.assignedTrainerId);
-            const trainerSnap = await getDoc(trainerRef);
-            if (trainerSnap.exists()) {
-                const trainer = trainerSnap.data() as UserProfile;
-                user.assignedTrainerPhone = trainer.phone;
-                user.assignedTrainerExperience = trainer.yearsOfExperience;
-                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+            const querySnapshot = await getDocs(userQuery);
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                const user = { id: userDoc.id, ...userDoc.data() } as UserProfile;
+                 // Logic to fetch trainer details for a customer
+                if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+                    const trainerRef = doc(db, "trainers", user.assignedTrainerId);
+                    const trainerSnap = await getDoc(trainerRef);
+                    if (trainerSnap.exists()) {
+                        const trainer = trainerSnap.data() as UserProfile;
+                        user.assignedTrainerPhone = trainer.phone;
+                        user.assignedTrainerExperience = trainer.yearsOfExperience;
+                        user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+                    }
+                }
+                return user;
             }
         }
-        return user;
+        return null; // Not found in any collection
     } catch(error: any) {
         console.error(`Error fetching user ${userId}:`, error);
         return null;
@@ -335,19 +332,6 @@ export function listenToAllUsers(callback: (data: UserProfile[]) => void) {
         callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile)));
     }, (error) => {
         console.error("Error listening to users:", error);
-    });
-}
-
-export function listenToAllTrainers(callback: (data: UserProfile[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-        callback([]);
-        return () => {};
-    }
-    const q = query(collection(db, 'trainers'), orderBy('registrationTimestamp', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile)));
-    }, (error) => {
-        console.error("Error listening to trainers:", error);
     });
 }
 
@@ -1060,3 +1044,5 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
 
     
 
+
+    
