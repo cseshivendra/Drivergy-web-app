@@ -63,17 +63,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle setting the user and redirecting.
-       toast({
-        title: `Login Successful!`,
-        description: 'Redirecting to your dashboard...',
-      });
+      const result = await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle setting the user, but we can pre-emptively log them in here
+      // to ensure state is set before any redirect logic might fire elsewhere.
+      const profile = await getOrCreateUser(result.user);
+      if (profile) {
+        logInUser(profile, true);
+      } else {
+         throw new Error("Could not retrieve user profile after Google sign-in.");
+      }
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       // Don't show toast for user-closed popup
       if (error.code !== 'auth/popup-closed-by-user') {
-          toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
+          toast({ title: "Sign-In Failed", description: error.message || "An error occurred during Google sign-in.", variant: "destructive" });
       }
       setLoading(false);
     }
