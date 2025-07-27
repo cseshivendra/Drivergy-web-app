@@ -1,5 +1,3 @@
-
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -12,7 +10,7 @@ import { uploadFile } from './server-actions';
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
-export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserProfile | null> {
+export async function getOrCreateUser(firebaseUser: FirebaseUser, additionalData?: Partial<UserProfile>): Promise<UserProfile | null> {
     if (!db) return null;
     const userRef = doc(db, "users", firebaseUser.uid);
     const userSnap = await getDoc(userRef);
@@ -20,21 +18,23 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
     if (userSnap.exists()) {
         return { id: userSnap.id, ...userSnap.data() } as UserProfile;
     } else {
-        // This path is for brand new users, typically from Google Sign-In for the first time
+        const email = firebaseUser.email || (additionalData?.contact ?? '');
+        const name = firebaseUser.displayName || (additionalData?.name ?? 'New User');
+
         const newUser: Omit<UserProfile, 'id'> = {
             uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
-            name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'New User',
-            username: firebaseUser.email || '',
-            contact: firebaseUser.email || '',
-            phone: firebaseUser.phoneNumber || '',
-            gender: 'Prefer not to say',
+            name: name,
+            contact: email,
+            phone: firebaseUser.phoneNumber || additionalData?.phone || '',
+            gender: additionalData?.gender || 'Prefer not to say',
             location: 'TBD',
             subscriptionPlan: 'None',
             registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
             approvalStatus: 'Pending',
-            myReferralCode: `${(firebaseUser.displayName || 'USER').split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-            photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${(firebaseUser.displayName || 'U').charAt(0)}`,
+            myReferralCode: `${name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
+            photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
             totalReferralPoints: 0,
+            ...additionalData,
         };
         try {
             await setDoc(userRef, newUser);
@@ -43,42 +43,6 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser): Promise<UserP
             console.error("Error creating new user in Firestore:", error);
             return null;
         }
-    }
-};
-
-export const authenticateUserByCredentials = async (username: string, password: string): Promise<UserProfile | null> => {
-    // This is a mock authentication for the sample admin user.
-    if (username === 'admin' && password === 'admin') {
-        const adminUser: UserProfile = {
-            id: 'admin-user-id',
-            uniqueId: 'AD-001',
-            name: 'Admin User',
-            username: 'admin',
-            contact: 'admin@drivergy.in',
-            subscriptionPlan: 'Admin',
-            approvalStatus: 'Approved',
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            location: 'HQ',
-            gender: 'Other',
-            isAdmin: true,
-        };
-        return adminUser;
-    }
-    
-    // Fallback to Firebase for other users if needed (or keep it separate)
-    if (!db) return null;
-    try {
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("username", "==", username), where("password", "==", password), limit(1));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) return null;
-
-        const userDoc = querySnapshot.docs[0];
-        return { id: userDoc.id, ...userDoc.data() } as UserProfile;
-    } catch (error: any) {
-        console.error("Error authenticating user:", error);
-        return null;
     }
 };
 
@@ -181,37 +145,6 @@ export async function changeUserPassword(userId: string, currentPassword: string
         return false;
     }
 };
-
-export async function addCustomer(data: CustomerRegistrationFormValues): Promise<UserProfile | null> {
-    if (!db) return null;
-
-    const newUser: Omit<UserProfile, 'id'> = {
-        uniqueId: `CU-${generateId().slice(-6).toUpperCase()}`,
-        name: data.name,
-        username: data.username,
-        password: data.password,
-        contact: data.email,
-        phone: data.phone,
-        gender: data.gender,
-        location: "TBD", // To be determined
-        subscriptionPlan: "None", // Start with no plan
-        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-        approvalStatus: 'Pending', // Pending profile completion
-        myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId().slice(-4)}`,
-        photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
-        totalReferralPoints: 0,
-    };
-
-    try {
-        const userRef = doc(collection(db, 'users'));
-        await setDoc(userRef, newUser);
-        return { id: userRef.id, ...newUser };
-    } catch (error: any) {
-        console.error("Error adding customer:", error);
-        return null;
-    }
-};
-
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!db) return false;
@@ -496,7 +429,7 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
         }
         const user = { id: snap.id, ...snap.data() } as UserProfile;
         if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerSnap = await getDoc(doc(db!, "trainers", user.assignedTrainerId));
+            const trainerSnap = await getDoc(doc(db!, "users", user.assignedTrainerId));
             if (trainerSnap.exists()) {
                 const trainer = trainerSnap.data() as UserProfile;
                 user.assignedTrainerPhone = trainer.phone;

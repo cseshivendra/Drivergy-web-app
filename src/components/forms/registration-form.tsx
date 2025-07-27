@@ -27,7 +27,7 @@ import {
   type CustomerRegistrationFormValues,
   TrainerPreferenceOptions,
 } from '@/types';
-import { addCustomer } from '@/lib/mock-data';
+import { useAuth } from '@/context/auth-context';
 import { registerTrainerAction } from '@/lib/server-actions';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
@@ -40,17 +40,17 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { signUpWithCredentials } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const defaultValues = useMemo((): RegistrationFormValues => {
     const base = {
       userRole: userRole,
-      username: '',
-      password: '',
-      confirmPassword: '',
       name: '',
       email: '',
+      password: '',
+      confirmPassword: '',
       phone: '',
       gender: '',
     };
@@ -62,6 +62,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     } else { // trainer
       return {
         ...base,
+        username: '', // username is now part of trainer schema
         location: '',
         yearsOfExperience: undefined,
         specialization: undefined,
@@ -91,8 +92,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         if (selectedGender === 'Male') {
             return ['Male'];
         }
-        // For Female, 'Other', 'Prefer not to say', show all options
-        return TrainerPreferenceOptions.slice(); // Return a copy of the original array
+        return TrainerPreferenceOptions.slice();
     }
     return [];
   }, [selectedGender, userRole]);
@@ -101,7 +101,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     if (userRole === 'customer') {
       const currentPreference = form.getValues('trainerPreference');
       if (currentPreference && !trainerOptions.includes(currentPreference)) {
-        form.setValue('trainerPreference', ''); // Reset if current option is invalid
+        form.setValue('trainerPreference', '');
       }
     }
   }, [selectedGender, trainerOptions, form, userRole]);
@@ -109,16 +109,17 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   async function onSubmit(data: RegistrationFormValues) {
     try {
       if (data.userRole === 'customer') {
-        const newUser = await addCustomer(data as CustomerRegistrationFormValues);
-        if (newUser) {
-          toast({
+        await signUpWithCredentials(data.email, data.password, {
+            name: data.name,
+            phone: data.phone,
+            gender: data.gender,
+            trainerPreference: data.trainerPreference || 'Any',
+        });
+        toast({
             title: "Registration Successful!",
             description: "Your account has been created. Please log in to continue.",
-          });
-          router.push('/login');
-        } else {
-          throw new Error("Registration failed: No user data returned.");
-        }
+        });
+        router.push('/login');
       } else if (data.userRole === 'trainer') {
         const formData = new FormData();
         Object.entries(data).forEach(([key, value]) => {
@@ -157,19 +158,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
             <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
+              control={form.control}
+              name="email"
+              render={({ field }) => (
                 <FormItem>
-                <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
-                <FormControl>
-                    <Input placeholder="Create a username" {...field} />
-                </FormControl>
-                <FormMessage />
+                  <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Email Address<span className="text-destructive ml-1">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="you@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
-            )}
+              )}
             />
-             <FormField
+            <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
@@ -244,20 +245,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Email Address<span className="text-destructive ml-1">*</span></FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="you@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
+           <FormField
             control={form.control}
             name="phone"
             render={({ field }) => (
@@ -273,7 +261,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                       placeholder="Enter 10-digit number"
                       {...field}
                       className="rounded-l-none"
-                      value={field.value || ''} // Ensure value is controlled, handles undefined
+                      value={field.value || ''}
                     />
                   </FormControl>
                 </div>
@@ -281,8 +269,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               </FormItem>
             )}
           />
-        </div>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
           <FormField
             control={form.control}
             name="gender"
@@ -305,6 +291,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
               </FormItem>
             )}
           />
+        </div>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
            {userRole === 'customer' && (
              <FormField
                 control={form.control}
@@ -328,6 +316,21 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </FormItem>
                 )}
             />
+           )}
+           {userRole === 'trainer' && (
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
+                    <FormControl>
+                        <Input placeholder="Create a username" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
            )}
         </div>
 

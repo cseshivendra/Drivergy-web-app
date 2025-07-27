@@ -2,11 +2,11 @@
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword as firebaseSignInWithEmailAndPassword } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, getOrCreateUser } from '@/lib/mock-data';
+import { getOrCreateUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { format } from 'date-fns';
@@ -18,6 +18,7 @@ interface AuthContextType {
   signInWithCredentials: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
+  signUpWithCredentials: (email: string, password: string, additionalData: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,14 +44,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for mock admin session first. If it exists, use it and bypass Firebase.
     if (sessionStorage.getItem('mockAdmin') === 'true') {
         setUser(adminUser);
         setLoading(false);
         return;
     }
 
-    // If not mock admin, proceed with Firebase auth listener.
     if (!auth) {
       setLoading(false);
       return;
@@ -83,9 +82,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      // Let the onAuthStateChanged listener handle setting the user state.
-      // It will fetch the full profile, including the isAdmin flag.
+      await signInWithPopup(auth, provider);
+      // onAuthStateChanged will handle setting the user state.
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -95,27 +93,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const signInWithCredentials = async (username: string, password: string): Promise<void> => {
+  const signInWithCredentials = async (email: string, password: string): Promise<void> => {
     setLoading(true);
 
-    if (username === 'admin' && password === 'admin') {
+    if (email === 'admin' && password === 'admin') {
         sessionStorage.setItem('mockAdmin', 'true');
         logInUser(adminUser, true);
         return;
     }
 
-    const userProfile = await authenticateUserByCredentials(username, password);
-    if (userProfile) {
-      logInUser(userProfile, true); 
-    } else {
+    if (!auth) {
+      toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await firebaseSignInWithEmailAndPassword(auth, email, password);
+      // onAuthStateChanged will handle the rest.
+    } catch (error: any) {
       setLoading(false);
       toast({
         title: 'Login Failed',
-        description: 'Invalid username or password.',
+        description: 'Invalid email or password.',
         variant: 'destructive',
       });
     }
   };
+
+  const signUpWithCredentials = async (email: string, password: string, additionalData: Partial<UserProfile>) => {
+    if (!auth) {
+      toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
+      await getOrCreateUser(firebaseUser, additionalData);
+      // Don't set user state here, onAuthStateChanged will handle it.
+      // This prevents a race condition on login after registration.
+    } catch (error: any) {
+      console.error("Sign up error:", error);
+      toast({ title: "Registration Failed", description: error.message || "An error occurred during sign up.", variant: "destructive" });
+    } finally {
+        setLoading(false);
+    }
+  };
+
 
   const signOut = async () => {
     setLoading(true);
@@ -146,7 +170,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials, signUpWithCredentials }}>
       {children}
     </AuthContext.Provider>
   );
