@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -14,7 +15,7 @@ import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
+  const { user, signInWithGoogle, signInWithCredentials, loading } from useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');

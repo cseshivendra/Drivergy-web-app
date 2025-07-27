@@ -22,6 +22,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const adminUser: UserProfile = {
+    id: 'admin-user-id',
+    uniqueId: 'AD-001',
+    name: 'Admin User',
+    username: 'admin',
+    contact: 'admin@drivergy.in',
+    subscriptionPlan: 'Admin',
+    approvalStatus: 'Approved',
+    registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+    location: 'HQ',
+    gender: 'Other',
+    isAdmin: true,
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,24 +43,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check for mock admin session first. If it exists, use it and bypass Firebase.
+    if (sessionStorage.getItem('mockAdmin') === 'true') {
+        setUser(adminUser);
+        setLoading(false);
+        return;
+    }
+
+    // If not mock admin, proceed with Firebase auth listener.
     if (!auth) {
       setLoading(false);
       return;
     }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // If a Firebase user is detected, fetch or create their profile.
         const profile = await getOrCreateUser(firebaseUser);
         if (profile) {
             setUser(profile);
         } else {
-            // This case handles errors during profile creation
             setUser(null);
             toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
             await firebaseSignOut(auth);
         }
-      } else if (sessionStorage.getItem('mockAdmin') !== 'true') {
-        // If no Firebase user and not a mock admin, clear the user.
+      } else {
         setUser(null);
       }
       setLoading(false);
@@ -64,8 +84,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle setting the user, but we can pre-emptively log them in here
-      // to ensure state is set before any redirect logic might fire elsewhere.
       const profile = await getOrCreateUser(result.user);
       if (profile) {
         logInUser(profile, true);
@@ -74,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
-      // Don't show toast for user-closed popup
       if (error.code !== 'auth/popup-closed-by-user') {
           toast({ title: "Sign-In Failed", description: error.message || "An error occurred during Google sign-in.", variant: "destructive" });
       }
@@ -85,22 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithCredentials = async (username: string, password: string): Promise<void> => {
     setLoading(true);
 
-    // Hardcoded admin check
     if (username === 'admin' && password === 'admin') {
-        const adminUser: UserProfile = {
-            id: 'admin-user-id',
-            uniqueId: 'AD-001',
-            name: 'Admin User',
-            username: 'admin',
-            contact: 'admin@drivergy.in',
-            subscriptionPlan: 'Admin',
-            approvalStatus: 'Approved',
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            location: 'HQ',
-            gender: 'Other',
-            isAdmin: true,
-        };
-        // Use a session storage flag for the mock admin
         sessionStorage.setItem('mockAdmin', 'true');
         logInUser(adminUser, true);
         return;
@@ -124,7 +126,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (auth?.currentUser) {
         await firebaseSignOut(auth);
     }
-    // Clear the mock admin flag on any sign out
     sessionStorage.removeItem('mockAdmin');
     setUser(null); 
     setLoading(false);
