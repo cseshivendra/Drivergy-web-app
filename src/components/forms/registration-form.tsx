@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,7 +63,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     } else { // trainer
       return {
         ...base,
-        username: '', // username is now part of trainer schema
         location: '',
         yearsOfExperience: undefined,
         specialization: undefined,
@@ -316,21 +316,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </FormItem>
                 )}
             />
-           )}
-           {userRole === 'trainer' && (
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                        <Input placeholder="Create a username" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
            )}
         </div>
 

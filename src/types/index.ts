@@ -40,7 +40,7 @@ export const UserProfileSchema = z.object({
   uniqueId: z.string(),
   name: z.string(),
   username: z.string().optional(),
-  password: z.string().optional(),
+  isAdmin: z.boolean().optional(),
   contact: z.string().email(),
   phone: z.string().optional(),
   location: z.string(),
@@ -109,7 +109,6 @@ const passwordSchema = z.string()
 
 const baseRegistrationSchema = z.object({
   userRole: z.enum(['customer', 'trainer']),
-  username: z.string().min(3, "Username must be at least 3 characters.").max(20, "Username must be less than 20 characters."),
   password: passwordSchema,
   confirmPassword: z.string(),
   name: z.string().min(1, 'Name is required.'),
@@ -462,5 +461,3 @@ export interface PromotionalPoster {
   title: string;
   description: string;
 }
-
-    

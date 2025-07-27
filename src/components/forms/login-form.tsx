@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
@@ -114,11 +115,11 @@ export default function LoginForm() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="flex items-center"><AtSign className="mr-2 h-4 w-4" />Email Address</Label>
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="Enter your email" 
+                  placeholder="Enter your email address" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}

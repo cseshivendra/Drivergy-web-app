@@ -9,20 +9,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInWithCredentials, loading } from useAuth();
+  const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
@@ -36,12 +36,12 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
-        toast({ title: 'Error', description: 'Please enter both username and password.', variant: 'destructive' });
+    if (!email || !password) {
+        toast({ title: 'Error', description: 'Please enter both email and password.', variant: 'destructive' });
         return;
     }
     // The signInWithCredentials function in the context will now handle the redirect on success.
-    await signInWithCredentials(username, password);
+    await signInWithCredentials(email, password);
   };
 
   const handleGoogleSignIn = () => {
@@ -116,15 +116,15 @@ export default function LoginPage() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="email" className="flex items-center"><AtSign className="mr-2 h-4 w-4" />Email Address</Label>
                 <Input 
-                  id="username" 
-                  type="text" 
-                  placeholder="Enter your username" 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="email" 
+                  type="email" 
+                  placeholder="Enter your email address" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
               <div>
