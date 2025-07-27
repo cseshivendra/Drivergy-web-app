@@ -553,13 +553,19 @@ export function listenToSummaryData(callback: (data: Partial<SummaryData>) => vo
     
     let summary: Partial<SummaryData> = {};
 
-    const usersUnsub = onSnapshot(collection(db!, 'users'), (snap) => {
-        const users = snap.docs.map(doc => doc.data() as UserProfile);
+    const unsubAll = onSnapshot(collection(db!, 'users'), (snap) => {
+        const allUsers = snap.docs.map(doc => doc.data() as UserProfile);
+        
+        const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
+        const trainers = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
+        
         summary = {
             ...summary,
-            totalCustomers: users.filter(u => u.uniqueId?.startsWith('CU')).length,
-            activeSubscriptions: users.filter(u => u.approvalStatus === 'Approved').length,
-            totalEarnings: users.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
+            totalCustomers: customers.length,
+            totalInstructors: trainers.length,
+            activeSubscriptions: customers.filter(u => u.approvalStatus === 'Approved').length,
+            totalCertifiedTrainers: trainers.filter(u => u.approvalStatus === 'Approved').length,
+            totalEarnings: customers.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
                 if (user.subscriptionPlan === 'Premium') return acc + 9999;
                 if (user.subscriptionPlan === 'Gold') return acc + 7499;
                 if (user.subscriptionPlan === 'Basic') return acc + 3999;
@@ -568,19 +574,7 @@ export function listenToSummaryData(callback: (data: Partial<SummaryData>) => vo
         };
         callback(summary);
     }, (error) => {
-      console.error("Error listening to users for summary:", error);
-    });
-
-    const trainersUnsub = onSnapshot(collection(db!, 'trainers'), (snap) => {
-        const trainers = snap.docs.map(doc => doc.data() as UserProfile);
-        summary = {
-            ...summary,
-            totalInstructors: trainers.length,
-            totalCertifiedTrainers: trainers.filter(u => u.approvalStatus === 'Approved').length,
-        };
-        callback(summary);
-    }, (error) => {
-        console.error("Error listening to trainers for summary:", error);
+      console.error("Error listening to all users for summary:", error);
     });
 
     const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
@@ -598,8 +592,7 @@ export function listenToSummaryData(callback: (data: Partial<SummaryData>) => vo
     });
 
     return () => {
-        usersUnsub();
-        trainersUnsub();
+        unsubAll();
         requestsUnsub();
         rescheduleUnsub();
     };
@@ -1039,4 +1032,3 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
         return { ...course, icon: newIcon };
     });
 };
-

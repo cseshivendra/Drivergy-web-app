@@ -84,12 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const profile = await getOrCreateUser(result.user);
-      if (profile) {
-        logInUser(profile, true);
-      } else {
-         throw new Error("Could not retrieve user profile after Google sign-in.");
-      }
+      // Let the onAuthStateChanged listener handle setting the user state.
+      // It will fetch the full profile, including the isAdmin flag.
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       if (error.code !== 'auth/popup-closed-by-user') {

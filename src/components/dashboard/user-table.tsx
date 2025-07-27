@@ -284,8 +284,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                                   className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
                                   aria-label={`View details for ${user.name}`}
                                 >
-                                  <Eye className="h-3.5 w-3.5" />
-                                  <span className="ml-1.5 hidden sm:inline">View Details</span>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
                                 </Button>
                               </div>
                           ) : (

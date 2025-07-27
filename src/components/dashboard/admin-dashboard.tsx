@@ -45,8 +45,7 @@ export default function AdminDashboard() {
     const activeTab = searchParams.get('tab');
 
     const [summaryData, setSummaryData] = useState<Partial<SummaryData>>({});
-    const [allCustomers, setAllCustomers] = useState<UserProfile[]>([]);
-    const [allTrainers, setAllTrainers] = useState<UserProfile[]>([]);
+    const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
     const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
     const [feedback, setFeedback] = useState<Feedback[]>([]);
     const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
@@ -70,8 +69,7 @@ export default function AdminDashboard() {
         if (user?.uniqueId === 'AD-001') {
             console.log("Running in local mock admin mode.");
             setSummaryData({ totalCustomers: 0, totalInstructors: 0, activeSubscriptions: 0, pendingRequests: 0, pendingRescheduleRequests: 0, totalEarnings: 0, totalCertifiedTrainers: 0});
-            setAllCustomers([]);
-            setAllTrainers([]);
+            setAllUsers([]);
             setAllLessonRequests([]);
             setFeedback([]);
             setReferrals([]);
@@ -105,10 +103,7 @@ export default function AdminDashboard() {
             listenToBlogPosts(setBlogPosts),
             listenToSiteBanners(setSiteBanners),
             listenToPromotionalPosters(setPromotionalPosters),
-            listenToAllUsers((allUsers) => {
-                setAllCustomers(allUsers.filter(u => u.uniqueId?.startsWith('CU')));
-                setAllTrainers(allUsers.filter(u => u.uniqueId?.startsWith('TR')));
-            }),
+            listenToAllUsers(setAllUsers),
         ].filter(Boolean);
 
         // Unified loading state management
@@ -126,8 +121,8 @@ export default function AdminDashboard() {
     }, [user]);
 
 
-    const filteredCustomers = useMemo(() => {
-        return allCustomers.filter(user => {
+    const filteredUsers = useMemo(() => {
+        return allUsers.filter(user => {
             const searchTermMatch = !searchTerm || (
                 user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -142,30 +137,13 @@ export default function AdminDashboard() {
 
             return locationMatch && subscriptionMatch;
         });
-    }, [allCustomers, filters, searchTerm]);
+    }, [allUsers, filters, searchTerm]);
 
-    const filteredTrainers = useMemo(() => {
-        return allTrainers.filter(user => {
-            const searchTermMatch = !searchTerm || (
-                user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (user.contact && user.contact.toLowerCase().includes(searchTerm.toLowerCase()))
-            );
-
-            // If a search term is present, only match against that.
-            if (searchTerm) return searchTermMatch;
-
-            const locationMatch = !filters.location || user.location === filters.location;
-
-            return locationMatch;
-        });
-    }, [allTrainers, filters, searchTerm]);
-
-    // Separate lists for different customer states
-    const interestedCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
-    const pendingVerificationCustomers = useMemo(() => filteredCustomers.filter(u => u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredCustomers]);
-    const pendingInstructors = useMemo(() => filteredTrainers.filter(u => !u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress'), [filteredTrainers]);
-    const existingInstructors = useMemo(() => filteredTrainers.filter(u => u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredTrainers]);
+    // Separate lists for different user states
+    const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
+    const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
 
 
     const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
