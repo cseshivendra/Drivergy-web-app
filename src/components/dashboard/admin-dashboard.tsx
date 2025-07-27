@@ -10,22 +10,9 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
-import {
-    listenToSummaryData,
-    listenToAllLessonRequests,
-    listenToAllFeedback,
-    listenToCustomerLessonProgress,
-    listenToQuizSets,
-    listenToFaqs,
-    listenToBlogPosts,
-    listenToSiteBanners,
-    listenToPromotionalPosters,
-    listenToAllReferrals,
-    listenToCourses,
-    listenToAllUsers,
-} from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, RescheduleRequest, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral } from '@/types';
-import { UserCheck, Search, ListChecks, Repeat, MessageSquare, History, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users } from 'lucide-react';
+import { listenToAdminDashboardData } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData } from '@/types';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -36,7 +23,6 @@ import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
-import { isFirebaseConfigured } from '@/lib/firebase';
 
 
 export default function AdminDashboard() {
@@ -44,20 +30,7 @@ export default function AdminDashboard() {
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab');
 
-    const [summaryData, setSummaryData] = useState<Partial<SummaryData>>({});
-    const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
-    const [allLessonRequests, setAllLessonRequests] = useState<LessonRequest[]>([]);
-    const [feedback, setFeedback] = useState<Feedback[]>([]);
-    const [lessonProgress, setLessonProgress] = useState<LessonProgressData[]>([]);
-    const [referrals, setReferrals] = useState<Referral[]>([]);
-
-    const [courses, setCourses] = useState<Course[]>([]);
-    const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
-    const [faqs, setFaqs] = useState<FaqItem[]>([]);
-    const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-    const [siteBanners, setSiteBanners] = useState<SiteBanner[]>([]);
-    const [promotionalPosters, setPromotionalPosters] = useState<PromotionalPoster[]>([]);
-
+    const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
 
     const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
@@ -65,64 +38,27 @@ export default function AdminDashboard() {
     const [tempSearchTerm, setTempSearchTerm] = useState('');
 
     useEffect(() => {
-        // If it's the mock admin, use mock data and stop to prevent live permission errors.
-        if (user?.uniqueId === 'AD-001') {
-            console.log("Running in local mock admin mode.");
-            setSummaryData({ totalCustomers: 0, totalInstructors: 0, activeSubscriptions: 0, pendingRequests: 0, pendingRescheduleRequests: 0, totalEarnings: 0, totalCertifiedTrainers: 0});
-            setAllUsers([]);
-            setAllLessonRequests([]);
-            setFeedback([]);
-            setReferrals([]);
-            setLessonProgress([]);
-            setCourses([]);
-            setQuizSets([]);
-            setFaqs([]);
-            setBlogPosts([]);
-            setSiteBanners([]);
-            setPromotionalPosters([]);
-            setLoading(false);
-            return;
-        }
-        
-        // For all other cases (real users), set up listeners if firebase is configured.
-        if (!isFirebaseConfigured() || !user) {
+        if (!user) {
             setLoading(false);
             return;
         }
 
         setLoading(true);
-        const subscriptions = [
-            listenToSummaryData(setSummaryData),
-            listenToAllLessonRequests(setAllLessonRequests),
-            listenToAllFeedback(setFeedback),
-            listenToAllReferrals(setAllReferrals),
-            listenToCustomerLessonProgress(setLessonProgress),
-            listenToCourses(setCourses),
-            listenToQuizSets(setQuizSets),
-            listenToFaqs(setFaqs),
-            listenToBlogPosts(setBlogPosts),
-            listenToSiteBanners(setSiteBanners),
-            listenToPromotionalPosters(setPromotionalPosters),
-            listenToAllUsers(setAllUsers),
-        ].filter(Boolean);
-
-        // Unified loading state management
-        const loadingTimeout = setTimeout(() => {
+        const unsubscribe = listenToAdminDashboardData((data) => {
+            setDashboardData(data);
             setLoading(false);
-        }, 2500); // Increased timeout to allow all listeners to establish
+        });
 
         // Cleanup function
         return () => {
-            subscriptions.forEach(unsubscribe => {
-                if (unsubscribe) unsubscribe();
-            });
-            clearTimeout(loadingTimeout);
+            if (unsubscribe) unsubscribe();
         };
     }, [user]);
 
 
     const filteredUsers = useMemo(() => {
-        return allUsers.filter(user => {
+        if (!dashboardData?.allUsers) return [];
+        return dashboardData.allUsers.filter(user => {
             const searchTermMatch = !searchTerm || (
                 user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,7 +73,7 @@ export default function AdminDashboard() {
 
             return locationMatch && subscriptionMatch;
         });
-    }, [allUsers, filters, searchTerm]);
+    }, [dashboardData?.allUsers, filters, searchTerm]);
 
     // Separate lists for different user states
     const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
@@ -154,14 +90,12 @@ export default function AdminDashboard() {
         setSearchTerm(tempSearchTerm.trim());
     };
 
-    const handleActioned = useCallback(() => {
-        // This function can be used to manually trigger re-fetches if needed,
-        // but with real-time listeners, it's often not necessary.
-    }, []);
+    // With a unified listener, this callback is less critical, but good to keep for potential manual refetches.
+    const handleActioned = useCallback(() => {}, []);
 
     const renderDashboardView = () => (
         <>
-            <SummaryMetrics data={summaryData as SummaryData} isLoading={loading} />
+            <SummaryMetrics data={dashboardData?.summaryData as SummaryData} isLoading={loading} />
             <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
             <Tabs defaultValue="verifications" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
@@ -181,14 +115,14 @@ export default function AdminDashboard() {
                     <UserTable
                         title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>}
                         users={pendingInstructors}
-                        collectionName="trainers"
+                        collectionName="users"
                         isLoading={loading}
                         onUserActioned={handleActioned}
                     />
                     <UserTable
                         title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>}
                         users={existingInstructors}
-                        collectionName="trainers"
+                        collectionName="users"
                         isLoading={loading}
                         onUserActioned={handleActioned}
                     />
@@ -204,21 +138,21 @@ export default function AdminDashboard() {
                     />
                     <RequestTable
                         title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>}
-                        requests={allLessonRequests}
+                        requests={dashboardData?.lessonRequests || []}
                         isLoading={loading}
                     />
                 </TabsContent>
                 <TabsContent value="progress" className="space-y-8">
                     <LessonProgressTable
                         title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
-                        data={lessonProgress}
+                        data={dashboardData?.lessonProgress || []}
                         isLoading={loading}
                     />
                 </TabsContent>
                 <TabsContent value="feedback" className="space-y-8">
                     <FeedbackTable
                         title={<><MessageSquare className="inline-block mr-3 h-6 w-6 align-middle" />Trainer Feedback</>}
-                        feedback={feedback}
+                        feedback={dashboardData?.feedback || []}
                         isLoading={loading}
                     />
                 </TabsContent>
@@ -229,7 +163,7 @@ export default function AdminDashboard() {
     const renderReferralsView = () => (
         <ReferralTable
             title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Program Management</>}
-            referrals={referrals}
+            referrals={dashboardData?.referrals || []}
             isLoading={loading}
             onActioned={handleActioned}
         />
@@ -239,32 +173,32 @@ export default function AdminDashboard() {
         <div className="space-y-8">
             <BlogManagement
                 title={<><BookText className="inline-block mr-3 h-6 w-6 align-middle" />Blog Post Management</>}
-                posts={blogPosts}
+                posts={dashboardData?.blogPosts || []}
                 isLoading={loading}
                 onAction={handleActioned}
             />
             <FaqManagement
                 title={<><HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />FAQ Management</>}
-                faqs={faqs}
+                faqs={dashboardData?.faqs || []}
                 isLoading={loading}
                 onAction={handleActioned}
             />
             <VisualContentManagement
                 title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Banners & Posters Management</>}
-                banners={siteBanners}
-                posters={promotionalPosters}
+                banners={dashboardData?.siteBanners || []}
+                posters={dashboardData?.promotionalPosters || []}
                 isLoading={loading}
                 onAction={handleActioned}
             />
             <CourseManagement
                 title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Content Management</>}
-                courses={courses}
+                courses={dashboardData?.courses || []}
                 isLoading={loading}
                 onAction={handleActioned}
             />
             <QuizManagement
                 title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
-                quizSets={quizSets}
+                quizSets={dashboardData?.quizSets || []}
                 isLoading={loading}
                 onAction={handleActioned}
             />

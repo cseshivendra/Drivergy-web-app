@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 import type { LucideIcon } from 'lucide-react';
 
@@ -460,4 +461,21 @@ export interface PromotionalPoster {
   imageHint: string;
   title: string;
   description: string;
+}
+
+
+// New type for the consolidated admin dashboard data
+export interface AdminDashboardData {
+    summaryData: SummaryData;
+    allUsers: UserProfile[];
+    lessonRequests: LessonRequest[];
+    feedback: Feedback[];
+    referrals: Referral[];
+    lessonProgress: LessonProgressData[];
+    courses: Course[];
+    quizSets: QuizSet[];
+    faqs: FaqItem[];
+    blogPosts: BlogPost[];
+    siteBanners: SiteBanner[];
+    promotionalPosters: PromotionalPoster[];
 }

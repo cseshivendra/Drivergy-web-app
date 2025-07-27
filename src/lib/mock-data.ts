@@ -1,4 +1,4 @@
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from './firebase';
@@ -49,7 +49,7 @@ export async function getOrCreateUser(firebaseUser: FirebaseUser, additionalData
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!db || !userId) return null;
     try {
-        const collectionsToSearch = ['users', 'trainers'];
+        const collectionsToSearch = ['users'];
         for (const collectionName of collectionsToSearch) {
             let userQuery;
             if (userId.startsWith('CU-') || userId.startsWith('TR-') || userId.startsWith('AD-')) {
@@ -61,7 +61,7 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
                     const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
                     // Logic to fetch trainer details for a customer
                     if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-                        const trainerSnap = await getDoc(doc(db, "trainers", user.assignedTrainerId));
+                        const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
                         if (trainerSnap.exists()) {
                             const trainer = trainerSnap.data() as UserProfile;
                             user.assignedTrainerPhone = trainer.phone;
@@ -80,7 +80,7 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
                 const user = { id: userDoc.id, ...userDoc.data() } as UserProfile;
                  // Logic to fetch trainer details for a customer
                 if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-                    const trainerRef = doc(db, "trainers", user.assignedTrainerId);
+                    const trainerRef = doc(db, "users", user.assignedTrainerId);
                     const trainerSnap = await getDoc(trainerRef);
                     if (trainerSnap.exists()) {
                         const trainer = trainerSnap.data() as UserProfile;
@@ -151,7 +151,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     try {
         const customerRef = doc(db, "users", customerId);
         const customerSnap = await getDoc(customerRef);
-        const trainerSnap = await getDoc(doc(db, "trainers", trainerId));
+        const trainerSnap = await getDoc(doc(db, "users", trainerId));
 
         if (!customerSnap.exists() || !trainerSnap.exists()) {
             throw new Error("Assign Trainer Error: Customer or Trainer document not found.");
@@ -255,167 +255,6 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 // =================================================================
 // REAL-TIME LISTENERS
 // =================================================================
-export function listenToAllUsers(callback: (data: UserProfile[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    const q = query(collection(db, 'users'), orderBy('registrationTimestamp', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile)));
-    }, (error) => {
-        console.error("Error listening to users:", error);
-    });
-}
-
-export function listenToAllLessonRequests(callback: (data: LessonRequest[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    const q = query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as LessonRequest)));
-    }, (error) => {
-        console.error("Error listening to lesson requests:", error);
-    });
-}
-
-export function listenToAllFeedback(callback: (data: Feedback[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    const q = query(collection(db, 'feedback'), orderBy('submissionDate', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Feedback)));
-    }, (error) => {
-        console.error("Error listening to feedback:", error);
-    });
-}
-
-export function listenToAllReferrals(callback: (data: Referral[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    const q = query(collection(db, "referrals"), orderBy("timestamp", "desc"));
-    return onSnapshot(q, async (snapshot) => {
-        const referrals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
-        if (referrals.length === 0) {
-            callback([]);
-            return;
-        }
-
-        const refereeIds = [...new Set(referrals.map(r => r.refereeId))].filter(Boolean);
-        if (refereeIds.length === 0) {
-            callback(referrals);
-            return;
-        }
-
-        const usersMap = new Map<string, UserProfile>();
-        for (let i = 0; i < refereeIds.length; i += 30) {
-            const batchIds = refereeIds.slice(i, i + 30);
-            const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', batchIds));
-            const usersSnapshot = await getDocs(usersQuery);
-            usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
-        }
-
-        const enrichedReferrals = referrals.map(ref => {
-            const referee = usersMap.get(ref.refereeId);
-            return {
-                ...ref,
-                refereeUniqueId: referee?.uniqueId,
-                refereeSubscriptionPlan: referee?.subscriptionPlan,
-                refereeApprovalStatus: referee?.approvalStatus,
-            };
-        });
-        callback(enrichedReferrals);
-    }, (error) => {
-        console.error("Error listening to referrals:", error);
-    });
-};
-
-export function listenToQuizSets(callback: (data: QuizSet[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    return onSnapshot(collection(db, 'quizSets'), (snapshot) => {
-      if (snapshot.empty) {
-        callback([]);
-      } else {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet)));
-      }
-    }, (error) => {
-        console.error("Error listening to quiz sets:", error);
-        callback([]);
-    });
-}
-export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    return onSnapshot(collection(db, 'promotionalPosters'), (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromotionalPoster)));
-    }, (error) => {
-        console.error("Error listening to promotional posters:", error);
-    });
-}
-export function listenToCourses(callback: (data: Course[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    return onSnapshot(collection(db, 'courses'), (snapshot) => {
-        const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
-        callback(reAssignCourseIcons(courses));
-    }, (error) => {
-        console.error("Error listening to courses:", error);
-    });
-}
-
-export function listenToFaqs(callback: (data: FaqItem[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    return onSnapshot(collection(db, 'faqs'), (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FaqItem)));
-    }, (error) => {
-        console.error("Error listening to faqs:", error);
-    });
-}
-
-export function listenToBlogPosts(callback: (data: BlogPost[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
-    return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({...doc.data(), slug: doc.id } as BlogPost)));
-    }, (error) => {
-        console.error("Error listening to blog posts:", error);
-    });
-}
-export function listenToSiteBanners(callback: (data: SiteBanner[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    return onSnapshot(collection(db, 'siteBanners'), (snapshot) => {
-        if(snapshot.empty) {
-            callback([]);
-            return;
-        }
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SiteBanner)));
-    }, (error) => {
-        console.error("Error listening to site banners:", error);
-        callback([]);
-    });
-}
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void) {
     if (!isFirebaseConfigured() || !db) {
@@ -478,71 +317,113 @@ export function listenToTrainerStudents(trainerId: string, callback: (students: 
 // CALCULATED/AGGREGATED DATA LISTENERS
 // =================================================================
 
-export function listenToSummaryData(callback: (data: Partial<SummaryData>) => void) {
+export function listenToAdminDashboardData(callback: (data: AdminDashboardData) => void): () => void {
     if (!isFirebaseConfigured() || !db) {
-      callback({});
-      return () => {};
+        callback({
+            summaryData: { totalCustomers: 0, totalInstructors: 0, activeSubscriptions: 0, pendingRequests: 0, pendingRescheduleRequests: 0, totalEarnings: 0, totalCertifiedTrainers: 0 },
+            allUsers: [],
+            lessonRequests: [],
+            feedback: [],
+            referrals: [],
+            lessonProgress: [],
+            courses: [],
+            quizSets: [],
+            faqs: [],
+            blogPosts: [],
+            siteBanners: [],
+            promotionalPosters: [],
+        });
+        return () => {};
     }
-    
-    let summary: Partial<SummaryData> = {};
 
-    const unsubAll = onSnapshot(collection(db!, 'users'), (snap) => {
-        const allUsers = snap.docs.map(doc => doc.data() as UserProfile);
-        
-        const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
-        const trainers = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
-        
-        summary = {
-            ...summary,
-            totalCustomers: customers.length,
-            totalInstructors: trainers.length,
-            activeSubscriptions: customers.filter(u => u.approvalStatus === 'Approved').length,
-            totalCertifiedTrainers: trainers.filter(u => u.approvalStatus === 'Approved').length,
-            totalEarnings: customers.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
-                if (user.subscriptionPlan === 'Premium') return acc + 9999;
-                if (user.subscriptionPlan === 'Gold') return acc + 7499;
-                if (user.subscriptionPlan === 'Basic') return acc + 3999;
-                return acc;
-            }, 0),
-        };
-        callback(summary);
-    }, (error) => {
-      console.error("Error listening to all users for summary:", error);
-    });
+    const collectionsToListen = [
+        'users', 'lessonRequests', 'rescheduleRequests', 'feedback', 'referrals',
+        'courses', 'quizSets', 'faqs', 'blogPosts', 'siteBanners', 'promotionalPosters'
+    ];
 
-    const requestsUnsub = onSnapshot(query(collection(db!, 'lessonRequests'), where('status', '==', 'Pending')), (snap) => {
-        summary = { ...summary, pendingRequests: snap.size };
-        callback(summary);
-    }, (error) => {
-      console.error("Error listening to lessonRequests for summary:", error);
-    });
+    const unsubs = collectionsToListen.map(colName => 
+        onSnapshot(collection(db!, colName), () => {
+            fetchAllAdminData().then(callback).catch(error => {
+                console.error("Error fetching all admin data:", error);
+            });
+        }, (error) => {
+            console.error(`Error listening to ${colName}:`, error);
+        })
+    );
 
-    const rescheduleUnsub = onSnapshot(query(collection(db!, 'rescheduleRequests'), where('status', '==', 'Pending')), (snap) => {
-        summary = { ...summary, pendingRescheduleRequests: snap.size };
-        callback(summary);
-    }, (error) => {
-      console.error("Error listening to rescheduleRequests for summary:", error);
+    // Initial fetch
+    fetchAllAdminData().then(callback).catch(error => {
+        console.error("Initial fetch for admin data failed:", error);
     });
 
     return () => {
-        unsubAll();
-        requestsUnsub();
-        rescheduleUnsub();
+        unsubs.forEach(unsub => unsub());
     };
-};
+}
 
-export function listenToCustomerLessonProgress(callback: (data: LessonProgressData[]) => void) {
-    if (!isFirebaseConfigured() || !db) {
-      callback([]);
-      return () => {};
-    }
-    const q = query(collection(db!, 'users'), where('approvalStatus', '==', 'Approved'));
-    return onSnapshot(q, (snapshot) => {
-        const users = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as UserProfile))
-            .filter(u => u.assignedTrainerName);
+async function fetchAllAdminData(): Promise<AdminDashboardData> {
+    if (!isFirebaseConfigured() || !db) throw new Error("Firebase not configured");
+    
+    const [
+        usersSnap, lessonRequestsSnap, rescheduleRequestsSnap, feedbackSnap, referralsSnap,
+        coursesSnap, quizSetsSnap, faqsSnap, blogPostsSnap, siteBannersSnap, promotionalPostersSnap
+    ] = await Promise.all([
+        getDocs(query(collection(db, 'users'), orderBy('registrationTimestamp', 'desc'))),
+        getDocs(query(collection(db, 'lessonRequests'), orderBy('requestTimestamp', 'desc'))),
+        getDocs(collection(db, 'rescheduleRequests')),
+        getDocs(query(collection(db, 'feedback'), orderBy('submissionDate', 'desc'))),
+        getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc'))),
+        getDocs(collection(db, 'courses')),
+        getDocs(collection(db, 'quizSets')),
+        getDocs(collection(db, 'faqs')),
+        getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc'))),
+        getDocs(collection(db, 'siteBanners')),
+        getDocs(collection(db, 'promotionalPosters')),
+    ]);
 
-        const progressData = users.map(c => ({
+    const allUsers = usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+    
+    // Process Referrals
+    const referrals = referralsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
+    const refereeIds = [...new Set(referrals.map(r => r.refereeId))].filter(Boolean);
+    const usersMap = new Map<string, UserProfile>();
+    allUsers.forEach(u => usersMap.set(u.id, u));
+
+    const enrichedReferrals = referrals.map(ref => {
+        const referee = usersMap.get(ref.refereeId);
+        return {
+            ...ref,
+            refereeUniqueId: referee?.uniqueId,
+            refereeSubscriptionPlan: referee?.subscriptionPlan,
+            refereeApprovalStatus: referee?.approvalStatus,
+        };
+    });
+
+    // Calculate Summary
+    const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
+    const trainers = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
+    const pendingLessonRequests = lessonRequestsSnap.docs.filter(doc => doc.data().status === 'Pending').length;
+    const pendingRescheduleRequests = rescheduleRequestsSnap.docs.filter(doc => doc.data().status === 'Pending').length;
+    
+    const summaryData: SummaryData = {
+        totalCustomers: customers.length,
+        totalInstructors: trainers.length,
+        activeSubscriptions: customers.filter(u => u.approvalStatus === 'Approved').length,
+        pendingRequests: pendingLessonRequests,
+        pendingRescheduleRequests: pendingRescheduleRequests,
+        totalCertifiedTrainers: trainers.filter(u => u.approvalStatus === 'Approved').length,
+        totalEarnings: customers.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
+            if (user.subscriptionPlan === 'Premium') return acc + 9999;
+            if (user.subscriptionPlan === 'Gold') return acc + 7499;
+            if (user.subscriptionPlan === 'Basic') return acc + 3999;
+            return acc;
+        }, 0),
+    };
+
+    // Calculate Lesson Progress
+    const lessonProgress = allUsers
+        .filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'Approved' && u.assignedTrainerName)
+        .map(c => ({
             studentId: c.uniqueId,
             studentName: c.name,
             trainerName: c.assignedTrainerName!,
@@ -552,11 +433,22 @@ export function listenToCustomerLessonProgress(callback: (data: LessonProgressDa
             remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
         })).sort((a, b) => a.remainingLessons - b.remainingLessons);
 
-        callback(progressData);
-    }, (error) => {
-      console.error("Error listening to lesson progress:", error);
-    });
-};
+    return {
+        summaryData,
+        allUsers,
+        lessonRequests: lessonRequestsSnap.docs.map(d => ({ id: d.id, ...d.data() } as LessonRequest)),
+        feedback: feedbackSnap.docs.map(d => ({ id: d.id, ...d.data() } as Feedback)),
+        referrals: enrichedReferrals,
+        lessonProgress,
+        courses: reAssignCourseIcons(coursesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Course))),
+        quizSets: quizSetsSnap.docs.map(d => ({ id: d.id, ...d.data() } as QuizSet)),
+        faqs: faqsSnap.docs.map(d => ({ id: d.id, ...d.data() } as FaqItem)),
+        blogPosts: blogPostsSnap.docs.map(d => ({ ...d.data(), slug: d.id } as BlogPost)),
+        siteBanners: siteBannersSnap.docs.map(d => ({ id: d.id, ...d.data() } as SiteBanner)),
+        promotionalPosters: promotionalPostersSnap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)),
+    };
+}
+
 
 // =================================================================
 // WRITE OPERATIONS (No changes needed for real-time, they trigger listeners)
@@ -899,8 +791,9 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
     if (!db) return [];
     try {
         const q = query(
-            collection(db, "trainers"),
-            where("approvalStatus", "==", "Approved")
+            collection(db, "users"),
+            where("approvalStatus", "==", "Approved"),
+            where("subscriptionPlan", "==", "Trainer")
         );
         const querySnapshot = await getDocs(q);
 
@@ -965,3 +858,4 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
         return { ...course, icon: newIcon };
     });
 };
+
