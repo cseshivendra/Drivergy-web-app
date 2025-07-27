@@ -1039,3 +1039,4 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
         return { ...course, icon: newIcon };
     });
 };
+

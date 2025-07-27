@@ -43,8 +43,8 @@ export default function LoginPage() {
     await signInWithCredentials(username, password);
   };
 
-  const handleGoogleSignIn = async () => {
-    await signInWithGoogle();
+  const handleGoogleSignIn = () => {
+    signInWithGoogle();
   }
 
   const GoogleIcon = () => (
