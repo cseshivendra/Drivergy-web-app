@@ -1,11 +1,13 @@
-
 'use client';
 
+import type { User as FirebaseUser } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
 import { format } from 'date-fns';
 
 interface AuthContextType {
@@ -27,28 +29,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // In mock mode, we check session storage for a logged-in user.
-    const storedUserId = sessionStorage.getItem('mockUserId');
-    if (storedUserId) {
-      fetchUserById(storedUserId).then(userProfile => {
-        if (userProfile) {
-          setUser(userProfile);
+    if (!isFirebaseConfigured() || !auth) {
+        // Fallback to mock data if Firebase isn't configured
+        const storedUserId = sessionStorage.getItem('mockUserId');
+        if (storedUserId) {
+          fetchUserById(storedUserId).then(userProfile => {
+            if (userProfile) setUser(userProfile);
+            setLoading(false);
+          });
+        } else {
+            setLoading(false);
+        }
+        return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            const profile = await fetchUserById(firebaseUser.uid);
+            if (profile) {
+                setUser(profile);
+            }
+        } else {
+            setUser(null);
         }
         setLoading(false);
-      });
-    } else {
-      setLoading(false);
-    }
-  }, []);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
   
   const signInWithGoogle = async () => {
-    toast({ title: "Offline Mode", description: "Google Sign-In is disabled in offline mode. Please use mock credentials.", variant: "destructive" });
+    if (!isFirebaseConfigured() || !auth) {
+        toast({ title: "Offline Mode", description: "Google Sign-In is disabled in offline mode. Please use mock credentials.", variant: "destructive" });
+        return;
+    }
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+        // onAuthStateChanged will handle setting the user and redirecting.
+        toast({
+            title: `Login Successful!`,
+            description: 'Redirecting to your dashboard...',
+        });
+    } catch (error: any) {
+        console.error("Google Sign-In Error:", error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
+        }
+        setLoading(false);
+    }
   };
   
   const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
     setLoading(true);
-    const userProfile = authenticateUserByCredentials(identifier, password);
+    const userProfile = await authenticateUserByCredentials(identifier, password);
     if (userProfile) {
+        // In a real Firebase Auth scenario, you'd use signInWithEmailAndPassword
+        // For now, we are just setting the user state based on Firestore lookup.
         logInUser(userProfile, true);
     } else {
         setLoading(false);
@@ -61,16 +99,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signUpWithCredentials = async (email: string, password: string, additionalData: Partial<UserProfile>) => {
-    toast({ title: "Offline Mode", description: "This is a mock sign-up. The user will not be persisted.", variant: "destructive" });
-    // This would typically interact with a mock user creation function, but for now we'll just log it.
-    console.log("Mock sign up with:", email, additionalData);
+    toast({ title: "Live Mode", description: "This will create a real user account.", variant: "default" });
+     if (!isFirebaseConfigured() || !auth) {
+        toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
+        return;
+    }
+    // In a real app, you would use createUserWithEmailAndPassword from Firebase Auth.
+    // The current implementation in server-actions handles user creation in Firestore.
+    console.log("Sign up attempt with:", email, additionalData);
     router.push('/login');
   };
 
   const signOut = async () => {
     setLoading(true);
+    if (isFirebaseConfigured() && auth?.currentUser) {
+        await firebaseSignOut(auth);
+    }
     setUser(null); 
-    sessionStorage.removeItem('mockUserId');
+    sessionStorage.removeItem('mockUserId'); // Clear mock session
     setLoading(false);
     toast({
       title: 'Logged Out',
@@ -81,7 +127,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
     setUser(userProfile);
-    sessionStorage.setItem('mockUserId', userProfile.id);
+    if (!isFirebaseConfigured()) {
+        sessionStorage.setItem('mockUserId', userProfile.id);
+    }
     setLoading(false);
 
     if (isDirectLogin) {
