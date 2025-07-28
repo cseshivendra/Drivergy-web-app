@@ -1,35 +1,21 @@
 
+
 'use server';
 
-import { v2 as cloudinary } from 'cloudinary';
-
-// This file configures the Cloudinary SDK.
-// It's marked with 'use server' to ensure this code only runs on the server.
-
-let isConfigured = false;
+// =================================================================
+// CLOUDINARY IS DISABLED - APP IS RUNNING IN OFFLINE MOCK MODE
+// =================================================================
+// This file has been updated to support offline mock mode.
+// The uploadFile function will now return a placeholder URL instead
+// of connecting to the live Cloudinary service.
 
 export const cloudinaryConfig = async () => {
-    if (isConfigured) {
-        return;
-    }
+    // In mock mode, we do not configure the Cloudinary SDK.
+    console.log("Cloudinary is in mock mode. No connection will be made.");
+};
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-    if (!cloudName || !apiKey || !apiSecret) {
-        console.error("Cloudinary environment variables are not set.");
-        throw new Error("Cloudinary configuration is missing.");
-    }
-    
-    try {
-        cloudinary.config({
-            cloud_name: cloudName,
-            api_key: apiKey,
-            api_secret: apiSecret,
-        });
-        isConfigured = true;
-    } catch (error) {
-        console.error("Error configuring Cloudinary:", error);
-    }
+export const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
+    console.log(`Mock Upload: Simulating upload of a file to folder: ${folder}`);
+    // Return a placeholder image URL for mock purposes.
+    return Promise.resolve("https://placehold.co/600x400.png");
 };

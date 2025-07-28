@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToTrainerStudents } from '@/lib/mock-data';
+import { listenToTrainerStudents, updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
 import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,7 +14,6 @@ import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, P
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
-import { updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
 
 const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -95,21 +94,13 @@ export default function TrainerDashboard() {
   }, [user]);
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
-    const success = await updateAssignmentStatusByTrainer(studentId, status);
-    if (success) {
-      toast({ title: `Request ${status}`, description: `You have ${status.toLowerCase()} the request for ${studentName}.` });
-    } else {
-      toast({ title: 'Error', description: 'Could not update assignment status.', variant: 'destructive' });
-    }
+    updateAssignmentStatusByTrainer(studentId, status);
+    toast({ title: `Request ${status}`, description: `You have ${status.toLowerCase()} the request for ${studentName}.` });
   };
 
   const handleAttendance = async (studentId: string, studentName: string, status: 'Present' | 'Absent') => {
-    const success = await updateUserAttendance(studentId, status);
-    if(success) {
-        toast({ title: 'Attendance Marked', description: `${studentName} marked as ${status}.` });
-    } else {
-        toast({ title: 'Error', description: 'Could not update attendance.', variant: 'destructive' });
-    }
+    updateUserAttendance(studentId, status);
+    toast({ title: 'Attendance Marked', description: `${studentName} marked as ${status}.` });
   };
   
   const handleViewDetails = (student: UserProfile) => {
@@ -329,5 +320,3 @@ export default function TrainerDashboard() {
     </div>
   );
 }
-
-    

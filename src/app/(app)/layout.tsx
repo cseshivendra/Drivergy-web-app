@@ -21,7 +21,7 @@ export default function AuthenticatedAppLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // This effect now has a single, clear responsibility:
+    // This effect has a single, clear responsibility:
     // If loading is finished and there is definitively no user, redirect to login.
     if (!loading && !user) {
       router.push('/login');
