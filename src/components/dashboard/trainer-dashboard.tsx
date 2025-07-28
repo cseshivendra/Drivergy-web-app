@@ -60,7 +60,6 @@ export default function TrainerDashboard() {
   const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // This callback will be triggered by the real-time listener
   const handleDataUpdate = (data: {
     students: UserProfile[];
     feedback: Feedback[];
@@ -71,7 +70,6 @@ export default function TrainerDashboard() {
     setRescheduleRequests(data.rescheduleRequests);
     setTrainerProfile(data.profile);
 
-    // Recalculate summary data
     const approvedStudents = data.students.filter(s => s.approvalStatus === 'Approved');
     let avgRating = 0;
     if (data.feedback.length > 0) {
@@ -80,7 +78,7 @@ export default function TrainerDashboard() {
     }
     const summaryData: TrainerSummaryData = {
       totalStudents: approvedStudents.length,
-      totalEarnings: approvedStudents.length * 2000, // This is a mock calculation
+      totalEarnings: approvedStudents.length * 2000, 
       upcomingLessons: data.students.filter(doc => doc.upcomingLesson).length,
       rating: avgRating,
       pendingRescheduleRequests: data.rescheduleRequests.filter(r => r.status === 'Pending').length,
@@ -89,7 +87,12 @@ export default function TrainerDashboard() {
     setLoading(false);
   };
   
-  // Single useEffect for a single listener
+  const refetchData = () => {
+      if (user?.id) {
+          listenToTrainerStudents(user.id, handleDataUpdate);
+      }
+  }
+
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
@@ -99,7 +102,6 @@ export default function TrainerDashboard() {
 
     const unsubscribe = listenToTrainerStudents(user.id, handleDataUpdate);
     
-    // Cleanup listener on component unmount
     return () => unsubscribe();
   }, [user]);
 
@@ -256,7 +258,7 @@ export default function TrainerDashboard() {
         title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
         requests={rescheduleRequests}
         isLoading={loading}
-        onActioned={() => {}}
+        onActioned={refetchData}
       />
 
 
