@@ -39,17 +39,13 @@ const adminUser: UserProfile = {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Changed initial state to true
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (sessionStorage.getItem('mockAdmin') === 'true') {
-        setUser(adminUser);
-        setLoading(false);
-        return;
-    }
-
+    // This effect should only run once to set up the listener.
+    // The `loading` state is now handled correctly by the listener itself.
     if (!auth) {
       setLoading(false);
       return;
@@ -68,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
       }
-      setLoading(false);
+      setLoading(false); // Set loading to false only after the first check is complete
     });
 
     return () => unsubscribe();
@@ -82,8 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       // onAuthStateChanged will handle setting the user state.
+      // After it runs, the layout will redirect automatically.
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -97,7 +94,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
 
     if (email === 'admin' && password === 'admin') {
-        sessionStorage.setItem('mockAdmin', 'true');
         logInUser(adminUser, true);
         return;
     }
@@ -146,7 +142,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (auth?.currentUser) {
         await firebaseSignOut(auth);
     }
-    sessionStorage.removeItem('mockAdmin');
     setUser(null); 
     setLoading(false);
     toast({
