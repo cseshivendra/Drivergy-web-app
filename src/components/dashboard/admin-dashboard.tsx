@@ -108,21 +108,18 @@ export default function AdminDashboard() {
                     <UserTable
                         title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>}
                         users={pendingVerificationCustomers}
-                        collectionName="users"
                         isLoading={loading}
                         onUserActioned={handleActioned}
                     />
                     <UserTable
                         title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>}
                         users={pendingInstructors}
-                        collectionName="users"
                         isLoading={loading}
                         onUserActioned={handleActioned}
                     />
                     <UserTable
                         title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>}
                         users={existingInstructors}
-                        collectionName="users"
                         isLoading={loading}
                         onUserActioned={handleActioned}
                     />
@@ -131,7 +128,6 @@ export default function AdminDashboard() {
                     <UserTable
                         title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Interested Customers</>}
                         users={interestedCustomers}
-                        collectionName="users"
                         isLoading={loading}
                         onUserActioned={handleActioned}
                         isInterestedList={true}

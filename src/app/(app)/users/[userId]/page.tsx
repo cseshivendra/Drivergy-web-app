@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +19,7 @@ export default function UserDetailsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (userId) {
@@ -28,7 +29,6 @@ export default function UserDetailsPage() {
           if (data) {
             setUser(data);
           } else {
-            // If data is null, it means the user was not found.
             setUser(null);
             toast({
               title: "User Not Found",
@@ -161,7 +161,7 @@ export default function UserDetailsPage() {
           </CardHeader>
           <CardContent>
             <p>The user details could not be loaded or the user does not exist. Please check the ID and try again.</p>
-            <Button onClick={() => window.history.back()} className="mt-4">Go Back</Button>
+            <Button onClick={() => router.back()} className="mt-4">Go Back</Button>
           </CardContent>
         </Card>
       </div>
@@ -293,5 +293,3 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
-
-    
