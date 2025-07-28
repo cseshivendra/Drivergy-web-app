@@ -543,3 +543,43 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
     if (!userId) return [];
     return mockReferrals.filter(r => r.referrerId === userId);
 }
+
+export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) return null;
+
+    const updateData: Partial<UserProfileUpdateValues> & { photoURL?: string } = {
+        name: data.name,
+        contact: data.email, // Assuming email from form is the new contact
+        phone: data.phone,
+        location: data.district, // Assuming district is the primary location field
+        flatHouseNumber: data.flatHouseNumber,
+        street: data.street,
+        state: data.state,
+        district: data.district,
+        pincode: data.pincode,
+    };
+
+    if (data.photo) {
+        updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
+    }
+
+    Object.keys(updateData).forEach(key => (updateData as any)[key] === undefined && delete (updateData as any)[key]);
+    
+    mockUsers[userIndex] = { ...mockUsers[userIndex], ...updateData };
+    
+    return mockUsers[userIndex];
+};
+
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+        return false;
+    }
+    const user = mockUsers[userIndex];
+    if (user.password !== currentPassword) {
+        return false;
+    }
+    mockUsers[userIndex].password = newPassword;
+    return true;
+};
