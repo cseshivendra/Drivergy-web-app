@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToTrainerStudents, updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
-import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback } from '@/types';
+import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -56,26 +56,34 @@ export default function TrainerDashboard() {
   const { toast } = useToast();
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
+  const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   // This callback will be triggered by the real-time listener
-  const handleDataUpdate = (students: UserProfile[], feedback: Feedback[], profile: UserProfile | null) => {
-    setAllStudents(students);
-    setTrainerProfile(profile);
+  const handleDataUpdate = (data: {
+    students: UserProfile[];
+    feedback: Feedback[];
+    rescheduleRequests: RescheduleRequest[];
+    profile: UserProfile | null;
+  }) => {
+    setAllStudents(data.students);
+    setRescheduleRequests(data.rescheduleRequests);
+    setTrainerProfile(data.profile);
 
     // Recalculate summary data
-    const approvedStudents = students.filter(s => s.approvalStatus === 'Approved');
+    const approvedStudents = data.students.filter(s => s.approvalStatus === 'Approved');
     let avgRating = 0;
-    if (feedback.length > 0) {
-      const totalRating = feedback.reduce((acc, doc) => acc + doc.rating, 0);
-      avgRating = parseFloat((totalRating / feedback.length).toFixed(1));
+    if (data.feedback.length > 0) {
+      const totalRating = data.feedback.reduce((acc, doc) => acc + doc.rating, 0);
+      avgRating = parseFloat((totalRating / data.feedback.length).toFixed(1));
     }
     const summaryData: TrainerSummaryData = {
       totalStudents: approvedStudents.length,
       totalEarnings: approvedStudents.length * 2000, // This is a mock calculation
-      upcomingLessons: students.filter(doc => doc.upcomingLesson).length,
+      upcomingLessons: data.students.filter(doc => doc.upcomingLesson).length,
       rating: avgRating,
+      pendingRescheduleRequests: data.rescheduleRequests.filter(r => r.status === 'Pending').length,
     };
     setSummary(summaryData);
     setLoading(false);
@@ -178,7 +186,7 @@ export default function TrainerDashboard() {
 
        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <SummaryCard title="Total Students" value={summary?.totalStudents ?? 0} icon={Users} description="All students assigned to you" />
-          <SummaryCard title="Total Earnings" value={`₹${(summary?.totalEarnings ?? 0).toLocaleString('en-IN')}`} icon={RupeeIconSvg} description="Your gross earnings" />
+          <SummaryCard title="Pending Reschedules" value={summary?.pendingRescheduleRequests ?? 0} icon={Repeat} description="Awaiting your approval" />
           <SummaryCard title="Upcoming Lessons" value={summary?.upcomingLessons ?? 0} icon={CalendarClock} description="Confirmed upcoming sessions" />
           <SummaryCard title="Your Rating" value={summary?.rating ?? 0} icon={Star} description="Average student rating" />
        </div>
@@ -246,7 +254,7 @@ export default function TrainerDashboard() {
       
       <RescheduleRequestTable
         title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
-        requests={[]}
+        requests={rescheduleRequests}
         isLoading={loading}
         onActioned={() => {}}
       />

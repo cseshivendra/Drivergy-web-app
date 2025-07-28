@@ -340,6 +340,7 @@ export interface TrainerSummaryData {
   totalEarnings: number;
   upcomingLessons: number;
   rating: number;
+  pendingRescheduleRequests: number;
 }
 
 export interface Feedback {

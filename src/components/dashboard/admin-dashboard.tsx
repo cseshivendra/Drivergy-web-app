@@ -10,9 +10,9 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
-import { listenToAdminDashboardData } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History } from 'lucide-react';
+import { listenToAdminDashboardData, updateRescheduleRequestStatus } from '@/lib/mock-data';
+import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,12 +24,14 @@ import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
 import RescheduleRequestTable from './reschedule-request-table';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function AdminDashboard() {
     const { user } = useAuth();
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab');
+    const { toast } = useToast();
 
     const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -37,6 +39,13 @@ export default function AdminDashboard() {
     const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
     const [searchTerm, setSearchTerm] = useState('');
     const [tempSearchTerm, setTempSearchTerm] = useState('');
+
+    const handleActioned = useCallback(() => {
+      // This function re-triggers the listener in mock-data, simulating a refetch
+      if(user) {
+        listenToAdminDashboardData(setDashboardData);
+      }
+    }, [user]);
 
     useEffect(() => {
         if (!user) {
@@ -82,7 +91,6 @@ export default function AdminDashboard() {
     const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
     const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
 
-
     const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
         setFilters(newFilters);
     };
@@ -90,9 +98,24 @@ export default function AdminDashboard() {
     const handleSearch = () => {
         setSearchTerm(tempSearchTerm.trim());
     };
+    
+    const handleRescheduleAction = async (requestId: string, status: RescheduleRequestStatusType) => {
+        const success = await updateRescheduleRequestStatus(requestId, status);
+        if (success) {
+            toast({
+                title: "Request Updated",
+                description: `The reschedule request has been ${status.toLowerCase()}.`
+            });
+            handleActioned();
+        } else {
+            toast({
+                title: "Update Failed",
+                description: "Could not update the request status.",
+                variant: "destructive",
+            });
+        }
+    };
 
-    // With a unified listener, this callback is less critical, but good to keep for potential manual refetches.
-    const handleActioned = useCallback(() => {}, []);
 
     const renderDashboardView = () => (
         <>
@@ -139,7 +162,7 @@ export default function AdminDashboard() {
                         isLoading={loading}
                     />
                      <RescheduleRequestTable
-                        title="Lesson Reschedule Requests"
+                        title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
                         requests={dashboardData?.rescheduleRequests || []}
                         isLoading={loading}
                         onActioned={handleActioned}

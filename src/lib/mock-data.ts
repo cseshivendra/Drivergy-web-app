@@ -27,6 +27,8 @@ let mockLessonRequests: LessonRequest[] = [
     { id: 'req-2', customerId: 'customer-3', customerName: 'New Student', vehicleType: 'Four-Wheeler', status: 'Active', requestTimestamp: format(subDays(new Date(), 1), 'MMM dd, yyyy, h:mm a') },
 ];
 
+let mockRescheduleRequests: RescheduleRequest[] = [];
+
 let mockFeedback: Feedback[] = [
     { id: 'fb-1', customerId: 'customer-1', customerName: 'Sample Customer', trainerId: 'trainer-1', trainerName: 'Sample Trainer', rating: 5, comment: "Rohan is an excellent and very patient instructor. Highly recommended!", submissionDate: format(subDays(new Date(), 1), 'MMM dd, yyyy') },
 ];
@@ -100,6 +102,7 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         return acc;
     }, 0);
     const pendingRequests = mockLessonRequests.filter(r => r.status === 'Pending').length;
+    const pendingRescheduleRequests = mockRescheduleRequests.filter(r => r.status === 'Pending').length;
 
     const lessonProgress = mockUsers
         .filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'Approved' && u.assignedTrainerName)
@@ -114,9 +117,10 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         })).sort((a, b) => a.remainingLessons - b.remainingLessons);
 
     const data: AdminDashboardData = {
-        summaryData: { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests: 0, totalEarnings, totalCertifiedTrainers },
+        summaryData: { totalCustomers, totalInstructors, activeSubscriptions, pendingRequests, pendingRescheduleRequests, totalEarnings, totalCertifiedTrainers },
         allUsers: [...mockUsers],
         lessonRequests: [...mockLessonRequests],
+        rescheduleRequests: [...mockRescheduleRequests],
         feedback: [...mockFeedback],
         referrals: [...mockReferrals],
         lessonProgress: lessonProgress,
@@ -137,12 +141,22 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
     return () => {};
 }
 
-export function listenToTrainerStudents(trainerId: string, callback: (students: UserProfile[], feedback: Feedback[], profile: UserProfile | null) => void): () => void {
-    const students = mockUsers.filter(u => u.assignedTrainerId === trainerId);
-    const feedback = mockFeedback.filter(f => f.trainerId === trainerId);
-    const profile = mockUsers.find(u => u.id === trainerId) || null;
-    callback(students, feedback, profile);
-    return () => {};
+export function listenToTrainerStudents(
+  trainerId: string,
+  callback: (data: {
+    students: UserProfile[];
+    feedback: Feedback[];
+    rescheduleRequests: RescheduleRequest[];
+    profile: UserProfile | null;
+  }) => void
+): () => void {
+  const students = mockUsers.filter(u => u.assignedTrainerId === trainerId);
+  const studentIds = students.map(s => s.id);
+  const feedback = mockFeedback.filter(f => f.trainerId === trainerId);
+  const rescheduleRequests = mockRescheduleRequests.filter(r => studentIds.includes(r.userId));
+  const profile = mockUsers.find(u => u.id === trainerId) || null;
+  callback({ students, feedback, rescheduleRequests, profile });
+  return () => {};
 }
 
 export async function fetchCourses(): Promise<Course[]> {
@@ -502,10 +516,7 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 }
 
 export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
-    // This function would add to a `mockRescheduleRequests` array if one existed.
-    // For now, we simulate success.
-    console.log(`Mock reschedule request for ${customerName} from ${originalDate} to ${newDate}`);
-    return {
+    const newRequest: RescheduleRequest = {
         id: generateId('resched'),
         userId,
         customerName,
@@ -514,15 +525,23 @@ export async function addRescheduleRequest(userId: string, customerName: string,
         status: 'Pending',
         requestTimestamp: new Date().toISOString(),
     };
+    mockRescheduleRequests.push(newRequest);
+    return newRequest;
 }
 
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
-    // This would update the status in a `mockRescheduleRequests` array.
-    console.log(`Mock update reschedule request ${requestId} to ${newStatus}`);
-    // If approved, you might update the user's upcoming lesson
-    // const request = mockRescheduleRequests.find(r => r.id === requestId);
-    // const userIndex = mockUsers.findIndex(u => u.id === request.userId);
-    // mockUsers[userIndex].upcomingLesson = request.requestedRescheduleDate;
+    const requestIndex = mockRescheduleRequests.findIndex(r => r.id === requestId);
+    if (requestIndex === -1) return false;
+
+    mockRescheduleRequests[requestIndex].status = newStatus;
+    
+    if (newStatus === 'Approved') {
+        const requestData = mockRescheduleRequests[requestIndex];
+        const userIndex = mockUsers.findIndex(u => u.id === requestData.userId);
+        if (userIndex !== -1) {
+            mockUsers[userIndex].upcomingLesson = requestData.requestedRescheduleDate;
+        }
+    }
     return true;
 }
 
