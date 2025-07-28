@@ -2,7 +2,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
 
 // IMPORTANT: This file configures the connection to a LIVE Firebase database.
 // For the app to work with Firebase, you must:
@@ -28,14 +27,12 @@ export function isFirebaseConfigured(): boolean {
 }
 
 let app;
-let db: Firestore | null = null;
 let auth: Auth | null = null;
 let isConfigured = isFirebaseConfigured();
 
 if (isConfigured) {
     try {
         app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-        db = getFirestore(app);
         auth = getAuth(app);
     } catch (error) {
         console.error("[firebase-init] CRITICAL: Error initializing Firebase. This can happen during hot reloads. Error:", error);
@@ -47,4 +44,4 @@ if (isConfigured) {
     console.warn("[firebase-init] WARNING: Firebase configuration is missing or incomplete. The application requires a valid Firebase configuration in .env.local to function with live data.");
 }
 
-export { app, db, auth };
+export { app, auth };
