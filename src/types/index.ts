@@ -115,6 +115,7 @@ const baseRegistrationSchema = z.object({
   confirmPassword: z.string(),
   name: z.string().min(1, 'Name is required.'),
   email: z.string().email('Invalid email address.'),
+  username: z.string().min(3, 'Username must be at least 3 characters.'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits.').max(13, 'Phone number is too long.'),
   gender: z.enum(GenderOptions),
 });

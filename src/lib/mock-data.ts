@@ -60,10 +60,11 @@ let mockSiteBanners: SiteBanner[] = [
 ];
 
 let mockPromotionalPosters: PromotionalPoster[] = [
-    { id: 'poster-1', href: '/site/register', imageSrc: 'https://placehold.co/400x600/60a5fa/ffffff.png', imageHint: 'special offer monsoon', title: 'Monsoon Special Offer!', description: 'Get 20% off on all Premium plans. Limited time only.' },
+    { id: 'poster-1', href: '/site/payment?plan=Premium&price=9999', imageSrc: 'https://placehold.co/400x600/60a5fa/ffffff.png', imageHint: 'special offer monsoon', title: 'Monsoon Special Offer!', description: 'Get 20% off on all Premium plans. Limited time only.' },
     { id: 'poster-2', href: '/referrals/invite', imageSrc: 'https://placehold.co/400x600/facc15/000000.png', imageHint: 'referral gift program', title: 'Refer & Earn Rewards', description: 'Invite friends and earn points on their first subscription.' },
     { id: 'poster-3', href: '/site/register', imageSrc: 'https://placehold.co/400x600/4ade80/ffffff.png', imageHint: 'driving instructor earning', title: 'Join as a Trainer', description: 'Turn your driving expertise into a rewarding career.' },
 ];
+
 
 // =================================================================
 // MOCK API FUNCTIONS
@@ -185,6 +186,14 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
 // MOCK WRITE OPERATIONS
 // =================================================================
 
+export function checkUserExistsInMock(details: { email: string; username: string; phone: string; }): boolean {
+    return mockUsers.some(u => 
+        u.contact === details.email || 
+        u.username === details.username ||
+        u.phone === details.phone
+    );
+}
+
 export function updateUserApprovalStatusInMock(userId: string, newStatus: ApprovalStatusType) {
     const userIndex = mockUsers.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
@@ -192,12 +201,34 @@ export function updateUserApprovalStatusInMock(userId: string, newStatus: Approv
     }
 }
 
+export function registerCustomerInMock(data: CustomerRegistrationFormValues): UserProfile {
+    const newUser: UserProfile = {
+        id: generateId('user'),
+        uniqueId: `CU-${generateId('').slice(-6).toUpperCase()}`,
+        name: data.name,
+        username: data.username,
+        contact: data.email,
+        phone: data.phone,
+        gender: data.gender,
+        password: data.password,
+        location: 'TBD',
+        subscriptionPlan: "None",
+        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+        approvalStatus: 'Pending',
+        photoURL: `https://placehold.co/100x100.png?text=${data.name.charAt(0)}`,
+        myReferralCode: `${data.name.split(' ')[0].toUpperCase()}${generateId('').slice(-4)}`,
+        trainerPreference: data.trainerPreference || 'Any',
+    };
+    mockUsers.push(newUser);
+    return newUser;
+}
+
 export function registerTrainerInMock(data: TrainerRegistrationFormValues) {
     const newUser: UserProfile = {
         id: generateId('user'),
         uniqueId: generateId('TR'),
         name: data.name,
-        username: data.email,
+        username: data.username,
         contact: data.email,
         phone: data.phone,
         gender: data.gender,

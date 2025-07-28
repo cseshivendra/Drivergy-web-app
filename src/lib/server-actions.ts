@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { ApprovalStatusType, TrainerRegistrationFormValues, FullCustomerDetailsValues } from '@/types';
+import type { ApprovalStatusType, TrainerRegistrationFormValues, FullCustomerDetailsValues, RegistrationFormValues, CustomerRegistrationFormValues } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
@@ -9,6 +9,8 @@ import {
     updateUserApprovalStatusInMock, 
     registerTrainerInMock,
     completeCustomerProfileInMock,
+    checkUserExistsInMock,
+    registerCustomerInMock
 } from './mock-data';
 import { uploadFileToCloudinary } from './cloudinary';
 
@@ -47,43 +49,60 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
     return { success: true };
 }
 
-export const registerTrainerAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
+
+export const registerUserAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
     try {
-        const data = Object.fromEntries(formData.entries());
+        const data = Object.fromEntries(formData.entries()) as unknown as RegistrationFormValues;
 
-        const certFile = formData.get('trainerCertificateFile') as File | null;
-        const dlFile = formData.get('drivingLicenseFile') as File | null;
-        const aadhaarFile = formData.get('aadhaarCardFile') as File | null;
+        // Pre-registration check
+        const userExists = checkUserExistsInMock({
+            email: data.email,
+            username: data.username,
+            phone: data.phone,
+        });
 
-        if (!certFile || !dlFile || !aadhaarFile) {
-            return { success: false, error: "One or more required documents were not uploaded." };
+        if (userExists) {
+            return { success: false, error: "A user is already registered with this email, username, or phone number." };
         }
 
-        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-            uploadFile(certFile, 'trainer_documents'),
-            uploadFile(dlFile, 'trainer_documents'),
-            uploadFile(aadhaarFile, 'trainer_documents'),
-        ]);
+        if (data.userRole === 'customer') {
+             registerCustomerInMock(data as CustomerRegistrationFormValues);
+        } else if (data.userRole === 'trainer') {
+            const certFile = formData.get('trainerCertificateFile') as File | null;
+            const dlFile = formData.get('drivingLicenseFile') as File | null;
+            const aadhaarFile = formData.get('aadhaarCardFile') as File | null;
 
-        const trainerData = {
-            ...data,
-            trainerCertificateUrl: certUrl,
-            drivingLicenseUrl: dlUrl,
-            aadhaarCardUrl: aadhaarUrl,
-        } as unknown as TrainerRegistrationFormValues;
+            if (!certFile || !dlFile || !aadhaarFile) {
+                return { success: false, error: "One or more required documents were not uploaded." };
+            }
 
-        registerTrainerInMock(trainerData);
+            const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
+                uploadFile(certFile, 'trainer_documents'),
+                uploadFile(dlFile, 'trainer_documents'),
+                uploadFile(aadhaarFile, 'trainer_documents'),
+            ]);
+
+            const trainerData = {
+                ...data,
+                trainerCertificateUrl: certUrl,
+                drivingLicenseUrl: dlUrl,
+                aadhaarCardUrl: aadhaarUrl,
+            } as TrainerRegistrationFormValues;
+            
+            registerTrainerInMock(trainerData);
+        }
 
         revalidatePath('/site/register');
         revalidatePath('/');
         return { success: true };
 
     } catch (error) {
-        console.error("Error in registerTrainerAction:", error);
+        console.error("Error in registerUserAction:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected server error occurred.";
         return { success: false, error: errorMessage };
     }
 }
+
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!userId) {

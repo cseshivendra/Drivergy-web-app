@@ -28,11 +28,13 @@ import {
   type CustomerRegistrationFormValues,
   TrainerPreferenceOptions,
 } from '@/types';
-import { useAuth } from '@/context/auth-context';
-import { registerTrainerAction } from '@/lib/server-actions';
+import { registerUserAction } from '@/lib/server-actions';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -41,15 +43,16 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const { signUpWithCredentials } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const defaultValues = useMemo((): RegistrationFormValues => {
     const base = {
       userRole: userRole,
       name: '',
       email: '',
+      username: '',
       password: '',
       confirmPassword: '',
       phone: '',
@@ -107,46 +110,41 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   }, [selectedGender, trainerOptions, form, userRole]);
 
   async function onSubmit(data: RegistrationFormValues) {
+    setFormError(null);
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+
     try {
-      if (data.userRole === 'customer') {
-        await signUpWithCredentials(data.email, data.password, {
-            name: data.name,
-            phone: data.phone,
-            gender: data.gender,
-            trainerPreference: data.trainerPreference || 'Any',
-        });
+      const result = await registerUserAction(formData);
+
+      if (result.success) {
         toast({
-            title: "Registration Successful!",
-            description: "Your account has been created. Please log in to continue.",
+          title: "Registration Successful!",
+          description: "Your account has been created. Please log in to continue.",
         });
         router.push('/login');
-      } else if (data.userRole === 'trainer') {
-        const formData = new FormData();
-        Object.entries(data).forEach(([key, value]) => {
-          if (value instanceof File) {
-            formData.append(key, value);
-          } else if (value !== undefined && value !== null) {
-            formData.append(key, String(value));
-          }
-        });
-        
-        const result = await registerTrainerAction(formData);
-
-        if (result.success) {
-           toast({
-            title: "Registration Successful!",
-            description: "Your account has been created and is pending verification.",
-          });
-          router.push('/login');
+      } else {
+        if(result.error?.includes('already registered')) {
+            setFormError(result.error);
         } else {
-          throw new Error(result.error || "An unknown error occurred during trainer registration.");
+             toast({
+                title: "Registration Failed",
+                description: result.error || "An unexpected error occurred.",
+                variant: "destructive",
+            });
         }
       }
     } catch (error) {
       console.error('Registration failed:', error);
       toast({
         title: "Registration Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "A client-side error occurred.",
         variant: "destructive",
       });
     }
@@ -155,8 +153,30 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {formError && (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Registration Error</AlertTitle>
+                <AlertDescription>
+                    {formError} You can <Link href="/login" className="font-bold underline">log in here</Link>.
+                </AlertDescription>
+            </Alert>
+        )}
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
+                  <FormControl>
+                    <Input placeholder="Create a username" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="email"
@@ -170,19 +190,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </FormItem>
               )}
             />
-            <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                        <Input placeholder="Enter full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
            <FormField
@@ -245,6 +252,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+            <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel>
+                    <FormControl>
+                        <Input placeholder="Enter full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
            <FormField
             control={form.control}
             name="phone"
