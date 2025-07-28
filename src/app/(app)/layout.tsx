@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -21,20 +20,19 @@ export default function AuthenticatedAppLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // This effect handles redirection based on authentication state.
-    // It will only run after the initial loading is complete.
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
   // The key to fixing the loop:
   // 1. If `loading` is true, ALWAYS show the Loading component and pause any other rendering.
-  // 2. If `loading` is false, THEN check if a user exists.
-  // 3. If no user exists after loading, this component will trigger the redirect from the useEffect,
-  //    but we still return the Loading component to prevent a flash of un-styled content.
+  // 2. The layout's protection is now implicitly handled by this check. If `!user` after loading,
+  //    the login page will be the one to redirect, but this component will just show the loading spinner,
+  //    preventing a render loop here.
   if (loading || !user) {
+    // A useEffect is still useful to push to login page if auth state is resolved to unauthenticated.
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+    
     return <Loading />;
   }
 
