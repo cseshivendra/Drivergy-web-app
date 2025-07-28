@@ -29,8 +29,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    if (user && !loading) {
-      router.push(redirect || '/'); // Redirect to intended page or dashboard after login
+    // Only redirect if loading is finished and a user exists.
+    if (!loading && user) {
+      router.push(redirect || '/'); 
     }
   }, [user, loading, router, redirect]);
 
@@ -40,7 +41,6 @@ export default function LoginPage() {
         toast({ title: 'Error', description: 'Please enter both email and password.', variant: 'destructive' });
         return;
     }
-    // The signInWithCredentials function in the context will now handle the redirect on success.
     await signInWithCredentials(email, password);
   };
 
@@ -54,7 +54,9 @@ export default function LoginPage() {
     </svg>
   );
 
-  if (loading || (user && isMounted)) { 
+  // Show a loading spinner if the auth state is loading, or if we have a user and are about to redirect.
+  // This prevents the login form from flashing on screen for an already logged-in user.
+  if (loading || user) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />

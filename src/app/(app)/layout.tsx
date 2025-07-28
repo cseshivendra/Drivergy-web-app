@@ -21,24 +21,22 @@ export default function AuthenticatedAppLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // This effect will only run when loading is complete.
-    // If, after loading, there is still no user, we redirect to login.
+    // This effect now has a single, clear responsibility:
+    // If loading is finished and there is definitively no user, redirect to login.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  // The key to fixing the loop:
-  // 1. If `loading` is true, ALWAYS show the Loading component and pause any other rendering.
-  // 2. The layout's protection is now implicitly handled by this check. If `!user` after loading,
-  //    the useEffect above will handle the redirect, but this component will just show the loading spinner,
-  //    preventing a render loop here.
+  // The "gatekeeper" pattern:
+  // 1. If we are in a loading state, show the spinner and wait.
+  //    This prevents any premature rendering or redirects.
   if (loading) {
     return <Loading />;
   }
 
-  // Only if loading is complete AND a user exists, render the full dashboard layout.
-  // This prevents the brief "unauthenticated" state from ever rendering the children or causing a redirect flash.
+  // 2. If loading is done and we have a user, render the dashboard.
+  //    This is the successful, authenticated state.
   if (user) {
     return (
         <SidebarProvider defaultOpen={true}>
@@ -55,8 +53,9 @@ export default function AuthenticatedAppLayout({
         </SidebarProvider>
     );
   }
-
-  // If loading is false and there's no user, the useEffect has already
-  // started the redirect. We render the loading component to avoid a layout flash.
+  
+  // 3. If loading is done and there's still no user, the useEffect above
+  //    has already started the redirect. We render the loading component
+  //    to provide a seamless transition and avoid a flash of unstyled content.
   return <Loading />;
 }

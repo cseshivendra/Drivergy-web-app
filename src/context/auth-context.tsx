@@ -39,7 +39,7 @@ const adminUser: UserProfile = {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Default to true
   const router = useRouter();
   const { toast } = useToast();
 
@@ -60,13 +60,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await firebaseSignOut(auth);
         }
       } else {
-        setUser(null);
+        // This is the critical fix: If no Firebase user is found,
+        // we must ensure our local state `user` is also cleared,
+        // unless it's the mock admin user.
+        if (user?.uniqueId !== 'AD-001') {
+            setUser(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [toast]); 
+  }, [toast, user]); 
   
   const signInWithGoogle = async () => {
     if (!auth) {
