@@ -1,21 +1,20 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToTrainerStudents, updateUserAttendance, listenToUser, updateAssignmentStatusByTrainer, listenToTrainerFeedback } from '@/lib/mock-data';
+import { listenToTrainerStudents } from '@/lib/mock-data';
 import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car, Gift } from 'lucide-react';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
-import { isFuture, parse } from 'date-fns';
-import Link from 'next/link';
+import { updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
 
 const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -59,43 +58,40 @@ export default function TrainerDashboard() {
   const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // This callback will be triggered by the real-time listener
+  const handleDataUpdate = (students: UserProfile[], feedback: Feedback[], profile: UserProfile | null) => {
+    setAllStudents(students);
+    setTrainerProfile(profile);
+
+    // Recalculate summary data
+    const approvedStudents = students.filter(s => s.approvalStatus === 'Approved');
+    let avgRating = 0;
+    if (feedback.length > 0) {
+      const totalRating = feedback.reduce((acc, doc) => acc + doc.rating, 0);
+      avgRating = parseFloat((totalRating / feedback.length).toFixed(1));
+    }
+    const summaryData: TrainerSummaryData = {
+      totalStudents: approvedStudents.length,
+      totalEarnings: approvedStudents.length * 2000, // This is a mock calculation
+      upcomingLessons: students.filter(doc => doc.upcomingLesson).length,
+      rating: avgRating,
+    };
+    setSummary(summaryData);
+    setLoading(false);
+  };
+  
+  // Single useEffect for a single listener
   useEffect(() => {
-    if (!user?.uid) {
+    if (!user?.id) {
       setLoading(false);
       return;
     }
     setLoading(true);
 
-    const unsubs = [
-      listenToUser(user.uid, setTrainerProfile),
-      listenToTrainerStudents(user.uid, (students, feedback) => {
-        setAllStudents(students);
-        
-        const approvedStudents = students.filter(s => s.approvalStatus === 'Approved');
-        let avgRating = 0;
-        if (feedback.length > 0) {
-          const totalRating = feedback.reduce((acc, doc) => acc + doc.rating, 0);
-          avgRating = parseFloat((totalRating / feedback.length).toFixed(1));
-        }
-
-        const summaryData: TrainerSummaryData = {
-          totalStudents: approvedStudents.length,
-          totalEarnings: approvedStudents.length * 2000,
-          upcomingLessons: approvedStudents.filter(doc => doc.upcomingLesson && isFuture(parse(doc.upcomingLesson, 'MMM dd, yyyy, h:mm a', new Date()))).length,
-          rating: avgRating,
-        };
-        setSummary(summaryData);
-      }),
-    ].filter(Boolean);
+    const unsubscribe = listenToTrainerStudents(user.id, handleDataUpdate);
     
-    const loadingTimeout = setTimeout(() => setLoading(false), 2000);
-
-    return () => {
-      unsubs.forEach(unsub => {
-        if (unsub) unsub();
-      });
-      clearTimeout(loadingTimeout);
-    };
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
   }, [user]);
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
@@ -333,3 +329,5 @@ export default function TrainerDashboard() {
     </div>
   );
 }
+
+    

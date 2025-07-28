@@ -27,13 +27,12 @@ interface UserTableProps {
   users: UserProfile[];
   isLoading: boolean;
   onUserActioned: () => void;
-  collectionName: 'users' | 'trainers';
-  isInterestedList?: boolean;
+  isInterestedList?: boolean; // This prop determines if it's for 'Interested Customers'
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function UserTable({ title, users, isLoading, onUserActioned, collectionName, isInterestedList = false }: UserTableProps) {
+export default function UserTable({ title, users, isLoading, onUserActioned, isInterestedList = false }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   
@@ -111,7 +110,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
   };
 
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
-    if (collectionName === 'users' && newStatus === 'Approved') {
+    // This logic is now primarily for trainers, as customers are approved via assignment.
+    if (!user.uniqueId.startsWith('TR') && newStatus === 'Approved') {
         toast({
           title: "Action Required",
           description: "Please use the 'Approve & Assign' button to approve customers. This assigns a trainer at the same time.",
@@ -121,7 +121,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
     }
 
     try {
-      const result = await updateUserApprovalStatus({ userId: user.id, newStatus, collectionName });
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
       if (result.success) {
         toast({
           title: `User ${newStatus}`,
@@ -142,9 +142,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
   };
 
   const handleViewDetails = (user: UserProfile) => {
-    // Determine the correct path based on the collection name
-    const viewPath = `/users/${user.id}`;
-    window.open(viewPath, '_blank');
+    window.open(`/users/${user.id}`, '_blank');
     toast({ 
       title: "Opening Details",
       description: `Opening details for ${user.name} in a new tab.`,
@@ -168,10 +166,10 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
         <TableCell><Skeleton className="h-5 w-20" /></TableCell>
         <TableCell><Skeleton className="h-5 w-28" /></TableCell>
         <TableCell><Skeleton className="h-5 w-36" /></TableCell>
-        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
         {!isInterestedList && (
            <>
+            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell> 
             <TableCell><Skeleton className="h-5 w-28" /></TableCell>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
@@ -211,7 +209,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
                   paginatedUsers.map((user) => {
-                    const isTrainer = collectionName === 'trainers';
+                    const isTrainer = user.uniqueId.startsWith('TR');
                     return (
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
@@ -225,7 +223,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                                     user.subscriptionPlan === 'Premium' ? 'bg-primary/20 text-primary' :
                                     user.subscriptionPlan === 'Gold' ? 'bg-accent/20 text-accent' :
                                     user.subscriptionPlan === 'Trainer' ? 'bg-secondary text-secondary-foreground' :
-                                    'bg-muted text-muted-foreground' // Basic or None
+                                    'bg-muted text-muted-foreground'
                                 }`}>
                                     {user.subscriptionPlan}
                                 </span>
@@ -308,7 +306,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, col
                                 aria-label={`Assign trainer for ${user.name}`}
                               >
                                 <UserCheck className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">Approve &amp; Assign</span>
+                                <span className="ml-1.5 hidden sm:inline">Approve & Assign</span>
                               </Button>
                               <Button 
                                 variant="destructive" 

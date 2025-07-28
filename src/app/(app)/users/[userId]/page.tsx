@@ -25,7 +25,17 @@ export default function UserDetailsPage() {
       setIsLoading(true); 
       fetchUserById(userId)
         .then((data) => {
-          setUser(data);
+          if (data) {
+            setUser(data);
+          } else {
+            // If data is null, it means the user was not found.
+            setUser(null);
+            toast({
+              title: "User Not Found",
+              description: `Could not load details for user ${userId}.`,
+              variant: "destructive",
+            });
+          }
         })
         .catch(error => {
           console.error("Failed to fetch user details for ID:", userId, error);
@@ -150,7 +160,7 @@ export default function UserDetailsPage() {
             <CardTitle className="text-destructive">User Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>The user details could not be loaded or the user does not exist. If you created this user in another tab, please note that mock data is not shared between tabs.</p>
+            <p>The user details could not be loaded or the user does not exist. Please check the ID and try again.</p>
             <Button onClick={() => window.history.back()} className="mt-4">Go Back</Button>
           </CardContent>
         </Card>
@@ -283,3 +293,5 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
+
+    
