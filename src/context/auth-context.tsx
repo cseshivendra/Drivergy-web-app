@@ -39,13 +39,11 @@ const adminUser: UserProfile = {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true); // Changed initial state to true
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect should only run once to set up the listener.
-    // The `loading` state is now handled correctly by the listener itself.
     if (!auth) {
       setLoading(false);
       return;
@@ -64,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setUser(null);
       }
-      setLoading(false); // Set loading to false only after the first check is complete
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -78,9 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, provider);
       // onAuthStateChanged will handle setting the user state.
-      // After it runs, the layout will redirect automatically.
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -126,8 +123,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
       await getOrCreateUser(firebaseUser, additionalData);
-      // Don't set user state here, onAuthStateChanged will handle it.
-      // This prevents a race condition on login after registration.
     } catch (error: any) {
       console.error("Sign up error:", error);
       toast({ title: "Registration Failed", description: error.message || "An error occurred during sign up.", variant: "destructive" });

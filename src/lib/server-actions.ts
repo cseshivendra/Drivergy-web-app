@@ -66,7 +66,7 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
     }
 
     try {
-        const userRef = doc(db, 'users', userId); // All users are in the 'users' collection
+        const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, { approvalStatus: newStatus });
         revalidatePath('/');
         return { success: true };
@@ -126,9 +126,6 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
     }
 
     try {
-        // This is a server action, so we need to handle auth manually.
-        // In a real app, you would use the Firebase Admin SDK to create a user.
-        // For this project, we'll create the user document directly.
         const data = Object.fromEntries(formData.entries());
 
         const certFile = formData.get('trainerCertificateFile') as File | null;
@@ -170,8 +167,11 @@ export const registerTrainerAction = async (formData: FormData): Promise<{ succe
             aadhaarCardNumber: data.aadhaarCardNumber as string,
         };
         
-        // In a real app, this should be the UID from Firebase Auth.
-        // Since we are not creating an auth user here for trainers directly, we use a new doc ref.
+        // This is a server action, so we can't create the Firebase Auth user here.
+        // We will create the document in the 'users' collection, and the user must be created
+        // on the client-side first. This action is now for adding the trainer-specific data.
+        // For a full implementation, you'd pass the auth user's UID.
+        // For this project, we create a new doc.
         const trainerDocRef = doc(collection(db, 'users'));
         await setDoc(trainerDocRef, newTrainerData);
 
@@ -255,5 +255,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
-
-    
