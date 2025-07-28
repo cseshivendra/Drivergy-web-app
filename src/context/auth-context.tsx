@@ -12,7 +12,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithCredentials: (email: string, password: string) => Promise<void>;
+  signInWithCredentials: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
   signUpWithCredentials: (email: string, password: string, additionalData: Partial<UserProfile>) => Promise<void>;
@@ -45,16 +45,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Offline Mode", description: "Google Sign-In is disabled in offline mode. Please use mock credentials.", variant: "destructive" });
   };
   
-  const signInWithCredentials = async (email: string, password: string): Promise<void> => {
+  const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
     setLoading(true);
-    const userProfile = authenticateUserByCredentials(email, password);
+    const userProfile = authenticateUserByCredentials(identifier, password);
     if (userProfile) {
         logInUser(userProfile, true);
     } else {
         setLoading(false);
         toast({
             title: 'Login Failed',
-            description: 'Invalid email or password.',
+            description: 'Invalid credentials. Please check your email/username and password.',
             variant: 'destructive',
         });
     }

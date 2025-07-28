@@ -14,9 +14,9 @@ const generateId = (prefix: string): string => {
 };
 
 let mockUsers: UserProfile[] = [
-    { id: 'admin-user-id', uniqueId: 'AD-001', name: 'Admin User', username: 'admin@drivergy.in', contact: 'admin@drivergy.in', subscriptionPlan: 'Admin', approvalStatus: 'Approved', registrationTimestamp: format(new Date(), 'MMM dd, yyyy'), location: 'HQ', gender: 'Other', isAdmin: true, password: 'password' },
-    { id: 'customer-1', uniqueId: 'CU-123456', name: 'Sample Customer', username: 'customer@drivergy.in', contact: 'customer@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 10), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Female', photoURL: 'https://placehold.co/100x100/f472b6/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Sample Trainer', totalLessons: 20, completedLessons: 12, upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'), myReferralCode: 'CUST123', totalReferralPoints: 150, password: 'password', flatHouseNumber: 'A-101', street: 'Cyber Hub Road', district: 'Gurugram', state: 'Haryana', pincode: '122002', dlStatus: 'Already Have DL', dlNumber: 'HR2620220012345', subscriptionStartDate: format(subDays(new Date(), 10), 'MMM dd, yyyy'), feedbackSubmitted: true },
-    { id: 'trainer-1', uniqueId: 'TR-ABCDEF', name: 'Sample Trainer', username: 'trainer@drivergy.in', contact: 'trainer@drivergy.in', subscriptionPlan: 'Trainer', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png', yearsOfExperience: 7, specialization: 'Car (Manual)', vehicleInfo: 'Maruti Swift (HR26A1234)', password: 'password' },
+    { id: 'admin-user-id', uniqueId: 'AD-001', name: 'Admin User', username: 'admin', contact: 'admin@drivergy.in', subscriptionPlan: 'Admin', approvalStatus: 'Approved', registrationTimestamp: format(new Date(), 'MMM dd, yyyy'), location: 'HQ', gender: 'Other', isAdmin: true, password: 'password' },
+    { id: 'customer-1', uniqueId: 'CU-123456', name: 'Sample Customer', username: 'customer', contact: 'customer@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 10), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Female', photoURL: 'https://placehold.co/100x100/f472b6/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Sample Trainer', totalLessons: 20, completedLessons: 12, upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'), myReferralCode: 'CUST123', totalReferralPoints: 150, password: 'password', flatHouseNumber: 'A-101', street: 'Cyber Hub Road', district: 'Gurugram', state: 'Haryana', pincode: '122002', dlStatus: 'Already Have DL', dlNumber: 'HR2620220012345', subscriptionStartDate: format(subDays(new Date(), 10), 'MMM dd, yyyy'), feedbackSubmitted: true },
+    { id: 'trainer-1', uniqueId: 'TR-ABCDEF', name: 'Sample Trainer', username: 'trainer', contact: 'trainer@drivergy.in', subscriptionPlan: 'Trainer', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png', yearsOfExperience: 7, specialization: 'Car (Manual)', vehicleInfo: 'Maruti Swift (HR26A1234)', password: 'password' },
     { id: 'customer-2', uniqueId: 'CU-789012', name: 'Amit Singh', username: 'amit@example.com', contact: 'amit@example.com', subscriptionPlan: 'Gold', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy'), location: 'Noida', gender: 'Male', photoURL: 'https://placehold.co/100x100/818cf8/ffffff.png', totalLessons: 15, completedLessons: 0, myReferralCode: 'AMIT456', password: 'password' },
     { id: 'trainer-2', uniqueId: 'TR-GHIJKL', name: 'Sunita Patel', username: 'sunita@example.com', contact: 'sunita@example.com', subscriptionPlan: 'Trainer', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 2), 'MMM dd, yyyy'), location: 'New Delhi', gender: 'Female', photoURL: 'https://placehold.co/100x100/a78bfa/ffffff.png', yearsOfExperience: 4, specialization: 'Car (Automatic)', vehicleInfo: 'Honda Amaze (DL10C5678)', password: 'password' },
     { id: 'customer-3', uniqueId: 'CU-NEWREQ', name: 'New Student', username: 'newstudent@drivergy.in', contact: 'newstudent@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'In Progress', registrationTimestamp: format(subDays(new Date(), 1), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/fb923c/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Sample Trainer', totalLessons: 20, completedLessons: 0, myReferralCode: 'NEWSTUD', password: 'password', flatHouseNumber: 'B-202', street: 'Golf Course Road', district: 'Gurugram', state: 'Haryana', pincode: '122011', dlStatus: 'New Learner', subscriptionStartDate: format(new Date(), 'MMM dd, yyyy') },
@@ -72,8 +72,8 @@ let mockPromotionalPosters: PromotionalPoster[] = [
 // Note: "listenTo" functions now simulate a one-time fetch for mock data.
 // In a real app, these would be `onSnapshot` listeners.
 
-export function authenticateUserByCredentials(email: string, password: string): UserProfile | null {
-    const user = mockUsers.find(u => u.username === email && u.password === password);
+export function authenticateUserByCredentials(identifier: string, password: string): UserProfile | null {
+    const user = mockUsers.find(u => (u.username === identifier || u.contact === identifier) && u.password === password);
     return user || null;
 };
 
@@ -150,13 +150,13 @@ export function listenToTrainerStudents(
     profile: UserProfile | null;
   }) => void
 ): () => void {
-  const students = mockUsers.filter(u => u.assignedTrainerId === trainerId);
-  const studentIds = students.map(s => s.id);
-  const feedback = mockFeedback.filter(f => f.trainerId === trainerId);
-  const rescheduleRequests = mockRescheduleRequests.filter(r => studentIds.includes(r.userId));
-  const profile = mockUsers.find(u => u.id === trainerId) || null;
-  callback({ students, feedback, rescheduleRequests, profile });
-  return () => {};
+    const students = mockUsers.filter(u => u.assignedTrainerId === trainerId);
+    const studentIds = students.map(s => s.id);
+    const feedback = mockFeedback.filter(f => f.trainerId === trainerId);
+    const rescheduleRequests = mockRescheduleRequests.filter(r => studentIds.includes(r.userId));
+    const profile = mockUsers.find(u => u.id === trainerId) || null;
+    callback({ students, feedback, rescheduleRequests, profile });
+    return () => {};
 }
 
 export async function fetchCourses(): Promise<Course[]> {

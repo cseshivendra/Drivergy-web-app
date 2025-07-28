@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign } from 'lucide-react';
+import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign, User } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ export default function LoginPage() {
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
@@ -37,11 +37,11 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-        toast({ title: 'Error', description: 'Please enter both email and password.', variant: 'destructive' });
+    if (!identifier || !password) {
+        toast({ title: 'Error', description: 'Please enter both your identifier and password.', variant: 'destructive' });
         return;
     }
-    await signInWithCredentials(email, password);
+    await signInWithCredentials(identifier, password);
   };
 
   const handleGoogleSignIn = () => {
@@ -118,15 +118,15 @@ export default function LoginPage() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="email" className="flex items-center"><AtSign className="mr-2 h-4 w-4" />Email Address</Label>
+                <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
                 <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="Enter your email address" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier" 
+                  type="text" 
+                  placeholder="Enter your email or username" 
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   disabled={loading}
-                  autoComplete="email"
+                  autoComplete="email username"
                 />
               </div>
               <div>
