@@ -56,7 +56,9 @@ let mockSiteBanners: SiteBanner[] = [
 ];
 
 let mockPromotionalPosters: PromotionalPoster[] = [
-    { id: 'poster-1', href: '/site/register', imageSrc: 'https://placehold.co/400x600.png', imageHint: 'special offer poster', title: 'Monsoon Special Offer!', description: 'Get 20% off on all Premium plans. Limited time only.' }
+    { id: 'poster-1', href: '/site/register', imageSrc: 'https://placehold.co/400x600/60a5fa/ffffff.png', imageHint: 'special offer monsoon', title: 'Monsoon Special Offer!', description: 'Get 20% off on all Premium plans. Limited time only.' },
+    { id: 'poster-2', href: '/referrals/invite', imageSrc: 'https://placehold.co/400x600/facc15/000000.png', imageHint: 'referral gift program', title: 'Refer & Earn Rewards', description: 'Invite friends and earn points on their first subscription.' },
+    { id: 'poster-3', href: '/site/register', imageSrc: 'https://placehold.co/400x600/4ade80/ffffff.png', imageHint: 'driving instructor earning', title: 'Join as a Trainer', description: 'Turn your driving expertise into a rewarding career.' },
 ];
 
 // =================================================================
@@ -400,6 +402,18 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
     return mockQuizSets[setIndex];
 }
 
+export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+        return false;
+    }
+    const user = mockUsers[userIndex];
+    if (user.password !== currentPassword) {
+        return false;
+    }
+    mockUsers[userIndex].password = newPassword;
+    return true;
+};
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
     return coursesToHydrate.map(course => {
@@ -571,15 +585,4 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     return mockUsers[userIndex];
 };
 
-export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
-    if (userIndex === -1) {
-        return false;
-    }
-    const user = mockUsers[userIndex];
-    if (user.password !== currentPassword) {
-        return false;
-    }
-    mockUsers[userIndex].password = newPassword;
-    return true;
-};
+
