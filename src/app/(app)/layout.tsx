@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -13,8 +14,8 @@ import { useEffect } from 'react';
 import Loading from '@/app/loading';
 
 export default function AuthenticatedAppLayout({
-  children,
-}: {
+                                                 children,
+                                               }: {
   children: ReactNode;
 }) {
   const { user, loading } = useAuth();
@@ -39,17 +40,17 @@ export default function AuthenticatedAppLayout({
 
   // Only if loading is complete AND a user exists, render the full dashboard layout.
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen bg-background">
-        <AppSidebar />
-        <SidebarInset className="flex flex-col flex-1">
-          <Header />
-          <main className="flex-1 overflow-y-auto">
-           {children}
-          </main>
-          <Footer />
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+      <SidebarProvider defaultOpen={true}>
+        <div className="flex min-h-screen bg-background">
+          <AppSidebar />
+          <SidebarInset className="flex flex-col flex-1">
+            <Header />
+            <main className="flex-1 overflow-y-auto">
+              {children}
+            </main>
+            <Footer />
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
   );
 }
