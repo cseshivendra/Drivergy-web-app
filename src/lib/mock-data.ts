@@ -1,3 +1,4 @@
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -88,13 +89,53 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 };
 
 export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
-  console.warn("updateUserProfile is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    try {
+        const updateData: { [key: string]: any } = {
+            name: data.name,
+            contact: data.email,
+            phone: data.phone,
+            location: data.location,
+            flatHouseNumber: data.flatHouseNumber,
+            street: data.street,
+            state: data.state,
+            district: data.district,
+            pincode: data.pincode,
+        };
+
+        if (data.photo) {
+            updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
+        }
+
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, updateData);
+        const updatedDoc = await getDoc(userRef);
+        return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+    } catch (error: any) {
+        console.error("Error updating user profile:", error);
+        return null;
+    }
 }
 
 export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
-  console.warn("changeUserPassword is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            return false;
+        }
+        // This is a mock check. In a real app, password would be hashed.
+        if (userSnap.data().password !== currentPassword) {
+            return false;
+        }
+        await updateDoc(userRef, { password: newPassword });
+        return true;
+    } catch (error: any) {
+        console.error("Error changing password:", error);
+        return false;
+    }
 }
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
@@ -124,18 +165,81 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 };
 
 export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
-  console.warn("updateAssignmentStatusByTrainer is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const customerRef = doc(db, "users", customerId);
+        const updates: { [key: string]: any } = { approvalStatus: newStatus };
+
+        if (newStatus === 'Approved') {
+            const customerSnap = await getDoc(customerRef);
+            if(!customerSnap.exists()) return false;
+            const user = customerSnap.data() as UserProfile;
+            const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
+            const firstLessonDate = addDays(startDate, 2);
+            firstLessonDate.setHours(9, 0, 0, 0);
+            updates.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+
+            // Update lesson request to 'Active'
+            const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId));
+            const requestSnapshot = await getDocs(requestQuery);
+            if (!requestSnapshot.empty) {
+                const requestDocRef = requestSnapshot.docs[0].ref;
+                await updateDoc(requestDocRef, { status: 'Active' });
+            }
+
+        } else { // If trainer rejects
+            updates.assignedTrainerId = null;
+            updates.assignedTrainerName = null;
+            updates.approvalStatus = 'Pending'; // Return to admin queue
+        }
+
+        await updateDoc(customerRef, updates);
+        return true;
+    } catch (error: any) {
+        console.error("Error updating assignment by trainer:", error);
+        return false;
+    }
 }
 
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
-  console.warn("updateUserAttendance is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const studentRef = doc(db, "users", studentId);
+        const studentSnap = await getDoc(studentRef);
+        if (!studentSnap.exists()) return false;
+
+        const studentData = studentSnap.data() as UserProfile;
+        const updates: { [key: string]: any } = { attendance: status };
+
+        if (status === 'Present' && studentData.attendance !== 'Present') {
+            updates.completedLessons = (studentData.completedLessons || 0) + 1;
+        }
+
+        await updateDoc(studentRef, updates);
+        return true;
+    } catch(error: any) {
+        console.error("Error updating attendance:", error);
+        return false;
+    }
 }
 
 export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
-  console.warn("updateSubscriptionStartDate is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    const firstLessonDate = addDays(newDate, 2);
+    firstLessonDate.setHours(9, 0, 0, 0);
+    const updates = {
+        subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
+        upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
+    };
+    try {
+        const customerRef = doc(db, 'users', customerId);
+        await updateDoc(customerRef, updates);
+        const updatedSnap = await getDoc(customerRef);
+        return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
+    } catch(error: any) {
+        console.error("Error updating start date:", error);
+        return null;
+    }
 }
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void): () => void {
@@ -268,98 +372,332 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
 
 
 export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
-  console.warn("addRescheduleRequest is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    const newRequest = {
+        userId, customerName,
+        originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
+        requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
+        status: 'Pending' as RescheduleRequestStatusType,
+        requestTimestamp: new Date().toISOString(),
+    };
+
+    try {
+        const docRef = await addDoc(collection(db, 'rescheduleRequests'), newRequest);
+        return { id: docRef.id, ...newRequest };
+    } catch(error: any) {
+        console.error("Error adding reschedule request:", error);
+        return null;
+    }
 }
 
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
-  console.warn("updateRescheduleRequestStatus is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const requestRef = doc(db, 'rescheduleRequests', requestId);
+        await updateDoc(requestRef, { status: newStatus });
+        if (newStatus === 'Approved') {
+            const requestSnap = await getDoc(requestRef);
+            if (!requestSnap.exists()) return false;
+            const requestData = requestSnap.data() as RescheduleRequest;
+            await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
+        }
+        return true;
+    } catch(error: any) {
+        console.error("Error updating reschedule request:", error);
+        return false;
+    }
 }
 
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
-  console.warn("addFeedback is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
+    try {
+        await addDoc(collection(db, 'feedback'), newFeedback);
+        await updateDoc(doc(db, 'users', customerId), { feedbackSubmitted: true });
+        return true;
+    } catch(error: any) {
+        console.error("Error adding feedback:", error);
+        return false;
+    }
 }
 
 export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
-  console.warn("updateReferralPayoutStatus is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
+        return true;
+    } catch(error: any) {
+        console.error("Error updating referral status:", error);
+        return false;
+    }
 }
 
 export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
-  console.warn("addCourseModule is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnap = await getDoc(courseRef);
+        if (!courseSnap.exists()) return null;
+        const course = courseSnap.data() as Course;
+        const newModule = { ...moduleData, id: generateId() };
+        const updatedModules = [...(course.modules || []), newModule];
+        await updateDoc(courseRef, { modules: updatedModules });
+        return { ...course, modules: updatedModules, id: courseId };
+    } catch (error: any) {
+        console.error("Error adding course module:", error);
+        return null;
+    }
 }
 
 export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
-  console.warn("updateCourseModule is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnap = await getDoc(courseRef);
+        if (!courseSnap.exists()) return null;
+        const course = courseSnap.data() as Course;
+        const updatedModules = course.modules.map(m => m.id === moduleId ? { ...m, ...moduleData } : m);
+        await updateDoc(courseRef, { modules: updatedModules });
+        return { ...course, modules: updatedModules, id: courseId };
+    } catch (error: any) {
+        console.error("Error updating course module:", error);
+        return null;
+    }
 }
 
 export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
-  console.warn("deleteCourseModule is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const courseRef = doc(db, 'courses', courseId);
+        const courseSnap = await getDoc(courseRef);
+        if (!courseSnap.exists()) return false;
+        const course = courseSnap.data() as Course;
+        const updatedModules = course.modules.filter(m => m.id !== moduleId);
+        await updateDoc(courseRef, { modules: updatedModules });
+        return true;
+    } catch(error: any) {
+        console.error("Error deleting course module:", error);
+        return false;
+    }
 }
 
 export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
-  console.warn("updateQuizQuestion is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    try {
+        const setRef = doc(db, 'quizSets', quizSetId);
+        const setSnap = await getDoc(setRef);
+        if (!setSnap.exists()) return null;
+        const quizSet = setSnap.data() as QuizSet;
+        const updatedQuestions = quizSet.questions.map(q => {
+            if (q.id === questionId) {
+                return {
+                    id: q.id,
+                    question: { en: data.question_en, hi: data.question_hi },
+                    options: { en: data.options_en.split('\n').filter(o => o.trim() !== ''), hi: data.options_hi.split('\n').filter(o => o.trim() !== '') },
+                    correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+                };
+            }
+            return q;
+        });
+        await updateDoc(setRef, { questions: updatedQuestions });
+        return { ...quizSet, questions: updatedQuestions, id: quizSetId };
+    } catch(error: any) {
+        console.error("Error updating quiz question:", error);
+        return null;
+    }
 }
 
 export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
-  console.warn("addFaq is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    try {
+        const docRef = await addDoc(collection(db, 'faqs'), data);
+        return { id: docRef.id, ...data };
+    } catch (error: any) {
+        console.error("Error adding FAQ:", error);
+        return null;
+    }
 }
 
 export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
-  console.warn("updateFaq is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        await updateDoc(doc(db, 'faqs', id), data);
+        return true;
+    } catch (error: any) {
+        console.error("Error updating FAQ:", error);
+        return false;
+    }
 }
 
 export async function deleteFaq(id: string): Promise<boolean> {
-  console.warn("deleteFaq is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        await deleteDoc(doc(db, 'faqs', id));
+        return true;
+    } catch(error: any) {
+        console.error("Error deleting FAQ:", error);
+        return false;
+    }
 }
 
 export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
-  console.warn("addBlogPost is a mock function. No database is connected.");
-  return null;
+  if (!db) return null;
+    try {
+        let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
+        if (data.imageFile) {
+            imageUrl = await uploadFile(data.imageFile, 'blog_images');
+        }
+
+        const newPostData: Omit<BlogPost, 'slug'> = {
+            title: data.title,
+            category: data.category,
+            excerpt: data.excerpt,
+            content: data.content,
+            author: data.author,
+            date: format(new Date(), 'LLL d, yyyy'),
+            imageSrc: imageUrl,
+            imageHint: data.imageHint,
+            tags: data.tags,
+        };
+        
+        const docRef = doc(db, 'blogPosts', data.slug);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            throw new Error("A blog post with this slug already exists.");
+        }
+
+        await setDoc(docRef, newPostData);
+        
+        return {
+            slug: docRef.id,
+            ...newPostData
+        };
+
+    } catch (error: any) {
+        console.error("Error adding blog post:", error);
+        return null;
+    }
 }
 
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-  console.warn("fetchBlogPostBySlug is a mock function. No database is connected.");
-  return null;
+  if (!isFirebaseConfigured() || !db) return null;
+    try {
+        const docRef = doc(db!, 'blogPosts', slug);
+        const snapshot = await getDoc(docRef);
+        if (!snapshot.exists()) return null;
+        return { slug: snapshot.id, ...snapshot.data() } as BlogPost;
+    } catch (error: any) {
+        console.error("Error fetching blog post by slug:", error);
+        return null;
+    }
 }
 
 export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
-  console.warn("updateBlogPost is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const docRef = doc(db, 'blogPosts', slug);
+        const updateData: Partial<BlogPostFormValues> = { ...data };
+        if(data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'blog_images');
+        }
+        delete updateData.imageFile;
+
+        await updateDoc(docRef, updateData as any);
+        return true;
+    } catch(error: any) {
+        console.error("Error updating blog post:", error);
+        return false;
+    }
 }
 
 export async function deleteBlogPost(slug: string): Promise<boolean> {
-  console.warn("deleteBlogPost is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        await deleteDoc(doc(db, 'blogPosts', slug));
+        return true;
+    } catch(error: any) {
+        console.error("Error deleting blog post:", error);
+        return false;
+    }
 }
 
 export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
-  console.warn("updateSiteBanner is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const updateData: Partial<VisualContentFormValues> = { ...data };
+        if (data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        }
+        delete updateData.imageFile; // Always remove the file object before updating DB
+
+        // Ensure all fields are included in the update
+        await updateDoc(doc(db, 'siteBanners', id), {
+            title: updateData.title,
+            description: updateData.description,
+            imageSrc: updateData.imageSrc,
+            imageHint: updateData.imageHint,
+        });
+        return true;
+    } catch (error: any) {
+        console.error("Error updating site banner:", error);
+        return false;
+    }
 }
 
 export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
-  console.warn("updatePromotionalPoster is a mock function. No database is connected.");
-  return true;
+  if (!db) return false;
+    try {
+        const updateData: Partial<VisualContentFormValues> = { ...data };
+        if (data.imageFile) {
+            updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        }
+        delete updateData.imageFile;
+
+        // Ensure all fields are included in the update
+        await updateDoc(doc(db, 'promotionalPosters', id), {
+            title: updateData.title,
+            description: updateData.description,
+            imageSrc: updateData.imageSrc,
+            imageHint: updateData.imageHint,
+            href: updateData.href,
+        });
+        return true;
+    } catch (error: any) {
+        console.error("Error updating promotional poster:", error);
+        return false;
+    }
 }
 
 export async function fetchCourses(): Promise<Course[]> {
-  console.warn("fetchCourses is a mock function. No database is connected.");
-  return [];
+  if (!isFirebaseConfigured() || !db) {
+      return [];
+    }
+    try {
+        const snapshot = await getDocs(collection(db!, "courses"));
+        const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Course);
+        return reAssignCourseIcons(courses);
+    } catch (error: any) {
+        console.error("Error fetching courses:", error);
+        return [];
+    }
 }
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
-  console.warn("fetchQuizSets is a mock function. No database is connected.");
-  return [];
+  if (!isFirebaseConfigured() || !db) {
+      return [];
+    }
+    try {
+        const snapshot = await getDocs(collection(db!, "quizSets"));
+        if (snapshot.empty) {
+            return [];
+        }
+        const sets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as QuizSet);
+        return sets;
+    } catch (error: any) {
+        console.error("Error fetching quiz sets:", error);
+        return [];
+    }
 }
 
 export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
@@ -387,8 +725,36 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
 
 
 export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
-  console.warn("fetchReferralsByUserId is a mock function. No database is connected.");
-  return [];
+  if (!db || !userId) return [];
+    try {
+        const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
+        const querySnapshot = await getDocs(q);
+
+        const referrals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
+
+        if (referrals.length === 0) return [];
+
+        const refereeIds = referrals.map(r => r.refereeId);
+        if(refereeIds.length === 0) return referrals;
+
+        const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', refereeIds));
+        const usersSnapshot = await getDocs(usersQuery);
+        const usersMap = new Map<string, UserProfile>();
+        usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
+
+        return referrals.map(ref => {
+            const referee = usersMap.get(ref.refereeId);
+            return {
+                ...ref,
+                refereeUniqueId: referee?.uniqueId,
+                refereeSubscriptionPlan: referee?.subscriptionPlan,
+                refereeApprovalStatus: referee?.approvalStatus,
+            };
+        });
+    } catch (error: any) {
+        console.error("Error fetching user referrals:", error);
+        return [];
+    }
 }
 
 const generateId = (): string => {
@@ -405,3 +771,16 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
         return { ...course, icon: newIcon };
     });
 };
+
+export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
+    if (!isFirebaseConfigured() || !db) {
+      callback([]);
+      return () => {};
+    }
+    return onSnapshot(collection(db, 'promotionalPosters'), (snapshot) => {
+        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PromotionalPoster)));
+    }, (error) => {
+        console.error("Error listening to promotional posters:", error);
+        callback([]);
+    });
+}
