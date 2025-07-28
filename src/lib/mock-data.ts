@@ -15,7 +15,7 @@ const generateId = (prefix: string): string => {
 
 let mockUsers: UserProfile[] = [
     { id: 'admin-user-id', uniqueId: 'AD-001', name: 'Admin User', username: 'admin@drivergy.in', contact: 'admin@drivergy.in', subscriptionPlan: 'Admin', approvalStatus: 'Approved', registrationTimestamp: format(new Date(), 'MMM dd, yyyy'), location: 'HQ', gender: 'Other', isAdmin: true, password: 'password' },
-    { id: 'customer-1', uniqueId: 'CU-123456', name: 'Sample Customer', username: 'customer@drivergy.in', contact: 'customer@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 10), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Female', photoURL: 'https://placehold.co/100x100/f472b6/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Rohan Verma', totalLessons: 20, completedLessons: 12, upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'), myReferralCode: 'CUST123', totalReferralPoints: 150, password: 'password', flatHouseNumber: 'A-101', street: 'Cyber Hub Road', district: 'Gurugram', state: 'Haryana', pincode: '122002', dlStatus: 'Already Have DL', dlNumber: 'HR2620220012345', subscriptionStartDate: format(subDays(new Date(), 10), 'MMM dd, yyyy'), feedbackSubmitted: true },
+    { id: 'customer-1', uniqueId: 'CU-123456', name: 'Sample Customer', username: 'customer@drivergy.in', contact: 'customer@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 10), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Female', photoURL: 'https://placehold.co/100x100/f472b6/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Sample Trainer', totalLessons: 20, completedLessons: 12, upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'), myReferralCode: 'CUST123', totalReferralPoints: 150, password: 'password', flatHouseNumber: 'A-101', street: 'Cyber Hub Road', district: 'Gurugram', state: 'Haryana', pincode: '122002', dlStatus: 'Already Have DL', dlNumber: 'HR2620220012345', subscriptionStartDate: format(subDays(new Date(), 10), 'MMM dd, yyyy'), feedbackSubmitted: true },
     { id: 'trainer-1', uniqueId: 'TR-ABCDEF', name: 'Sample Trainer', username: 'trainer@drivergy.in', contact: 'trainer@drivergy.in', subscriptionPlan: 'Trainer', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png', yearsOfExperience: 7, specialization: 'Car (Manual)', vehicleInfo: 'Maruti Swift (HR26A1234)', password: 'password' },
     { id: 'customer-2', uniqueId: 'CU-789012', name: 'Amit Singh', username: 'amit@example.com', contact: 'amit@example.com', subscriptionPlan: 'Gold', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy'), location: 'Noida', gender: 'Male', photoURL: 'https://placehold.co/100x100/818cf8/ffffff.png', totalLessons: 15, completedLessons: 0, myReferralCode: 'AMIT456', password: 'password' },
     { id: 'trainer-2', uniqueId: 'TR-GHIJKL', name: 'Sunita Patel', username: 'sunita@example.com', contact: 'sunita@example.com', subscriptionPlan: 'Trainer', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 2), 'MMM dd, yyyy'), location: 'New Delhi', gender: 'Female', photoURL: 'https://placehold.co/100x100/a78bfa/ffffff.png', yearsOfExperience: 4, specialization: 'Car (Automatic)', vehicleInfo: 'Honda Amaze (DL10C5678)', password: 'password' },
@@ -26,11 +26,11 @@ let mockLessonRequests: LessonRequest[] = [
 ];
 
 let mockFeedback: Feedback[] = [
-    { id: 'fb-1', customerId: 'customer-1', customerName: 'Priya Sharma', trainerId: 'trainer-1', trainerName: 'Rohan Verma', rating: 5, comment: "Rohan is an excellent and very patient instructor. Highly recommended!", submissionDate: format(subDays(new Date(), 1), 'MMM dd, yyyy') },
+    { id: 'fb-1', customerId: 'customer-1', customerName: 'Sample Customer', trainerId: 'trainer-1', trainerName: 'Sample Trainer', rating: 5, comment: "Rohan is an excellent and very patient instructor. Highly recommended!", submissionDate: format(subDays(new Date(), 1), 'MMM dd, yyyy') },
 ];
 
 let mockReferrals: Referral[] = [
-    { id: 'ref-1', referrerId: 'customer-1', referrerName: 'Priya Sharma', refereeId: 'customer-2', refereeName: 'Amit Singh', status: 'Pending', pointsEarned: 0, payoutStatus: 'Pending', timestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy') },
+    { id: 'ref-1', referrerId: 'customer-1', referrerName: 'Sample Customer', refereeId: 'customer-2', refereeName: 'Amit Singh', status: 'Pending', pointsEarned: 0, payoutStatus: 'Pending', timestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy') },
 ];
 
 let mockCourses: Course[] = [
@@ -584,5 +584,3 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     
     return mockUsers[userIndex];
 };
-
-
