@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -14,9 +15,9 @@ const generateId = (prefix: string): string => {
 
 let mockUsers: UserProfile[] = [
     { id: 'admin-user-id', uniqueId: 'AD-001', name: 'Admin User', username: 'admin@drivergy.in', contact: 'admin@drivergy.in', subscriptionPlan: 'Admin', approvalStatus: 'Approved', registrationTimestamp: format(new Date(), 'MMM dd, yyyy'), location: 'HQ', gender: 'Other', isAdmin: true, password: 'password' },
-    { id: 'customer-1', uniqueId: 'CU-123456', name: 'Priya Sharma', username: 'priya@example.com', contact: 'priya@example.com', subscriptionPlan: 'Premium', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 10), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Female', photoURL: 'https://placehold.co/100x100/f472b6/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Rohan Verma', totalLessons: 20, completedLessons: 12, upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'), myReferralCode: 'PRIYA123', totalReferralPoints: 150, password: 'password', flatHouseNumber: 'A-101', street: 'Cyber Hub Road', district: 'Gurugram', state: 'Haryana', pincode: '122002', dlStatus: 'Already Have DL', dlNumber: 'HR2620220012345', subscriptionStartDate: format(subDays(new Date(), 10), 'MMM dd, yyyy'), feedbackSubmitted: true },
+    { id: 'customer-1', uniqueId: 'CU-123456', name: 'Sample Customer', username: 'customer@drivergy.in', contact: 'customer@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 10), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Female', photoURL: 'https://placehold.co/100x100/f472b6/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Rohan Verma', totalLessons: 20, completedLessons: 12, upcomingLesson: format(addDays(new Date(), 3), 'MMM dd, yyyy, h:mm a'), myReferralCode: 'CUST123', totalReferralPoints: 150, password: 'password', flatHouseNumber: 'A-101', street: 'Cyber Hub Road', district: 'Gurugram', state: 'Haryana', pincode: '122002', dlStatus: 'Already Have DL', dlNumber: 'HR2620220012345', subscriptionStartDate: format(subDays(new Date(), 10), 'MMM dd, yyyy'), feedbackSubmitted: true },
+    { id: 'trainer-1', uniqueId: 'TR-ABCDEF', name: 'Sample Trainer', username: 'trainer@drivergy.in', contact: 'trainer@drivergy.in', subscriptionPlan: 'Trainer', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png', yearsOfExperience: 7, specialization: 'Car (Manual)', vehicleInfo: 'Maruti Swift (HR26A1234)', password: 'password' },
     { id: 'customer-2', uniqueId: 'CU-789012', name: 'Amit Singh', username: 'amit@example.com', contact: 'amit@example.com', subscriptionPlan: 'Gold', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy'), location: 'Noida', gender: 'Male', photoURL: 'https://placehold.co/100x100/818cf8/ffffff.png', totalLessons: 15, completedLessons: 0, myReferralCode: 'AMIT456', password: 'password' },
-    { id: 'trainer-1', uniqueId: 'TR-ABCDEF', name: 'Rohan Verma', username: 'rohan@example.com', contact: 'rohan@example.com', subscriptionPlan: 'Trainer', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png', yearsOfExperience: 7, specialization: 'Car (Manual)', vehicleInfo: 'Maruti Swift (HR26A1234)', password: 'password' },
     { id: 'trainer-2', uniqueId: 'TR-GHIJKL', name: 'Sunita Patel', username: 'sunita@example.com', contact: 'sunita@example.com', subscriptionPlan: 'Trainer', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 2), 'MMM dd, yyyy'), location: 'New Delhi', gender: 'Female', photoURL: 'https://placehold.co/100x100/a78bfa/ffffff.png', yearsOfExperience: 4, specialization: 'Car (Automatic)', vehicleInfo: 'Honda Amaze (DL10C5678)', password: 'password' },
 ];
 
@@ -69,14 +70,6 @@ export function authenticateUserByCredentials(email: string, password: string): 
     const user = mockUsers.find(u => u.username === email && u.password === password);
     return user || null;
 };
-
-export async function getOrCreateUser(firebaseUser: any, additionalData?: Partial<UserProfile>): Promise<UserProfile | null> {
-    // This function is now a passthrough in mock mode as auth is handled separately.
-    const existing = mockUsers.find(u => u.username === firebaseUser.email);
-    if (existing) return existing;
-    // We won't create new users via Google Sign-In in mock mode to avoid complexity.
-    return null;
-}
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     const user = mockUsers.find(u => u.id === userId);
@@ -325,6 +318,89 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
     return mockCourses[courseIndex].modules.length < initialLength;
 }
 
+export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
+    const newFaq: FaqItem = {
+      id: generateId('faq'),
+      ...data,
+    };
+    mockFaqs.push(newFaq);
+    return newFaq;
+}
+
+export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
+    const faqIndex = mockFaqs.findIndex(f => f.id === id);
+    if (faqIndex === -1) return false;
+    mockFaqs[faqIndex] = { ...mockFaqs[faqIndex], ...data };
+    return true;
+}
+
+export async function deleteFaq(id: string): Promise<boolean> {
+    const initialLength = mockFaqs.length;
+    mockFaqs = mockFaqs.filter(f => f.id !== id);
+    return mockFaqs.length < initialLength;
+}
+
+export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
+    const bannerIndex = mockSiteBanners.findIndex(b => b.id === id);
+    if (bannerIndex === -1) return false;
+
+    let imageUrl = data.imageSrc || mockSiteBanners[bannerIndex].imageSrc;
+    if (data.imageFile) {
+        imageUrl = await uploadFile(data.imageFile, 'site_visuals');
+    }
+
+    mockSiteBanners[bannerIndex] = {
+        ...mockSiteBanners[bannerIndex],
+        title: data.title,
+        description: data.description,
+        imageSrc: imageUrl,
+        imageHint: data.imageHint || '',
+    };
+    return true;
+}
+
+export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
+    const posterIndex = mockPromotionalPosters.findIndex(p => p.id === id);
+    if (posterIndex === -1) return false;
+
+    let imageUrl = data.imageSrc || mockPromotionalPosters[posterIndex].imageSrc;
+    if (data.imageFile) {
+        imageUrl = await uploadFile(data.imageFile, 'site_visuals');
+    }
+    
+    mockPromotionalPosters[posterIndex] = {
+        ...mockPromotionalPosters[posterIndex],
+        title: data.title,
+        description: data.description,
+        imageSrc: imageUrl,
+        imageHint: data.imageHint || '',
+        href: data.href || '#',
+    };
+    return true;
+}
+
+export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
+    const setIndex = mockQuizSets.findIndex(s => s.id === quizSetId);
+    if (setIndex === -1) return null;
+
+    const questionIndex = mockQuizSets[setIndex].questions.findIndex(q => q.id === questionId);
+    if (questionIndex === -1) return null;
+
+    const updatedQuestion: Question = {
+        id: questionId,
+        question: { en: data.question_en, hi: data.question_hi },
+        options: { 
+            en: data.options_en.split('\n').filter(o => o.trim() !== ''),
+            hi: data.options_hi.split('\n').filter(o => o.trim() !== '')
+        },
+        correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi }
+    };
+
+    mockQuizSets[setIndex].questions[questionIndex] = updatedQuestion;
+    return mockQuizSets[setIndex];
+}
+
+
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
     return coursesToHydrate.map(course => {
         let newIcon;
@@ -335,3 +411,135 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => {
         return { ...course, icon: newIcon };
     });
 };
+
+export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
+    return mockUsers.filter(u => 
+        u.uniqueId.startsWith('TR') && 
+        u.approvalStatus === 'Approved' &&
+        (!filters.location || u.location === filters.location) &&
+        (!filters.gender || u.gender === filters.gender)
+    );
+};
+
+export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
+    const customerIndex = mockUsers.findIndex(u => u.id === customerId);
+    const trainer = mockUsers.find(u => u.id === trainerId);
+
+    if(customerIndex !== -1 && trainer) {
+        mockUsers[customerIndex].assignedTrainerId = trainerId;
+        mockUsers[customerIndex].assignedTrainerName = trainer.name;
+        mockUsers[customerIndex].approvalStatus = 'In Progress'; // Trainer needs to confirm
+        return true;
+    }
+    return false;
+};
+
+export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
+    const customerIndex = mockUsers.findIndex(u => u.id === customerId);
+    if(customerIndex === -1) return false;
+    
+    mockUsers[customerIndex].approvalStatus = newStatus;
+
+    if (newStatus === 'Approved') {
+        const user = mockUsers[customerIndex];
+        const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
+        const firstLessonDate = addDays(startDate, 2);
+        firstLessonDate.setHours(9, 0, 0, 0);
+        user.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+
+        const requestIndex = mockLessonRequests.findIndex(r => r.customerId === customerId);
+        if(requestIndex !== -1) {
+            mockLessonRequests[requestIndex].status = 'Active';
+        }
+    } else { // Rejected by trainer
+        mockUsers[customerIndex].assignedTrainerId = undefined;
+        mockUsers[customerIndex].assignedTrainerName = undefined;
+        mockUsers[customerIndex].approvalStatus = 'Pending';
+    }
+    return true;
+}
+
+export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
+    const studentIndex = mockUsers.findIndex(u => u.id === studentId);
+    if (studentIndex === -1) return false;
+
+    const studentData = mockUsers[studentIndex];
+    
+    if (status === 'Present' && studentData.attendance !== 'Present') {
+        studentData.completedLessons = (studentData.completedLessons || 0) + 1;
+    }
+    studentData.attendance = status;
+    return true;
+}
+
+export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
+    const customerIndex = mockUsers.findIndex(u => u.id === customerId);
+    if (customerIndex === -1) return null;
+
+    const firstLessonDate = addDays(newDate, 2);
+    firstLessonDate.setHours(9, 0, 0, 0);
+    
+    mockUsers[customerIndex].subscriptionStartDate = format(newDate, 'MMM dd, yyyy');
+    mockUsers[customerIndex].upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+
+    return mockUsers[customerIndex];
+}
+
+export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
+    // This function would add to a `mockRescheduleRequests` array if one existed.
+    // For now, we simulate success.
+    console.log(`Mock reschedule request for ${customerName} from ${originalDate} to ${newDate}`);
+    return {
+        id: generateId('resched'),
+        userId,
+        customerName,
+        originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
+        requestedRescheduleDate: format(newDate, 'MMM dd, yyyy, h:mm a'),
+        status: 'Pending',
+        requestTimestamp: new Date().toISOString(),
+    };
+}
+
+export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
+    // This would update the status in a `mockRescheduleRequests` array.
+    console.log(`Mock update reschedule request ${requestId} to ${newStatus}`);
+    // If approved, you might update the user's upcoming lesson
+    // const request = mockRescheduleRequests.find(r => r.id === requestId);
+    // const userIndex = mockUsers.findIndex(u => u.id === request.userId);
+    // mockUsers[userIndex].upcomingLesson = request.requestedRescheduleDate;
+    return true;
+}
+
+export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
+    const newFeedback: Feedback = {
+        id: generateId('fb'),
+        customerId,
+        customerName,
+        trainerId,
+        trainerName,
+        rating,
+        comment,
+        submissionDate: new Date().toISOString(),
+    };
+    mockFeedback.push(newFeedback);
+
+    const userIndex = mockUsers.findIndex(u => u.id === customerId);
+    if(userIndex !== -1) {
+        mockUsers[userIndex].feedbackSubmitted = true;
+    }
+    return true;
+}
+
+export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
+    const referralIndex = mockReferrals.findIndex(r => r.id === referralId);
+    if (referralIndex !== -1) {
+        mockReferrals[referralIndex].payoutStatus = status;
+        return true;
+    }
+    return false;
+}
+
+export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
+    if (!userId) return [];
+    return mockReferrals.filter(r => r.referrerId === userId);
+}
