@@ -1,15 +1,16 @@
 
 'use server';
 
-import type { ApprovalStatusType, TrainerRegistrationFormValues, FullCustomerDetailsValues, RegistrationFormValues, CustomerRegistrationFormValues } from '@/types';
+import { doc, updateDoc, getDoc, collection, addDoc, setDoc, query, where, limit, getDocs } from 'firebase/firestore';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
+import type { ApprovalStatusType, TrainerRegistrationFormValues, FullCustomerDetailsValues, RegistrationFormValues, CustomerRegistrationFormValues, UserProfile, LessonRequest, VehicleType } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
 import { 
-    updateUserApprovalStatusInMock, 
+    checkUserExistsInMock,
     registerTrainerInMock,
     completeCustomerProfileInMock,
-    checkUserExistsInMock,
     registerCustomerInMock
 } from './mock-data';
 import { uploadFileToCloudinary } from './cloudinary';
@@ -31,9 +32,20 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs) {
+    if (!isFirebaseConfigured() || !db) {
+        console.error("Firebase not configured. Cannot update user status.");
+        return { success: false, error: 'Database not configured.' };
+    }
+
+    if (!userId) {
+        return { success: false, error: 'User ID is missing.' };
+    }
+    
     console.log(`Server Action: Updating user ${userId} to status ${newStatus}`);
+    
     try {
-        updateUserApprovalStatusInMock(userId, newStatus);
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, { approvalStatus: newStatus });
         revalidatePath('/'); // Revalidate the dashboard page to show new data
         return { success: true };
     } catch (error: any) {
@@ -55,7 +67,7 @@ export const registerUserAction = async (formData: FormData): Promise<{ success:
         const data = Object.fromEntries(formData.entries()) as unknown as RegistrationFormValues;
 
         // Pre-registration check
-        const userExists = checkUserExistsInMock({
+        const userExists = await checkUserExistsInMock({
             email: data.email,
             username: data.username,
             phone: data.phone,
@@ -66,7 +78,7 @@ export const registerUserAction = async (formData: FormData): Promise<{ success:
         }
 
         if (data.userRole === 'customer') {
-             registerCustomerInMock(data as CustomerRegistrationFormValues);
+             await registerCustomerInMock(data as CustomerRegistrationFormValues);
         } else if (data.userRole === 'trainer') {
             const certFile = formData.get('trainerCertificateFile') as File | null;
             const dlFile = formData.get('drivingLicenseFile') as File | null;
@@ -87,9 +99,9 @@ export const registerUserAction = async (formData: FormData): Promise<{ success:
                 trainerCertificateUrl: certUrl,
                 drivingLicenseUrl: dlUrl,
                 aadhaarCardUrl: aadhaarUrl,
-            } as TrainerRegistrationFormValues;
+            } as unknown as TrainerRegistrationFormValues;
             
-            registerTrainerInMock(trainerData);
+            await registerTrainerInMock(trainerData);
         }
 
         revalidatePath('/site/register');
@@ -123,7 +135,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
             photoIdUrl,
         } as unknown as FullCustomerDetailsValues;
 
-        completeCustomerProfileInMock(userId, values);
+        await completeCustomerProfileInMock(userId, values);
         
         revalidatePath('/site/payment');
         revalidatePath('/');
