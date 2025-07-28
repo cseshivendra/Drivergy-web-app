@@ -19,10 +19,12 @@ let mockUsers: UserProfile[] = [
     { id: 'trainer-1', uniqueId: 'TR-ABCDEF', name: 'Sample Trainer', username: 'trainer@drivergy.in', contact: 'trainer@drivergy.in', subscriptionPlan: 'Trainer', approvalStatus: 'Approved', registrationTimestamp: format(subDays(new Date(), 30), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png', yearsOfExperience: 7, specialization: 'Car (Manual)', vehicleInfo: 'Maruti Swift (HR26A1234)', password: 'password' },
     { id: 'customer-2', uniqueId: 'CU-789012', name: 'Amit Singh', username: 'amit@example.com', contact: 'amit@example.com', subscriptionPlan: 'Gold', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 5), 'MMM dd, yyyy'), location: 'Noida', gender: 'Male', photoURL: 'https://placehold.co/100x100/818cf8/ffffff.png', totalLessons: 15, completedLessons: 0, myReferralCode: 'AMIT456', password: 'password' },
     { id: 'trainer-2', uniqueId: 'TR-GHIJKL', name: 'Sunita Patel', username: 'sunita@example.com', contact: 'sunita@example.com', subscriptionPlan: 'Trainer', approvalStatus: 'Pending', registrationTimestamp: format(subDays(new Date(), 2), 'MMM dd, yyyy'), location: 'New Delhi', gender: 'Female', photoURL: 'https://placehold.co/100x100/a78bfa/ffffff.png', yearsOfExperience: 4, specialization: 'Car (Automatic)', vehicleInfo: 'Honda Amaze (DL10C5678)', password: 'password' },
+    { id: 'customer-3', uniqueId: 'CU-NEWREQ', name: 'New Student', username: 'newstudent@drivergy.in', contact: 'newstudent@drivergy.in', subscriptionPlan: 'Premium', approvalStatus: 'In Progress', registrationTimestamp: format(subDays(new Date(), 1), 'MMM dd, yyyy'), location: 'Gurugram', gender: 'Male', photoURL: 'https://placehold.co/100x100/fb923c/ffffff.png', assignedTrainerId: 'trainer-1', assignedTrainerName: 'Sample Trainer', totalLessons: 20, completedLessons: 0, myReferralCode: 'NEWSTUD', password: 'password', flatHouseNumber: 'B-202', street: 'Golf Course Road', district: 'Gurugram', state: 'Haryana', pincode: '122011', dlStatus: 'New Learner', subscriptionStartDate: format(new Date(), 'MMM dd, yyyy') },
 ];
 
 let mockLessonRequests: LessonRequest[] = [
     { id: 'req-1', customerId: 'customer-2', customerName: 'Amit Singh', vehicleType: 'Four-Wheeler', status: 'Pending', requestTimestamp: format(subDays(new Date(), 4), 'MMM dd, yyyy, h:mm a') },
+    { id: 'req-2', customerId: 'customer-3', customerName: 'New Student', vehicleType: 'Four-Wheeler', status: 'Active', requestTimestamp: format(subDays(new Date(), 1), 'MMM dd, yyyy, h:mm a') },
 ];
 
 let mockFeedback: Feedback[] = [
@@ -584,3 +586,5 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     
     return mockUsers[userIndex];
 };
+
+    
