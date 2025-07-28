@@ -52,6 +52,7 @@ export const UserProfileSchema = z.object({
   myReferralCode: z.string().optional(),
   photoURL: z.string().optional(),
   gender: z.string(),
+  password: z.string().optional(),
   
   // Customer specific
   flatHouseNumber: z.string().optional(),
@@ -469,6 +470,7 @@ export interface AdminDashboardData {
     summaryData: SummaryData;
     allUsers: UserProfile[];
     lessonRequests: LessonRequest[];
+    rescheduleRequests: RescheduleRequest[];
     feedback: Feedback[];
     referrals: Referral[];
     lessonProgress: LessonProgressData[];

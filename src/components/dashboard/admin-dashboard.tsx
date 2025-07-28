@@ -11,7 +11,7 @@ import RequestTable from '@/components/dashboard/request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { listenToAdminDashboardData } from '@/lib/mock-data';
-import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest } from '@/types';
 import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import FaqManagement from './faq-management';
 import BlogManagement from './blog-management';
 import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
+import RescheduleRequestTable from './reschedule-request-table';
 
 
 export default function AdminDashboard() {
@@ -132,10 +133,16 @@ export default function AdminDashboard() {
                         onUserActioned={handleActioned}
                         isInterestedList={true}
                     />
-                    <RequestTable
+                     <RequestTable
                         title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>}
                         requests={dashboardData?.lessonRequests || []}
                         isLoading={loading}
+                    />
+                     <RescheduleRequestTable
+                        title="Lesson Reschedule Requests"
+                        requests={dashboardData?.rescheduleRequests || []}
+                        isLoading={loading}
+                        onActioned={handleActioned}
                     />
                 </TabsContent>
                 <TabsContent value="progress" className="space-y-8">

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,10 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car } from 'lucide-react';
+import { Users, CalendarClock, Star, Check, X, MapPin, AlertCircle, Eye, User, Phone, ShieldCheck, Hourglass, BellRing, Car, Repeat } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '../ui/badge';
 import type React from 'react';
+import RescheduleRequestTable from './reschedule-request-table';
 
 const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -241,6 +243,14 @@ export default function TrainerDashboard() {
               </Table>
           </CardContent>
       </Card>
+      
+      <RescheduleRequestTable
+        title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
+        requests={[]}
+        isLoading={loading}
+        onActioned={() => {}}
+      />
+
 
       <Card className="shadow-lg border-primary">
           <CardHeader>

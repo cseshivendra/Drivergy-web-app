@@ -87,7 +87,7 @@ export default function RescheduleRequestTable({ title, requests, isLoading, onA
   return (
     <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
+        <CardTitle className="font-headline text-2xl font-semibold flex items-center">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="overflow-x-auto">
