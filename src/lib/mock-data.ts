@@ -9,7 +9,7 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
 
-// NOTE: This function is called from a Server Action, which handles the file uploads.
+// NOTE: This function is now only called from a Server Action, which handles the file uploads.
 export async function createNewUser(data: RegistrationFormValues, fileUrls: { [key: string]: string | null }): Promise<{ success: boolean, error?: string, userId?: string }> {
     if (!db) return { success: false, error: "Database not configured." };
 
@@ -53,9 +53,9 @@ export async function createNewUser(data: RegistrationFormValues, fileUrls: { [k
             myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
             vehicleInfo: trainerData.trainerVehicleType, specialization: trainerData.specialization,
             yearsOfExperience: Number(trainerData.yearsOfExperience),
-            trainerCertificateUrl: fileUrls.trainerCertificateFile || '',
-            drivingLicenseUrl: fileUrls.drivingLicenseFile || '',
-            aadhaarCardUrl: fileUrls.aadhaarCardFile || '',
+            trainerCertificateUrl: fileUrls.trainerCertificateUrl || '',
+            drivingLicenseUrl: fileUrls.drivingLicenseUrl || '',
+            aadhaarCardUrl: fileUrls.aadhaarCardUrl || '',
         };
     }
 

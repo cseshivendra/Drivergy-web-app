@@ -8,45 +8,9 @@ import { sendEmail } from '@/lib/email';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { ApprovalStatusType, FullCustomerDetailsValues, VehicleType } from '@/types';
-import { v2 as cloudinary } from 'cloudinary';
-import streamifier from 'streamifier';
+import { uploadFileToCloudinary } from '@/lib/cloudinary';
 import { collection, addDoc, getDoc } from 'firebase/firestore';
 
-// Cloudinary logic is now self-contained within this server actions file.
-const cloudinaryConfig = () => {
-    cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-        secure: true,
-    });
-};
-
-const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-        console.error("Cloudinary environment variables are not set.");
-        throw new Error("Cannot upload file: Server storage is not configured.");
-    }
-
-    cloudinaryConfig();
-
-    return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-            { folder: folder, resource_type: "auto" },
-            (error, result) => {
-                if (error) {
-                    console.error('Cloudinary upload error:', error);
-                    reject(new Error('File upload to Cloudinary failed.'));
-                } else if (result) {
-                    resolve(result.secure_url);
-                } else {
-                    reject(new Error('File upload failed: No result from Cloudinary.'));
-                }
-            }
-        );
-        streamifier.createReadStream(fileBuffer).pipe(stream);
-    });
-};
 
 export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
@@ -198,8 +162,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
     }
 };
 
-// This is no longer exported as it is internal to this file now.
-async function uploadFile(file: File, folder: string): Promise<string> {
-    const buffer = await file.arrayBuffer();
-    return uploadFileToCloudinary(Buffer.from(buffer), folder);
-}
