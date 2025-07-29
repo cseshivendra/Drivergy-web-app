@@ -23,11 +23,9 @@ import {
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
   GenderOptions,
-  type TrainerRegistrationFormValues,
-  type CustomerRegistrationFormValues,
   TrainerPreferenceOptions,
 } from '@/types';
-import { createNewUser } from '@/lib/mock-data';
+import { registerUserAction } from '@/lib/server-actions';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -61,7 +59,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       return {
         ...base,
         trainerPreference: '',
-      } as CustomerRegistrationFormValues;
+      };
     } else { // trainer
       return {
         ...base,
@@ -77,7 +75,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         trainerCertificateFile: undefined,
         drivingLicenseFile: undefined,
         aadhaarCardFile: undefined,
-      } as TrainerRegistrationFormValues;
+      };
     }
   }, [userRole]);
 
@@ -86,6 +84,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     defaultValues,
     mode: 'onChange',
   });
+  
+  const { formState: { isSubmitting } } = form;
 
   const selectedGender = form.watch('gender');
 
@@ -107,18 +107,22 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       }
     }
   }, [selectedGender, trainerOptions, form, userRole]);
-
+  
   async function onSubmit(data: RegistrationFormValues) {
     setFormError(null);
-    const files: { [key: string]: File | null } = {};
-    if (data.userRole === 'trainer') {
-      files.trainerCertificateFile = data.trainerCertificateFile ?? null;
-      files.drivingLicenseFile = data.drivingLicenseFile ?? null;
-      files.aadhaarCardFile = data.aadhaarCardFile ?? null;
+    const formData = new FormData();
+    
+    // Append all fields from the data object to formData
+    for (const [key, value] of Object.entries(data)) {
+        if (value instanceof File) {
+            formData.append(key, value);
+        } else if (value !== null && value !== undefined) {
+            formData.append(key, String(value));
+        }
     }
 
     try {
-      const result = await createNewUser(data, files);
+      const result = await registerUserAction(formData);
       if (result.success) {
         toast({
           title: "Registration Successful!",
@@ -145,6 +149,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       });
     }
   }
+
 
   return (
     <Form {...form}>
@@ -553,8 +558,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         )}
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
+          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
               userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
           </Button>
         </div>

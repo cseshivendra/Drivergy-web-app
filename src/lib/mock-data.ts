@@ -2,7 +2,7 @@
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData, RegistrationFormValues } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { uploadFile } from './server-actions';
+import { uploadFileToCloudinary } from './cloudinary';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 
@@ -50,10 +50,16 @@ export async function createNewUser(data: RegistrationFormValues, files: { [key:
         const aadhaarFile = files.aadhaarCardFile;
         if (!certFile || !dlFile || !aadhaarFile) return { success: false, error: "One or more required documents were not uploaded." };
         
+        const [certBuffer, dlBuffer, aadhaarBuffer] = await Promise.all([
+            certFile.arrayBuffer().then(b => Buffer.from(b)),
+            dlFile.arrayBuffer().then(b => Buffer.from(b)),
+            aadhaarFile.arrayBuffer().then(b => Buffer.from(b)),
+        ]);
+        
         const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-            uploadFile(certFile, `trainer_documents/${userRef.id}`),
-            uploadFile(dlFile, `trainer_documents/${userRef.id}`),
-            uploadFile(aadhaarFile, `trainer_documents/${userRef.id}`),
+            uploadFileToCloudinary(certBuffer, `trainer_documents/${userRef.id}`),
+            uploadFileToCloudinary(dlBuffer, `trainer_documents/${userRef.id}`),
+            uploadFileToCloudinary(aadhaarBuffer, `trainer_documents/${userRef.id}`),
         ]);
 
         const newTrainer: Omit<UserProfile, 'id'> = {
@@ -286,6 +292,8 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
     if (!isFirebaseConfigured() || !db) return callback([]);
     return onSnapshot(collection(db, 'promotionalPosters'), snap => {
         callback(snap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)));
+    }, (error) => {
+        console.error("Error listening to promotional posters:", error);
     });
 }
 
@@ -299,7 +307,8 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
     if (!db) return null;
     let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
     if (data.imageFile) {
-        imageUrl = await uploadFile(data.imageFile, 'blog_images');
+        const buffer = await data.imageFile.arrayBuffer();
+        imageUrl = await uploadFileToCloudinary(Buffer.from(buffer), 'blog_images');
     }
     const newPostData: Omit<BlogPost, 'slug'> = {
         title: data.title, category: data.category, excerpt: data.excerpt,
@@ -315,7 +324,8 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
     if (!db) return false;
     const updateData: Partial<BlogPostFormValues> = { ...data };
     if (data.imageFile) {
-        updateData.imageSrc = await uploadFile(data.imageFile, 'blog_images');
+        const buffer = await data.imageFile.arrayBuffer();
+        updateData.imageSrc = await uploadFileToCloudinary(Buffer.from(buffer), 'blog_images');
     }
     delete updateData.imageFile;
     await updateDoc(doc(db, 'blogPosts', slug), updateData as any);
@@ -384,7 +394,8 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
     if (!db) return false;
     const updateData: Partial<VisualContentFormValues> = { ...data };
     if (data.imageFile) {
-        updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        const buffer = await data.imageFile.arrayBuffer();
+        updateData.imageSrc = await uploadFileToCloudinary(Buffer.from(buffer), 'site_visuals');
     }
     delete updateData.imageFile;
     await updateDoc(doc(db, 'siteBanners', id), updateData as any);
@@ -395,7 +406,8 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
     if (!db) return false;
     const updateData: Partial<VisualContentFormValues> = { ...data };
     if (data.imageFile) {
-        updateData.imageSrc = await uploadFile(data.imageFile, 'site_visuals');
+        const buffer = await data.imageFile.arrayBuffer();
+        updateData.imageSrc = await uploadFileToCloudinary(Buffer.from(buffer), 'site_visuals');
     }
     delete updateData.imageFile;
     await updateDoc(doc(db, 'promotionalPosters', id), updateData as any);
@@ -594,10 +606,13 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
         pincode: data.pincode,
     };
     if (data.photo) {
-        updateData.photoURL = await uploadFile(data.photo, `user_photos/${userId}`);
+        const buffer = await data.photo.arrayBuffer();
+        updateData.photoURL = await uploadFileToCloudinary(Buffer.from(buffer), `user_photos/${userId}`);
     }
     Object.keys(updateData).forEach(key => (updateData as any)[key] === undefined && delete (updateData as any)[key]);
     await updateDoc(userRef, updateData as any);
     const updatedDoc = await getDoc(userRef);
     return updatedDoc.exists() ? { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile : null;
 };
+
+    
