@@ -1,6 +1,5 @@
-
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData } from '@/types';
-import { addDays, format, isFuture, parse, subDays } from 'date-fns';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData, RegistrationFormValues } from '@/types';
+import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { uploadFile } from './server-actions';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
@@ -9,6 +8,73 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
+
+export async function createNewUser(data: RegistrationFormValues, files: { [key: string]: File | null }): Promise<{ success: boolean, error?: string }> {
+    if (!db) return { success: false, error: "Database not configured." };
+
+    const usersRef = collection(db, "users");
+    const emailQuery = query(usersRef, where("contact", "==", data.email), limit(1));
+    const usernameQuery = query(usersRef, where("username", "==", data.username), limit(1));
+    
+    const [emailSnap, usernameSnap] = await Promise.all([
+        getDocs(emailQuery),
+        getDocs(usernameQuery),
+    ]);
+
+    if (!emailSnap.empty) {
+         return { success: false, error: "A user is already registered with this email." };
+    }
+    if (!usernameSnap.empty) {
+        return { success: false, error: "This username is already taken." };
+    }
+
+    const userRef = doc(collection(db, 'users'));
+    if (data.userRole === 'customer') {
+        const customerData = data as CustomerRegistrationFormValues;
+        const newUser: Omit<UserProfile, 'id'> = {
+            uniqueId: `CU-${userRef.id.slice(-6).toUpperCase()}`,
+            name: customerData.name, username: customerData.username, password: customerData.password,
+            contact: customerData.email, phone: customerData.phone, gender: customerData.gender,
+            location: 'TBD', subscriptionPlan: "None",
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            approvalStatus: 'Pending', photoURL: `https://placehold.co/100x100.png?text=${customerData.name.charAt(0)}`,
+            myReferralCode: `${customerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
+            trainerPreference: customerData.trainerPreference || 'Any',
+        };
+        await setDoc(userRef, newUser);
+    } else { // trainer
+        const trainerData = data as TrainerRegistrationFormValues;
+        const certFile = files.trainerCertificateFile;
+        const dlFile = files.drivingLicenseFile;
+        const aadhaarFile = files.aadhaarCardFile;
+        if (!certFile || !dlFile || !aadhaarFile) return { success: false, error: "One or more required documents were not uploaded." };
+        
+        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
+            uploadFile(certFile, `trainer_documents/${userRef.id}`),
+            uploadFile(dlFile, `trainer_documents/${userRef.id}`),
+            uploadFile(aadhaarFile, `trainer_documents/${userRef.id}`),
+        ]);
+
+        const newTrainer: Omit<UserProfile, 'id'> = {
+            uniqueId: `TR-${userRef.id.slice(-6).toUpperCase()}`,
+            name: trainerData.name, username: trainerData.username,
+            contact: trainerData.email, phone: trainerData.phone, gender: trainerData.gender,
+            password: trainerData.password, location: trainerData.location,
+            subscriptionPlan: "Trainer", registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            approvalStatus: 'Pending', photoURL: `https://placehold.co/100x100.png?text=${trainerData.name.charAt(0)}`,
+            myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
+            vehicleInfo: trainerData.trainerVehicleType, specialization: trainerData.specialization,
+            yearsOfExperience: Number(trainerData.yearsOfExperience),
+            trainerCertificateUrl: certUrl,
+            drivingLicenseUrl: dlUrl,
+            aadhaarCardUrl: aadhaarUrl,
+        };
+        await setDoc(userRef, newTrainer);
+    }
+    return { success: true };
+}
+
+
 export async function authenticateUserByCredentials(identifier: string, password: string): Promise<UserProfile | null> {
     if (!db) return null; // Or handle mock data if needed
 
@@ -534,5 +600,3 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     const updatedDoc = await getDoc(userRef);
     return updatedDoc.exists() ? { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile : null;
 };
-
-    

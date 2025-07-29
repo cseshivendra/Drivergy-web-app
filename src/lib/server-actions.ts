@@ -1,4 +1,3 @@
-
 'use server';
 
 import { doc, updateDoc, getDoc, collection, addDoc, setDoc, query, where, limit, getDocs } from 'firebase/firestore';
@@ -8,6 +7,7 @@ import { revalidatePath } from 'next/cache';
 import { sendEmail } from './email';
 import { format } from 'date-fns';
 import { uploadFileToCloudinary } from './cloudinary';
+import { createNewUser } from './mock-data';
 
 export async function uploadFile(file: File, folder: string): Promise<string> {
     try {
@@ -55,73 +55,20 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
 }
 
 export const registerUserAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    if (!db) return { success: false, error: "Database not configured." };
+    const data = Object.fromEntries(formData.entries()) as unknown as RegistrationFormValues;
+    const files: { [key: string]: File | null } = {
+        trainerCertificateFile: formData.get('trainerCertificateFile') as File | null,
+        drivingLicenseFile: formData.get('drivingLicenseFile') as File | null,
+        aadhaarCardFile: formData.get('aadhaarCardFile') as File | null,
+    };
+
     try {
-        const data = Object.fromEntries(formData.entries()) as unknown as RegistrationFormValues;
-
-        const usersRef = collection(db, "users");
-        const emailQuery = query(usersRef, where("contact", "==", data.email), limit(1));
-        const usernameQuery = query(usersRef, where("username", "==", data.username), limit(1));
-        const phoneQuery = query(usersRef, where("phone", "==", data.phone), limit(1));
-        
-        const [emailSnap, usernameSnap, phoneSnap] = await Promise.all([
-            getDocs(emailQuery),
-            getDocs(usernameQuery),
-            getDocs(phoneQuery)
-        ]);
-
-        if (!emailSnap.empty || !usernameSnap.empty || !phoneSnap.empty) {
-             return { success: false, error: "A user is already registered with this email, username, or phone number." };
+        const result = await createNewUser(data, files);
+        if (result.success) {
+            revalidatePath('/register');
+            revalidatePath('/');
         }
-
-        const userRef = doc(collection(db, 'users'));
-        if (data.userRole === 'customer') {
-            const customerData = data as CustomerRegistrationFormValues;
-            const newUser: Omit<UserProfile, 'id'> = {
-                uniqueId: `CU-${userRef.id.slice(-6).toUpperCase()}`,
-                name: customerData.name, username: customerData.username, password: customerData.password,
-                contact: customerData.email, phone: customerData.phone, gender: customerData.gender,
-                location: 'TBD', subscriptionPlan: "None",
-                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-                approvalStatus: 'Pending', photoURL: `https://placehold.co/100x100.png?text=${customerData.name.charAt(0)}`,
-                myReferralCode: `${customerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
-                trainerPreference: customerData.trainerPreference || 'Any',
-            };
-            await setDoc(userRef, newUser);
-        } else if (data.userRole === 'trainer') {
-            const trainerData = data as TrainerRegistrationFormValues;
-            const certFile = formData.get('trainerCertificateFile') as File | null;
-            const dlFile = formData.get('drivingLicenseFile') as File | null;
-            const aadhaarFile = formData.get('aadhaarCardFile') as File | null;
-            if (!certFile || !dlFile || !aadhaarFile) return { success: false, error: "One or more required documents were not uploaded." };
-            
-            const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-                uploadFile(certFile, `trainer_documents/${userRef.id}`),
-                uploadFile(dlFile, `trainer_documents/${userRef.id}`),
-                uploadFile(aadhaarFile, `trainer_documents/${userRef.id}`),
-            ]);
-
-            const newTrainer: Omit<UserProfile, 'id'> = {
-                uniqueId: `TR-${userRef.id.slice(-6).toUpperCase()}`,
-                name: trainerData.name, username: trainerData.username,
-                contact: trainerData.email, phone: trainerData.phone, gender: trainerData.gender,
-                password: trainerData.password, location: trainerData.location,
-                subscriptionPlan: "Trainer", registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-                approvalStatus: 'Pending', photoURL: `https://placehold.co/100x100.png?text=${trainerData.name.charAt(0)}`,
-                myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
-                vehicleInfo: trainerData.trainerVehicleType, specialization: trainerData.specialization,
-                yearsOfExperience: Number(trainerData.yearsOfExperience),
-                trainerCertificateUrl: certUrl,
-                drivingLicenseUrl: dlUrl,
-                aadhaarCardUrl: aadhaarUrl,
-            };
-            await setDoc(userRef, newTrainer);
-        }
-
-        revalidatePath('/register');
-        revalidatePath('/');
-        return { success: true };
-
+        return result;
     } catch (error) {
         console.error("Error in registerUserAction:", error);
         const errorMessage = error instanceof Error ? error.message : "An unexpected server error occurred.";
@@ -188,5 +135,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
-
-    

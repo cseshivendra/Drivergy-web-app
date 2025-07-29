@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -18,8 +17,6 @@ interface AuthContextType {
   signInWithCredentials: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
-  // This is no longer needed as registration is a server action
-  // signUpWithCredentials: (email: string, password: string, additionalData: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,5 +142,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-
-    
