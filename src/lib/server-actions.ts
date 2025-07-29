@@ -47,7 +47,6 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     try {
         const data = Object.fromEntries(formData.entries());
         
-        // Manually constructing an object to hold potential files
         const files: { [key: string]: File | null } = {
             trainerCertificateFile: formData.get('trainerCertificateFile') as File | null,
             drivingLicenseFile: formData.get('drivingLicenseFile') as File | null,
@@ -95,12 +94,10 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     }
 }
 
-
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
     console.log(`A password reset link would be sent to ${email} if email services were configured.`);
     return { success: true };
 }
-
 
 interface UpdateStatusArgs {
     userId: string;
@@ -124,7 +121,6 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
         return { success: false, error: error.message || 'An unexpected server error occurred.' };
     }
 }
-
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!db) {
@@ -172,7 +168,6 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
         
-        // This seems to be missing from the original logic, adding it back.
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             const newRequestData = {
@@ -192,3 +187,4 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
     }
 };
 
+    

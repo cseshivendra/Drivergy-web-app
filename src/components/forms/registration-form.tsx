@@ -84,7 +84,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     setFormError(null);
     const formData = new FormData();
     
-    // Append all form data, including files, to the FormData object
     Object.entries(data).forEach(([key, value]) => {
         if (value instanceof File) {
             formData.append(key, value);
@@ -109,7 +108,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       setFormError(error instanceof Error ? error.message : "A client-side error occurred.");
     }
   }
-
 
   return (
     <Form {...form}>
@@ -528,3 +526,5 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
+
+    
