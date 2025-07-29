@@ -1,4 +1,3 @@
-
 'use server';
 
 import { createNewUser } from './mock-data';
@@ -12,7 +11,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { collection, addDoc, getDoc } from 'firebase/firestore';
 
-// Cloudinary logic is now self-contained within this server action file.
 const cloudinaryConfig = () => {
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -198,4 +196,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
-
