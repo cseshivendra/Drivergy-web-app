@@ -264,7 +264,7 @@ export async function registerTrainerInMock(data: TrainerRegistrationFormValues)
     if (!db) throw new Error("Database not configured");
     const userRef = doc(collection(db, 'users'));
     const newUser: Omit<UserProfile, 'id'> = {
-        uniqueId: generateId('TR'), name: data.name, username: data.username,
+        uniqueId: `TR-${generateId().slice(-6).toUpperCase()}`, name: data.name, username: data.username,
         contact: data.email, phone: data.phone, gender: data.gender,
         password: data.password, location: data.location,
         subscriptionPlan: "Trainer", registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
@@ -579,7 +579,7 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
     const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
     const querySnapshot = await getDocs(q);
     const referrals = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Referral));
-    if (referrals.length === 0) return [];
+    if (referrals.length === 0) return referrals;
     const refereeIds = referrals.map(r => r.refereeId).filter(Boolean);
     if(refereeIds.length === 0) return referrals;
 
