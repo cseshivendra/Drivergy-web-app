@@ -42,5 +42,3 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         return { success: false, error: errorMessage };
     }
 }
-
-    

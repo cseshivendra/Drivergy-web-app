@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign } from 'lucide-react';
+import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign, User } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from "@/hooks/use-toast";
@@ -22,25 +22,26 @@ export default function LoginForm() {
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     setIsMounted(true);
-    if (user && !loading) {
-      router.push(redirect || '/'); // Redirect to intended page or dashboard after login
+    // Only redirect if loading is finished and a user exists.
+    if (!loading && user) {
+      router.push(redirect || '/'); 
     }
   }, [user, loading, router, redirect]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-        toast({ title: 'Error', description: 'Please enter both email and password.', variant: 'destructive' });
+    if (!identifier || !password) {
+        toast({ title: 'Error', description: 'Please enter both your identifier and password.', variant: 'destructive' });
         return;
     }
-    await signInWithCredentials(email, password);
+    await signInWithCredentials(identifier, password);
   };
 
   const handleGoogleSignIn = () => {
@@ -53,7 +54,9 @@ export default function LoginForm() {
     </svg>
   );
 
-  if (loading || (user && isMounted)) { 
+  // Show a loading spinner if the auth state is loading, or if we have a user and are about to redirect.
+  // This prevents the login form from flashing on screen for an already logged-in user.
+  if (loading || user) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -81,7 +84,7 @@ export default function LoginForm() {
           asChild
           className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
         >
-          <Link href="/site" aria-label="Back to site">
+          <Link href="/" aria-label="Back to site">
             <Home className="h-5 w-5" />
           </Link>
         </Button>
@@ -115,21 +118,21 @@ export default function LoginForm() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="email" className="flex items-center"><AtSign className="mr-2 h-4 w-4" />Email Address</Label>
+                <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
                 <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="Enter your email address" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="identifier" 
+                  type="text" 
+                  placeholder="Enter your email or username" 
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   disabled={loading}
-                  autoComplete="email"
+                  autoComplete="email username"
                 />
               </div>
               <div>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                   <Link href="/site/forgot-password" passHref>
+                   <Link href="/forgot-password" passHref>
                     <Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button>
                   </Link>
                 </div>
@@ -184,7 +187,7 @@ export default function LoginForm() {
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
              <p className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
-                <Link href="/site/register" className="font-semibold text-primary hover:underline">
+                <Link href="/register" className="font-semibold text-primary hover:underline">
                     Sign Up
                 </Link>
             </p>
