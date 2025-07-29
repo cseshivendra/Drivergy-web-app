@@ -5,6 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/context/theme-context';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
+import SiteHeader from '@/components/layout/site-header';
+import SiteFooter from '@/components/layout/site-footer';
+import ChatWidget from '@/components/chatbot/chat-widget';
 
 export default function RootLayout({
   children,
@@ -13,9 +17,9 @@ export default function RootLayout({
 }>) {
   const pathname = usePathname();
   
-  // The not-found page in Next.js App Router is special.
-  // We must prevent it from being wrapped in providers that use client-side hooks.
-  const isNotFoundPage = pathname.includes('/not-found');
+  // A simple way to distinguish between the public site and the authenticated app area.
+  // The authenticated app pages live inside the (app) route group.
+  const isAppRoute = /^\/($|profile|courses|rto-quiz|referrals|contact)/.test(pathname);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -29,16 +33,21 @@ export default function RootLayout({
         <meta name="keywords" content="driving school, learn to drive, driving lessons, car training, motorcycle training, driving school for women, driving school for men, cheap driving lessons, flexible driving school, RTO test" />
       </head>
       <body className="font-body antialiased">
-        {isNotFoundPage ? (
-          children
-        ) : (
           <AuthProvider>
             <ThemeProvider>
-              {children}
+              {isAppRoute ? (
+                children // The AuthenticatedAppLayout will provide its own header/footer
+              ) : (
+                <div className="flex flex-col min-h-screen bg-background text-foreground">
+                  <SiteHeader />
+                  <main className="flex-grow">{children}</main>
+                  <SiteFooter />
+                  <ChatWidget />
+                </div>
+              )}
               <Toaster />
             </ThemeProvider>
           </AuthProvider>
-        )}
       </body>
     </html>
   );

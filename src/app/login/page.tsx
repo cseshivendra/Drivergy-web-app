@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -84,7 +83,7 @@ export default function LoginPage() {
           asChild
           className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
         >
-          <Link href="/site" aria-label="Back to site">
+          <Link href="/" aria-label="Back to site">
             <Home className="h-5 w-5" />
           </Link>
         </Button>
@@ -132,7 +131,7 @@ export default function LoginPage() {
               <div>
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                   <Link href="/site/forgot-password" passHref>
+                   <Link href="/forgot-password" passHref>
                     <Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button>
                   </Link>
                 </div>
@@ -187,7 +186,7 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
              <p className="text-sm text-muted-foreground">
                 Don't have an account?{' '}
-                <Link href="/site/register" className="font-semibold text-primary hover:underline">
+                <Link href="/register" className="font-semibold text-primary hover:underline">
                     Sign Up
                 </Link>
             </p>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 // A simplified logo component for the footer.
 const FooterLogo = () => (
-    <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
+    <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
       <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
         <Car className="h-7 w-7 text-primary shrink-0" />
       </div>
@@ -34,7 +33,7 @@ export default function Footer() {
               <Link href="/contact" className="hover:text-primary transition-colors">
                 Get In Touch
               </Link>
-              <Link href="/site/faq" className="hover:text-primary transition-colors">
+              <Link href="/faq" className="hover:text-primary transition-colors">
                 FAQ
               </Link>
               <Link href="#" className="hover:text-primary transition-colors">

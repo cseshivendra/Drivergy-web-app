@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Info, Users, Target, Car, UserCircle, Linkedin, Instagram } from 'lucide-react';
 import Image from 'next/image';

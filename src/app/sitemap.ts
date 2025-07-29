@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next';
 import { listenToBlogPosts } from '@/lib/mock-data'; 
 import { BlogPost } from '@/types';
@@ -11,12 +10,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Define static routes that are always present on the site.
   const staticRoutes = [
     '', // Homepage
-    '/site',
-    '/site/register',
-    '/site/faq',
-    '/site/career',
-    '/site/rto-services',
-    '/site/blog',
+    '/register',
+    '/faq',
+    '/career',
+    '/rto-services',
+    '/blog',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
@@ -35,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const blogRoutes = posts.map((post) => ({
-    url: `${baseUrl}/site/blog/${post.slug}`,
+    url: `${baseUrl}/blog/${post.slug}`,
     lastModified: new Date(post.date).toISOString(),
     changeFrequency: 'monthly' as const,
     priority: 0.7,

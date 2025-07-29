@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -42,7 +41,7 @@ import { useTheme } from '@/context/theme-context';
 
 const SiteLogo = () => (
   <Link
-    href="/site"
+    href="/"
     className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md"
   >
     <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
@@ -61,21 +60,21 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { href: '/site#services', label: 'Services' },
-  { href: '/site#courses', label: 'Courses' },
-  { href: '/site#subscriptions', label: 'Plans' },
-  { href: '/site/rto-services', label: 'RTO Services' },
+  { href: '#services', label: 'Services' },
+  { href: '#courses', label: 'Courses' },
+  { href: '#subscriptions', label: 'Plans' },
+  { href: '/rto-services', label: 'RTO Services' },
   {
     label: 'Insights',
     children: [
-      { href: '/site/faq', label: 'FAQ' },
-      { href: '/site#testimonials', label: 'Testimonials' },
-      { href: '/site/blog', label: 'Blogs' },
+      { href: '/faq', label: 'FAQ' },
+      { href: '#testimonials', label: 'Testimonials' },
+      { href: '/blog', label: 'Blogs' },
     ],
   },
-  { href: '/site/about', label: 'About Us' },
-  { href: '/site/career', label: 'Careers' },
-  { href: '/site#contact', label: 'Support' },
+  { href: '/about', label: 'About Us' },
+  { href: '/career', label: 'Careers' },
+  { href: '#contact', label: 'Support' },
 ];
 
 export default function SiteHeader() {
@@ -140,7 +139,7 @@ export default function SiteHeader() {
           asChild
           className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}
         >
-          <Link href="/site/register">
+          <Link href="/register">
             <UserPlus className="mr-2 h-4 w-4" />
             Register
           </Link>

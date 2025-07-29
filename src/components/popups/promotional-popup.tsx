@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -63,7 +62,7 @@ export default function PromotionalPopup({ isOpen, onOpenChange }: PromotionalPo
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {posters.map((poster) => (
                 <Card key={poster.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out overflow-hidden group">
-                  <Link href={poster.href} onClick={() => onOpenChange(false)}>
+                  <Link href={poster.href.startsWith('/') ? poster.href : `/${poster.href}`} onClick={() => onOpenChange(false)}>
                     <div className="relative h-96 w-full">
                       <Image
                         src={poster.imageSrc}

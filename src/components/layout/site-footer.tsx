@@ -1,11 +1,10 @@
-
 'use client';
 
 import Link from 'next/link';
 import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 
 const SiteLogo = () => (
-    <Link href="/site" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
+    <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
       <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
         <Car className="h-7 w-7 text-primary shrink-0" />
       </div>

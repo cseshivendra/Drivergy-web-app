@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -76,8 +75,8 @@ function PaymentGateway() {
   }
 
   if (!user) {
-    const redirectUrl = encodeURIComponent(`/site/payment?plan=${plan}&price=${price}`);
-    const registerUrl = `/site/register`;
+    const redirectUrl = encodeURIComponent(`/payment?plan=${plan}&price=${price}`);
+    const registerUrl = `/register`;
     
     return (
        <Card className="w-full max-w-lg shadow-xl">

@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { fetchBlogPostBySlug } from '@/lib/mock-data';
 import BlogPostClientPage from './blog-post-client-page';

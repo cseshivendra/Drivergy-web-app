@@ -1,4 +1,3 @@
-
 import { MetadataRoute } from 'next';
 
 // This file instructs search engine crawlers which pages they can or cannot access on your site.

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -65,7 +64,7 @@ export default function BlogPostClientPage({ initialPost }: { initialPost: BlogP
                     <CardContent>
                         <p className="text-muted-foreground mt-2">The blog post you're looking for doesn't exist or couldn't be loaded.</p>
                         <Button asChild className="mt-6">
-                            <Link href="/site/blog">Back to Blog</Link>
+                            <Link href="/blog">Back to Blog</Link>
                         </Button>
                     </CardContent>
                 </Card>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -137,10 +136,10 @@ export default function AppSidebar() {
            <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={pathname === '/site'}
+              isActive={pathname === '/'}
               tooltip={{ children: "Home Page", side: "right", align: "center" }}
             >
-              <Link href="/site">
+              <Link href="/">
                 <Home />
                 <span>Home Page</span>
               </Link>
@@ -251,10 +250,10 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={pathname === '/site/about'}
+              isActive={pathname === '/about'}
               tooltip={{ children: "About Us", side: "right", align: "center" }}
             >
-              <Link href="/site/about">
+              <Link href="/about">
                 <Info />
                 <span>About Us</span>
               </Link>
