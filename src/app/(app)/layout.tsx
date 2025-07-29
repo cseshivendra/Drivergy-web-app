@@ -53,7 +53,7 @@ export default function AuthenticatedAppLayout({
         </SidebarProvider>
     );
   }
-  
+
   // 3. If loading is done and there's still no user, the useEffect above
   //    has already started the redirect. We render the loading component
   //    to provide a seamless transition and avoid a flash of unstyled content.
