@@ -1,5 +1,5 @@
 
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData, RegistrationFormValues } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
@@ -29,7 +29,7 @@ export async function createNewUser(data: RegistrationFormValues, fileUrls: { [k
     let newUser: Omit<UserProfile, 'id'>;
 
     if (data.userRole === 'customer') {
-        const customerData = data as CustomerRegistrationFormValues;
+        const customerData = data;
         newUser = {
             uniqueId: `CU-${userRef.id.slice(-6).toUpperCase()}`,
             name: customerData.name, username: customerData.username, password: customerData.password,
@@ -41,7 +41,7 @@ export async function createNewUser(data: RegistrationFormValues, fileUrls: { [k
             trainerPreference: customerData.trainerPreference || 'Any',
         };
     } else { // trainer
-        const trainerData = data as TrainerRegistrationFormValues;
+        const trainerData = data;
         
         newUser = {
             uniqueId: `TR-${userRef.id.slice(-6).toUpperCase()}`,
@@ -575,9 +575,7 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     };
 
     if (photo) {
-        // The file upload is handled by the server action now.
-        // We expect a URL to be passed in a real scenario, or this will need refactoring
-        // For now, we assume this function will be called with the URL already resolved
+        // This is now handled by a server action which receives the file
     }
     
     Object.keys(updateData).forEach(key => (updateData as any)[key] === undefined && delete (updateData as any)[key]);
