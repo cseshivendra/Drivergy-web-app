@@ -94,14 +94,14 @@ export const registerUserAction = async (formData: FormData): Promise<{ success:
                 uploadFile(aadhaarFile, 'trainer_documents'),
             ]);
 
-            const trainerData = {
+            const trainerDataWithUrls = {
                 ...data,
                 trainerCertificateUrl: certUrl,
                 drivingLicenseUrl: dlUrl,
                 aadhaarCardUrl: aadhaarUrl,
-            } as unknown as TrainerRegistrationFormValues;
+            };
             
-            await registerTrainerInMock(trainerData);
+            await registerTrainerInMock(trainerDataWithUrls as TrainerRegistrationFormValues);
         }
 
         revalidatePath('/site/register');
@@ -132,6 +132,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         const photoIdUrl = await uploadFile(photoIdFile, `user_documents/${userId}`);
         const values = {
             ...data,
+            subscriptionStartDate: new Date(data.subscriptionStartDate as string),
             photoIdUrl,
         } as unknown as FullCustomerDetailsValues;
 
