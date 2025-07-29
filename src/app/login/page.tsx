@@ -1,17 +1,27 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, AtSign, User } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
-import { useToast } from "@/hooks/use-toast";
+
+const LoginSchema = z.object({
+  identifier: z.string().min(1, 'Please enter your email or username.'),
+  password: z.string().min(1, 'Please enter your password.'),
+});
+type LoginValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
@@ -21,31 +31,25 @@ export default function LoginPage() {
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { toast } = useToast();
+  
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: { identifier: '', password: '' },
+  });
+  
+  const { formState: { isSubmitting } } = form;
 
   useEffect(() => {
     setIsMounted(true);
-    // Only redirect if loading is finished and a user exists.
     if (!loading && user) {
       router.push(redirect || '/'); 
     }
   }, [user, loading, router, redirect]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!identifier || !password) {
-        toast({ title: 'Error', description: 'Please enter both your identifier and password.', variant: 'destructive' });
-        return;
-    }
-    await signInWithCredentials(identifier, password);
+  const onSubmit = async (data: LoginValues) => {
+    await signInWithCredentials(data.identifier, data.password);
   };
-
-  const handleGoogleSignIn = () => {
-    signInWithGoogle();
-  }
 
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -53,8 +57,6 @@ export default function LoginPage() {
     </svg>
   );
 
-  // Show a loading spinner if the auth state is loading, or if we have a user and are about to redirect.
-  // This prevents the login form from flashing on screen for an already logged-in user.
   if (loading || user) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -77,122 +79,79 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background z-10 transition-colors duration-500 ease-in-out"></div>
 
       <div className="absolute top-6 right-6 z-30 flex items-center space-x-2">
-        <Button
-          variant="outline"
-          size="icon"
-          asChild
-          className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
-        >
-          <Link href="/" aria-label="Back to site">
-            <Home className="h-5 w-5" />
-          </Link>
+        <Button variant="outline" size="icon" asChild className="bg-card/80 backdrop-blur-sm hover:bg-accent/80">
+          <Link href="/" aria-label="Back to site"><Home className="h-5 w-5" /></Link>
         </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="bg-card/80 backdrop-blur-sm hover:bg-accent/80"
-        >
+        <Button variant="outline" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="bg-card/80 backdrop-blur-sm hover:bg-accent/80">
           {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
       </div>
 
       <div className="relative z-20 flex min-h-screen flex-col items-center justify-center p-4">
-        <Card className={`
-          w-full max-w-md bg-card/90 backdrop-blur-md shadow-2xl rounded-xl border-border/50
-          transition-all duration-700 ease-out
-          ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}
-        `}>
+        <Card className={`w-full max-w-md bg-card/90 backdrop-blur-md shadow-2xl rounded-xl border-border/50 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <CardHeader className="text-center p-6 space-y-2">
             <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
               <Car className="h-16 w-16 text-primary animate-pulse" />
             </div>
             <CardTitle className="font-headline text-4xl font-extrabold text-primary tracking-tight">Drivergy</CardTitle>
             <p className="text-xl font-semibold text-foreground/90 mt-1">Steer Your Success</p>
-            <CardDescription className="text-muted-foreground pt-1 px-2">
-              Sign in to access your dashboard and unlock new opportunities.
-            </CardDescription>
+            <CardDescription className="text-muted-foreground pt-1 px-2">Sign in to access your dashboard and unlock new opportunities.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
-            <form onSubmit={handleSignIn} className="space-y-3">
-              <div>
-                <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
-                <Input 
-                  id="identifier" 
-                  type="text" 
-                  placeholder="Enter your email or username" 
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  disabled={loading}
-                  autoComplete="email username"
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="identifier"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
+                      <FormControl>
+                        <Input id="identifier" type="text" placeholder="Enter your email or username" {...field} disabled={loading || isSubmitting} autoComplete="email username" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                   <Link href="/forgot-password" passHref>
-                    <Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button>
-                  </Link>
-                </div>
-                <div className="relative">
-                    <Input 
-                        id="password" 
-                        type={showPassword ? 'text' : 'password'} 
-                        placeholder="Enter your password" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={loading}
-                        autoComplete="current-password"
-                        className="pr-10"
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                 </div>
-              </div>
-              <Button
-                type="submit"
-                className="w-full h-12 text-base bg-primary hover:bg-primary/90"
-                disabled={loading}
-              >
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
-              </Button>
-            </form>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password">Password</Label>
+                        <Link href="/forgot-password" passHref><Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button></Link>
+                      </div>
+                      <div className="relative">
+                        <FormControl>
+                          <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" {...field} disabled={loading || isSubmitting} autoComplete="current-password" className="pr-10" />
+                        </FormControl>
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full h-12 text-base bg-primary hover:bg-primary/90" disabled={loading || isSubmitting}>
+                  {isSubmitting || loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
+                </Button>
+              </form>
+            </Form>
 
             <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-              </div>
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or continue with</span></div>
             </div>
 
-            <Button
-              variant="outline"
-              className="w-full h-12 text-base border-border hover:bg-accent/50"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-            >
+            <Button variant="outline" className="w-full h-12 text-base border-border hover:bg-accent/50" onClick={() => signInWithGoogle()} disabled={loading || isSubmitting}>
               <GoogleIcon /> Sign in with Google
             </Button>
           </CardContent>
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
-             <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link href="/register" className="font-semibold text-primary hover:underline">
-                    Sign Up
-                </Link>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              By signing in, you agree to our Terms of Service.
-            </p>
+             <p className="text-sm text-muted-foreground">Don't have an account? <Link href="/register" className="font-semibold text-primary hover:underline">Sign Up</Link></p>
+            <p className="text-xs text-muted-foreground">By signing in, you agree to our Terms of Service.</p>
           </CardFooter>
         </Card>
       </div>

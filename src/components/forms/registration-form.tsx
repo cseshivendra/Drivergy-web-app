@@ -44,44 +44,18 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const defaultValues = useMemo((): RegistrationFormValues => {
-    const base = {
-      userRole: userRole,
-      name: '',
-      email: '',
-      username: '',
-      password: '',
-      confirmPassword: '',
-      phone: '',
-      gender: '',
-    };
-    if (userRole === 'customer') {
-      return {
-        ...base,
-        trainerPreference: '',
-      };
-    } else { // trainer
-      return {
-        ...base,
-        location: '',
-        yearsOfExperience: undefined,
-        specialization: undefined,
-        trainerVehicleType: undefined,
-        fuelType: undefined,
-        vehicleNumber: '',
-        trainerCertificateNumber: '',
-        aadhaarCardNumber: '',
-        drivingLicenseNumber: '',
-        trainerCertificateFile: undefined,
-        drivingLicenseFile: undefined,
-        aadhaarCardFile: undefined,
-      };
-    }
-  }, [userRole]);
-
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
-    defaultValues,
+    defaultValues: {
+      userRole: userRole,
+      name: '', email: '', username: '', password: '', confirmPassword: '', phone: '', gender: '',
+      ...(userRole === 'customer' ? { trainerPreference: '' } : {
+        location: '', yearsOfExperience: undefined, specialization: undefined, trainerVehicleType: undefined,
+        fuelType: undefined, vehicleNumber: '', trainerCertificateNumber: '', aadhaarCardNumber: '',
+        drivingLicenseNumber: '', trainerCertificateFile: undefined, drivingLicenseFile: undefined,
+        aadhaarCardFile: undefined,
+      })
+    },
     mode: 'onChange',
   });
   
@@ -91,9 +65,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   const trainerOptions = useMemo(() => {
     if (userRole === 'customer') {
-        if (selectedGender === 'Male') {
-            return ['Male'];
-        }
+        if (selectedGender === 'Male') return ['Male'];
         return TrainerPreferenceOptions.slice();
     }
     return [];
@@ -112,14 +84,13 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     setFormError(null);
     const formData = new FormData();
     
-    // Append all fields from the data object to formData
-    for (const [key, value] of Object.entries(data)) {
+    Object.entries(data).forEach(([key, value]) => {
         if (value instanceof File) {
             formData.append(key, value);
         } else if (value !== null && value !== undefined) {
             formData.append(key, String(value));
         }
-    }
+    });
 
     try {
       const result = await registerUserAction(formData);
@@ -130,23 +101,11 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         });
         router.push('/login');
       } else {
-        if(result.error?.includes('already registered') || result.error?.includes('already taken')) {
-            setFormError(result.error);
-        } else {
-             toast({
-                title: "Registration Failed",
-                description: result.error || "An unexpected error occurred.",
-                variant: "destructive",
-            });
-        }
+        setFormError(result.error || "An unexpected error occurred.");
       }
     } catch (error) {
       console.error('Registration failed:', error);
-      toast({
-        title: "Registration Failed",
-        description: error instanceof Error ? error.message : "A client-side error occurred.",
-        variant: "destructive",
-      });
+      setFormError(error instanceof Error ? error.message : "A client-side error occurred.");
     }
   }
 
@@ -159,7 +118,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
                 <AlertDescription>
-                    {formError} You can <Link href="/login" className="font-bold underline">log in here</Link>.
+                    {formError}
+                    {formError.includes("already registered") && (
+                       <> You can <Link href="/login" className="font-bold underline">log in here</Link>.</>
+                    )}
                 </AlertDescription>
             </Alert>
         )}
@@ -271,7 +233,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number</FormLabel>
+                <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel>
                 <div className="flex items-center">
                   <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
                     +91
@@ -282,7 +244,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                       placeholder="Enter 10-digit number"
                       {...field}
                       className="rounded-l-none"
-                      value={field.value || ''}
                     />
                   </FormControl>
                 </div>
@@ -296,7 +257,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender<span className="text-destructive ml-1">*</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -313,32 +274,31 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             )}
           />
         </div>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-           {userRole === 'customer' && (
-             <FormField
-                control={form.control}
-                name="trainerPreference"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={!selectedGender}>
-                    <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder="Select trainer preference" />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {trainerOptions.map(option => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-           )}
-        </div>
+        
+        {userRole === 'customer' && (
+            <FormField
+            control={form.control}
+            name="trainerPreference"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedGender}>
+                <FormControl>
+                    <SelectTrigger>
+                    <SelectValue placeholder="Select trainer preference" />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {trainerOptions.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        )}
 
         {userRole === 'trainer' && (
           <>
@@ -350,7 +310,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Select location" />
@@ -387,7 +347,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select specialization" />
@@ -409,7 +369,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select vehicle type" />
@@ -446,7 +406,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select fuel type" />
