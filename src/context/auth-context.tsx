@@ -29,32 +29,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isFirebaseConfigured() || !auth) {
-        // Fallback to mock data if Firebase isn't configured
-        const storedUserId = sessionStorage.getItem('mockUserId');
-        if (storedUserId) {
-          fetchUserById(storedUserId).then(userProfile => {
-            if (userProfile) setUser(userProfile);
-            setLoading(false);
-          });
+    // This function now handles both Firebase and mock user setup.
+    const initializeAuth = () => {
+        if (isFirebaseConfigured() && auth) {
+            // Firebase mode
+            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                if (firebaseUser) {
+                    // User is signed in with Firebase, fetch their profile from Firestore.
+                    const profile = await fetchUserById(firebaseUser.uid);
+                    if (profile) {
+                        setUser(profile);
+                    }
+                    // If no profile, user might be in the process of full registration.
+                    // For now, we wait for them to be redirected or for the app to handle it.
+                } else {
+                    // No Firebase user.
+                    setUser(null);
+                }
+                setLoading(false);
+            });
+            return unsubscribe;
         } else {
-            setLoading(false);
-        }
-        return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-            const profile = await fetchUserById(firebaseUser.uid);
-            if (profile) {
-                setUser(profile);
+            // Mock mode (no Firebase config)
+            try {
+              const storedUserId = sessionStorage.getItem('mockUserId');
+              if (storedUserId) {
+                fetchUserById(storedUserId).then(userProfile => {
+                  if (userProfile) setUser(userProfile);
+                });
+              }
+            } catch(e) {
+                // sessionStorage might not be available in all contexts (e.g. SSR)
+                console.warn("Could not access sessionStorage for mock user.");
             }
-        } else {
-            setUser(null);
+            setLoading(false);
+            return () => {}; // Return an empty unsubscribe function
         }
-        setLoading(false);
-    });
-
+    };
+    
+    const unsubscribe = initializeAuth();
     return () => unsubscribe();
   }, []);
   
@@ -67,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const provider = new GoogleAuthProvider();
     try {
         await signInWithPopup(auth, provider);
-        // onAuthStateChanged will handle setting the user and redirecting.
+        // onAuthStateChanged will handle the rest.
         toast({
             title: `Login Successful!`,
             description: 'Redirecting to your dashboard...',
@@ -85,8 +98,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     const userProfile = await authenticateUserByCredentials(identifier, password);
     if (userProfile) {
-        // In a real Firebase Auth scenario, you'd use signInWithEmailAndPassword
-        // For now, we are just setting the user state based on Firestore lookup.
         logInUser(userProfile, true);
     } else {
         setLoading(false);
@@ -100,17 +111,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     setLoading(true);
-    if (isFirebaseConfigured() && auth?.currentUser) {
-        await firebaseSignOut(auth);
+    try {
+        if (isFirebaseConfigured() && auth?.currentUser) {
+            await firebaseSignOut(auth);
+        }
+        // This will be caught by onAuthStateChanged, which sets user to null.
+    } catch(error) {
+        console.error("Error signing out:", error);
+    } finally {
+        // Clear both Firebase and mock user states
+        setUser(null); 
+        sessionStorage.removeItem('mockUserId'); 
+        setLoading(false);
+        toast({
+          title: 'Logged Out',
+          description: 'You have been successfully signed out.',
+        });
+        router.push('/');
     }
-    setUser(null); 
-    sessionStorage.removeItem('mockUserId'); // Clear mock session
-    setLoading(false);
-    toast({
-      title: 'Logged Out',
-      description: 'You have been successfully signed out.',
-    });
-    router.push('/');
   };
   
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
