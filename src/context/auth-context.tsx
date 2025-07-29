@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -17,7 +18,8 @@ interface AuthContextType {
   signInWithCredentials: (identifier: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
-  signUpWithCredentials: (email: string, password: string, additionalData: Partial<UserProfile>) => Promise<void>;
+  // This is no longer needed as registration is a server action
+  // signUpWithCredentials: (email: string, password: string, additionalData: Partial<UserProfile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,18 +100,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUpWithCredentials = async (email: string, password: string, additionalData: Partial<UserProfile>) => {
-    toast({ title: "Live Mode", description: "This will create a real user account.", variant: "default" });
-     if (!isFirebaseConfigured() || !auth) {
-        toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
-        return;
-    }
-    // In a real app, you would use createUserWithEmailAndPassword from Firebase Auth.
-    // The current implementation in server-actions handles user creation in Firestore.
-    console.log("Sign up attempt with:", email, additionalData);
-    router.push('/login');
-  };
-
   const signOut = async () => {
     setLoading(true);
     if (isFirebaseConfigured() && auth?.currentUser) {
@@ -122,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       title: 'Logged Out',
       description: 'You have been successfully signed out.',
     });
-    router.push('/site');
+    router.push('/');
   };
   
   const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
@@ -142,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials, signUpWithCredentials }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut, logInUser, signInWithCredentials }}>
       {children}
     </AuthContext.Provider>
   );
@@ -155,3 +145,5 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+    
