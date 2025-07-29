@@ -1,32 +1,29 @@
+
 'use server';
 
+import { z } from 'zod';
 import { createNewUser } from './mock-data';
-import type { RegistrationFormValues } from '@/types';
 import { RegistrationFormSchema } from '@/types';
-import { sendEmail } from '@/lib/email';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import type { ApprovalStatusType, FullCustomerDetailsValues, VehicleType } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { collection, addDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from './firebase';
+import type { ApprovalStatusType } from '@/types';
+import { sendEmail } from './email';
 
-const cloudinaryConfig = () => {
+// This function is self-contained and does not need to be exported.
+const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+        console.error("Cloudinary environment variables are not set.");
+        throw new Error("Cannot upload file: Server storage is not configured.");
+    }
+    
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET,
         secure: true,
     });
-};
-
-const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-        console.error("Cloudinary environment variables are not set.");
-        throw new Error("Cannot upload file: Server storage is not configured.");
-    }
-
-    cloudinaryConfig();
 
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -46,11 +43,11 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
     });
 };
 
-
 export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
         const data = Object.fromEntries(formData.entries());
-
+        
+        // Manually constructing an object to hold potential files
         const files: { [key: string]: File | null } = {
             trainerCertificateFile: formData.get('trainerCertificateFile') as File | null,
             drivingLicenseFile: formData.get('drivingLicenseFile') as File | null,
@@ -99,8 +96,6 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
 
 
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
-    // This is a mock function. In a real app, you would generate a secure token,
-    // save it with an expiry date in the database, and send a real email.
     console.log(`A password reset link would be sent to ${email} if email services were configured.`);
     return { success: true };
 }
@@ -174,21 +169,20 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         };
 
         const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        if(!userSnap.exists()) {
-             throw new Error("User profile not found.");
-        }
-        
         await updateDoc(userRef, profileData);
         
-        const newRequestData = {
-            customerId: userId,
-            customerName: userSnap.data().name,
-            vehicleType: data.vehiclePreference as VehicleType,
-            status: 'Pending' as const,
-            requestTimestamp: new Date().toISOString(),
-        };
-        await addDoc(collection(db, 'lessonRequests'), newRequestData);
+        // This seems to be missing from the original logic, adding it back.
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const newRequestData = {
+                customerId: userId,
+                customerName: userSnap.data().name,
+                vehicleType: data.vehiclePreference as 'Two-Wheeler' | 'Four-Wheeler' | 'Both',
+                status: 'Pending' as const,
+                requestTimestamp: new Date().toISOString(),
+            };
+            await addDoc(collection(db, 'lessonRequests'), newRequestData);
+        }
 
         return { success: true };
     } catch (error: any) {
@@ -196,3 +190,5 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
+
+    
