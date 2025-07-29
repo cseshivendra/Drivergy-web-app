@@ -59,3 +59,5 @@ export default function AuthenticatedAppLayout({
   //    to provide a seamless transition and avoid a flash of unstyled content.
   return <Loading />;
 }
+
+    

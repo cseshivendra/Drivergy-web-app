@@ -1,3 +1,4 @@
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, CustomerRegistrationFormValues, TrainerRegistrationFormValues, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse, subDays } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -533,3 +534,5 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     const updatedDoc = await getDoc(userRef);
     return updatedDoc.exists() ? { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile : null;
 };
+
+    
