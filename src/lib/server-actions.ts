@@ -67,16 +67,17 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         const fileUrls: { [key: string]: string | null } = {};
         
         if (validatedData.userRole === 'trainer') {
-            const fileUploads: Promise<[string, string | null]>[] = [
-                validatedData.trainerCertificateFile ? uploadFileToCloudinary(Buffer.from(await validatedData.trainerCertificateFile.arrayBuffer()), `user_documents`).then(url => ['trainerCertificateUrl', url]) : Promise.resolve(['trainerCertificateUrl', null]),
-                validatedData.drivingLicenseFile ? uploadFileToCloudinary(Buffer.from(await validatedData.drivingLicenseFile.arrayBuffer()), `user_documents`).then(url => ['drivingLicenseUrl', url]) : Promise.resolve(['drivingLicenseUrl', null]),
-                validatedData.aadhaarCardFile ? uploadFileToCloudinary(Buffer.from(await validatedData.aadhaarCardFile.arrayBuffer()), `user_documents`).then(url => ['aadhaarCardUrl', url]) : Promise.resolve(['aadhaarCardUrl', null]),
-            ];
-
-            const uploadedFiles = await Promise.all(fileUploads);
-            uploadedFiles.forEach(([key, url]) => {
-                fileUrls[key] = url;
-            });
+            const fileUploadPromises = [];
+            if (validatedData.trainerCertificateFile) {
+                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.trainerCertificateFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['trainerCertificateUrl'] = url; }));
+            }
+             if (validatedData.drivingLicenseFile) {
+                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.drivingLicenseFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['drivingLicenseUrl'] = url; }));
+            }
+             if (validatedData.aadhaarCardFile) {
+                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.aadhaarCardFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['aadhaarCardUrl'] = url; }));
+            }
+            await Promise.all(fileUploadPromises);
         }
 
         const result = await createNewUser(validatedData, fileUrls);
@@ -191,4 +192,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
     }
 };
 
-    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -55,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
   
   const signInWithGoogle = async () => {
     if (!isFirebaseConfigured() || !auth) {

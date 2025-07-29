@@ -572,10 +572,6 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
         ...restData,
         location: data.district, 
     };
-
-    if (photo) {
-        // This is now handled by a server action which receives the file
-    }
     
     Object.keys(updateData).forEach(key => (updateData as any)[key] === undefined && delete (updateData as any)[key]);
     await updateDoc(userRef, updateData);
