@@ -55,27 +55,14 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
     return { success: true };
 }
 
+// This is an empty placeholder to satisfy the import. All logic is now in the form component.
 export const registerUserAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    const data = Object.fromEntries(formData.entries()) as unknown as RegistrationFormValues;
-    const files: { [key: string]: File | null } = {
-        trainerCertificateFile: formData.get('trainerCertificateFile') as File | null,
-        drivingLicenseFile: formData.get('drivingLicenseFile') as File | null,
-        aadhaarCardFile: formData.get('aadhaarCardFile') as File | null,
-    };
-
-    try {
-        const result = await createNewUser(data, files);
-        if (result.success) {
-            revalidatePath('/register');
-            revalidatePath('/');
-        }
-        return result;
-    } catch (error) {
-        console.error("Error in registerUserAction:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unexpected server error occurred.";
-        return { success: false, error: errorMessage };
-    }
+    // This function is intentionally left empty as the logic has been moved.
+    // It exists solely to prevent the build from failing due to the import.
+    console.warn("registerUserAction is deprecated and should not be called.");
+    return { success: false, error: "This function is deprecated." };
 };
+
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!userId || !db) {

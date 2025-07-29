@@ -24,11 +24,10 @@ import {
   FuelTypeOptions,
   GenderOptions,
   type TrainerRegistrationFormValues,
-  type UserProfile,
   type CustomerRegistrationFormValues,
   TrainerPreferenceOptions,
 } from '@/types';
-import { registerUserAction } from '@/lib/server-actions';
+import { createNewUser } from '@/lib/mock-data';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -111,18 +110,15 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   async function onSubmit(data: RegistrationFormValues) {
     setFormError(null);
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
+    const files: { [key: string]: File | null } = {};
+    if (data.userRole === 'trainer') {
+      files.trainerCertificateFile = data.trainerCertificateFile ?? null;
+      files.drivingLicenseFile = data.drivingLicenseFile ?? null;
+      files.aadhaarCardFile = data.aadhaarCardFile ?? null;
+    }
 
     try {
-      const result = await registerUserAction(formData);
-
+      const result = await createNewUser(data, files);
       if (result.success) {
         toast({
           title: "Registration Successful!",
@@ -130,7 +126,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         });
         router.push('/login');
       } else {
-        if(result.error?.includes('already registered')) {
+        if(result.error?.includes('already registered') || result.error?.includes('already taken')) {
             setFormError(result.error);
         } else {
              toast({
@@ -566,5 +562,3 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
-
-    
