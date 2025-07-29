@@ -1,3 +1,4 @@
+
 'use server';
 
 import { doc, updateDoc, getDoc, collection, addDoc, setDoc, query, where, limit, getDocs } from 'firebase/firestore';
@@ -74,7 +75,7 @@ export const registerUserAction = async (formData: FormData): Promise<{ success:
         const errorMessage = error instanceof Error ? error.message : "An unexpected server error occurred.";
         return { success: false, error: errorMessage };
     }
-}
+};
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
     if (!userId || !db) {
