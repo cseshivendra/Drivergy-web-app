@@ -5,11 +5,12 @@ import { createNewUser } from './mock-data';
 import type { RegistrationFormValues } from '@/types';
 import { RegistrationFormSchema } from '@/types';
 import { sendEmail } from '@/lib/email';
-import { doc, updateDoc, collection, addDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
-import type { ApprovalStatusType, VehicleType } from '@/types';
+import type { ApprovalStatusType, FullCustomerDetailsValues, VehicleType } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
+import { collection, addDoc, getDoc } from 'firebase/firestore';
 
 // Cloudinary logic is now self-contained within this server actions file.
 const cloudinaryConfig = () => {
@@ -47,7 +48,6 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
     });
 };
 
-
 export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
         const data = Object.fromEntries(formData.entries());
@@ -68,15 +68,22 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         }
 
         const validatedData = validationResult.data;
-        const fileUploads: { [key: string]: File | null } = {};
+        const fileUrls: { [key: string]: string | null } = {};
         
         if (validatedData.userRole === 'trainer') {
-            fileUploads.trainerCertificateFile = validatedData.trainerCertificateFile;
-            fileUploads.drivingLicenseFile = validatedData.drivingLicenseFile;
-            fileUploads.aadhaarCardFile = validatedData.aadhaarCardFile;
+            const fileUploads: Promise<[string, string | null]>[] = [
+                validatedData.trainerCertificateFile ? uploadFileToCloudinary(Buffer.from(await validatedData.trainerCertificateFile.arrayBuffer()), `user_documents`).then(url => ['trainerCertificateUrl', url]) : Promise.resolve(['trainerCertificateUrl', null]),
+                validatedData.drivingLicenseFile ? uploadFileToCloudinary(Buffer.from(await validatedData.drivingLicenseFile.arrayBuffer()), `user_documents`).then(url => ['drivingLicenseUrl', url]) : Promise.resolve(['drivingLicenseUrl', null]),
+                validatedData.aadhaarCardFile ? uploadFileToCloudinary(Buffer.from(await validatedData.aadhaarCardFile.arrayBuffer()), `user_documents`).then(url => ['aadhaarCardUrl', url]) : Promise.resolve(['aadhaarCardUrl', null]),
+            ];
+
+            const uploadedFiles = await Promise.all(fileUploads);
+            uploadedFiles.forEach(([key, url]) => {
+                fileUrls[key] = url;
+            });
         }
 
-        const result = await createNewUser(validatedData, fileUploads);
+        const result = await createNewUser(validatedData, fileUrls);
 
         if (!result.success) {
             return { success: false, error: result.error };
@@ -191,9 +198,8 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
     }
 };
 
-// This function is now internal to server-actions.ts and is NOT exported
-// It was previously in a separate file, causing client-bundle issues.
-export const uploadFile = async (file: File, folder: string): Promise<string> => {
+// This is no longer exported as it is internal to this file now.
+async function uploadFile(file: File, folder: string): Promise<string> {
     const buffer = await file.arrayBuffer();
     return uploadFileToCloudinary(Buffer.from(buffer), folder);
 }
