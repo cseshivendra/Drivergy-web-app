@@ -1,20 +1,26 @@
+
 'use server';
 
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-    secure: true,
-});
+// It is crucial that this configuration is ONLY done in a server-side context.
+// This function should be called within a Server Action or a Route Handler.
+export const initializeCloudinary = () => {
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+        console.warn("Cloudinary environment variables not fully set. File uploads will fail.");
+    }
+    cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+        secure: true,
+    });
+};
 
 export const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
-        console.error("Cloudinary environment variables are not set.");
-        throw new Error("Cannot upload file: Server storage is not configured.");
-    }
+    // Ensure config is set before an upload attempt
+    initializeCloudinary();
     
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
