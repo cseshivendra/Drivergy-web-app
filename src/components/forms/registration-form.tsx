@@ -2,7 +2,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useFormState } from 'react-hook-form';
+import { useFormState as useFormActionState } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -37,12 +38,23 @@ interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
 }
 
+function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
+    const { isSubmitting } = useFormState();
+    return (
+        <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
+              userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+        </Button>
+    )
+}
+
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+
+  const [state, formAction] = useFormActionState(registerUserAction, { success: false, error: undefined });
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -58,8 +70,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     },
     mode: 'onChange',
   });
-  
-  const { formState: { isSubmitting } } = form;
 
   const selectedGender = form.watch('gender');
 
@@ -79,46 +89,27 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       }
     }
   }, [selectedGender, trainerOptions, form, userRole]);
-  
-  async function onSubmit(data: RegistrationFormValues) {
-    setFormError(null);
-    const formData = new FormData();
-    
-    Object.entries(data).forEach(([key, value]) => {
-        if (value instanceof File) {
-            formData.append(key, value);
-        } else if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-        }
-    });
 
-    try {
-      const result = await registerUserAction(formData);
-      if (result.success) {
-        toast({
-          title: "Registration Successful!",
-          description: "Your account has been created. Please log in to continue.",
-        });
-        router.push('/login');
-      } else {
-        setFormError(result.error || "An unexpected error occurred.");
-      }
-    } catch (error) {
-      console.error('Registration failed:', error);
-      setFormError(error instanceof Error ? error.message : "A client-side error occurred.");
+  useEffect(() => {
+    if (state.success) {
+      toast({
+        title: "Registration Successful!",
+        description: "Your account has been created. Please log in to continue.",
+      });
+      router.push('/login');
     }
-  }
+  }, [state, toast, router]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {formError && (
+      <form action={formAction} className="space-y-8">
+        {state.error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
                 <AlertDescription>
-                    {formError}
-                    {formError.includes("already registered") && (
+                    {state.error}
+                    {state.error.includes("already registered") && (
                        <> You can <Link href="/login" className="font-bold underline">log in here</Link>.</>
                     )}
                 </AlertDescription>
@@ -126,403 +117,62 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         )}
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
-                  <FormControl>
-                    <Input placeholder="Create a username" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Email Address<span className="text-destructive ml-1">*</span></FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="you@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="username" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Create a username" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="email" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Email Address<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem> )} />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-           <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password<span className="text-destructive ml-1">*</span></FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a password"
-                        {...field}
-                        className="pr-10"
-                      />
-                    </FormControl>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password<span className="text-destructive ml-1">*</span></FormLabel>
-                   <div className="relative">
-                    <FormControl>
-                      <Input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirm your password"
-                        {...field}
-                        className="pr-10"
-                      />
-                    </FormControl>
-                     <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary"
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                    >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+           <FormField control={form.control} name="password" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Password<span className="text-destructive ml-1">*</span></FormLabel><div className="relative"><FormControl><Input type={showPassword ? 'text' : 'password'} placeholder="Create a password" {...field} className="pr-10" /></FormControl><button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button></div><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="confirmPassword" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><KeyRound className="mr-2 h-4 w-4 text-primary" />Confirm Password<span className="text-destructive ml-1">*</span></FormLabel><div className="relative"><FormControl><Input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm your password" {...field} className="pr-10" /></FormControl><button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showConfirmPassword ? "Hide password" : "Show password"}>{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button></div><FormMessage /></FormItem> )} />
         </div>
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-            <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                        <Input placeholder="Enter full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-           <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel>
-                <div className="flex items-center">
-                  <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
-                    +91
-                  </span>
-                  <FormControl>
-                    <Input
-                      type="tel"
-                      placeholder="Enter 10-digit number"
-                      {...field}
-                      className="rounded-l-none"
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="gender"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender<span className="text-destructive ml-1">*</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {GenderOptions.map(option => (
-                      <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter full name" {...field} /></FormControl><FormMessage /></FormItem> )} />
+           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} className="rounded-l-none" /></FormControl></div><FormMessage /></FormItem> )} />
+          <FormField control={form.control} name="gender" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger></FormControl><SelectContent>{GenderOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
         </div>
         
         {userRole === 'customer' && (
-            <FormField
-            control={form.control}
-            name="trainerPreference"
-            render={({ field }) => (
-            <FormItem>
-                <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedGender}>
-                <FormControl>
-                    <SelectTrigger>
-                    <SelectValue placeholder="Select trainer preference" />
-                    </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                    {trainerOptions.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))}
-                </SelectContent>
-                </Select>
-                <FormMessage />
-            </FormItem>
-            )}
-        />
+            <FormField control={form.control} name="trainerPreference" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!selectedGender}><FormControl><SelectTrigger><SelectValue placeholder="Select trainer preference" /></SelectTrigger></FormControl><SelectContent>{trainerOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
         )}
 
         {userRole === 'trainer' && (
           <>
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                 <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Select location" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {Locations.map(loc => (
-                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                control={form.control}
-                name="yearsOfExperience"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+                 <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem> )} />
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
-                control={form.control}
-                name="specialization"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select specialization" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {SpecializationOptions.map(spec => (
-                            <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="trainerVehicleType"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select vehicle type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {TrainerVehicleTypeOptions.map(type => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                 <FormField control={form.control} name="trainerVehicleType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{TrainerVehicleTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
-                    control={form.control}
-                    name="vehicleNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input placeholder="e.g., MH01AB1234" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="fuelType"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select fuel type" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {FuelTypeOptions.map(type => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormField control={form.control} name="vehicleNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="e.g., MH01AB1234" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="fuelType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent>{FuelTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
             </div>
-
-
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
             <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
-
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
-                    control={form.control}
-                    name="trainerCertificateNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Trainer Certificate No.<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter certificate number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="trainerCertificateFile"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Certificate<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormField control={form.control} name="trainerCertificateNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Trainer Certificate No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter certificate number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="trainerCertificateFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Certificate<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
-
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                 <FormField
-                    control={form.control}
-                    name="drivingLicenseNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter DL number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="drivingLicenseFile"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
-
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField
-                    control={form.control}
-                    name="aadhaarCardNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Aadhaar Card No.<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input placeholder="Enter 12-digit Aadhaar number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="aadhaarCardFile"
-                    render={({ field: { value, onChange, ...fieldProps } }) => (
-                        <FormItem>
-                        <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel>
-                        <FormControl>
-                            <Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <FormField control={form.control} name="aadhaarCardNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Aadhaar Card No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter 12-digit Aadhaar number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="aadhaarCardFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </>
         )}
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-              userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
-          </Button>
+          <SubmitButton userRole={userRole} />
         </div>
       </form>
     </Form>
   );
 }
+

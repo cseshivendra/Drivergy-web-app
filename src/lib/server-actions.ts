@@ -43,7 +43,7 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
     });
 };
 
-export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string }> {
+export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
         const data = Object.fromEntries(formData.entries());
         
@@ -53,7 +53,6 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
             aadhaarCardFile: formData.get('aadhaarCardFile') as File | null,
         };
         
-        // This combines the text fields and file objects for Zod validation
         const combinedData = { ...data, ...files };
 
         const validationResult = RegistrationFormSchema.safeParse(combinedData);
@@ -69,7 +68,6 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         
         if (validatedData.userRole === 'trainer') {
             const fileUploadPromises = [];
-            // We only attempt to upload files if they exist and have a size > 0
             if (validatedData.trainerCertificateFile && validatedData.trainerCertificateFile.size > 0) {
                 fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.trainerCertificateFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['trainerCertificateUrl'] = url; }));
             }
@@ -99,8 +97,6 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
 
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
     console.log(`A password reset link would be sent to ${email} if email services were configured.`);
-    // In a real app, you'd find the user by email, generate a token, save it with an expiry,
-    // and then use the sendEmail utility to send the link.
     return { success: true };
 }
 
@@ -157,7 +153,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
             district: data.district as string,
             state: data.state as string,
             pincode: data.pincode as string,
-            location: data.district as string, // Use district as the primary location filter
+            location: data.district as string, 
             dlStatus: data.dlStatus as string,
             dlNumber: (data.dlNumber as string) || '',
             dlTypeHeld: (data.dlTypeHeld as string) || '',
@@ -167,13 +163,12 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
             subscriptionStartDate: data.subscriptionStartDate as string,
             totalLessons: getLessonsForPlan(data.subscriptionPlan as string),
             completedLessons: 0,
-            approvalStatus: 'Pending' as ApprovalStatusType, // Reset to pending for admin approval
+            approvalStatus: 'Pending' as ApprovalStatusType,
         };
 
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
         
-        // Create a lesson request for the admin dashboard
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
             const newRequestData = {
@@ -193,4 +188,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
     }
 };
 
-    
