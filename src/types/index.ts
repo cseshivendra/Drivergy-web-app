@@ -86,6 +86,8 @@ export const UserProfileSchema = z.object({
   trainerCertificateUrl: z.string().optional(),
   drivingLicenseUrl: z.string().optional(),
   aadhaarCardUrl: z.string().optional(),
+  licenseNumber: z.string().optional(),
+  expertise: z.string().optional()
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approvalStatus>;
@@ -368,7 +370,6 @@ export interface LessonProgressData {
 export interface Referral {
     id: string;
     referrerId: string;
-    referrerName: string;
     refereeId: string;
     refereeName: string;
     status: 'Successful' | 'Pending';

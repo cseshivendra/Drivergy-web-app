@@ -42,6 +42,12 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
     });
 };
 
+export async function uploadFile(file: File, folder: string): Promise<string> {
+    const buffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(buffer);
+    return await uploadFileToCloudinary(fileBuffer, folder);
+}
+
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
         const data = Object.fromEntries(formData.entries());
