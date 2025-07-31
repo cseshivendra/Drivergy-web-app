@@ -11,7 +11,6 @@ import { db } from './firebase';
 import type { ApprovalStatusType } from '@/types';
 import { sendEmail } from './email';
 
-// This function is self-contained and does not need to be exported.
 const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
         console.error("Cloudinary environment variables are not set.");

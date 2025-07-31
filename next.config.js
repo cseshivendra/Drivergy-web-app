@@ -1,8 +1,6 @@
 
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -42,6 +40,27 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['@genkit-ai/core', 'genkit']
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+      };
+    }
+    
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      handlebars: 'handlebars/dist/handlebars.min.js'
+    };
+    
+    return config;
   },
 };
 
