@@ -2,8 +2,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useFormState } from 'react-hook-form';
-import { useFormState as useFormActionState } from 'react-dom';
+import { useForm } from 'react-hook-form';
+import { useFormState } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -38,23 +38,13 @@ interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
 }
 
-function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
-    const { isSubmitting } = useFormState();
-    return (
-        <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-              userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
-        </Button>
-    )
-}
-
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [state, formAction] = useFormActionState(registerUserAction, { success: false, error: undefined });
+  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined });
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -70,6 +60,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     },
     mode: 'onChange',
   });
+
+  const { formState } = form;
 
   const selectedGender = form.watch('gender');
 
@@ -115,6 +107,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </AlertDescription>
             </Alert>
         )}
+        {/* Hidden input for userRole */}
+        <input type="hidden" {...form.register('userRole')} value={userRole} />
+
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
             <FormField control={form.control} name="username" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Create a username" {...field} /></FormControl><FormMessage /></FormItem> )} />
@@ -169,10 +164,12 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         )}
 
         <div className="flex justify-end pt-4">
-          <SubmitButton userRole={userRole} />
+            <Button type="submit" className="w-full sm:w-auto" disabled={formState.isSubmitting}>
+              {formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
+                userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+            </Button>
         </div>
       </form>
     </Form>
   );
 }
-
