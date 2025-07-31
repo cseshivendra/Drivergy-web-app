@@ -23,6 +23,11 @@ const app = isFirebaseConfigured()
         : initializeApp(firebaseConfig) 
     : null;
 
+// Disable network during build
+if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+  // This is server-side during build - don't initialize Firestore connections
+}
+
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
 

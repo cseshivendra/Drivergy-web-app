@@ -41,9 +41,7 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@genkit-ai/core', 'genkit']
-  },
+  serverExternalPackages: ['@genkit-ai/core', 'genkit'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
