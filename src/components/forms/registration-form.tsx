@@ -26,7 +26,6 @@ import {
   GenderOptions,
   TrainerPreferenceOptions,
 } from '@/types';
-import { registerUserAction } from '@/lib/server-actions';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -36,9 +35,10 @@ import { AlertCircle } from 'lucide-react';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
+  registerUserAction: (prevState: any, formData: FormData) => Promise<{ success: boolean; error?: string }>;
 }
 
-export default function RegistrationForm({ userRole }: RegistrationFormProps) {
+export default function RegistrationForm({ userRole, registerUserAction }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
