@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -6,16 +5,15 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, getOrCreateUser } from '@/lib/mock-data';
+import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
-import { format } from 'date-fns';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
 
 interface AuthContextType {
     user: UserProfile | null;
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
-    signInWithCredentials: (email: string, password: string) => Promise<void>;
+    signInWithCredentials: (identifier: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
     logInUser: (userProfile: UserProfile, isDirectLogin?: boolean) => void;
 }
@@ -29,49 +27,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
 
     useEffect(() => {
-        if (!auth) {
-            setLoading(false);
-            return;
-        }
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                const profile = await getOrCreateUser(firebaseUser);
-                if (profile) {
-                    setUser(profile);
-                } else {
-                    setUser(null);
-                    toast({ title: "Login Error", description: "Could not create or fetch user profile.", variant: "destructive" });
-                    await firebaseSignOut(auth);
-                }
+        // This function now handles both Firebase and mock user setup.
+        const initializeAuth = () => {
+            if (isFirebaseConfigured() && auth) {
+                const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                    if (firebaseUser) {
+                        const profile = await fetchUserById(firebaseUser.uid);
+                        if (profile) {
+                            setUser(profile);
+                        }
+                    } else {
+                        setUser(null);
+                    }
+                    setLoading(false);
+                });
+                return unsubscribe;
             } else {
-                // Only set user to null if not already logged in as mock admin
-                if (user?.uniqueId !== 'AD-001') {
-                    setUser(null);
+                // Mock mode
+                try {
+                    const storedUserId = sessionStorage.getItem('mockUserId');
+                    if (storedUserId) {
+                        fetchUserById(storedUserId).then(userProfile => {
+                            if (userProfile) setUser(userProfile);
+                            setLoading(false);
+                        });
+                    } else {
+                        setLoading(false);
+                    }
+                } catch(e) {
+                    console.warn("Could not access sessionStorage for mock user.");
+                    setLoading(false);
                 }
+                return () => {};
             }
-            setLoading(false);
-        });
+        };
 
+        const unsubscribe = initializeAuth();
         return () => unsubscribe();
-    }, [toast, user]);
+    }, []);
 
     const signInWithGoogle = async () => {
-        if (!auth) {
-            toast({ title: "Configuration Error", description: "Firebase is not configured.", variant: "destructive" });
+        if (!isFirebaseConfigured() || !auth) {
+            toast({ title: "Offline Mode", description: "Google Sign-In is disabled. Please use mock credentials.", variant: "destructive" });
             return;
         }
         setLoading(true);
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
-            // onAuthStateChanged will handle setting the user and redirecting.
+            // onAuthStateChanged will handle the rest.
             toast({
                 title: `Login Successful!`,
                 description: 'Redirecting to your dashboard...',
             });
         } catch (error: any) {
-            console.error("Google Sign-In Error:", error);
-            // Don't show toast for user-closed popup
             if (error.code !== 'auth/popup-closed-by-user') {
                 toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
             }
@@ -79,36 +88,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const signInWithCredentials = async (username: string, password: string): Promise<void> => {
+    const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
-
-        // Hardcoded admin check
-        if (username === 'admin' && password === 'admin') {
-            const adminUser: UserProfile = {
-                id: 'admin-user-id',
-                uniqueId: 'AD-001',
-                name: 'Admin User',
-                username: 'admin',
-                contact: 'admin@drivergy.in',
-                subscriptionPlan: 'Admin',
-                approvalStatus: 'Approved',
-                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-                location: 'HQ',
-                gender: 'Other',
-                isAdmin: true,
-            };
-            logInUser(adminUser, true);
-            return;
-        }
-
-        const userProfile = await authenticateUserByCredentials(username, password);
+        const userProfile = await authenticateUserByCredentials(identifier, password);
         if (userProfile) {
             logInUser(userProfile, true);
         } else {
             setLoading(false);
             toast({
                 title: 'Login Failed',
-                description: 'Invalid username or password.',
+                description: 'Invalid credentials. Please check your email/username and password.',
                 variant: 'destructive',
             });
         }
@@ -116,20 +105,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signOut = async () => {
         setLoading(true);
-        if (auth?.currentUser) {
-            await firebaseSignOut(auth);
+        try {
+            if (isFirebaseConfigured() && auth?.currentUser) {
+                await firebaseSignOut(auth);
+            }
+        } catch(error) {
+            console.error("Error signing out:", error);
+        } finally {
+            setUser(null);
+            sessionStorage.removeItem('mockUserId');
+            setLoading(false);
+            toast({
+                title: 'Logged Out',
+                description: 'You have been successfully signed out.',
+            });
+            router.push('/');
         }
-        setUser(null);
-        setLoading(false);
-        toast({
-            title: 'Logged Out',
-            description: 'You have been successfully signed out.',
-        });
-        router.push('/site');
     };
 
     const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
         setUser(userProfile);
+        if (!isFirebaseConfigured()) {
+            sessionStorage.setItem('mockUserId', userProfile.id);
+        }
         setLoading(false);
 
         if (isDirectLogin) {
@@ -137,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 title: `Welcome, ${userProfile.name}!`,
                 description: 'You are now logged in.',
             });
-            router.push('/');
+            router.push('/dashboard');
         }
     };
 
