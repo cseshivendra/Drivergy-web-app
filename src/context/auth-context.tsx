@@ -9,7 +9,6 @@ import type { UserProfile } from '@/types';
 import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth, isFirebaseConfigured } from '@/lib/firebase';
-import { format } from 'date-fns';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -32,38 +31,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // This function now handles both Firebase and mock user setup.
     const initializeAuth = () => {
         if (isFirebaseConfigured() && auth) {
-            // Firebase mode
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                 if (firebaseUser) {
-                    // User is signed in with Firebase, fetch their profile from Firestore.
                     const profile = await fetchUserById(firebaseUser.uid);
                     if (profile) {
                         setUser(profile);
                     }
-                    // If no profile, user might be in the process of full registration.
-                    // For now, we wait for them to be redirected or for the app to handle it.
                 } else {
-                    // No Firebase user.
                     setUser(null);
                 }
                 setLoading(false);
             });
             return unsubscribe;
         } else {
-            // Mock mode (no Firebase config)
+            // Mock mode
             try {
               const storedUserId = sessionStorage.getItem('mockUserId');
               if (storedUserId) {
                 fetchUserById(storedUserId).then(userProfile => {
                   if (userProfile) setUser(userProfile);
+                  setLoading(false);
                 });
+              } else {
+                setLoading(false);
               }
             } catch(e) {
-                // sessionStorage might not be available in all contexts (e.g. SSR)
                 console.warn("Could not access sessionStorage for mock user.");
+                setLoading(false);
             }
-            setLoading(false);
-            return () => {}; // Return an empty unsubscribe function
+            return () => {}; 
         }
     };
     
@@ -73,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const signInWithGoogle = async () => {
     if (!isFirebaseConfigured() || !auth) {
-        toast({ title: "Offline Mode", description: "Google Sign-In is disabled in offline mode. Please use mock credentials.", variant: "destructive" });
+        toast({ title: "Offline Mode", description: "Google Sign-In is disabled. Please use mock credentials.", variant: "destructive" });
         return;
     }
     setLoading(true);
@@ -86,7 +82,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             description: 'Redirecting to your dashboard...',
         });
     } catch (error: any) {
-        console.error("Google Sign-In Error:", error);
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
         }
@@ -115,11 +110,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (isFirebaseConfigured() && auth?.currentUser) {
             await firebaseSignOut(auth);
         }
-        // This will be caught by onAuthStateChanged, which sets user to null.
     } catch(error) {
         console.error("Error signing out:", error);
     } finally {
-        // Clear both Firebase and mock user states
         setUser(null); 
         sessionStorage.removeItem('mockUserId'); 
         setLoading(false);

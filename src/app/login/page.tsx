@@ -42,6 +42,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // Only redirect if loading is finished and a user exists.
     if (!loading && user) {
       router.push(redirect || '/'); 
     }
@@ -57,6 +58,8 @@ export default function LoginPage() {
     </svg>
   );
 
+  // Show a loading spinner if the auth state is loading OR if a user exists (and we're about to redirect).
+  // This prevents the login form from flashing on screen for an already logged-in user.
   if (loading || user) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
