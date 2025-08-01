@@ -50,9 +50,9 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues: {
       userRole: userRole,
-      name: '', email: '', username: '', password: '', confirmPassword: '', phone: '', gender: '',
+      name: '', email: '', username: '', password: '', confirmPassword: '', phone: '', gender: undefined,
       ...(userRole === 'customer' ? { trainerPreference: '' } : {
-        location: '', yearsOfExperience: undefined, specialization: undefined, trainerVehicleType: undefined,
+        location: undefined, yearsOfExperience: undefined, specialization: undefined, trainerVehicleType: undefined,
         fuelType: undefined, vehicleNumber: '', trainerCertificateNumber: '', aadhaarCardNumber: '',
         drivingLicenseNumber: '', trainerCertificateFile: undefined, drivingLicenseFile: undefined,
         aadhaarCardFile: undefined,
