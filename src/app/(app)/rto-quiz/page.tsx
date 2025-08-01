@@ -14,6 +14,8 @@ import type { QuizSet } from '@/types';
 import RtoQuizClientPage from './rto-quiz-client-page';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: 'RTO Mock Test Quiz | Drivergy',
     description: "Practice for your official RTO driving license exam with our free mock tests. Available in multiple languages for all learners in India."

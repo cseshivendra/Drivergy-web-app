@@ -23,12 +23,25 @@ const app = isFirebaseConfigured()
         : initializeApp(firebaseConfig) 
     : null;
 
-// Disable network during build
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
-  // This is server-side during build - don't initialize Firestore connections
+// Conditionally initialize Firebase services
+// This prevents them from being initialized on the server during the build process
+let auth = null;
+let db = null;
+
+// Only initialize on the client-side or if not in a build environment
+if (typeof window !== 'undefined' || process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    if (app) {
+        auth = getAuth(app);
+        db = getFirestore(app);
+    }
+} else {
+    // In Vercel build environment, we explicitly check if we are in the build phase.
+    // If you have server-side functions that need firebase, you might need a more nuanced check.
+    if (app) {
+        auth = getAuth(app);
+        db = getFirestore(app);
+    }
 }
 
-export const auth = app ? getAuth(app) : null;
-export const db = app ? getFirestore(app) : null;
 
-export { app };
+export { app, auth, db };
