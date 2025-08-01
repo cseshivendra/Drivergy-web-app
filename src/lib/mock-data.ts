@@ -12,19 +12,24 @@ import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, 
 export async function createNewUser(data: RegistrationFormValues, fileUrls: { [key: string]: string | null }): Promise<{ success: boolean, error?: string, userId?: string }> {
     if (!db) return { success: false, error: "Database not configured." };
 
-    const usersRef = collection(db, "users");
-    const emailQuery = query(usersRef, where("contact", "==", data.email), limit(1));
-    const usernameQuery = query(usersRef, where("username", "==", data.username), limit(1));
-    
-    const [emailSnap, usernameSnap] = await Promise.all([
-        getDocs(emailQuery),
-        getDocs(usernameQuery),
+    const customersRef = collection(db, "customers");
+    const trainersRef = collection(db, "trainers");
+
+    const emailQueryCustomers = query(customersRef, where("contact", "==", data.email), limit(1));
+    const usernameQueryCustomers = query(customersRef, where("username", "==", data.username), limit(1));
+    const emailQueryTrainers = query(trainersRef, where("contact", "==", data.email), limit(1));
+    const usernameQueryTrainers = query(trainersRef, where("username", "==", data.username), limit(1));
+
+    const [emailSnapCustomers, usernameSnapCustomers, emailSnapTrainers, usernameSnapTrainers] = await Promise.all([
+        getDocs(emailQueryCustomers), getDocs(usernameQueryCustomers),
+        getDocs(emailQueryTrainers), getDocs(usernameQueryTrainers)
     ]);
 
-    if (!emailSnap.empty) return { success: false, error: "A user is already registered with this email." };
-    if (!usernameSnap.empty) return { success: false, error: "This username is already taken." };
+    if (!emailSnapCustomers.empty || !emailSnapTrainers.empty) return { success: false, error: "A user is already registered with this email." };
+    if (!usernameSnapCustomers.empty || !usernameSnapTrainers.empty) return { success: false, error: "This username is already taken." };
 
-    const userRef = doc(collection(db, 'users'));
+    const targetCollection = data.userRole === 'customer' ? 'customers' : 'trainers';
+    const userRef = doc(collection(db, targetCollection));
     let newUser: Omit<UserProfile, 'id'>;
 
     if (data.userRole === 'customer') {
@@ -41,7 +46,6 @@ export async function createNewUser(data: RegistrationFormValues, fileUrls: { [k
         };
     } else { // trainer
         const trainerData = data;
-        
         newUser = {
             uniqueId: `TR-${userRef.id.slice(-6).toUpperCase()}`,
             name: trainerData.name, username: trainerData.username,
@@ -66,50 +70,55 @@ export async function createNewUser(data: RegistrationFormValues, fileUrls: { [k
 export async function authenticateUserByCredentials(identifier: string, password: string): Promise<UserProfile | null> {
     if (!db) return null;
 
-    try {
-        const usersRef = collection(db, "users");
-        let q = query(usersRef, where("username", "==", identifier), where("password", "==", password), limit(1));
-        let querySnapshot = await getDocs(q);
+    const collectionsToSearch = ['customers', 'trainers'];
+    for (const col of collectionsToSearch) {
+        try {
+            const collectionRef = collection(db, col);
+            let q = query(collectionRef, where("username", "==", identifier), where("password", "==", password), limit(1));
+            let querySnapshot = await getDocs(q);
 
-        if (querySnapshot.empty) {
-            q = query(usersRef, where("contact", "==", identifier), where("password", "==", password), limit(1));
-            querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                q = query(collectionRef, where("contact", "==", identifier), where("password", "==", password), limit(1));
+                querySnapshot = await getDocs(q);
+            }
+
+            if (!querySnapshot.empty) {
+                const userDoc = querySnapshot.docs[0];
+                return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+            }
+        } catch (error: any) {
+            console.error(`Error authenticating user in ${col}:`, error);
         }
-        
-        if (querySnapshot.empty) return null;
-
-        const userDoc = querySnapshot.docs[0];
-        return { id: userDoc.id, ...userDoc.data() } as UserProfile;
-    } catch (error: any) {
-        console.error("Error authenticating user:", error);
-        return null;
     }
+    return null; // User not found in any collection
 };
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!db || !userId) return null;
-    try {
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
+    const collectionsToSearch = ['customers', 'trainers'];
+    for (const col of collectionsToSearch) {
+        try {
+            const userRef = doc(db, col, userId);
+            const userSnap = await getDoc(userRef);
 
-        if (!userSnap.exists()) return null;
-
-        const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
-        
-        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerSnap = await getDoc(doc(db, "users", user.assignedTrainerId));
-            if (trainerSnap.exists()) {
-                const trainer = trainerSnap.data() as UserProfile;
-                user.assignedTrainerPhone = trainer.phone;
-                user.assignedTrainerExperience = trainer.yearsOfExperience;
-                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+            if (userSnap.exists()) {
+                const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+                if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
+                    const trainerSnap = await getDoc(doc(db, "trainers", user.assignedTrainerId));
+                    if (trainerSnap.exists()) {
+                        const trainer = trainerSnap.data() as UserProfile;
+                        user.assignedTrainerPhone = trainer.phone;
+                        user.assignedTrainerExperience = trainer.yearsOfExperience;
+                        user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+                    }
+                }
+                return user;
             }
+        } catch (error: any) {
+            console.error(`Error fetching user ${userId} from ${col}:`, error);
         }
-        return user;
-    } catch(error: any) {
-        console.error(`Error fetching user ${userId}:`, error);
-        return null;
     }
+    return null; // Not found in any collection
 };
 
 // =================================================================
@@ -130,21 +139,38 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         callback(combinedData as AdminDashboardData);
     };
 
-    unsubs.push(onSnapshot(collection(db, 'users'), (snap) => {
-        const allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
-        const totalCustomers = allUsers.filter(u => u.uniqueId?.startsWith('CU')).length;
-        const totalInstructors = allUsers.filter(u => u.uniqueId?.startsWith('TR')).length;
-        const activeSubscriptions = allUsers.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer' && u.subscriptionPlan !== 'None').length;
-        const totalCertifiedTrainers = allUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved').length;
-        const totalEarnings = allUsers.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'Trainer').reduce((acc, user) => {
+    const unsubCustomers = onSnapshot(collection(db, 'customers'), (snap) => {
+        const customers = snap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
+        updateCombinedUsers(customers, 'customers');
+    });
+
+    const unsubTrainers = onSnapshot(collection(db, 'trainers'), (snap) => {
+        const trainers = snap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
+        updateCombinedUsers(trainers, 'trainers');
+    });
+
+    let customerUsers: UserProfile[] = [];
+    let trainerUsers: UserProfile[] = [];
+
+    const updateCombinedUsers = (users: UserProfile[], type: 'customers' | 'trainers') => {
+        if (type === 'customers') customerUsers = users;
+        if (type === 'trainers') trainerUsers = users;
+
+        const allUsers = [...customerUsers, ...trainerUsers];
+        const totalCustomers = customerUsers.length;
+        const totalInstructors = trainerUsers.length;
+
+        const activeSubscriptions = customerUsers.filter(u => u.approvalStatus === 'Approved' && u.subscriptionPlan !== 'None').length;
+        const totalCertifiedTrainers = trainerUsers.filter(u => u.approvalStatus === 'Approved').length;
+        const totalEarnings = customerUsers.filter(u => u.approvalStatus === 'Approved').reduce((acc, user) => {
             if (user.subscriptionPlan === 'Premium') return acc + 9999;
             if (user.subscriptionPlan === 'Gold') return acc + 7499;
             if (user.subscriptionPlan === 'Basic') return acc + 3999;
             return acc;
         }, 0);
-        
-        const lessonProgress = allUsers
-            .filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'Approved' && u.assignedTrainerName)
+
+        const lessonProgress = customerUsers
+            .filter(u => u.approvalStatus === 'Approved' && u.assignedTrainerName)
             .map(c => ({
                 studentId: c.uniqueId, studentName: c.name, trainerName: c.assignedTrainerName!,
                 subscriptionPlan: c.subscriptionPlan, totalLessons: c.totalLessons || 0,
@@ -152,19 +178,21 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
                 remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
             })).sort((a, b) => a.remainingLessons - b.remainingLessons);
 
-        updateData({ 
-            allUsers, 
+        updateData({
+            allUsers,
             lessonProgress,
-            summaryData: { 
-                ...combinedData.summaryData, 
-                totalCustomers, 
-                totalInstructors, 
-                activeSubscriptions, 
-                totalEarnings, 
-                totalCertifiedTrainers 
+            summaryData: {
+                ...combinedData.summaryData,
+                totalCustomers,
+                totalInstructors,
+                activeSubscriptions,
+                totalEarnings,
+                totalCertifiedTrainers
             } as SummaryData
         });
-    }));
+    };
+
+    unsubs.push(unsubCustomers, unsubTrainers);
 
     unsubs.push(onSnapshot(collection(db, 'lessonRequests'), snap => updateData({ lessonRequests: snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonRequest)), summaryData: { ...combinedData.summaryData, pendingRequests: snap.docs.filter(d => d.data().status === 'Pending').length } as SummaryData })));
     unsubs.push(onSnapshot(collection(db, 'rescheduleRequests'), snap => updateData({ rescheduleRequests: snap.docs.map(d => ({ id: d.id, ...d.data() } as RescheduleRequest)), summaryData: { ...combinedData.summaryData, pendingRescheduleRequests: snap.docs.filter(d => d.data().status === 'Pending').length } as SummaryData })));
@@ -184,22 +212,33 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
     if (!isFirebaseConfigured() || !db) {
         callback(null); return () => {};
     }
-    return onSnapshot(doc(db, 'users', userId), async (snap) => {
-        if (!snap.exists()) {
-            callback(null); return;
-        }
-        const user = { id: snap.id, ...snap.data() } as UserProfile;
-        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainerSnap = await getDoc(doc(db!, "users", user.assignedTrainerId));
-            if (trainerSnap.exists()) {
-                const trainer = trainerSnap.data() as UserProfile;
-                user.assignedTrainerPhone = trainer.phone;
-                user.assignedTrainerExperience = trainer.yearsOfExperience;
-                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+    
+    const unsubCustomer = onSnapshot(doc(db, 'customers', userId), async (snap) => {
+        if (snap.exists()) {
+            const user = { id: snap.id, ...snap.data() } as UserProfile;
+            if (user.assignedTrainerId) {
+                const trainerSnap = await getDoc(doc(db, "trainers", user.assignedTrainerId));
+                if (trainerSnap.exists()) {
+                    const trainer = trainerSnap.data() as UserProfile;
+                    user.assignedTrainerPhone = trainer.phone;
+                    user.assignedTrainerExperience = trainer.yearsOfExperience;
+                    user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+                }
             }
+            callback(user);
         }
-        callback(user);
-    }, (error) => console.error(`Error listening to user ${userId}:`, error));
+    });
+
+    const unsubTrainer = onSnapshot(doc(db, 'trainers', userId), (snap) => {
+        if (snap.exists()) {
+            callback({ id: snap.id, ...snap.data() } as UserProfile);
+        }
+    });
+    
+    return () => {
+        unsubCustomer();
+        unsubTrainer();
+    };
 };
 
 export function listenToTrainerStudents(trainerId: string, callback: (data: { students: UserProfile[]; feedback: Feedback[]; rescheduleRequests: RescheduleRequest[]; profile: UserProfile | null; }) => void): () => void {
@@ -208,10 +247,10 @@ export function listenToTrainerStudents(trainerId: string, callback: (data: { st
         return () => {};
     }
 
-    const trainerProfileUnsub = onSnapshot(doc(db, 'users', trainerId), (trainerSnap) => {
+    const trainerProfileUnsub = onSnapshot(doc(db, 'trainers', trainerId), (trainerSnap) => {
         const trainerProfile = trainerSnap.exists() ? { id: trainerSnap.id, ...trainerSnap.data() } as UserProfile : null;
         
-        const studentsQuery = query(collection(db!, "users"), where("assignedTrainerId", "==", trainerId));
+        const studentsQuery = query(collection(db!, "customers"), where("assignedTrainerId", "==", trainerId));
         const studentUnsub = onSnapshot(studentsQuery, (studentsSnap) => {
             const students = studentsSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserProfile));
             const studentIds = students.map(s => s.id);
@@ -403,11 +442,20 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 
 export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
     if (!db) return false;
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists() || userSnap.data().password !== currentPassword) return false;
-    await updateDoc(userRef, { password: newPassword });
-    return true;
+    const collections = ['customers', 'trainers'];
+    for (const col of collections) {
+        const userRef = doc(db, col, userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            if (userSnap.data().password === currentPassword) {
+                await updateDoc(userRef, { password: newPassword });
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    return false;
 };
 
 const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => coursesToHydrate.map(course => {
@@ -420,7 +468,7 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => coursesToH
 
 export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
     if (!db) return [];
-    let q = query(collection(db, "users"), where("subscriptionPlan", "==", "Trainer"), where("approvalStatus", "==", "Approved"));
+    let q = query(collection(db, "trainers"), where("approvalStatus", "==", "Approved"));
     if (filters.location) {
         q = query(q, where("location", "==", filters.location));
     }
@@ -433,8 +481,8 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!db) return false;
-    const customerRef = doc(db, "users", customerId);
-    const trainerRef = doc(db, "users", trainerId);
+    const customerRef = doc(db, "customers", customerId);
+    const trainerRef = doc(db, "trainers", trainerId);
     const [customerSnap, trainerSnap] = await Promise.all([getDoc(customerRef), getDoc(trainerRef)]);
     if (!customerSnap.exists() || !trainerSnap.exists()) return false;
     const trainerData = trainerSnap.data() as UserProfile;
@@ -447,7 +495,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 
 export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
     if (!db) return false;
-    const customerRef = doc(db, "users", customerId);
+    const customerRef = doc(db, "customers", customerId);
     const updates: { [key: string]: any } = { approvalStatus: newStatus };
 
     if (newStatus === 'Approved') {
@@ -477,7 +525,7 @@ export async function updateAssignmentStatusByTrainer(customerId: string, newSta
 
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
     if (!db) return false;
-    const studentRef = doc(db, "users", studentId);
+    const studentRef = doc(db, "customers", studentId);
     const studentSnap = await getDoc(studentRef);
     if (!studentSnap.exists()) return false;
     const studentData = studentSnap.data() as UserProfile;
@@ -497,7 +545,7 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
         subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
         upcomingLesson: format(firstLessonDate, 'MMM dd, yyyy, h:mm a'),
     };
-    const customerRef = doc(db, 'users', customerId);
+    const customerRef = doc(db, 'customers', customerId);
     await updateDoc(customerRef, updates);
     const updatedSnap = await getDoc(customerRef);
     return updatedSnap.exists() ? { id: updatedSnap.id, ...updatedSnap.data() } as UserProfile : null;
@@ -523,7 +571,7 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
         const requestSnap = await getDoc(requestRef);
         if (!requestSnap.exists()) return false;
         const requestData = requestSnap.data() as RescheduleRequest;
-        await updateDoc(doc(db, 'users', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
+        await updateDoc(doc(db, 'customers', requestData.userId), { upcomingLesson: requestData.requestedRescheduleDate });
     }
     return true;
 }
@@ -532,7 +580,7 @@ export async function addFeedback(customerId: string, customerName: string, trai
     if (!db) return false;
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
     await addDoc(collection(db, 'feedback'), newFeedback);
-    await updateDoc(doc(db, 'users', customerId), { feedbackSubmitted: true });
+    await updateDoc(doc(db, 'customers', customerId), { feedbackSubmitted: true });
     return true;
 }
 
@@ -554,7 +602,7 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
     const usersMap = new Map<string, UserProfile>();
     for (let i = 0; i < refereeIds.length; i += 30) {
         const batchIds = refereeIds.slice(i, i + 30);
-        const usersQuery = query(collection(db, 'users'), where(documentId(), 'in', batchIds));
+        const usersQuery = query(collection(db, 'customers'), where(documentId(), 'in', batchIds));
         const usersSnapshot = await getDocs(usersQuery);
         usersSnapshot.forEach(doc => usersMap.set(doc.id, { id: doc.id, ...doc.data() } as UserProfile));
     }
@@ -567,8 +615,20 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 
 export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
     if (!db) return null;
-    const userRef = doc(db, "users", userId);
+    const collectionsToSearch = ['customers', 'trainers'];
+    let userRef;
     
+    for (const col of collectionsToSearch) {
+        const ref = doc(db, col, userId);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+            userRef = ref;
+            break;
+        }
+    }
+    
+    if (!userRef) return null;
+
     const { photo, ...restData } = data;
 
     const updateData: Partial<UserProfile> = {

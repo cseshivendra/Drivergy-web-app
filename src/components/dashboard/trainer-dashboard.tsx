@@ -116,7 +116,7 @@ export default function TrainerDashboard() {
   };
   
   const handleViewDetails = (student: UserProfile) => {
-    window.open(`/users/${student.id}`, '_blank');
+    window.open(`/dashboard/users/${student.id}`, '_blank');
     toast({ 
       title: "Opening Details",
       description: `Opening details for ${student.name} in a new tab.`,

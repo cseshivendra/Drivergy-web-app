@@ -124,7 +124,22 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
     }
 
     try {
-        const userRef = doc(db, 'users', userId);
+        const collections = ['customers', 'trainers'];
+        let userRef;
+
+        for (const col of collections) {
+            const ref = doc(db, col, userId);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                userRef = ref;
+                break;
+            }
+        }
+        
+        if (!userRef) {
+            return { success: false, error: 'User not found in any collection.' };
+        }
+
         await updateDoc(userRef, { approvalStatus: newStatus });
         return { success: true };
     } catch (error: any) {
@@ -176,7 +191,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
             approvalStatus: 'Pending' as ApprovalStatusType,
         };
 
-        const userRef = doc(db, 'users', userId);
+        const userRef = doc(db, 'customers', userId);
         await updateDoc(userRef, profileData);
         
         const userSnap = await getDoc(userRef);
