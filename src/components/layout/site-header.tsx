@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -108,7 +109,7 @@ export default function SiteHeader() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href="/">
+              <Link href="/dashboard">
                 <LayoutDashboard className="mr-2 h-4 w-4" />
                 My Dashboard
               </Link>

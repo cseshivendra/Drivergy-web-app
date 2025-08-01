@@ -27,7 +27,7 @@ export default function LoginPage() {
   const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect');
+  const redirect = searchParams.get('redirect') || '/dashboard';
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
@@ -44,7 +44,7 @@ export default function LoginPage() {
     setIsMounted(true);
     // Only redirect if loading is finished and a user exists.
     if (!loading && user) {
-      router.push(redirect || '/'); 
+      router.push(redirect); 
     }
   }, [user, loading, router, redirect]);
 

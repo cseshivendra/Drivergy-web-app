@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Car, UserCircle, LogIn, PanelLeft, Sun, Moon, Power } from 'lucide-react';
@@ -33,7 +34,7 @@ export default function Header() {
             </Button>
           )}
           {(isMobile || (!isMobile && sidebarState === 'collapsed')) && (
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/dashboard" className="flex items-center space-x-2">
               <Car className="h-7 w-7 text-primary animate-car-slide-logo" />
               <span className={cn(
                 "font-headline text-2xl font-bold text-primary",

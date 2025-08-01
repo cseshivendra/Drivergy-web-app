@@ -1,3 +1,4 @@
+
 'use client';
 
 import './globals.css';
@@ -18,8 +19,8 @@ export default function RootLayout({
   const pathname = usePathname();
   
   // A simple way to distinguish between the public site and the authenticated app area.
-  // The authenticated app pages live inside the (app) route group.
-  const isAppRoute = /^\/($|profile|courses|rto-quiz|referrals|contact)/.test(pathname);
+  // The authenticated app pages now live inside the /dashboard route.
+  const isAppRoute = pathname.startsWith('/dashboard');
 
   return (
     <html lang="en" suppressHydrationWarning>

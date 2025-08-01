@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: `Welcome, ${userProfile.name}!`,
         description: 'You are now logged in.',
       });
-      router.push('/');
+      router.push('/dashboard');
     }
   };
 

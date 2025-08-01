@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -40,10 +41,10 @@ export default function AppSidebar() {
   );
 
   useEffect(() => {
-    if (pathname.startsWith('/create')) {
+    if (pathname.startsWith('/dashboard/create')) {
       setCreateOpen(true);
     }
-    if (pathname.startsWith('/referrals')) {
+    if (pathname.startsWith('/dashboard/referrals')) {
       setReferralsOpen(true);
     }
   }, [pathname]);
@@ -51,9 +52,9 @@ export default function AppSidebar() {
   const isCustomer = user?.uniqueId?.startsWith('CU');
   const isTrainer = user?.uniqueId?.startsWith('TR');
   
-  const isDashboardActive = pathname === '/' && !searchParams.get('tab');
-  const isContentActive = pathname === '/' && searchParams.get('tab') === 'content';
-  const isReferralsActive = pathname === '/' && searchParams.get('tab') === 'referrals';
+  const isDashboardActive = pathname === '/dashboard' && !searchParams.get('tab');
+  const isContentActive = pathname === '/dashboard' && searchParams.get('tab') === 'content';
+  const isReferralsActive = pathname === '/dashboard' && searchParams.get('tab') === 'referrals';
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
@@ -68,7 +69,7 @@ export default function AppSidebar() {
               isActive={isDashboardActive}
               tooltip={{ children: "Dashboard", side: "right", align: "center" }}
             >
-              <Link href="/">
+              <Link href="/dashboard">
                 <LayoutDashboard />
                 <span>Dashboard</span>
               </Link>
@@ -79,10 +80,10 @@ export default function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === '/profile'}
+                isActive={pathname === '/dashboard/profile'}
                 tooltip={{ children: "Profile", side: "right", align: "center" }}
               >
-                <Link href="/profile">
+                <Link href="/dashboard/profile">
                   <User />
                   <span>Profile</span>
                 </Link>
@@ -94,7 +95,7 @@ export default function AppSidebar() {
              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setReferralsOpen(!referralsOpen)}
-                  isActive={pathname.startsWith('/referrals')}
+                  isActive={pathname.startsWith('/dashboard/referrals')}
                   tooltip={{ children: "Referrals", side: "right", align: "center" }}
                   className="justify-between"
                 >
@@ -109,9 +110,9 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         asChild
-                        isActive={pathname === '/referrals/invite'}
+                        isActive={pathname === '/dashboard/referrals/invite'}
                       >
-                        <Link href="/referrals/invite">
+                        <Link href="/dashboard/referrals/invite">
                           <Send className="mr-2 h-4 w-4" />
                           Invite Friends
                         </Link>
@@ -120,9 +121,9 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         asChild
-                        isActive={pathname === '/referrals/track'}
+                        isActive={pathname === '/dashboard/referrals/track'}
                       >
-                        <Link href="/referrals/track">
+                        <Link href="/dashboard/referrals/track">
                           <BarChart3 className="mr-2 h-4 w-4" />
                           Track Referrals
                         </Link>
@@ -151,7 +152,7 @@ export default function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setCreateOpen(!createOpen)}
-                  isActive={pathname.startsWith('/create')}
+                  isActive={pathname.startsWith('/dashboard/create')}
                   tooltip={{ children: "Create", side: "right", align: "center" }}
                   className="justify-between"
                 >
@@ -166,9 +167,9 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         asChild
-                        isActive={pathname === '/create/trainer'}
+                        isActive={pathname === '/dashboard/create/trainer'}
                       >
-                        <Link href="/create/trainer">
+                        <Link href="/dashboard/create/trainer">
                           <UserCog className="mr-2 h-4 w-4" />
                           New Trainer
                         </Link>
@@ -183,7 +184,7 @@ export default function AppSidebar() {
                   isActive={isContentActive}
                   tooltip={{ children: "Content Management", side: "right", align: "center" }}
                 >
-                  <Link href="/?tab=content">
+                  <Link href="/dashboard?tab=content">
                     <Library />
                     <span>Content</span>
                   </Link>
@@ -195,7 +196,7 @@ export default function AppSidebar() {
                   isActive={isReferralsActive}
                   tooltip={{ children: "Referrals", side: "right", align: "center" }}
                 >
-                  <Link href="/?tab=referrals">
+                  <Link href="/dashboard?tab=referrals">
                     <Gift />
                     <span>Referrals</span>
                   </Link>
@@ -210,10 +211,10 @@ export default function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === '/courses'}
+                  isActive={pathname === '/dashboard/courses'}
                   tooltip={{ children: "Courses", side: "right", align: "center" }}
                 >
-                  <Link href="/courses">
+                  <Link href="/dashboard/courses">
                     <BookOpen />
                     <span>Courses</span>
                   </Link>
@@ -223,10 +224,10 @@ export default function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === '/rto-quiz'}
+                  isActive={pathname === '/dashboard/rto-quiz'}
                   tooltip={{ children: "RTO Quiz", side: "right", align: "center" }}
                 >
-                  <Link href="/rto-quiz">
+                  <Link href="/dashboard/rto-quiz">
                     <ClipboardCheck />
                     <span>RTO Quiz</span>
                   </Link>
@@ -238,10 +239,10 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              isActive={pathname === '/contact'}
+              isActive={pathname === '/dashboard/contact'}
               tooltip={{ children: "Support", side: "right", align: "center" }}
             >
-              <Link href="/contact">
+              <Link href="/dashboard/contact">
                 <MessageSquareText /> 
                 <span>Support</span>
               </Link>
