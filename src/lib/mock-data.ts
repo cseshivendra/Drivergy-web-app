@@ -1,4 +1,4 @@
-import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues } from '@/types';
+import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
@@ -454,10 +454,13 @@ export async function updateAssignmentStatusByTrainer(customerId: string, newSta
         const customerSnap = await getDoc(customerRef);
         if(!customerSnap.exists()) return false;
         const user = customerSnap.data() as UserProfile;
-        const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
-        const firstLessonDate = addDays(startDate, 2);
-        firstLessonDate.setHours(9, 0, 0, 0);
-        updates.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+        if(user.subscriptionStartDate) {
+            const startDate = parse(user.subscriptionStartDate!, 'MMM dd, yyyy', new Date());
+            const firstLessonDate = addDays(startDate, 2);
+            firstLessonDate.setHours(9, 0, 0, 0);
+            updates.upcomingLesson = format(firstLessonDate, 'MMM dd, yyyy, h:mm a');
+        }
+
 
         const requestQuery = query(collection(db, 'lessonRequests'), where('customerId', '==', customerId));
         const requestSnapshot = await getDocs(requestQuery);
