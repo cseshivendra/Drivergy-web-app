@@ -11,22 +11,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// ✅ Helper to initialize app (safe for SSR)
-export const getFirebaseApp = () => {
-  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) return null;
-  return !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const isFirebaseConfigured = () => {
+    return !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
 };
 
-// ✅ Lazy accessors for Firebase services
-export const getFirebaseAuth = () => {
-  const app = getFirebaseApp();
-  return app ? getAuth(app) : null;
-};
+// Initialize Firebase App
+const app = isFirebaseConfigured()
+  ? getApps().length === 0
+    ? initializeApp(firebaseConfig)
+    : getApp()
+  : null;
 
-export const getFirebaseDb = () => {
-  const app = getFirebaseApp();
-  return app ? getFirestore(app) : null;
-};
+// Lazy-loaded services to be used throughout the app
+const getDb = () => (app ? getFirestore(app) : null);
+const getAuthInstance = () => (app ? getAuth(app) : null);
 
-export class isFirebaseConfigured {
-}
+// Export instances for use, which will be null if not configured
+export const db = getDb();
+export const auth = getAuthInstance();
+
+// Export the configuration check as well
+export { isFirebaseConfigured };
