@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -141,7 +140,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
   };
 
   const handleViewDetails = (user: UserProfile) => {
-    window.open(`/users/${user.id}`, '_blank');
+    window.open(`/dashboard/users/${user.id}`, '_blank');
     toast({ 
       title: "Opening Details",
       description: `Opening details for ${user.name} in a new tab.`,
