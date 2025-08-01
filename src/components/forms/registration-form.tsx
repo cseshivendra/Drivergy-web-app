@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import type { registerUserAction } from '@/lib/server-actions';
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -58,7 +59,7 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
         aadhaarCardFile: undefined,
       })
     },
-    mode: 'onChange',
+    mode: 'onBlur',
   });
 
   const { formState, watch } = form;
@@ -67,7 +68,7 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
   
   const trainerOptions = useMemo(() => {
     if (userRole === 'customer') {
-      if (selectedGender === 'Male') return ['Male'];
+      if (selectedGender === 'Male') return ['Male', 'Any'];
       if (selectedGender === 'Female') return ['Female', 'Any'];
       return TrainerPreferenceOptions.slice();
     }

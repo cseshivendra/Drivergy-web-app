@@ -52,6 +52,11 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
     try {
         const data = Object.fromEntries(formData.entries());
         
+        // Explicitly check for gender existence before validation.
+        if (!data.gender || data.gender === '') {
+            return { success: false, error: "Please select a gender." };
+        }
+        
         const files: { [key: string]: File | null } = {
             trainerCertificateFile: formData.get('trainerCertificateFile') as File | null,
             drivingLicenseFile: formData.get('drivingLicenseFile') as File | null,
@@ -151,7 +156,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
 
         const profileData = {
             subscriptionPlan: data.subscriptionPlan as string,
-            vehicleInfo: data.vehiclePreference as string,
+            vehiclePreference: data.vehiclePreference as string,
             trainerPreference: data.trainerPreference as string,
             flatHouseNumber: data.flatHouseNumber as string,
             street: data.street as string,
