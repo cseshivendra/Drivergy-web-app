@@ -16,28 +16,25 @@ export const isFirebaseConfigured = () => {
     return !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
 }
 
-// Initialize Firebase
-const app = isFirebaseConfigured() 
-    ? getApps().length 
-        ? getApp() 
-        : initializeApp(firebaseConfig) 
-    : null;
+// Initialize Firebase App
+const app = isFirebaseConfigured() && !getApps().length
+    ? initializeApp(firebaseConfig)
+    : isFirebaseConfigured() ? getApp() : null;
 
 // Conditionally initialize Firebase services
 // This prevents them from being initialized on the server during the build process
 let auth = null;
 let db = null;
 
-// Only initialize on the client-side or if not in a build environment
-if (typeof window !== 'undefined' || process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    if (app) {
+// Only initialize services if the app was successfully initialized
+if (app) {
+    // We check if we are in a browser environment before initializing
+    if (typeof window !== 'undefined') {
         auth = getAuth(app);
         db = getFirestore(app);
-    }
-} else {
-    // In Vercel build environment, we explicitly check if we are in the build phase.
-    // If you have server-side functions that need firebase, you might need a more nuanced check.
-    if (app) {
+    } else {
+        // For server environments (like Server Actions), we can initialize.
+        // The build process (a non-browser, non-interactive server env) will be skipped by the top-level `if (app)`
         auth = getAuth(app);
         db = getFirestore(app);
     }

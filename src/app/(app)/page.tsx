@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -7,6 +8,9 @@ import CustomerDashboard from '@/components/dashboard/customer-dashboard';
 import TrainerDashboard from '@/components/dashboard/trainer-dashboard';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+
+// This forces the page to be rendered dynamically, preventing build-time errors.
+export const dynamic = 'force-dynamic';
 
 export default function AuthenticatedRootPage() {
   const { user, loading } = useAuth();
