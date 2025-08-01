@@ -61,26 +61,19 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
     mode: 'onChange',
   });
 
-  const { formState } = form;
+  const { formState, watch } = form;
 
-  const selectedGender = form.watch('gender');
-
+  const selectedGender = watch('gender');
+  
   const trainerOptions = useMemo(() => {
     if (userRole === 'customer') {
-        if (selectedGender === 'Male') return ['Male'];
-        return TrainerPreferenceOptions.slice();
+      if (selectedGender === 'Male') return ['Male'];
+      if (selectedGender === 'Female') return ['Female', 'Any'];
+      return TrainerPreferenceOptions.slice();
     }
     return [];
   }, [selectedGender, userRole]);
 
-  useEffect(() => {
-    if (userRole === 'customer') {
-      const currentPreference = form.getValues('trainerPreference');
-      if (currentPreference && !trainerOptions.includes(currentPreference)) {
-        form.setValue('trainerPreference', '');
-      }
-    }
-  }, [selectedGender, trainerOptions, form, userRole]);
 
   useEffect(() => {
     if (state.success) {
