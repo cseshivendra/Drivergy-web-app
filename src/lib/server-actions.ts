@@ -6,7 +6,7 @@ import { createNewUser } from './mock-data';
 import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import type { ApprovalStatusType } from '@/types';
 import { sendEmail } from './email';
@@ -53,7 +53,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const data = Object.fromEntries(formData.entries());
         
         // Explicitly check for gender existence before validation.
-        if (!data.gender || data.gender === '') {
+        if (!data.gender || data.gender === '' || typeof data.gender !== 'string') {
             return { success: false, error: "Please select a gender." };
         }
         

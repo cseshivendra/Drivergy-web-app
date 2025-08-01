@@ -119,7 +119,7 @@ const baseRegistrationSchema = z.object({
   email: z.string().email('Invalid email address.'),
   username: z.string().min(3, 'Username must be at least 3 characters.'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits.').max(13, 'Phone number is too long.'),
-  gender: z.enum(GenderOptions),
+  gender: z.enum(GenderOptions, { required_error: "Gender is required." }),
 });
 
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
