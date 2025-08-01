@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -81,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             title: `Login Successful!`,
             description: 'Redirecting to your dashboard...',
         });
+        router.push('/dashboard');
     } catch (error: any) {
         if (error.code !== 'auth/popup-closed-by-user') {
             toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
