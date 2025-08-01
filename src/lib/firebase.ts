@@ -19,17 +19,10 @@ const isFirebaseConfigured = () => {
 
 // Initialize Firebase App
 const app = isFirebaseConfigured() && typeof window !== 'undefined'
-<<<<<<< HEAD
-    ? getApps().length === 0
-        ? initializeApp(firebaseConfig)
-        : getApp()
-    : null;
-=======
   ? getApps().length === 0
     ? initializeApp(firebaseConfig)
     : getApp()
   : null;
->>>>>>> c968b2d31ab42385f2b31d1c6d82274e61722dcd
 
 // Lazy-loaded services to be used throughout the app
 const getDb = () => (app ? getFirestore(app) : null);

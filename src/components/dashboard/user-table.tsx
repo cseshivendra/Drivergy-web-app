@@ -109,7 +109,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
   };
 
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
-    if (!user.uniqueId.startsWith('TR') && newStatus === 'Approved') {
+    if (user.uniqueId.startsWith('CU') && newStatus === 'Approved') {
         toast({
           title: "Action Required",
           description: "Please use the 'Approve & Assign' button to approve customers. This assigns a trainer at the same time.",
