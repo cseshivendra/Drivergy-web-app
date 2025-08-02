@@ -6,7 +6,7 @@ import streamifier from 'streamifier';
 
 // It is crucial that this configuration is ONLY done in a server-side context.
 // This function should be called within a Server Action or a Route Handler.
-export const initializeCloudinary = () => {
+export const initializeCloudinary = async () => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
         console.warn("Cloudinary environment variables not fully set. File uploads will fail.");
     }
@@ -20,7 +20,7 @@ export const initializeCloudinary = () => {
 
 export const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
     // Ensure config is set before an upload attempt
-    initializeCloudinary();
+    await initializeCloudinary();
     
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
