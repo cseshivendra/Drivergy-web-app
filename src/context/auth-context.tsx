@@ -101,12 +101,18 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
         try {
             const { auth } = initializeFirebaseApp(firebaseConfig);
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-                const isSampleUser = user && sampleUsers.some(su => su.profile.id === user.id);
+                const isSampleUserLoggedIn = user && sampleUsers.some(su => su.profile.id === user.id);
+                
+                // If a sample user is logged in, do not touch the state.
+                if (isSampleUserLoggedIn) {
+                    setLoading(false);
+                    return;
+                }
 
                 if (firebaseUser) {
                     const profile = await fetchUserById(firebaseUser.uid);
                     setUser(profile);
-                } else if (!isSampleUser) { // Only set user to null if it's NOT a sample user
+                } else {
                     setUser(null);
                 }
                 setLoading(false);
@@ -178,14 +184,15 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
         setLoading(true);
 
         const matchedUser = sampleUsers.find(
-            (u) => u.username === identifier && u.password === password
+            (u) => (u.username.toLowerCase() === identifier.toLowerCase() || u.profile.contact.toLowerCase() === identifier.toLowerCase()) && u.password === password
         );
 
         if (matchedUser) {
             setUser(matchedUser.profile);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
-            setLoading(false);
+            // We intentionally don't set loading to false here, 
+            // the useEffect will handle it after confirming it's a sample user.
             return;
         }
 
