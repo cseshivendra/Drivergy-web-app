@@ -20,7 +20,8 @@ async function initializeAdminApp() {
     if (serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey) {
         return admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            projectId: serviceAccount.projectId,
+            // Explicitly set the projectId to ensure the correct database is used.
+            projectId: serviceAccount.projectId, 
         });
     }
 
