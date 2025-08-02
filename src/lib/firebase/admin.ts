@@ -9,24 +9,19 @@ async function initializeAdminApp() {
     }
 
     const serviceAccount = {
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        projectId: process.env.FIREBASE_PROJECT_ID, // Use the new server-side variable
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // The private key must be formatted correctly by replacing `\n` with actual newlines.
         privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
     };
     
-    // Check if the essential service account properties are present.
-    // This is a more robust way to initialize than relying on default credentials.
     if (serviceAccount.projectId && serviceAccount.clientEmail && serviceAccount.privateKey) {
         return admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            // Explicitly set the projectId to ensure the correct database is used.
             projectId: serviceAccount.projectId, 
         });
     }
 
     console.warn("Firebase Admin credentials not provided in environment variables. Falling back to default credentials.");
-    // Fallback to default credentials for environments like Firebase App Hosting
     return admin.initializeApp({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
     });
