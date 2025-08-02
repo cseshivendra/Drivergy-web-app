@@ -17,23 +17,6 @@ import { Badge } from '../ui/badge';
 import type React from 'react';
 import RescheduleRequestTable from './reschedule-request-table';
 
-const sampleTrainerSummary: TrainerSummaryData = {
-    totalStudents: 8,
-    totalEarnings: 16000,
-    upcomingLessons: 5,
-    rating: 4.8,
-    pendingRescheduleRequests: 1,
-};
-
-const sampleStudents: UserProfile[] = [
-    { id: 'stud-1', uniqueId: 'CU-STUD1', name: 'Ravi Kumar', phone: '9876543210', upcomingLesson: 'Aug 03, 2024, 09:00 AM', flatHouseNumber: 'B-45', street: 'Sector 15', district: 'Noida', vehicleInfo: 'Car (Manual)', attendance: 'Pending', approvalStatus: 'Approved' } as UserProfile,
-    { id: 'stud-2', uniqueId: 'CU-STUD2', name: 'Sunita Sharma', phone: '9876543211', upcomingLesson: 'Aug 03, 2024, 11:00 AM', flatHouseNumber: 'C-101', street: 'Sector 22', district: 'Gurugram', vehicleInfo: 'Car (Automatic)', attendance: 'Pending', approvalStatus: 'Approved' } as UserProfile,
-    { id: 'stud-3', uniqueId: 'CU-STUD3', name: 'Amit Singh', phone: '9876543212', upcomingLesson: 'Aug 04, 2024, 10:00 AM', flatHouseNumber: 'D-2', street: 'DLF Phase 3', district: 'Gurugram', vehicleInfo: 'Motorcycle', attendance: 'Pending', approvalStatus: 'Approved' } as UserProfile,
-];
-
-const samplePendingAssignments: UserProfile[] = [
-    { id: 'stud-4', uniqueId: 'CU-STUD4', name: 'Priya Verma', phone: '9876543213', flatHouseNumber: 'E-78', street: 'Sector 56', district: 'Gurugram', vehicleInfo: 'Car (Manual)', approvalStatus: 'In Progress' } as UserProfile,
-];
 
 const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -106,21 +89,12 @@ export default function TrainerDashboard() {
   };
   
   const refetchData = () => {
-      if (user?.id && !user.id.startsWith('trainer-')) {
+      if (user?.id) {
           listenToTrainerStudents(user.id, handleDataUpdate);
       }
   }
 
   useEffect(() => {
-    // If the user is a sample user, use the provided profile from auth context
-    if (user && user.id.startsWith('trainer-')) {
-        setAllStudents([...sampleStudents, ...samplePendingAssignments]);
-        setTrainerProfile(user);
-        setSummary(sampleTrainerSummary);
-        setLoading(false);
-        return;
-    }
-    
     if (!user?.id) {
       setLoading(false);
       return;

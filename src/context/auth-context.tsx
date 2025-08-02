@@ -24,73 +24,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const sampleAdmin: UserProfile = {
-  id: 'admin-001',
-  uniqueId: 'AD-ADMIN1',
-  name: 'Admin User',
-  username: 'admin',
-  isAdmin: true,
-  contact: 'admin@drivergy.com',
-  phone: '1234567890',
-  location: 'Gurugram',
-  subscriptionPlan: 'Admin',
-  registrationTimestamp: 'Jan 01, 2024',
-  approvalStatus: 'Approved',
-  gender: 'Prefer not to say',
-  photoURL: 'https://placehold.co/100x100/4f46e5/ffffff.png'
-};
-
-const sampleTrainer: UserProfile = {
-  id: 'trainer-001',
-  uniqueId: 'TR-TRAINER1',
-  name: 'Sample Trainer',
-  username: 'trainer',
-  contact: 'trainer@drivergy.com',
-  phone: '1234567890',
-  location: 'Gurugram',
-  subscriptionPlan: 'Trainer',
-  registrationTimestamp: 'Jan 01, 2024',
-  approvalStatus: 'Approved',
-  gender: 'Male',
-  photoURL: 'https://placehold.co/100x100/facc15/44403c.png',
-  specialization: 'Car',
-  yearsOfExperience: 5
-};
-
-const sampleCustomer: UserProfile = {
-  id: 'customer-001',
-  uniqueId: 'CU-CUSTOMER1',
-  name: 'Sample Customer',
-  username: 'customer',
-  contact: 'customer@drivergy.com',
-  phone: '1234567890',
-  location: 'Noida',
-  subscriptionPlan: 'Premium',
-  registrationTimestamp: 'Jan 01, 2024',
-  approvalStatus: 'Approved',
-  gender: 'Female',
-  photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png',
-  assignedTrainerId: 'trainer-001',
-  assignedTrainerName: 'Sample Trainer',
-  upcomingLesson: 'Jul 28, 2024, 10:00 AM',
-  totalLessons: 20,
-  completedLessons: 5,
-  feedbackSubmitted: false,
-  subscriptionStartDate: 'Jul 20, 2024',
-  flatHouseNumber: 'A-123',
-  street: 'Main Road',
-  district: 'Noida',
-  state: 'Uttar Pradesh',
-  pincode: '201301',
-  dlStatus: 'New Learner'
-};
-
-const sampleUsers = [
-    { username: 'admin', password: 'Admin@1234', profile: sampleAdmin },
-    { username: 'trainer', password: 'Trainer@1234', profile: sampleTrainer },
-    { username: 'customer', password: 'Customer@1234', profile: sampleCustomer },
-];
-
 export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode, firebaseConfig: FirebaseOptions }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -101,14 +34,6 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
         try {
             const { auth } = initializeFirebaseApp(firebaseConfig);
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-                const isSampleUserLoggedIn = user && sampleUsers.some(su => su.profile.id === user.id);
-                
-                // If a sample user is logged in, do not touch the state.
-                if (isSampleUserLoggedIn) {
-                    setLoading(false);
-                    return;
-                }
-
                 if (firebaseUser) {
                     const profile = await fetchUserById(firebaseUser.uid);
                     setUser(profile);
@@ -123,7 +48,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
             setLoading(false);
             return;
         }
-    }, [firebaseConfig, user]);
+    }, [firebaseConfig]);
 
     const signInWithGoogle = async () => {
         try {
@@ -182,63 +107,42 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
-
-        const matchedUser = sampleUsers.find(
-            (u) => (u.username.toLowerCase() === identifier.toLowerCase() || u.profile.contact.toLowerCase() === identifier.toLowerCase()) && u.password === password
-        );
-
-        if (matchedUser) {
-            setUser(matchedUser.profile);
-            toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
-            router.push('/dashboard');
-            // We intentionally don't set loading to false here, 
-            // the useEffect will handle it after confirming it's a sample user.
-            return;
-        }
-
         try {
             const { auth } = initializeFirebaseApp(firebaseConfig);
+            // We assume the identifier is an email for this flow.
             await signInWithEmailAndPassword(auth, identifier, password);
             // onAuthStateChanged will handle setting the user and redirecting
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
-        } catch (error) {
+        } catch (error: any) {
             setLoading(false);
+            let description = 'An unexpected error occurred. Please try again.';
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                 description = 'Invalid credentials. Please check your email and password.';
+            }
             toast({
                 title: 'Login Failed',
-                description: 'Invalid credentials. Please check your email/username and password.',
+                description: description,
                 variant: 'destructive',
             });
         }
     };
 
     const signOut = async () => {
-        // Check if the current user is a sample user
-        const isSampleUser = user && sampleUsers.some(su => su.profile.id === user.id);
-
-        if (isSampleUser) {
+        try {
+            const { auth } = initializeFirebaseApp(firebaseConfig);
+            setLoading(true);
+            await firebaseSignOut(auth);
             setUser(null);
             toast({
                 title: 'Logged Out',
                 description: 'You have been successfully signed out.',
             });
             router.push('/');
-        } else {
-            try {
-                const { auth } = initializeFirebaseApp(firebaseConfig);
-                setLoading(true);
-                await firebaseSignOut(auth);
-                setUser(null);
-                toast({
-                    title: 'Logged Out',
-                    description: 'You have been successfully signed out.',
-                });
-                router.push('/');
-            } catch(error) {
-                console.error("Error signing out:", error);
-                toast({ title: 'Logout Failed', description: 'An error occurred while signing out.', variant: 'destructive' });
-            } finally {
-                setLoading(false);
-            }
+        } catch(error) {
+            console.error("Error signing out:", error);
+            toast({ title: 'Logout Failed', description: 'An error occurred while signing out.', variant: 'destructive' });
+        } finally {
+            setLoading(false);
         }
     };
 
