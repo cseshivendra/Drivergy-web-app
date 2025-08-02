@@ -5,10 +5,12 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import type { UserProfile } from '@/types';
-import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
+import type { UserProfile, RegistrationFormValues } from '@/types';
+import { authenticateUserByCredentials, fetchUserById, createNewUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { auth, isFirebaseConfigured, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -58,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const signInWithGoogle = async () => {
-        if (!isFirebaseConfigured() || !auth) {
+        if (!isFirebaseConfigured() || !auth || !db) {
             toast({ title: "Offline Mode", description: "Google Sign-In is disabled. Please check your Firebase configuration.", variant: "destructive" });
             return;
         }
@@ -68,20 +70,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
             
-            // Immediately fetch profile to see if user needs to complete registration
+            // Check if user document exists in Firestore
             const profile = await fetchUserById(firebaseUser.uid);
             
             if (profile) {
+                // Existing user
                 setUser(profile);
-                toast({ title: `Welcome, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
+                toast({ title: `Welcome back, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
                 router.push('/dashboard');
             } else {
-                // This is a new user via Google, they need to register fully.
-                // We'll sign them out of firebase to force them through the registration flow
-                // where their profile document will be created.
-                await firebaseSignOut(auth);
+                // New user via Google, they need to register fully.
+                // Redirect them to the registration page to complete their profile.
                 toast({ title: "Registration Incomplete", description: "Welcome! Please complete your registration to continue.", });
-                router.push('/register'); // Redirect to unified registration page
+                // We pass google-specific info to the registration page
+                router.push(`/register?isGoogleSignIn=true&google_name=${firebaseUser.displayName}&google_email=${firebaseUser.email}`);
             }
         } catch (error: any) {
             if (error.code !== 'auth/popup-closed-by-user') {
@@ -102,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await signInWithEmailAndPassword(auth, identifier, password);
             // onAuthStateChanged will handle setting the user and redirecting
         } catch (error: any) {
+            // Fallback for non-firebase auth for now.
             const userProfile = await authenticateUserByCredentials(identifier, password);
             if (userProfile) {
                 logInUser(userProfile, true);

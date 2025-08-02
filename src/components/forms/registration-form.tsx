@@ -3,7 +3,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -34,6 +34,17 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import type { registerUserAction } from '@/lib/server-actions';
 
+function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
+            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
+            userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+        </Button>
+    );
+}
+
+
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
   registerUserAction: (prevState: any, formData: FormData) => Promise<{ success: boolean; error?: string }>;
@@ -62,7 +73,7 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
     mode: 'onBlur',
   });
 
-  const { formState, watch } = form;
+  const { watch, handleSubmit } = form;
   const selectedGender = watch('gender');
   
   const trainerOptions = useMemo(() => {
@@ -84,10 +95,24 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
       router.push('/login');
     }
   }, [state, toast, router]);
+  
+  const onClientSubmit = (data: RegistrationFormValues) => {
+    const formData = new FormData();
+    for (const key in data) {
+        const value = (data as any)[key];
+        if (value instanceof File) {
+            formData.append(key, value);
+        } else if (value !== undefined && value !== null) {
+            formData.append(key, String(value));
+        }
+    }
+    formAction(formData);
+  };
+
 
   return (
     <Form {...form}>
-      <form action={formAction} className="space-y-8">
+      <form onSubmit={handleSubmit(onClientSubmit)} className="space-y-8">
         {state.error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -178,10 +203,7 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
         )}
 
         <div className="flex justify-end pt-4">
-            <Button type="submit" className="w-full sm:w-auto" disabled={formState.isSubmitting}>
-              {formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-                userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
-            </Button>
+            <SubmitButton userRole={userRole} />
         </div>
       </form>
     </Form>
