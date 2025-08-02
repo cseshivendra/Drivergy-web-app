@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -35,6 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         const profile = await fetchUserById(firebaseUser.uid);
                         if (profile) {
                             setUser(profile);
+                        } else {
+                            // This can happen if a user is authenticated with Firebase but has no profile document.
+                            setUser(null);
                         }
                     } else {
                         setUser(null);
@@ -43,21 +47,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 });
                 return unsubscribe;
             } else {
-                // Mock mode
-                try {
-                    const storedUserId = sessionStorage.getItem('mockUserId');
-                    if (storedUserId) {
-                        fetchUserById(storedUserId).then(userProfile => {
-                            if (userProfile) setUser(userProfile);
-                            setLoading(false);
-                        });
-                    } else {
-                        setLoading(false);
-                    }
-                } catch(e) {
-                    console.warn("Could not access sessionStorage for mock user.");
-                    setLoading(false);
-                }
+                console.warn("Firebase is not configured. Authentication will not work.");
+                setLoading(false);
                 return () => {};
             }
         };
@@ -68,22 +59,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signInWithGoogle = async () => {
         if (!isFirebaseConfigured() || !auth) {
-            toast({ title: "Offline Mode", description: "Google Sign-In is disabled. Please use mock credentials.", variant: "destructive" });
+            toast({ title: "Offline Mode", description: "Google Sign-In is disabled. Please check your Firebase configuration.", variant: "destructive" });
             return;
         }
         setLoading(true);
         const provider = new GoogleAuthProvider();
         try {
-            await signInWithPopup(auth, provider);
-            // onAuthStateChanged will handle the rest.
-            toast({
-                title: `Login Successful!`,
-                description: 'Redirecting to your dashboard...',
-            });
-            router.push('/dashboard');
+            const result = await signInWithPopup(auth, provider);
+            const firebaseUser = result.user;
+            
+            // Immediately fetch profile to see if user needs to complete registration
+            const profile = await fetchUserById(firebaseUser.uid);
+            
+            if (profile) {
+                setUser(profile);
+                toast({ title: `Welcome, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
+                router.push('/dashboard');
+            } else {
+                // This is a new user via Google, they need to register fully.
+                // We'll sign them out of firebase to force them through the registration flow
+                // where their profile document will be created.
+                await firebaseSignOut(auth);
+                toast({ title: "Registration Incomplete", description: "Welcome! Please complete your registration to continue.", });
+                router.push('/register'); // Redirect to unified registration page
+            }
         } catch (error: any) {
             if (error.code !== 'auth/popup-closed-by-user') {
                 toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
+                console.error("Google Sign-in Error:", error);
             }
             setLoading(false);
         }
@@ -114,7 +117,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error("Error signing out:", error);
         } finally {
             setUser(null);
-            sessionStorage.removeItem('mockUserId');
             setLoading(false);
             toast({
                 title: 'Logged Out',
@@ -126,9 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
         setUser(userProfile);
-        if (!isFirebaseConfigured()) {
-            sessionStorage.setItem('mockUserId', userProfile.id);
-        }
         setLoading(false);
 
         if (isDirectLogin) {
