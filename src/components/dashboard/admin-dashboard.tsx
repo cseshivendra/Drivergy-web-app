@@ -26,6 +26,22 @@ import { useAuth } from '@/context/auth-context';
 import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
 
+const sampleAdminDashboardData: AdminDashboardData = {
+    summaryData: { totalCustomers: 150, totalInstructors: 25, activeSubscriptions: 120, pendingRequests: 5, pendingRescheduleRequests: 2, totalEarnings: 850000, totalCertifiedTrainers: 20 },
+    allUsers: [],
+    lessonRequests: [],
+    rescheduleRequests: [],
+    feedback: [],
+    referrals: [],
+    lessonProgress: [],
+    courses: [],
+    quizSets: [],
+    faqs: [],
+    blogPosts: [],
+    siteBanners: [],
+    promotionalPosters: [],
+};
+
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -42,14 +58,21 @@ export default function AdminDashboard() {
 
     const handleActioned = useCallback(() => {
       // This function re-triggers the listener in mock-data, simulating a refetch
-      if(user) {
+      if(user && !user.id.startsWith('admin-')) {
         listenToAdminDashboardData(setDashboardData);
       }
     }, [user]);
 
     useEffect(() => {
+        // If the user is a sample user, use the provided profile from auth context
+        if (user && user.id.startsWith('admin-')) {
+            setDashboardData(sampleAdminDashboardData);
+            setLoading(false);
+            return;
+        }
+
         // Stop listening if the user is a sample user, as they won't have Firestore permissions.
-        if (!user || user.id.startsWith('admin-')) {
+        if (!user) {
             setLoading(false);
             return;
         }

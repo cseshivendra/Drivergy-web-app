@@ -499,7 +499,7 @@ export default function CustomerDashboard() {
           </CardContent>
           <CardFooter>
             <Button asChild className="w-full">
-              <Link href="/rto-quiz">Start Quiz</Link>
+              <Link href="/dashboard/rto-quiz">Start Quiz</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -524,7 +524,7 @@ export default function CustomerDashboard() {
           </CardContent>
           <CardFooter>
             <Button asChild className="w-full">
-              <Link href="/referrals/invite">Go to Referrals</Link>
+              <Link href="/dashboard/referrals/invite">Go to Referrals</Link>
             </Button>
           </CardFooter>
         </Card>
