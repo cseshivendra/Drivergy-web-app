@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { getAdminAuth, getAdminFirestore } from './firebase';
+import { doc, setDoc, getDoc, updateDoc, collection } from 'firebase/firestore';
+import { getAdminAuth, getAdminFirestore } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
 
@@ -70,8 +70,8 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const validatedData = validationResult.data;
         const fileUrls: { [key: string]: string | null } = {};
 
-        const auth = getAdminAuth();
-        const db = getAdminFirestore();
+        const auth = await getAdminAuth();
+        const db = await getAdminFirestore();
 
         const userRecord = await auth.createUser({
             email: validatedData.email,
@@ -161,7 +161,7 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
-    const db = getAdminFirestore();
+    const db = await getAdminFirestore();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -192,7 +192,7 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    const db = getAdminFirestore();
+    const db = await getAdminFirestore();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
