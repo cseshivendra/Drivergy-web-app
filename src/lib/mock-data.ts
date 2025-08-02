@@ -1,16 +1,44 @@
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { db, isFirebaseConfigured, auth } from '@/lib/firebase';
+import { initializeFirebaseApp, isFirebaseConfigured } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import type { FirebaseOptions } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+
+
+// Helper to get initialized DB instance
+const getDb = () => {
+    const firebaseConfig: FirebaseOptions = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+    if (!isFirebaseConfigured(firebaseConfig)) return null;
+    const { db } = initializeFirebaseApp(firebaseConfig);
+    return db;
+}
+
 
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
 
 export async function createNewUser(data: RegistrationFormValues, fileUrls: { [key: string]: string | null }): Promise<{ success: boolean; error?: string; userId?: string }> {
-    if (!db || !auth) return { success: false, error: "Database or Auth not configured." };
+    const db = getDb();
+    const firebaseConfig: FirebaseOptions = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    };
+    if (!db || !firebaseConfig.apiKey || !firebaseConfig.projectId) return { success: false, error: "Database or Auth not configured." };
+    
+    // We need a temporary Auth instance for user creation
+    const { auth } = initializeFirebaseApp(firebaseConfig);
 
     try {
         // Step 1: Create user in Firebase Authentication
@@ -82,40 +110,8 @@ export async function createNewUser(data: RegistrationFormValues, fileUrls: { [k
     }
 }
 
-
-export async function authenticateUserByCredentials(identifier: string, password: string): Promise<UserProfile | null> {
-    if (!db) return null;
-
-    const collectionsToSearch = ['customers', 'trainers'];
-    for (const col of collectionsToSearch) {
-        try {
-            // Try searching by username first
-            let q = query(collection(db, col), where("username", "==", identifier), limit(1));
-            let querySnapshot = await getDocs(q);
-
-            // If not found by username, try by email (contact field)
-            if (querySnapshot.empty) {
-                q = query(collection(db, col), where("contact", "==", identifier), limit(1));
-                querySnapshot = await getDocs(q);
-            }
-
-            if (!querySnapshot.empty) {
-                const userDoc = querySnapshot.docs[0];
-                // Note: In a real app, never store plain text passwords. This is for mock purposes.
-                // The check for password would be handled by Firebase Auth.
-                // Here we simulate it for fallback.
-                if (userDoc.data().password === password) {
-                    return { id: userDoc.id, ...userDoc.data() } as UserProfile;
-                }
-            }
-        } catch (error: any) {
-            console.error(`Error authenticating user in ${col}:`, error);
-        }
-    }
-    return null; // User not found in any collection or password mismatch
-};
-
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
+    const db = getDb();
     if (!db || !userId) return null;
     const collectionsToSearch = ['customers', 'trainers'];
     for (const col of collectionsToSearch) {
@@ -148,7 +144,8 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 // =================================================================
 
 export function listenToAdminDashboardData(callback: (data: AdminDashboardData) => void): () => void {
-    if (!isFirebaseConfigured() || !db) {
+    const db = getDb();
+    if (!db) {
         callback({} as AdminDashboardData);
         return () => {};
     }
@@ -231,7 +228,8 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
 }
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void): () => void {
-    if (!isFirebaseConfigured() || !db) {
+    const db = getDb();
+    if (!db) {
         callback(null); return () => {};
     }
 
@@ -264,7 +262,8 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
 };
 
 export function listenToTrainerStudents(trainerId: string, callback: (data: { students: UserProfile[]; feedback: Feedback[]; rescheduleRequests: RescheduleRequest[]; profile: UserProfile | null; }) => void): () => void {
-    if (!isFirebaseConfigured() || !db) {
+    const db = getDb();
+    if (!db) {
         callback({ students: [], feedback: [], rescheduleRequests: [], profile: null });
         return () => {};
     }
@@ -303,25 +302,29 @@ export function listenToTrainerStudents(trainerId: string, callback: (data: { st
 }
 
 export async function fetchCourses(): Promise<Course[]> {
-    if (!isFirebaseConfigured() || !db) return [];
+    const db = getDb();
+    if (!db) return [];
     const snapshot = await getDocs(collection(db, "courses"));
     return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course)));
 }
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
-    if (!isFirebaseConfigured() || !db) return [];
+    const db = getDb();
+    if (!db) return [];
     const snapshot = await getDocs(collection(db, "quizSets"));
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
 }
 
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-    if (!isFirebaseConfigured() || !db) return null;
+    const db = getDb();
+    if (!db) return null;
     const snapshot = await getDoc(doc(db, 'blogPosts', slug));
     return snapshot.exists() ? { slug: snapshot.id, ...snapshot.data() } as BlogPost : null;
 }
 
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
-    if (!isFirebaseConfigured() || !db) {
+    const db = getDb();
+    if (!db) {
         callback([]);
         return () => {};
     }
@@ -331,7 +334,8 @@ export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => v
 }
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
-    if (!isFirebaseConfigured() || !db) {
+    const db = getDb();
+    if (!db) {
         callback([]);
         return () => {};
     }
@@ -349,6 +353,7 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
 const generateId = (): string => Math.random().toString(36).substring(2, 10);
 
 export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
+    const db = getDb();
     if (!db) return null;
     let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
     // File upload is handled by server action now
@@ -363,6 +368,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
 }
 
 export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const updateData: Partial<BlogPostFormValues> = { ...data };
     // File upload handled by server action
@@ -372,12 +378,14 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
 }
 
 export async function deleteBlogPost(slug: string): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     await deleteDoc(doc(db, 'blogPosts', slug));
     return true;
 }
 
 export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
+    const db = getDb();
     if (!db) return null;
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
@@ -390,6 +398,7 @@ export async function addCourseModule(courseId: string, moduleData: Omit<CourseM
 }
 
 export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
+    const db = getDb();
     if (!db) return null;
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
@@ -401,6 +410,7 @@ export async function updateCourseModule(courseId: string, moduleId: string, mod
 }
 
 export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
@@ -412,24 +422,28 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
 }
 
 export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
+    const db = getDb();
     if (!db) return null;
     const docRef = await addDoc(collection(db, 'faqs'), data);
     return { id: docRef.id, ...data };
 }
 
 export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     await updateDoc(doc(db, 'faqs', id), data as any);
     return true;
 }
 
 export async function deleteFaq(id: string): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     await deleteDoc(doc(db, 'faqs', id));
     return true;
 }
 
 export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const updateData: Partial<VisualContentFormValues> = { ...data };
     // File upload handled by server action
@@ -439,6 +453,7 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
 }
 
 export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const updateData: Partial<VisualContentFormValues> = { ...data };
     // File upload handled by server action
@@ -448,6 +463,7 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
 }
 
 export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
+    const db = getDb();
     if (!db) return null;
     const setRef = doc(db, 'quizSets', quizSetId);
     const setSnap = await getDoc(setRef);
@@ -469,18 +485,15 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 }
 
 export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const collections = ['customers', 'trainers'];
     for (const col of collections) {
         const userRef = doc(db, col, userId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-            if (userSnap.data().password === currentPassword) {
-                await updateDoc(userRef, { password: newPassword });
-                return true;
-            } else {
-                return false;
-            }
+            // Password verification should be handled by Firebase Auth, this is a mock
+            return false;
         }
     }
     return false;
@@ -495,6 +508,7 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => coursesToH
 });
 
 export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
+    const db = getDb();
     if (!db) return [];
     let q = query(collection(db, "trainers"), where("approvalStatus", "==", "Approved"));
     if (filters.location) {
@@ -508,6 +522,7 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
 };
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const customerRef = doc(db, "customers", customerId);
     const trainerRef = doc(db, "trainers", trainerId);
@@ -522,6 +537,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 };
 
 export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const customerRef = doc(db, "customers", customerId);
     const updates: { [key: string]: any } = { approvalStatus: newStatus };
@@ -552,6 +568,7 @@ export async function updateAssignmentStatusByTrainer(customerId: string, newSta
 }
 
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const studentRef = doc(db, "customers", studentId);
     const studentSnap = await getDoc(studentRef);
@@ -566,6 +583,7 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
 }
 
 export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
+    const db = getDb();
     if (!db) return null;
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
@@ -580,6 +598,7 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 }
 
 export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
+    const db = getDb();
     if (!db) return null;
     const newRequest: Omit<RescheduleRequest, 'id'> = {
         userId, customerName,
@@ -592,6 +611,7 @@ export async function addRescheduleRequest(userId: string, customerName: string,
 }
 
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const requestRef = doc(db, 'rescheduleRequests', requestId);
     await updateDoc(requestRef, { status: newStatus });
@@ -605,6 +625,7 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
 }
 
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
     await addDoc(collection(db, 'feedback'), newFeedback);
@@ -613,12 +634,14 @@ export async function addFeedback(customerId: string, customerName: string, trai
 }
 
 export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
+    const db = getDb();
     if (!db) return false;
     await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
     return true;
 }
 
 export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
+    const db = getDb();
     if (!db || !userId) return [];
     const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
     const querySnapshot = await getDocs(q);
@@ -642,6 +665,7 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 }
 
 export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
+    const db = getDb();
     if (!db) return null;
     const collectionsToSearch = ['customers', 'trainers'];
     let userRef;

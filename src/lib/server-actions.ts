@@ -7,23 +7,26 @@ import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { doc, updateDoc, getDoc, collection, addDoc } from 'firebase/firestore';
-import { db } from './firebase';
-import type { ApprovalStatusType } from '@/types';
+import { initializeFirebaseApp } from './firebase'; // Use the central initializer
+import type { ApprovalStatusType, FirebaseOptions } from '@/types';
 import { sendEmail } from './email';
 
-const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
+// This function should be called within a Server Action or a Route Handler.
+const initializeCloudinary = () => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
-        console.error("Cloudinary environment variables are not set.");
-        throw new Error("Cannot upload file: Server storage is not configured.");
+        console.warn("Cloudinary environment variables not fully set. File uploads will fail.");
     }
-    
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
         api_secret: process.env.CLOUDINARY_API_SECRET,
         secure: true,
     });
+};
 
+const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
+    initializeCloudinary();
+    
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
             { folder: folder, resource_type: "auto" },
@@ -52,7 +55,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
     try {
         const data = Object.fromEntries(formData.entries());
         
-        // Explicitly check for gender existence before validation.
         if (!data.gender || data.gender === '' || typeof data.gender !== 'string') {
             return { success: false, error: "Please select a gender." };
         }
@@ -116,6 +118,12 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
+    const firebaseConfig: FirebaseOptions = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    };
+    const { db } = initializeFirebaseApp(firebaseConfig);
     if (!db) {
         return { success: false, error: 'Database not configured.' };
     }
@@ -149,6 +157,12 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
+    const firebaseConfig: FirebaseOptions = {
+        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    };
+    const { db } = initializeFirebaseApp(firebaseConfig);
     if (!db) {
         return { success: false, error: 'Database not configured.' };
     }
