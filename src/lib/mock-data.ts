@@ -299,14 +299,20 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
 }
 
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
-    if (!isFirebaseConfigured() || !db) return callback([]);
+    if (!isFirebaseConfigured() || !db) {
+        callback([]);
+        return () => {};
+    }
     return onSnapshot(query(collection(db, 'blogPosts'), orderBy('date', 'desc')), snap => {
         callback(snap.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost)));
     });
 }
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
-    if (!isFirebaseConfigured() || !db) return callback([]);
+    if (!isFirebaseConfigured() || !db) {
+        callback([]);
+        return () => {};
+    }
     return onSnapshot(collection(db, 'promotionalPosters'), snap => {
         callback(snap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)));
     }, (error) => {

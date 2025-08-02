@@ -17,20 +17,14 @@ const isFirebaseConfigured = () => {
   return !!firebaseConfig.apiKey && !!firebaseConfig.projectId;
 };
 
-// Initialize Firebase App
-const app = isFirebaseConfigured() && typeof window !== 'undefined'
-    ? getApps().length === 0
-        ? initializeApp(firebaseConfig)
-        : getApp()
-    : null;
+// Initialize Firebase App for both client and server
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Lazy-loaded services to be used throughout the app
-const getDb = () => (app ? getFirestore(app) : null);
-const getAuthInstance = () => (app ? getAuth(app) : null);
 
 // Export instances for use, which will be null if not configured
-export const db = getDb();
-export const auth = getAuthInstance();
+export const db = isFirebaseConfigured() ? getFirestore(app) : null;
+export const auth = isFirebaseConfigured() ? getAuth(app) : null;
+
 
 // Export the configuration check as well
 export { isFirebaseConfigured };
