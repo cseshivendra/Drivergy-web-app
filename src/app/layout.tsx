@@ -10,7 +10,6 @@ import type { ReactNode } from 'react';
 import SiteHeader from '@/components/layout/site-header';
 import SiteFooter from '@/components/layout/site-footer';
 import ChatWidget from '@/components/chatbot/chat-widget';
-import type { FirebaseOptions } from 'firebase/app';
 
 export default function RootLayout({
   children,
@@ -33,7 +32,7 @@ export default function RootLayout({
         <meta name="keywords" content="driving school, learn to drive, driving lessons, car training, motorcycle training, driving school for women, driving school for men, cheap driving lessons, flexible driving school, RTO test" />
       </head>
       <body className="font-body antialiased">
-          {/* AuthProvider will now handle its own config */}
+          {/* AuthProvider now handles its own config through the new client initializer */}
           <AuthProvider>
             <ThemeProvider>
               {isAppRoute ? (

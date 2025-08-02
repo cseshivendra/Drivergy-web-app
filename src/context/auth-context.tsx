@@ -10,7 +10,6 @@ import { fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { initializeFirebaseApp } from '@/lib/firebase/client';
 import { doc, setDoc } from 'firebase/firestore';
-import type { FirebaseOptions } from 'firebase/app';
 
 
 interface AuthContextType {
@@ -24,17 +23,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Moved the config object construction outside the component
-// to ensure it's stable and defined once.
-const firebaseConfig: FirebaseOptions = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -43,8 +31,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     useEffect(() => {
         try {
-            // Pass the constructed config object to the initialization function.
-            const { auth } = initializeFirebaseApp(firebaseConfig);
+            // Initialization is now clean and doesn't require passing a config object.
+            const { auth } = initializeFirebaseApp();
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                 if (firebaseUser) {
                     const profile = await fetchUserById(firebaseUser.uid);
@@ -60,12 +48,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
             return;
         }
-    }, []); // Removed firebaseConfig from dependency array as it's stable
+    }, []);
 
     const signInWithGoogle = async () => {
         try {
-            // Pass the constructed config object here as well.
-            const { auth, db } = initializeFirebaseApp(firebaseConfig);
+            // initializeFirebaseApp will get the config from environment variables.
+            const { auth, db } = initializeFirebaseApp();
             const provider = new GoogleAuthProvider();
 
             setLoading(true);
@@ -121,11 +109,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         try {
-            // Pass the constructed config object here.
-            const { auth } = initializeFirebaseApp(firebaseConfig);
-            // We assume the identifier is an email for this flow.
+            const { auth } = initializeFirebaseApp();
             await signInWithEmailAndPassword(auth, identifier, password);
-            // onAuthStateChanged will handle setting the user and redirecting
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
         } catch (error: any) {
             setLoading(false);
@@ -143,8 +128,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signOut = async () => {
         try {
-            // Pass the constructed config object here.
-            const { auth } = initializeFirebaseApp(firebaseConfig);
+            const { auth } = initializeFirebaseApp();
             setLoading(true);
             await firebaseSignOut(auth);
             setUser(null);
