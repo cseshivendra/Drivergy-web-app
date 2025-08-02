@@ -24,7 +24,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode, firebaseConfig: FirebaseOptions }) => {
+// Moved the config object construction outside the component
+// to ensure it's stable and defined once.
+const firebaseConfig: FirebaseOptions = {
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -32,6 +43,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     
     useEffect(() => {
         try {
+            // Pass the constructed config object to the initialization function.
             const { auth } = initializeFirebaseApp(firebaseConfig);
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                 if (firebaseUser) {
@@ -48,10 +60,11 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
             setLoading(false);
             return;
         }
-    }, [firebaseConfig]);
+    }, []); // Removed firebaseConfig from dependency array as it's stable
 
     const signInWithGoogle = async () => {
         try {
+            // Pass the constructed config object here as well.
             const { auth, db } = initializeFirebaseApp(firebaseConfig);
             const provider = new GoogleAuthProvider();
 
@@ -108,6 +121,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         try {
+            // Pass the constructed config object here.
             const { auth } = initializeFirebaseApp(firebaseConfig);
             // We assume the identifier is an email for this flow.
             await signInWithEmailAndPassword(auth, identifier, password);
@@ -129,6 +143,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
 
     const signOut = async () => {
         try {
+            // Pass the constructed config object here.
             const { auth } = initializeFirebaseApp(firebaseConfig);
             setLoading(true);
             await firebaseSignOut(auth);

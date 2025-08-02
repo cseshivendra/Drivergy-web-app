@@ -12,16 +12,6 @@ import SiteFooter from '@/components/layout/site-footer';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import type { FirebaseOptions } from 'firebase/app';
 
-// Storing the config in a constant ensures it's read once.
-const firebaseConfig: FirebaseOptions = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,8 +33,8 @@ export default function RootLayout({
         <meta name="keywords" content="driving school, learn to drive, driving lessons, car training, motorcycle training, driving school for women, driving school for men, cheap driving lessons, flexible driving school, RTO test" />
       </head>
       <body className="font-body antialiased">
-          {/* Pass the config to the AuthProvider */}
-          <AuthProvider firebaseConfig={firebaseConfig}>
+          {/* AuthProvider will now handle its own config */}
+          <AuthProvider>
             <ThemeProvider>
               {isAppRoute ? (
                 children // The AuthenticatedAppLayout will provide its own header/footer
