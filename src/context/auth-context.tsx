@@ -85,6 +85,11 @@ const sampleCustomer: UserProfile = {
   dlStatus: 'New Learner'
 };
 
+const sampleUsers = [
+    { username: 'admin', password: 'Admin@1234', profile: sampleAdmin },
+    { username: 'trainer', password: 'Trainer@1234', profile: sampleTrainer },
+    { username: 'customer', password: 'Customer@1234', profile: sampleCustomer },
+];
 
 export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode, firebaseConfig: FirebaseOptions }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -96,10 +101,12 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
         try {
             const { auth } = initializeFirebaseApp(firebaseConfig);
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                const isSampleUser = user && sampleUsers.some(su => su.profile.id === user.id);
+
                 if (firebaseUser) {
                     const profile = await fetchUserById(firebaseUser.uid);
                     setUser(profile);
-                } else {
+                } else if (!isSampleUser) { // Only set user to null if it's NOT a sample user
                     setUser(null);
                 }
                 setLoading(false);
@@ -110,7 +117,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
             setLoading(false);
             return;
         }
-    }, [firebaseConfig]);
+    }, [firebaseConfig, user]);
 
     const signInWithGoogle = async () => {
         try {
@@ -170,12 +177,6 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
 
-        const sampleUsers = [
-            { username: 'admin', password: 'Admin@1234', profile: sampleAdmin },
-            { username: 'trainer', password: 'Trainer@1234', profile: sampleTrainer },
-            { username: 'customer', password: 'Customer@1234', profile: sampleCustomer },
-        ];
-
         const matchedUser = sampleUsers.find(
             (u) => u.username === identifier && u.password === password
         );
@@ -204,21 +205,33 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     };
 
     const signOut = async () => {
-        try {
-            const { auth } = initializeFirebaseApp(firebaseConfig);
-            setLoading(true);
-            await firebaseSignOut(auth);
+        // Check if the current user is a sample user
+        const isSampleUser = user && sampleUsers.some(su => su.profile.id === user.id);
+
+        if (isSampleUser) {
             setUser(null);
             toast({
                 title: 'Logged Out',
                 description: 'You have been successfully signed out.',
             });
             router.push('/');
-        } catch(error) {
-            console.error("Error signing out:", error);
-            toast({ title: 'Logout Failed', description: 'An error occurred while signing out.', variant: 'destructive' });
-        } finally {
-            setLoading(false);
+        } else {
+            try {
+                const { auth } = initializeFirebaseApp(firebaseConfig);
+                setLoading(true);
+                await firebaseSignOut(auth);
+                setUser(null);
+                toast({
+                    title: 'Logged Out',
+                    description: 'You have been successfully signed out.',
+                });
+                router.push('/');
+            } catch(error) {
+                console.error("Error signing out:", error);
+                toast({ title: 'Logout Failed', description: 'An error occurred while signing out.', variant: 'destructive' });
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
