@@ -146,7 +146,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
                     registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                     approvalStatus: 'Pending',
                     photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
                     trainerPreference: 'Any',
                 };
                 
@@ -168,24 +168,21 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     };
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
-         setLoading(true);
-        if (identifier === 'admin' && password === 'Admin@1234') {
-            setUser(sampleAdmin);
-            toast({ title: "Login Successful!", description: "Redirecting to admin dashboard..." });
-            router.push('/dashboard');
-            setLoading(false);
-            return;
-        }
-        if (identifier === 'trainer' && password === 'Trainer@1234') {
-            setUser(sampleTrainer);
-            toast({ title: "Login Successful!", description: "Redirecting to trainer dashboard..." });
-            router.push('/dashboard');
-            setLoading(false);
-            return;
-        }
-        if (identifier === 'customer' && password === 'Customer@1234') {
-            setUser(sampleCustomer);
-            toast({ title: "Login Successful!", description: "Redirecting to customer dashboard..." });
+        setLoading(true);
+
+        const sampleUsers = [
+            { username: 'admin', password: 'Admin@1234', profile: sampleAdmin },
+            { username: 'trainer', password: 'Trainer@1234', profile: sampleTrainer },
+            { username: 'customer', password: 'Customer@1234', profile: sampleCustomer },
+        ];
+
+        const matchedUser = sampleUsers.find(
+            (u) => u.username === identifier && u.password === password
+        );
+
+        if (matchedUser) {
+            setUser(matchedUser.profile);
+            toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
             setLoading(false);
             return;
@@ -194,8 +191,8 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
         try {
             const { auth } = initializeFirebaseApp(firebaseConfig);
             await signInWithEmailAndPassword(auth, identifier, password);
-            toast({ title: "Login Successful!", description: "Redirecting to your dashboard..."});
-            // The onAuthStateChanged listener will handle setting user and redirecting
+            // onAuthStateChanged will handle setting the user and redirecting
+            toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
         } catch (error) {
             setLoading(false);
             toast({
