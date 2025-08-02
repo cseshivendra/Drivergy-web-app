@@ -9,7 +9,7 @@ import type { UserProfile, RegistrationFormValues } from '@/types';
 import { authenticateUserByCredentials, fetchUserById, createNewUser } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth, isFirebaseConfigured, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
 interface AuthContextType {
@@ -40,7 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                             setUser(profile);
                         } else {
                             // This can happen if a user is authenticated with Firebase but has no profile document.
-                            setUser(null);
+                            // This case is handled by the signInWithGoogle flow for new users.
+                            // For existing sessions, if no profile, treat as not fully logged in.
+                             setUser(null);
                         }
                     } else {
                         setUser(null);
@@ -69,25 +71,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
-            
-            // Check if user document exists in Firestore
-            const profile = await fetchUserById(firebaseUser.uid);
-            
-            if (profile) {
+
+            const userRef = doc(db, "customers", firebaseUser.uid);
+            const userSnap = await getDoc(userRef);
+
+            let profileToSet: UserProfile;
+
+            if (userSnap.exists()) {
                 // Existing user
-                setUser(profile);
-                toast({ title: `Welcome back, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
-                router.push('/dashboard');
+                profileToSet = { id: userSnap.id, ...userSnap.data() } as UserProfile;
+                toast({ title: `Welcome back, ${profileToSet.name}!`, description: 'Redirecting to your dashboard...' });
             } else {
-                // New user via Google, they need to register fully.
-                // Redirect them to the registration page to complete their profile.
-                toast({ title: "Registration Incomplete", description: "Welcome! Please complete your registration to continue.", });
-                // We pass google-specific info to the registration page
-                router.push(`/register?isGoogleSignIn=true&google_name=${firebaseUser.displayName}&google_email=${firebaseUser.email}`);
+                // New user via Google Sign-In
+                const name = firebaseUser.displayName || 'New User';
+                const email = firebaseUser.email;
+
+                if (!email) {
+                    throw new Error("Could not retrieve email from Google. Please try registering with email and password.");
+                }
+                
+                const newUser: Omit<UserProfile, 'id'> = {
+                    uniqueId: `CU-${firebaseUser.uid.slice(-6).toUpperCase()}`,
+                    name,
+                    contact: email,
+                    phone: firebaseUser.phoneNumber || '',
+                    gender: 'Prefer not to say',
+                    location: 'TBD',
+                    subscriptionPlan: "None",
+                    registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                    approvalStatus: 'Pending',
+                    photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
+                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
+                    trainerPreference: 'Any',
+                };
+                
+                await setDoc(userRef, newUser);
+                profileToSet = { id: firebaseUser.uid, ...newUser };
+                toast({ title: "Welcome to Drivergy!", description: "Your account has been created successfully." });
             }
+            
+            setUser(profileToSet);
+            router.push('/dashboard');
+
         } catch (error: any) {
             if (error.code !== 'auth/popup-closed-by-user') {
-                toast({ title: "Sign-In Failed", description: "An error occurred during Google sign-in.", variant: "destructive" });
+                toast({ title: "Sign-In Failed", description: error.message || "An error occurred during Google sign-in.", variant: "destructive" });
                 console.error("Google Sign-in Error:", error);
             }
             setLoading(false);
