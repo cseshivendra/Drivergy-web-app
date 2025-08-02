@@ -209,5 +209,3 @@ export default function RegistrationForm({ userRole, registerUserAction }: Regis
     </Form>
   );
 }
-
-    
