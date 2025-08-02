@@ -2,7 +2,7 @@
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
@@ -93,17 +93,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
+        if (!auth) {
+            toast({ title: 'Error', description: 'Authentication is not configured.', variant: 'destructive' });
+            return;
+        }
         setLoading(true);
-        const userProfile = await authenticateUserByCredentials(identifier, password);
-        if (userProfile) {
-            logInUser(userProfile, true);
-        } else {
-            setLoading(false);
-            toast({
-                title: 'Login Failed',
-                description: 'Invalid credentials. Please check your email/username and password.',
-                variant: 'destructive',
-            });
+        try {
+            await signInWithEmailAndPassword(auth, identifier, password);
+            // onAuthStateChanged will handle setting the user and redirecting
+        } catch (error: any) {
+            const userProfile = await authenticateUserByCredentials(identifier, password);
+            if (userProfile) {
+                logInUser(userProfile, true);
+            } else {
+                setLoading(false);
+                toast({
+                    title: 'Login Failed',
+                    description: 'Invalid credentials. Please check your email/username and password.',
+                    variant: 'destructive',
+                });
+            }
         }
     };
 
