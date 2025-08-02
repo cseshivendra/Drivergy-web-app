@@ -48,7 +48,8 @@ export default function AdminDashboard() {
     }, [user]);
 
     useEffect(() => {
-        if (!user) {
+        // Stop listening if the user is a sample user, as they won't have Firestore permissions.
+        if (!user || user.id.startsWith('admin-')) {
             setLoading(false);
             return;
         }

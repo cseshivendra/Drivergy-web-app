@@ -94,12 +94,25 @@ export default function TrainerDashboard() {
   }
 
   useEffect(() => {
+    // If the user is a sample user, use the provided profile from auth context
+    if (user && user.id.startsWith('trainer-')) {
+        const sampleData = {
+            students: [], // Sample data doesn't have students yet
+            feedback: [],
+            rescheduleRequests: [],
+            profile: user
+        };
+        handleDataUpdate(sampleData);
+        setLoading(false);
+        return;
+    }
+    
     if (!user?.id) {
       setLoading(false);
       return;
     }
-    setLoading(true);
 
+    setLoading(true);
     const unsubscribe = listenToTrainerStudents(user.id, handleDataUpdate);
     
     return () => unsubscribe();

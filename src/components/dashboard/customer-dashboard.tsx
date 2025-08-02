@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -133,13 +134,19 @@ export default function CustomerDashboard() {
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
 
   useEffect(() => {
+    // If the user is a sample user, use the provided profile from auth context
+    if (user && user.id.startsWith('customer-')) {
+        setProfile(user);
+        setLoading(false);
+        return;
+    }
+
     if (!user?.id) {
         setLoading(false);
         return;
     }
     
-    // The user object from useAuth is the primary source of truth.
-    // We listen to changes on that specific user to get real-time updates for the dashboard.
+    // For real users, listen to Firestore
     setLoading(true);
     const unsubscribe = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
