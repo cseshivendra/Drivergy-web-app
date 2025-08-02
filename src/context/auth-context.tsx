@@ -8,8 +8,8 @@ import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { isFirebaseConfigured, getClientAuth, getClientFirestore } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { initializeFirebaseApp } from '@/lib/firebase/client';
+import { doc, setDoc } from 'firebase/firestore';
 import type { FirebaseOptions } from 'firebase/app';
 
 
@@ -30,37 +30,31 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     const { toast } = useToast();
     
     useEffect(() => {
-        if (!isFirebaseConfigured(firebaseConfig)) {
-            console.warn("Firebase is not configured. Authentication will be unavailable.");
+        try {
+            const { auth } = initializeFirebaseApp(firebaseConfig);
+            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                if (firebaseUser) {
+                    const profile = await fetchUserById(firebaseUser.uid);
+                    setUser(profile);
+                } else {
+                    setUser(null);
+                }
+                setLoading(false);
+            });
+            return () => unsubscribe();
+        } catch (error) {
+            console.warn("Firebase initialization failed in AuthContext:", error);
             setLoading(false);
             return;
         }
-        
-        const auth = getClientAuth();
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                const profile = await fetchUserById(firebaseUser.uid);
-                setUser(profile);
-            } else {
-                setUser(null);
-            }
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
     }, [firebaseConfig]);
 
     const signInWithGoogle = async () => {
-        if (!isFirebaseConfigured(firebaseConfig)) {
-            toast({ title: "Offline Mode", description: "Google Sign-In is disabled.", variant: "destructive" });
-            return;
-        }
-        
-        setLoading(true);
-        const auth = getClientAuth();
-        const provider = new GoogleAuthProvider();
-
         try {
+            const { auth, db } = initializeFirebaseApp(firebaseConfig);
+            const provider = new GoogleAuthProvider();
+
+            setLoading(true);
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
             
@@ -70,7 +64,6 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
                 setUser(profile);
                 toast({ title: `Welcome back, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
             } else {
-                const db = getClientFirestore();
                 const userRef = doc(db, "customers", firebaseUser.uid);
                 const name = firebaseUser.displayName || 'New User';
                 const email = firebaseUser.email;
@@ -112,13 +105,9 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     };
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
-        if (!isFirebaseConfigured(firebaseConfig)) {
-            toast({ title: 'Error', description: 'Authentication is not configured.', variant: 'destructive' });
-            return;
-        }
-        setLoading(true);
-        const auth = getClientAuth();
         try {
+            const { auth } = initializeFirebaseApp(firebaseConfig);
+            setLoading(true);
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: "Login Successful!", description: "Redirecting to your dashboard..."});
             // The onAuthStateChanged listener will handle setting user and redirecting
@@ -133,10 +122,9 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     };
 
     const signOut = async () => {
-        if (!isFirebaseConfigured(firebaseConfig)) return;
-        setLoading(true);
-        const auth = getClientAuth();
         try {
+            const { auth } = initializeFirebaseApp(firebaseConfig);
+            setLoading(true);
             await firebaseSignOut(auth);
             setUser(null);
             toast({

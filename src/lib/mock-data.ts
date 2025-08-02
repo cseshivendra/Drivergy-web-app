@@ -2,14 +2,14 @@
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { initializeFirebaseApp, isFirebaseConfigured } from '@/lib/firebase';
+import { getAdminFirestore } from '@/lib/firebase/admin';
+import { initializeFirebaseApp } from '@/lib/firebase/client';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import type { FirebaseOptions } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 
-// Helper to get initialized DB instance
-const getDb = () => {
+// Helper to get initialized client DB instance
+const getClientDb = () => {
     const firebaseConfig: FirebaseOptions = {
         apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
         authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -18,101 +18,22 @@ const getDb = () => {
         messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
         appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     };
-    if (!isFirebaseConfigured(firebaseConfig)) return null;
-    const { db } = initializeFirebaseApp(firebaseConfig);
-    return db;
-}
-
-
-// =================================================================
-// USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
-// =================================================================
-
-export async function createNewUser(data: RegistrationFormValues, fileUrls: { [key: string]: string | null }): Promise<{ success: boolean; error?: string; userId?: string }> {
-    const db = getDb();
-    const firebaseConfig: FirebaseOptions = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    };
-    if (!db || !firebaseConfig.apiKey || !firebaseConfig.projectId) return { success: false, error: "Database or Auth not configured." };
-    
-    // We need a temporary Auth instance for user creation
-    const { auth } = initializeFirebaseApp(firebaseConfig);
-
     try {
-        // Step 1: Create user in Firebase Authentication
-        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-        const firebaseUser = userCredential.user;
-        const uid = firebaseUser.uid;
-
-        // Step 2: Determine collection and prepare user data for Firestore
-        const targetCollection = data.userRole === 'customer' ? 'customers' : 'trainers';
-        const userRef = doc(db, targetCollection, uid);
-
-        let newUser: Omit<UserProfile, 'id' | 'password'>; // Exclude id and password from the base type
-
-        if (data.userRole === 'customer') {
-            const customerData = data;
-            newUser = {
-                uniqueId: `CU-${uid.slice(-6).toUpperCase()}`,
-                name: customerData.name,
-                username: customerData.username,
-                contact: customerData.email,
-                phone: customerData.phone,
-                gender: customerData.gender,
-                location: 'TBD',
-                subscriptionPlan: "None",
-                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-                approvalStatus: 'Pending',
-                photoURL: `https://placehold.co/100x100.png?text=${customerData.name.charAt(0)}`,
-                myReferralCode: `${customerData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
-                trainerPreference: customerData.trainerPreference || 'Any',
-            };
-        } else { // trainer
-            const trainerData = data;
-            newUser = {
-                uniqueId: `TR-${uid.slice(-6).toUpperCase()}`,
-                name: trainerData.name,
-                username: trainerData.username,
-                contact: trainerData.email,
-                phone: trainerData.phone,
-                gender: trainerData.gender,
-                location: trainerData.location,
-                subscriptionPlan: "Trainer",
-                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-                approvalStatus: 'Pending',
-                photoURL: `https://placehold.co/100x100.png?text=${trainerData.name.charAt(0)}`,
-                myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
-                vehicleInfo: trainerData.trainerVehicleType,
-                specialization: trainerData.specialization,
-                yearsOfExperience: Number(trainerData.yearsOfExperience),
-                trainerCertificateUrl: fileUrls.trainerCertificateUrl || '',
-                drivingLicenseUrl: fileUrls.drivingLicenseUrl || '',
-                aadhaarCardUrl: fileUrls.aadhaarCardUrl || '',
-            };
-        }
-
-        // Step 3: Save the user profile to Firestore
-        await setDoc(userRef, newUser);
-
-        return { success: true, userId: uid };
-
-    } catch (error: any) {
-        console.error("Error creating new user:", error);
-        if (error.code === 'auth/email-already-in-use') {
-            return { success: false, error: 'A user is already registered with this email.' };
-        }
-        if (error.code === 'auth/weak-password') {
-            return { success: false, error: 'The password is too weak.' };
-        }
-        return { success: false, error: error.message || "An unexpected error occurred during registration." };
+        const { db } = initializeFirebaseApp(firebaseConfig);
+        return db;
+    } catch(e) {
+        console.warn("Client DB not available", e);
+        return null;
     }
 }
 
+
+// =================================================================
+// USER MANAGEMENT - READ OPERATIONS
+// =================================================================
+
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
-    const db = getDb();
-    if (!db || !userId) return null;
+    const db = getAdminFirestore(); // Use admin SDK on server
     const collectionsToSearch = ['customers', 'trainers'];
     for (const col of collectionsToSearch) {
         try {
@@ -144,7 +65,7 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 // =================================================================
 
 export function listenToAdminDashboardData(callback: (data: AdminDashboardData) => void): () => void {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) {
         callback({} as AdminDashboardData);
         return () => {};
@@ -228,7 +149,7 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
 }
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void): () => void {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) {
         callback(null); return () => {};
     }
@@ -262,7 +183,7 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
 };
 
 export function listenToTrainerStudents(trainerId: string, callback: (data: { students: UserProfile[]; feedback: Feedback[]; rescheduleRequests: RescheduleRequest[]; profile: UserProfile | null; }) => void): () => void {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) {
         callback({ students: [], feedback: [], rescheduleRequests: [], profile: null });
         return () => {};
@@ -302,28 +223,28 @@ export function listenToTrainerStudents(trainerId: string, callback: (data: { st
 }
 
 export async function fetchCourses(): Promise<Course[]> {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) return [];
     const snapshot = await getDocs(collection(db, "courses"));
     return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course)));
 }
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) return [];
     const snapshot = await getDocs(collection(db, "quizSets"));
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
 }
 
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) return null;
     const snapshot = await getDoc(doc(db, 'blogPosts', slug));
     return snapshot.exists() ? { slug: snapshot.id, ...snapshot.data() } as BlogPost : null;
 }
 
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) {
         callback([]);
         return () => {};
@@ -334,7 +255,7 @@ export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => v
 }
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
-    const db = getDb();
+    const db = getClientDb();
     if (!db) {
         callback([]);
         return () => {};
@@ -347,14 +268,13 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
 }
 
 // =================================================================
-// MOCK WRITE OPERATIONS - CONVERTED TO FIRESTORE
+// WRITE OPERATIONS
 // =================================================================
 
 const generateId = (): string => Math.random().toString(36).substring(2, 10);
 
 export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
     // File upload is handled by server action now
     const newPostData: Omit<BlogPost, 'slug'> = {
@@ -368,8 +288,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
 }
 
 export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const updateData: Partial<BlogPostFormValues> = { ...data };
     // File upload handled by server action
     delete updateData.imageFile;
@@ -378,15 +297,13 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
 }
 
 export async function deleteBlogPost(slug: string): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     await deleteDoc(doc(db, 'blogPosts', slug));
     return true;
 }
 
 export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
     if (!courseSnap.exists()) return null;
@@ -398,8 +315,7 @@ export async function addCourseModule(courseId: string, moduleData: Omit<CourseM
 }
 
 export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
     if (!courseSnap.exists()) return null;
@@ -410,8 +326,7 @@ export async function updateCourseModule(courseId: string, moduleId: string, mod
 }
 
 export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
     if (!courseSnap.exists()) return false;
@@ -422,29 +337,25 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
 }
 
 export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     const docRef = await addDoc(collection(db, 'faqs'), data);
     return { id: docRef.id, ...data };
 }
 
 export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     await updateDoc(doc(db, 'faqs', id), data as any);
     return true;
 }
 
 export async function deleteFaq(id: string): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     await deleteDoc(doc(db, 'faqs', id));
     return true;
 }
 
 export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const updateData: Partial<VisualContentFormValues> = { ...data };
     // File upload handled by server action
     delete updateData.imageFile;
@@ -453,8 +364,7 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
 }
 
 export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const updateData: Partial<VisualContentFormValues> = { ...data };
     // File upload handled by server action
     delete updateData.imageFile;
@@ -463,8 +373,7 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
 }
 
 export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     const setRef = doc(db, 'quizSets', quizSetId);
     const setSnap = await getDoc(setRef);
     if (!setSnap.exists()) return null;
@@ -485,8 +394,7 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 }
 
 export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const collections = ['customers', 'trainers'];
     for (const col of collections) {
         const userRef = doc(db, col, userId);
@@ -508,8 +416,7 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => coursesToH
 });
 
 export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
-    const db = getDb();
-    if (!db) return [];
+    const db = getAdminFirestore();
     let q = query(collection(db, "trainers"), where("approvalStatus", "==", "Approved"));
     if (filters.location) {
         q = query(q, where("location", "==", filters.location));
@@ -522,8 +429,7 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
 };
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const customerRef = doc(db, "customers", customerId);
     const trainerRef = doc(db, "trainers", trainerId);
     const [customerSnap, trainerSnap] = await Promise.all([getDoc(customerRef), getDoc(trainerRef)]);
@@ -537,8 +443,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 };
 
 export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const customerRef = doc(db, "customers", customerId);
     const updates: { [key: string]: any } = { approvalStatus: newStatus };
 
@@ -568,8 +473,7 @@ export async function updateAssignmentStatusByTrainer(customerId: string, newSta
 }
 
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const studentRef = doc(db, "customers", studentId);
     const studentSnap = await getDoc(studentRef);
     if (!studentSnap.exists()) return false;
@@ -583,8 +487,7 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
 }
 
 export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
     const updates = {
@@ -598,8 +501,7 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 }
 
 export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
-    const db = getDb();
-    if (!db) return null;
+    const db = getAdminFirestore();
     const newRequest: Omit<RescheduleRequest, 'id'> = {
         userId, customerName,
         originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
@@ -611,8 +513,7 @@ export async function addRescheduleRequest(userId: string, customerName: string,
 }
 
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const requestRef = doc(db, 'rescheduleRequests', requestId);
     await updateDoc(requestRef, { status: newStatus });
     if (newStatus === 'Approved') {
@@ -625,8 +526,7 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
 }
 
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
     await addDoc(collection(db, 'feedback'), newFeedback);
     await updateDoc(doc(db, 'customers', customerId), { feedbackSubmitted: true });
@@ -634,14 +534,13 @@ export async function addFeedback(customerId: string, customerName: string, trai
 }
 
 export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
-    const db = getDb();
-    if (!db) return false;
+    const db = getAdminFirestore();
     await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
     return true;
 }
 
 export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
-    const db = getDb();
+    const db = getClientDb();
     if (!db || !userId) return [];
     const q = query(collection(db, "referrals"), where("referrerId", "==", userId));
     const querySnapshot = await getDocs(q);
@@ -665,11 +564,10 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 }
 
 export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
-    const db = getDb();
-    if (!db) return null;
-    const collectionsToSearch = ['customers', 'trainers'];
+    const db = getAdminFirestore();
     let userRef;
 
+    const collectionsToSearch = ['customers', 'trainers'];
     for (const col of collectionsToSearch) {
         const ref = doc(db, col, userId);
         const snap = await getDoc(ref);

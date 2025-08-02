@@ -45,15 +45,16 @@ const nextConfig = {
   },
   serverExternalPackages: ['@genkit-ai/core', 'genkit'],
   webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        child_process: false,
-      };
-    }
+    // This is no longer needed as we have separated client and server initializations
+    // if (!isServer) {
+    //   config.resolve.fallback = {
+    //     ...config.resolve.fallback,
+    //     fs: false,
+    //     net: false,
+    //     tls: false,
+    //     child_process: false,
+    //   };
+    // }
     
     config.resolve.alias = {
       ...config.resolve.alias,
