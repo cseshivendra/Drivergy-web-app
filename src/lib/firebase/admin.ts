@@ -1,8 +1,9 @@
+
 'use server';
 
 import admin from 'firebase-admin';
 
-function initializeAdminApp() {
+async function initializeAdminApp() {
     if (admin.apps.length > 0) {
         return admin.app();
     }
@@ -15,11 +16,11 @@ function initializeAdminApp() {
 }
 
 // Server-side Firebase Admin services
-export const getAdminAuth = () => {
-    initializeAdminApp();
+export const getAdminAuth = async () => {
+    await initializeAdminApp();
     return admin.auth();
 };
-export const getAdminFirestore = () => {
-    initializeAdminApp();
+export const getAdminFirestore = async () => {
+    await initializeAdminApp();
     return admin.firestore();
 };
