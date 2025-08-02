@@ -1,69 +1,85 @@
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { db, isFirebaseConfigured, auth } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 // =================================================================
 // USER MANAGEMENT - WRITE & ONE-TIME READ OPERATIONS
 // =================================================================
 
-// NOTE: This function is now only called from a Server Action, which handles the file uploads.
-export async function createNewUser(data: RegistrationFormValues, fileUrls: { [key: string]: string | null }): Promise<{ success: boolean, error?: string, userId?: string }> {
-    if (!db) return { success: false, error: "Database not configured." };
+export async function createNewUser(data: RegistrationFormValues, fileUrls: { [key: string]: string | null }): Promise<{ success: boolean; error?: string; userId?: string }> {
+    if (!db || !auth) return { success: false, error: "Database or Auth not configured." };
 
-    const customersRef = collection(db, "customers");
-    const trainersRef = collection(db, "trainers");
+    try {
+        // Step 1: Create user in Firebase Authentication
+        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const firebaseUser = userCredential.user;
+        const uid = firebaseUser.uid;
 
-    const emailQueryCustomers = query(customersRef, where("contact", "==", data.email), limit(1));
-    const usernameQueryCustomers = query(customersRef, where("username", "==", data.username), limit(1));
-    const emailQueryTrainers = query(trainersRef, where("contact", "==", data.email), limit(1));
-    const usernameQueryTrainers = query(trainersRef, where("username", "==", data.username), limit(1));
+        // Step 2: Determine collection and prepare user data for Firestore
+        const targetCollection = data.userRole === 'customer' ? 'customers' : 'trainers';
+        const userRef = doc(db, targetCollection, uid);
 
-    const [emailSnapCustomers, usernameSnapCustomers, emailSnapTrainers, usernameSnapTrainers] = await Promise.all([
-        getDocs(emailQueryCustomers), getDocs(usernameQueryCustomers),
-        getDocs(emailQueryTrainers), getDocs(usernameQueryTrainers)
-    ]);
+        let newUser: Omit<UserProfile, 'id' | 'password'>; // Exclude id and password from the base type
 
-    if (!emailSnapCustomers.empty || !emailSnapTrainers.empty) return { success: false, error: "A user is already registered with this email." };
-    if (!usernameSnapCustomers.empty || !usernameSnapTrainers.empty) return { success: false, error: "This username is already taken." };
+        if (data.userRole === 'customer') {
+            const customerData = data;
+            newUser = {
+                uniqueId: `CU-${uid.slice(-6).toUpperCase()}`,
+                name: customerData.name,
+                username: customerData.username,
+                contact: customerData.email,
+                phone: customerData.phone,
+                gender: customerData.gender,
+                location: 'TBD',
+                subscriptionPlan: "None",
+                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+                approvalStatus: 'Pending',
+                photoURL: `https://placehold.co/100x100.png?text=${customerData.name.charAt(0)}`,
+                myReferralCode: `${customerData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                trainerPreference: customerData.trainerPreference || 'Any',
+            };
+        } else { // trainer
+            const trainerData = data;
+            newUser = {
+                uniqueId: `TR-${uid.slice(-6).toUpperCase()}`,
+                name: trainerData.name,
+                username: trainerData.username,
+                contact: trainerData.email,
+                phone: trainerData.phone,
+                gender: trainerData.gender,
+                location: trainerData.location,
+                subscriptionPlan: "Trainer",
+                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+                approvalStatus: 'Pending',
+                photoURL: `https://placehold.co/100x100.png?text=${trainerData.name.charAt(0)}`,
+                myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                vehicleInfo: trainerData.trainerVehicleType,
+                specialization: trainerData.specialization,
+                yearsOfExperience: Number(trainerData.yearsOfExperience),
+                trainerCertificateUrl: fileUrls.trainerCertificateUrl || '',
+                drivingLicenseUrl: fileUrls.drivingLicenseUrl || '',
+                aadhaarCardUrl: fileUrls.aadhaarCardUrl || '',
+            };
+        }
 
-    const targetCollection = data.userRole === 'customer' ? 'customers' : 'trainers';
-    const userRef = doc(collection(db, targetCollection));
-    let newUser: Omit<UserProfile, 'id'>;
+        // Step 3: Save the user profile to Firestore
+        await setDoc(userRef, newUser);
 
-    if (data.userRole === 'customer') {
-        const customerData = data;
-        newUser = {
-            uniqueId: `CU-${userRef.id.slice(-6).toUpperCase()}`,
-            name: customerData.name, username: customerData.username, password: customerData.password,
-            contact: customerData.email, phone: customerData.phone, gender: customerData.gender,
-            location: 'TBD', subscriptionPlan: "None",
-            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            approvalStatus: 'Pending', photoURL: `https://placehold.co/100x100.png?text=${customerData.name.charAt(0)}`,
-            myReferralCode: `${customerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
-            trainerPreference: customerData.trainerPreference || 'Any',
-        };
-    } else { // trainer
-        const trainerData = data;
-        newUser = {
-            uniqueId: `TR-${userRef.id.slice(-6).toUpperCase()}`,
-            name: trainerData.name, username: trainerData.username,
-            contact: trainerData.email, phone: trainerData.phone, gender: trainerData.gender,
-            password: trainerData.password, location: trainerData.location,
-            subscriptionPlan: "Trainer", registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-            approvalStatus: 'Pending', photoURL: `https://placehold.co/100x100.png?text=${trainerData.name.charAt(0)}`,
-            myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${userRef.id.slice(-4)}`,
-            vehicleInfo: trainerData.trainerVehicleType, specialization: trainerData.specialization,
-            yearsOfExperience: Number(trainerData.yearsOfExperience),
-            trainerCertificateUrl: fileUrls.trainerCertificateUrl || '',
-            drivingLicenseUrl: fileUrls.drivingLicenseUrl || '',
-            aadhaarCardUrl: fileUrls.aadhaarCardUrl || '',
-        };
+        return { success: true, userId: uid };
+
+    } catch (error: any) {
+        console.error("Error creating new user:", error);
+        if (error.code === 'auth/email-already-in-use') {
+            return { success: false, error: 'A user is already registered with this email.' };
+        }
+        if (error.code === 'auth/weak-password') {
+             return { success: false, error: 'The password is too weak.' };
+        }
+        return { success: false, error: error.message || "An unexpected error occurred during registration." };
     }
-
-    await setDoc(userRef, newUser);
-    return { success: true, userId: userRef.id };
 }
 
 
@@ -73,24 +89,30 @@ export async function authenticateUserByCredentials(identifier: string, password
     const collectionsToSearch = ['customers', 'trainers'];
     for (const col of collectionsToSearch) {
         try {
-            const collectionRef = collection(db, col);
-            let q = query(collectionRef, where("username", "==", identifier), where("password", "==", password), limit(1));
+            // Try searching by username first
+            let q = query(collection(db, col), where("username", "==", identifier), limit(1));
             let querySnapshot = await getDocs(q);
 
+            // If not found by username, try by email (contact field)
             if (querySnapshot.empty) {
-                q = query(collectionRef, where("contact", "==", identifier), where("password", "==", password), limit(1));
+                q = query(collection(db, col), where("contact", "==", identifier), limit(1));
                 querySnapshot = await getDocs(q);
             }
 
             if (!querySnapshot.empty) {
                 const userDoc = querySnapshot.docs[0];
-                return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+                // Note: In a real app, never store plain text passwords. This is for mock purposes.
+                // The check for password would be handled by Firebase Auth.
+                // Here we simulate it for fallback.
+                if (userDoc.data().password === password) {
+                    return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+                }
             }
         } catch (error: any) {
             console.error(`Error authenticating user in ${col}:`, error);
         }
     }
-    return null; // User not found in any collection
+    return null; // User not found in any collection or password mismatch
 };
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {

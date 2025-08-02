@@ -6,7 +6,7 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as fir
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile, RegistrationFormValues } from '@/types';
-import { authenticateUserByCredentials, fetchUserById, createNewUser } from '@/lib/mock-data';
+import { authenticateUserByCredentials, fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { auth, isFirebaseConfigured, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -30,34 +30,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
 
     useEffect(() => {
-        // This function now handles both Firebase and mock user setup.
-        const initializeAuth = () => {
-            if (isFirebaseConfigured() && auth) {
-                const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-                    if (firebaseUser) {
-                        const profile = await fetchUserById(firebaseUser.uid);
-                        if (profile) {
-                            setUser(profile);
-                        } else {
-                            // This can happen if a user is authenticated with Firebase but has no profile document.
-                            // This case is handled by the signInWithGoogle flow for new users.
-                            // For existing sessions, if no profile, treat as not fully logged in.
-                             setUser(null);
-                        }
-                    } else {
-                        setUser(null);
-                    }
-                    setLoading(false);
-                });
-                return unsubscribe;
-            } else {
-                console.warn("Firebase is not configured. Authentication will not work.");
-                setLoading(false);
-                return () => {};
-            }
-        };
+        if (!isFirebaseConfigured() || !auth) {
+            console.warn("Firebase is not configured. Authentication will be unavailable.");
+            setLoading(false);
+            return;
+        }
 
-        const unsubscribe = initializeAuth();
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                const profile = await fetchUserById(firebaseUser.uid);
+                if (profile) {
+                    setUser(profile);
+                } else {
+                    // This can happen for a new Google Sign-In before the profile is created,
+                    // or if a user exists in Firebase Auth but not Firestore.
+                    // The signInWithGoogle flow will handle profile creation.
+                    setUser(null);
+                }
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
         return () => unsubscribe();
     }, []);
 
@@ -118,21 +113,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 toast({ title: "Sign-In Failed", description: error.message || "An error occurred during Google sign-in.", variant: "destructive" });
                 console.error("Google Sign-in Error:", error);
             }
+        } finally {
             setLoading(false);
         }
     };
 
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
-        if (!auth) {
+        if (!isFirebaseConfigured() || !auth) {
             toast({ title: 'Error', description: 'Authentication is not configured.', variant: 'destructive' });
             return;
         }
+
         setLoading(true);
+        
         try {
-            await signInWithEmailAndPassword(auth, identifier, password);
-            // onAuthStateChanged will handle setting the user and redirecting
-        } catch (error: any) {
-            // Fallback for non-firebase auth for now.
+            // First, try signing in with Firebase Auth directly
+            const userCredential = await signInWithEmailAndPassword(auth, identifier, password);
+            // onAuthStateChanged will handle setting the user and redirecting.
+            // We just need to wait for the state to update.
+            toast({ title: "Login Successful!", description: "Redirecting to your dashboard..."});
+            router.push('/dashboard');
+
+        } catch (error) {
+            // If Firebase Auth fails, try the mock data as a fallback.
+            // This allows login for users created before the transition to Firebase Auth.
+            console.log("Firebase Auth failed, trying mock data fallback...");
             const userProfile = await authenticateUserByCredentials(identifier, password);
             if (userProfile) {
                 logInUser(userProfile, true);
@@ -153,19 +158,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (isFirebaseConfigured() && auth?.currentUser) {
                 await firebaseSignOut(auth);
             }
-        } catch(error) {
-            console.error("Error signing out:", error);
-        } finally {
+            // If not using Firebase or already signed out, just clear local state.
             setUser(null);
-            setLoading(false);
             toast({
                 title: 'Logged Out',
                 description: 'You have been successfully signed out.',
             });
             router.push('/');
+        } catch(error) {
+            console.error("Error signing out:", error);
+            toast({ title: 'Logout Failed', description: 'An error occurred while signing out.', variant: 'destructive' });
+        } finally {
+            setLoading(false);
         }
     };
 
+    // This function is for mock authentication fallback
     const logInUser = (userProfile: UserProfile, isDirectLogin: boolean = false) => {
         setUser(userProfile);
         setLoading(false);
