@@ -19,9 +19,72 @@ interface AuthContextType {
     signInWithGoogle: () => Promise<void>;
     signInWithCredentials: (identifier: string, password: string) => Promise<void>;
     signOut: () => Promise<void>;
+    logInUser: (user: UserProfile, redirect?: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const sampleAdmin: UserProfile = {
+  id: 'admin-001',
+  uniqueId: 'AD-ADMIN1',
+  name: 'Admin User',
+  username: 'admin',
+  isAdmin: true,
+  contact: 'admin@drivergy.com',
+  phone: '1234567890',
+  location: 'Gurugram',
+  subscriptionPlan: 'Admin',
+  registrationTimestamp: 'Jan 01, 2024',
+  approvalStatus: 'Approved',
+  gender: 'Prefer not to say',
+  photoURL: 'https://placehold.co/100x100/4f46e5/ffffff.png'
+};
+
+const sampleTrainer: UserProfile = {
+  id: 'trainer-001',
+  uniqueId: 'TR-TRAINER1',
+  name: 'Sample Trainer',
+  username: 'trainer',
+  contact: 'trainer@drivergy.com',
+  phone: '1234567890',
+  location: 'Gurugram',
+  subscriptionPlan: 'Trainer',
+  registrationTimestamp: 'Jan 01, 2024',
+  approvalStatus: 'Approved',
+  gender: 'Male',
+  photoURL: 'https://placehold.co/100x100/facc15/44403c.png',
+  specialization: 'Car',
+  yearsOfExperience: 5
+};
+
+const sampleCustomer: UserProfile = {
+  id: 'customer-001',
+  uniqueId: 'CU-CUSTOMER1',
+  name: 'Sample Customer',
+  username: 'customer',
+  contact: 'customer@drivergy.com',
+  phone: '1234567890',
+  location: 'Noida',
+  subscriptionPlan: 'Premium',
+  registrationTimestamp: 'Jan 01, 2024',
+  approvalStatus: 'Approved',
+  gender: 'Female',
+  photoURL: 'https://placehold.co/100x100/60a5fa/ffffff.png',
+  assignedTrainerId: 'trainer-001',
+  assignedTrainerName: 'Sample Trainer',
+  upcomingLesson: 'Jul 28, 2024, 10:00 AM',
+  totalLessons: 20,
+  completedLessons: 5,
+  feedbackSubmitted: false,
+  subscriptionStartDate: 'Jul 20, 2024',
+  flatHouseNumber: 'A-123',
+  street: 'Main Road',
+  district: 'Noida',
+  state: 'Uttar Pradesh',
+  pincode: '201301',
+  dlStatus: 'New Learner'
+};
+
 
 export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode, firebaseConfig: FirebaseOptions }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -83,7 +146,7 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
                     registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                     approvalStatus: 'Pending',
                     photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
+                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
                     trainerPreference: 'Any',
                 };
                 
@@ -105,9 +168,31 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     };
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
+         setLoading(true);
+        if (identifier === 'admin' && password === 'Admin@1234') {
+            setUser(sampleAdmin);
+            toast({ title: "Login Successful!", description: "Redirecting to admin dashboard..." });
+            router.push('/dashboard');
+            setLoading(false);
+            return;
+        }
+        if (identifier === 'trainer' && password === 'Trainer@1234') {
+            setUser(sampleTrainer);
+            toast({ title: "Login Successful!", description: "Redirecting to trainer dashboard..." });
+            router.push('/dashboard');
+            setLoading(false);
+            return;
+        }
+        if (identifier === 'customer' && password === 'Customer@1234') {
+            setUser(sampleCustomer);
+            toast({ title: "Login Successful!", description: "Redirecting to customer dashboard..." });
+            router.push('/dashboard');
+            setLoading(false);
+            return;
+        }
+
         try {
             const { auth } = initializeFirebaseApp(firebaseConfig);
-            setLoading(true);
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: "Login Successful!", description: "Redirecting to your dashboard..."});
             // The onAuthStateChanged listener will handle setting user and redirecting
@@ -140,12 +225,20 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
         }
     };
 
+    const logInUser = (user: UserProfile, redirect = true) => {
+        setUser(user);
+        if (redirect) {
+            router.push('/dashboard');
+        }
+    };
+
     const value: AuthContextType = {
         user,
         loading,
         signInWithGoogle,
         signInWithCredentials,
         signOut,
+        logInUser
     };
 
     return (
