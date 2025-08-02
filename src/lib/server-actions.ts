@@ -2,16 +2,14 @@
 'use server';
 
 import { z } from 'zod';
-import { createNewUser } from './mock-data';
 import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, updateDoc, getDoc, collection, addDoc } from 'firebase/firestore';
-import { initializeFirebaseApp } from './firebase'; // Use the central initializer
-import type { ApprovalStatusType, FirebaseOptions } from '@/types';
-import { sendEmail } from './email';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { getAdminAuth, getAdminFirestore } from './firebase';
+import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
+import { format } from 'date-fns';
 
-// This function should be called within a Server Action or a Route Handler.
 const initializeCloudinary = () => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
         console.warn("Cloudinary environment variables not fully set. File uploads will fail.");
@@ -45,12 +43,6 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
     });
 };
 
-export async function uploadFile(file: File, folder: string): Promise<string> {
-    const buffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(buffer);
-    return await uploadFileToCloudinary(fileBuffer, folder);
-}
-
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
         const data = Object.fromEntries(formData.entries());
@@ -77,6 +69,22 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
         const validatedData = validationResult.data;
         const fileUrls: { [key: string]: string | null } = {};
+
+        const auth = getAdminAuth();
+        const db = getAdminFirestore();
+
+        const userRecord = await auth.createUser({
+            email: validatedData.email,
+            password: validatedData.password,
+            displayName: validatedData.name,
+            emailVerified: false,
+        });
+        const uid = userRecord.uid;
+
+        const targetCollection = validatedData.userRole === 'customer' ? 'customers' : 'trainers';
+        const userRef = doc(db, targetCollection, uid);
+
+        let newUserProfile: Omit<UserProfile, 'id' | 'password'>;
         
         if (validatedData.userRole === 'trainer') {
             const fileUploadPromises = [];
@@ -90,19 +98,54 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.aadhaarCardFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['aadhaarCardUrl'] = url; }));
             }
             await Promise.all(fileUploadPromises);
+            
+            newUserProfile = {
+                uniqueId: `TR-${uid.slice(-6).toUpperCase()}`,
+                name: validatedData.name,
+                username: validatedData.username,
+                contact: validatedData.email,
+                phone: validatedData.phone,
+                gender: validatedData.gender,
+                location: validatedData.location,
+                subscriptionPlan: "Trainer",
+                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+                approvalStatus: 'Pending',
+                photoURL: `https://placehold.co/100x100.png?text=${validatedData.name.charAt(0)}`,
+                myReferralCode: `${validatedData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                vehicleInfo: validatedData.trainerVehicleType,
+                specialization: validatedData.specialization,
+                yearsOfExperience: Number(validatedData.yearsOfExperience),
+                trainerCertificateUrl: fileUrls.trainerCertificateUrl || '',
+                drivingLicenseUrl: fileUrls.drivingLicenseUrl || '',
+                aadhaarCardUrl: fileUrls.aadhaarCardUrl || '',
+            };
+        } else {
+             newUserProfile = {
+                uniqueId: `CU-${uid.slice(-6).toUpperCase()}`,
+                name: validatedData.name,
+                username: validatedData.username,
+                contact: validatedData.email,
+                phone: validatedData.phone,
+                gender: validatedData.gender,
+                location: 'TBD',
+                subscriptionPlan: "None",
+                registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+                approvalStatus: 'Pending',
+                photoURL: `https://placehold.co/100x100.png?text=${validatedData.name.charAt(0)}`,
+                myReferralCode: `${validatedData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                trainerPreference: validatedData.trainerPreference || 'Any',
+            };
         }
 
-        const result = await createNewUser(validatedData, fileUrls);
-
-        if (!result.success) {
-            return { success: false, error: result.error };
-        }
-
+        await setDoc(userRef, newUserProfile);
         return { success: true };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error in registerUserAction:", error);
-        const errorMessage = error instanceof Error ? error.message : "An unexpected server error occurred.";
+        if (error.code === 'auth/email-already-exists') {
+             return { success: false, error: 'A user is already registered with this email.' };
+        }
+        const errorMessage = error.message || "An unexpected server error occurred.";
         return { success: false, error: errorMessage };
     }
 }
@@ -118,15 +161,7 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
-    const firebaseConfig: FirebaseOptions = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    };
-    const { db } = initializeFirebaseApp(firebaseConfig);
-    if (!db) {
-        return { success: false, error: 'Database not configured.' };
-    }
+    const db = getAdminFirestore();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -157,15 +192,7 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    const firebaseConfig: FirebaseOptions = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    };
-    const { db } = initializeFirebaseApp(firebaseConfig);
-    if (!db) {
-        return { success: false, error: 'Database not configured.' };
-    }
+    const db = getAdminFirestore();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -217,7 +244,8 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
                 status: 'Pending' as const,
                 requestTimestamp: new Date().toISOString(),
             };
-            await addDoc(collection(db, 'lessonRequests'), newRequestData);
+            const lessonRequestsCollection = collection(db, 'lessonRequests');
+            await setDoc(doc(lessonRequestsCollection), newRequestData);
         }
 
         return { success: true };

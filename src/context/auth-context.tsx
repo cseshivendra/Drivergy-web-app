@@ -2,14 +2,14 @@
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, getAuth, type Auth } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import type { UserProfile, RegistrationFormValues } from '@/types';
+import type { UserProfile } from '@/types';
 import { fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { isFirebaseConfigured, initializeFirebaseApp } from '@/lib/firebase';
-import { doc, getDoc, setDoc, getFirestore } from 'firebase/firestore';
+import { isFirebaseConfigured, getClientAuth, getClientFirestore } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { FirebaseOptions } from 'firebase/app';
 
 
@@ -23,72 +23,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// The provider now accepts the config
 export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode, firebaseConfig: FirebaseOptions }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const { toast } = useToast();
     
-    // State to hold the initialized auth and db instances
-    const [firebaseAuth, setFirebaseAuth] = useState<Auth | null>(null);
-
     useEffect(() => {
-        if (isFirebaseConfigured(firebaseConfig)) {
-            const { auth, db } = initializeFirebaseApp(firebaseConfig);
-            setFirebaseAuth(auth);
-            
-            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-                if (firebaseUser) {
-                    const profile = await fetchUserById(firebaseUser.uid);
-                    if (profile) {
-                        setUser(profile);
-                    } else {
-                        setUser(null);
-                    }
-                } else {
-                    setUser(null);
-                }
-                setLoading(false);
-            });
-
-            return () => unsubscribe();
-        } else {
+        if (!isFirebaseConfigured(firebaseConfig)) {
             console.warn("Firebase is not configured. Authentication will be unavailable.");
             setLoading(false);
+            return;
         }
+        
+        const auth = getClientAuth();
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                const profile = await fetchUserById(firebaseUser.uid);
+                setUser(profile);
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [firebaseConfig]);
 
     const signInWithGoogle = async () => {
-        if (!firebaseAuth) {
-            toast({ title: "Offline Mode", description: "Google Sign-In is disabled. Please check your Firebase configuration.", variant: "destructive" });
+        if (!isFirebaseConfigured(firebaseConfig)) {
+            toast({ title: "Offline Mode", description: "Google Sign-In is disabled.", variant: "destructive" });
             return;
         }
+        
         setLoading(true);
+        const auth = getClientAuth();
         const provider = new GoogleAuthProvider();
+
         try {
-            const result = await signInWithPopup(firebaseAuth, provider);
+            const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
+            
+            let profile = await fetchUserById(firebaseUser.uid);
 
-            // Re-initialize db here to ensure it's available
-            const { db } = initializeFirebaseApp(firebaseConfig);
-            const userRef = doc(db, "customers", firebaseUser.uid);
-            const userSnap = await getDoc(userRef);
-
-            let profileToSet: UserProfile;
-
-            if (userSnap.exists()) {
-                profileToSet = { id: userSnap.id, ...userSnap.data() } as UserProfile;
-                toast({ title: `Welcome back, ${profileToSet.name}!`, description: 'Redirecting to your dashboard...' });
+            if (profile) {
+                setUser(profile);
+                toast({ title: `Welcome back, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
             } else {
+                const db = getClientFirestore();
+                const userRef = doc(db, "customers", firebaseUser.uid);
                 const name = firebaseUser.displayName || 'New User';
                 const email = firebaseUser.email;
 
                 if (!email) {
-                    throw new Error("Could not retrieve email from Google. Please try registering with email and password.");
+                    throw new Error("Could not retrieve email from Google.");
                 }
 
-                const newUser: Omit<UserProfile, 'id'> = {
+                const newUserProfile: Omit<UserProfile, 'id'> = {
                     uniqueId: `CU-${firebaseUser.uid.slice(-6).toUpperCase()}`,
                     name,
                     contact: email,
@@ -102,35 +93,35 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
                     myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
                     trainerPreference: 'Any',
                 };
-
-                await setDoc(userRef, newUser);
-                profileToSet = { id: firebaseUser.uid, ...newUser };
-                toast({ title: "Welcome to Drivergy!", description: "Your account has been created successfully." });
+                
+                await setDoc(userRef, newUserProfile);
+                profile = { id: firebaseUser.uid, ...newUserProfile } as UserProfile;
+                setUser(profile);
+                toast({ title: "Welcome to Drivergy!", description: "Your account has been created." });
             }
-
-            setUser(profileToSet);
             router.push('/dashboard');
 
         } catch (error: any) {
             if (error.code !== 'auth/popup-closed-by-user') {
-                toast({ title: "Sign-In Failed", description: error.message || "An error occurred during Google sign-in.", variant: "destructive" });
+                toast({ title: "Sign-In Failed", description: error.message || "An error occurred.", variant: "destructive" });
                 console.error("Google Sign-in Error:", error);
             }
         } finally {
             setLoading(false);
         }
     };
-
+    
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
-        if (!firebaseAuth) {
+        if (!isFirebaseConfigured(firebaseConfig)) {
             toast({ title: 'Error', description: 'Authentication is not configured.', variant: 'destructive' });
             return;
         }
         setLoading(true);
+        const auth = getClientAuth();
         try {
-            const userCredential = await signInWithEmailAndPassword(firebaseAuth, identifier, password);
+            await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: "Login Successful!", description: "Redirecting to your dashboard..."});
-            router.push('/dashboard');
+            // The onAuthStateChanged listener will handle setting user and redirecting
         } catch (error) {
             setLoading(false);
             toast({
@@ -142,10 +133,11 @@ export const AuthProvider = ({ children, firebaseConfig }: { children: ReactNode
     };
 
     const signOut = async () => {
-        if (!firebaseAuth) return;
+        if (!isFirebaseConfigured(firebaseConfig)) return;
         setLoading(true);
+        const auth = getClientAuth();
         try {
-            await firebaseSignOut(firebaseAuth);
+            await firebaseSignOut(auth);
             setUser(null);
             toast({
                 title: 'Logged Out',
