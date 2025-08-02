@@ -6,7 +6,7 @@ import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { doc, setDoc, getDoc, updateDoc, collection } from 'firebase/firestore';
-import { getAdminAuth, getAdminFirestore } from './firebase/admin';
+import { adminAuth, adminDb } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
 
@@ -70,10 +70,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const validatedData = validationResult.data;
         const fileUrls: { [key: string]: string | null } = {};
 
-        const auth = await getAdminAuth();
-        const db = await getAdminFirestore();
-
-        const userRecord = await auth.createUser({
+        const userRecord = await adminAuth.createUser({
             email: validatedData.email,
             password: validatedData.password,
             displayName: validatedData.name,
@@ -82,7 +79,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const uid = userRecord.uid;
 
         const targetCollection = validatedData.userRole === 'customer' ? 'customers' : 'trainers';
-        const userRef = doc(db, targetCollection, uid);
+        const userRef = doc(adminDb, targetCollection, uid);
 
         let newUserProfile: Omit<UserProfile, 'id' | 'password'>;
         
@@ -161,7 +158,6 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
-    const db = await getAdminFirestore();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -171,7 +167,7 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
         let userRef;
 
         for (const col of collections) {
-            const ref = doc(db, col, userId);
+            const ref = doc(adminDb, col, userId);
             const snap = await getDoc(ref);
             if (snap.exists()) {
                 userRef = ref;
@@ -192,7 +188,6 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    const db = await getAdminFirestore();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -232,7 +227,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
             approvalStatus: 'Pending' as ApprovalStatusType,
         };
 
-        const userRef = doc(db, 'customers', userId);
+        const userRef = doc(adminDb, 'customers', userId);
         await updateDoc(userRef, profileData);
         
         const userSnap = await getDoc(userRef);
@@ -244,7 +239,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
                 status: 'Pending' as const,
                 requestTimestamp: new Date().toISOString(),
             };
-            const lessonRequestsCollection = collection(db, 'lessonRequests');
+            const lessonRequestsCollection = collection(adminDb, 'lessonRequests');
             await setDoc(doc(lessonRequestsCollection), newRequestData);
         }
 

@@ -23,16 +23,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Hardcoded public configuration to ensure the correct keys are used.
-const firebaseConfig = {
-  apiKey: "AIzaSyDSRC6aRS72j0iYKxY-CpZs7FvXCrMWiOk",
-  authDomain: "drivergydb.firebaseapp.com",
-  projectId: "drivergydb",
-  storageBucket: "drivergydb.firebasestorage.app",
-  messagingSenderId: "377081560086",
-  appId: "1:377081560086:web:599e9b3e557bf11e6d4937"
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -41,7 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     useEffect(() => {
         try {
-            const { auth } = initializeFirebaseApp(firebaseConfig);
+            const { auth } = initializeFirebaseApp();
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                 if (firebaseUser) {
                     const profile = await fetchUserById(firebaseUser.uid);
@@ -61,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signInWithGoogle = async () => {
         try {
-            const { auth, db } = initializeFirebaseApp(firebaseConfig);
+            const { auth, db } = initializeFirebaseApp();
             const provider = new GoogleAuthProvider();
 
             setLoading(true);
@@ -105,10 +95,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             router.push('/dashboard');
 
         } catch (error: any) {
-            if (error.code !== 'auth/popup-closed-by-user') {
-                toast({ title: "Sign-In Failed", description: error.message || "An error occurred.", variant: "destructive" });
-                console.error("Google Sign-in Error:", error);
+            if (error.code === 'auth/popup-closed-by-user') {
+                return; // User closed popup, do not show error
             }
+            if (error.code === 'auth/missing-or-insufficient-permissions') {
+                 toast({ title: "Sign-In Failed", description: "The Identity Toolkit API may not be enabled in your Google Cloud project.", variant: "destructive" });
+            } else {
+                toast({ title: "Sign-In Failed", description: error.message || "An error occurred.", variant: "destructive" });
+            }
+            console.error("Google Sign-in Error:", error);
         } finally {
             setLoading(false);
         }
@@ -117,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         try {
-            const { auth } = initializeFirebaseApp(firebaseConfig);
+            const { auth } = initializeFirebaseApp();
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
         } catch (error: any) {
@@ -136,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signOut = async () => {
         try {
-            const { auth } = initializeFirebaseApp(firebaseConfig);
+            const { auth } = initializeFirebaseApp();
             setLoading(true);
             await firebaseSignOut(auth);
             setUser(null);
