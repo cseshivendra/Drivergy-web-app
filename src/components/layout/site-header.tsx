@@ -61,21 +61,21 @@ interface NavLink {
 }
 
 const navLinks: NavLink[] = [
-  { href: '#services', label: 'Services' },
-  { href: '#courses', label: 'Courses' },
-  { href: '#subscriptions', label: 'Plans' },
+  { href: '/#services', label: 'Services' },
+  { href: '/#courses', label: 'Courses' },
+  { href: '/#subscriptions', label: 'Plans' },
   { href: '/rto-services', label: 'RTO Services' },
   {
     label: 'Insights',
     children: [
       { href: '/faq', label: 'FAQ' },
-      { href: '#testimonials', label: 'Testimonials' },
+      { href: '/#testimonials', label: 'Testimonials' },
       { href: '/blog', label: 'Blogs' },
     ],
   },
   { href: '/about', label: 'About Us' },
   { href: '/career', label: 'Careers' },
-  { href: '#contact', label: 'Support' },
+  { href: '/#contact', label: 'Support' },
 ];
 
 export default function SiteHeader() {
