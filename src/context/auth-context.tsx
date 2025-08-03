@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error("Firebase initialization failed in AuthContext:", error);
             toast({
                 title: "Configuration Error",
-                description: "Could not connect to services. Please check your setup.",
+                description: "Could not connect to services. This usually means your environment variables are not set correctly. See the README for instructions on setting up Firebase credentials.",
                 variant: "destructive",
             });
             setLoading(false);
@@ -169,7 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 setLoading(false);
                 return;
             } else {
-                toast({ title: 'Login Failed', description: 'Invalid admin credentials.', variant: 'destructive' });
+                toast({ title: 'Login Failed', description: adminCheck.error || 'Invalid admin credentials.', variant: 'destructive' });
                 setLoading(false);
                 return;
             }
@@ -190,6 +190,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             let description = 'An unexpected error occurred. Please try again.';
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                  description = 'Invalid credentials. Please check your email and password.';
+            } else if (error.code === 'permission-denied') {
+                description = 'Database access was denied. This is likely a cloud configuration issue. Please see the README file for instructions on fixing "Permission Denied" errors by granting the "Service Usage Consumer" role to your service account.'
             }
             toast({
                 title: 'Login Failed',
