@@ -1,3 +1,4 @@
+
 # Drivergy - Driving School Platform
 
 This is a Next.js application for Drivergy, a modern platform for driving education, built with Next.js, TypeScript, ShadCN UI, Tailwind CSS, and Genkit for AI features.
@@ -47,9 +48,9 @@ This key is required for all AI-powered features, such as the chatbot.
 ### 3. Other Services
 The `.env` file also contains placeholders for email (Nodemailer) and file storage (Cloudinary). Fill these in if you are using these services.
 
-### IMPORTANT: Fixing the Registration "Permission Denied" Error
+### IMPORTANT: Fixing "Permission Denied" Errors
 
-If you encounter a "PERMISSION_DENIED" or "Caller does not have required permission" error during user registration, it means the server-side service account is missing a required role in Google Cloud.
+If you encounter a "PERMISSION_DENIED" or "Caller does not have required permission" error when trying to log in or view data, it means the server-side service account is missing a required role in Google Cloud.
 
 Follow these steps to fix it:
 
@@ -59,7 +60,7 @@ Follow these steps to fix it:
     `firebase-adminsdk-fbsvc@driveview-pfyzq.iam.gserviceaccount.com`
 4.  In the "Assign roles" dropdown, search for and select the **"Service Usage Consumer"** role.
 5.  Click **"Save"**.
-6.  **Wait for 1-2 minutes** for the permission to apply across Google's systems, then try registering a user again.
+6.  **Wait for 1-2 minutes** for the permission to apply across Google's systems, then try accessing your application again.
 
 ### IMPORTANT: Deployment
 When you deploy to a hosting service like **Vercel** or **Firebase App Hosting**, you must add these same environment variables to your project's settings on that platform. They will not be deployed from your local `.env` file.
