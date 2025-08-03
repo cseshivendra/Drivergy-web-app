@@ -125,7 +125,7 @@ export default function CustomerDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
   const [isStartDateDialogOpen, setIsStartDateDialogOpen] = useState(false);
-  const [newStartDate, setNewStartDate] = useState<Date | undefined>(undefined);
+  const [newStartDate, setNewStartDate] = useState<Date | undefined>(new Date());
   const [isStartDateEditable, setIsStartDateEditable] = useState(false);
 
   // State for reschedule dialog
@@ -213,7 +213,7 @@ export default function CustomerDashboard() {
   
   const handleUpgradePlan = () => {
     toast({ title: 'Redirecting to Plans', description: 'You can choose a new plan on our main site.' });
-    router.push('/site#subscriptions');
+    router.push('/#subscriptions');
   };
   
   const handleCancelPlan = () => {
