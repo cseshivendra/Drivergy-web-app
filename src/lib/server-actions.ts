@@ -159,10 +159,11 @@ export async function verifyAdminCredentials({ username, password }: { username:
     try {
         const { db: adminDb } = initializeFirebaseAdmin();
         const adminsRef = collection(adminDb, 'admins');
-        const q = query(adminsRef, where("username", "==", username));
+        const q = query(adminsRef, where("username", "==", username.toLowerCase()));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
+            console.log("Admin user not found in database.");
             return { isAdmin: false };
         }
 
@@ -173,7 +174,8 @@ export async function verifyAdminCredentials({ username, password }: { username:
         if (adminData.password === password) {
             return { isAdmin: true };
         }
-
+        
+        console.log("Admin password does not match.");
         return { isAdmin: false };
     } catch (error) {
         console.error("Admin verification error:", error);
@@ -285,3 +287,5 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
+
+    
