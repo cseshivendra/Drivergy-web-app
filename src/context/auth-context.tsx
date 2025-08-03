@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [auth, setAuth] = useState<Auth | null>(null);
     const router = useRouter();
     const { toast } = useToast();
-    
+
     useEffect(() => {
         try {
             const { auth: initializedAuth } = initializeFirebaseApp();
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 if (firebaseUser) {
                     // Check for hardcoded admin user session
                     if (sessionStorage.getItem('isAdmin') === 'true') {
-                         setUser({
+                        setUser({
                             id: 'admin',
                             uniqueId: 'ADMIN-001',
                             name: 'Admin',
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(true);
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
-            
+
             let profile = await fetchUserById(firebaseUser.uid);
 
             if (profile) {
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     feedbackSubmitted: false,
                     totalReferralPoints: 0,
                 };
-                
+
                 await setDoc(userRef, newUserProfile);
                 profile = { id: firebaseUser.uid, ...newUserProfile } as UserProfile;
                 setUser(profile);
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return; // User closed popup, do not show error
             }
             if (error.code === 'auth/account-exists-with-different-credential') {
-                 toast({ title: "Sign-In Failed", description: "An account with this email already exists using a different sign-in method.", variant: "destructive" });
+                toast({ title: "Sign-In Failed", description: "An account with this email already exists using a different sign-in method.", variant: "destructive" });
             } else {
                 toast({ title: "Sign-In Failed", description: error.message || "An error occurred.", variant: "destructive" });
             }
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
-    
+
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
 
@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
         }
-        
+
         // Step 2: If not admin, proceed with standard Firebase email/password auth
         if (!auth) {
             setLoading(false);
@@ -189,7 +189,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error: any) {
             let description = 'An unexpected error occurred. Please try again.';
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                 description = 'Invalid credentials. Please check your email and password.';
+                description = 'Invalid credentials. Please check your email and password.';
             } else if (error.code === 'permission-denied') {
                 description = 'Database access was denied. This is likely a cloud configuration issue. Please see the README file for instructions on fixing "Permission Denied" errors by granting the "Service Usage Consumer" role to your service account.'
             }
