@@ -1,5 +1,4 @@
 
-
 import admin from 'firebase-admin';
 
 // This function initializes the Firebase Admin SDK.
@@ -14,6 +13,8 @@ const initializeAdminApp = () => {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
     if (!projectId || !clientEmail || !privateKey) {
+        console.error("Firebase Admin credentials not fully provided in environment variables.");
+        // Throwing an error here is better for debugging server-side issues.
         throw new Error("Firebase Admin credentials not fully provided in environment variables.");
     }
 
@@ -22,6 +23,8 @@ const initializeAdminApp = () => {
             credential: admin.credential.cert({
                 projectId,
                 clientEmail,
+                // The private key from the .env file might contain escaped newlines (\n).
+                // We need to replace them with actual newline characters.
                 privateKey: privateKey.replace(/\\n/g, '\n'),
             }),
             projectId: projectId, // Explicitly set projectId here as well
