@@ -18,7 +18,7 @@ export function initializeFirebaseApp() {
     };
     
     if (!firebaseConfig.apiKey) {
-        throw new Error("Firebase configuration is missing or incomplete. Make sure your .env file is correctly set up.");
+        throw new Error("Firebase configuration is missing or incomplete. Make sure your .env file is correctly set up and the Next.js server is restarted.");
     }
     
     const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
