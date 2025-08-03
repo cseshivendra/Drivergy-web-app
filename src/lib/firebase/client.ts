@@ -19,11 +19,12 @@ export function initializeFirebaseApp() {
     }
 
     // Hardcoded configuration to ensure keys are always valid on the client.
+    // These keys are public and safe to expose.
     const firebaseConfig: FirebaseOptions = {
         apiKey: "AIzaSyDNz72w3Cbs0PsOUfuQYJF35An-wJb3Pvs",
         authDomain: "driveview-pfyzq.firebaseapp.com",
         projectId: "driveview-pfyzq",
-        storageBucket: "driveview-pfyzq.firebasestorage.app",
+        storageBucket: "driveview-pfyzq.appspot.com",
         messagingSenderId: "964264958585",
         appId: "1:964264958585:web:a4449ae823cef0c57d92a8"
     };
