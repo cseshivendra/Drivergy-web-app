@@ -1,14 +1,13 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
+import nextPlugin from '@genkit-ai/next';
 
-// By explicitly passing the apiKey from the environment variables,
-// we ensure the Genkit plugin is initialized correctly in Vercel's
-// serverless environment, avoiding any potential race conditions.
-// The environment variable GOOGLE_API_KEY must be set in Vercel.
+// This is the correct configuration for Genkit in a Next.js app.
+// The `nextPlugin` handles the server-side initialization and routing.
+// We no longer manually pass the API key here; the plugin handles it.
 export const ai = genkit({
   plugins: [
-    googleAI({
-      apiKey: process.env.GOOGLE_API_KEY,
-    }),
+    googleAI(),
+    nextPlugin(),
   ],
 });
