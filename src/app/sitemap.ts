@@ -22,6 +22,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === '' ? 1.0 : 0.8, // Priority of this URL relative to other URLs on your site
   }));
 
+  // Temporarily removing dynamic blog post fetching to fix build.
+  // To re-enable, add environment variables and uncomment the following:
+  /*
   // 2. Fetch dynamic routes, like blog posts, from the data source.
   const posts: BlogPost[] = await fetchBlogPosts();
 
@@ -31,7 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }));
+  */
 
   // 3. Combine static and dynamic routes into a single sitemap.
-  return [...staticRoutes, ...blogRoutes];
+  return [...staticRoutes];
 }
