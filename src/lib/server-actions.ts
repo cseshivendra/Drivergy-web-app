@@ -10,7 +10,7 @@ import { adminAuth, adminDb } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
 
-const initializeCloudinary = () => {
+const initializeCloudinary = async () => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
         console.warn("Cloudinary environment variables not fully set. File uploads will fail.");
     }
@@ -23,7 +23,7 @@ const initializeCloudinary = () => {
 };
 
 const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promise<string> => {
-    initializeCloudinary();
+    await initializeCloudinary();
     
     return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
