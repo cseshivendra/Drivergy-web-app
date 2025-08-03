@@ -47,7 +47,7 @@ const nextConfig = {
       ...config.resolve.alias,
       handlebars: 'handlebars/dist/handlebars.min.js'
     };
-    
+
     return config;
   },
   // Expose environment variables to the client-side
