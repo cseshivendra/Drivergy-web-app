@@ -1,11 +1,13 @@
 
 import admin from 'firebase-admin';
 
-// This function initializes the Firebase Admin SDK.
-// It's designed to be a singleton, ensuring it only runs once.
-const initializeAdminApp = () => {
+// This function ensures the Firebase Admin SDK is initialized only once.
+export const getFirebaseAdmin = () => {
     if (admin.apps.length > 0) {
-        return admin.app();
+        return {
+            adminAuth: admin.auth(),
+            adminDb: admin.firestore()
+        };
     }
 
     const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -14,33 +16,26 @@ const initializeAdminApp = () => {
 
     if (!projectId || !clientEmail || !privateKey) {
         console.error("Firebase Admin credentials not fully provided in environment variables.");
-        // Throwing an error here is better for debugging server-side issues.
-        throw new Error("Firebase Admin credentials not fully provided in environment variables.");
+        throw new Error("Firebase Admin credentials are not fully configured.");
     }
 
     try {
-        return admin.initializeApp({
+        admin.initializeApp({
             credential: admin.credential.cert({
                 projectId,
                 clientEmail,
-                // The private key from the .env file might contain escaped newlines (\n).
-                // We need to replace them with actual newline characters.
                 privateKey: privateKey.replace(/\\n/g, '\n'),
             }),
-            projectId: projectId, // Explicitly set projectId here as well
+            projectId: projectId,
         });
+
+        return {
+            adminAuth: admin.auth(),
+            adminDb: admin.firestore()
+        };
+
     } catch (error: any) {
         console.error("Firebase Admin SDK Initialization Error:", error);
         throw new Error(`Failed to initialize Firebase Admin SDK: ${error.message}`);
     }
 };
-
-
-// Initialize the app immediately when this module is loaded on the server.
-const adminApp = initializeAdminApp();
-
-// Export auth and firestore instances directly.
-// This ensures that any part of the server-side application that imports them
-// gets the already-initialized instances.
-export const adminAuth = admin.auth(adminApp);
-export const adminDb = admin.firestore(adminApp);
