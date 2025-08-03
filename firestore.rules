@@ -4,98 +4,81 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      // Assumes you have an 'admins' collection where document IDs are user UIDs
-      // or a custom claim on the user's token.
-      // Using custom claims is more secure and efficient.
-      // return request.auth.token.admin == true; 
-      // For now, we will check an admins collection.
-      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Helper function to check if the user is the owner of the document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    // Customers can read their own data and trainers can read data of students assigned to them.
-    // Admins can read any customer document.
-    match /customers/{userId} {
-      allow read: if isOwner(userId) || isAdmin() || (exists(/databases/$(database)/documents/trainers/$(request.auth.uid)) && resource.data.assignedTrainerId == request.auth.uid);
-      allow create: if request.auth != null; // Anyone can create a customer profile (register)
-      allow update: if isOwner(userId) || isAdmin(); // Only owner or admin can update
-    }
-
-    // Trainers can read their own data and admins can read any trainer data.
-    match /trainers/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if request.auth != null; // Anyone can create a trainer profile (register)
-      allow update: if isOwner(userId) || isAdmin(); // Only owner or admin can update
-    }
-
-    // Lesson Requests can be read by admins and created by customers.
-    match /lessonRequests/{requestId} {
-      allow read: if isAdmin();
-      allow create: if isOwner(resource.data.customerId);
-      allow update: if isAdmin(); // Only admin can update status
-    }
     
-    // Reschedule Requests can be read by admins and the assigned trainer. Created by customers.
-    match /rescheduleRequests/{requestId} {
-      allow read: if isAdmin() || (exists(/databases/$(database)/documents/customers/$(resource.data.userId)) && get(/databases/$(database)/documents/customers/$(resource.data.userId)).data.assignedTrainerId == request.auth.uid);
-      allow create: if isOwner(resource.data.userId);
-      allow update: if isAdmin() || (exists(/databases/$(database)/documents/customers/$(resource.data.userId)) && get(/databases/$(database)/documents/customers/$(resource.data.userId)).data.assignedTrainerId == request.auth.uid);
-    }
-
-    // Feedback can be created by a customer for their assigned trainer.
-    // It can be read by admins and the trainer who received it.
-    match /feedback/{feedbackId} {
-      allow read: if isAdmin() || isOwner(resource.data.trainerId);
-      allow create: if isOwner(resource.data.customerId);
-    }
-    
-    // Referrals can be read by the referrer and admins.
-    match /referrals/{referralId} {
-        allow read: if isAdmin() || isOwner(resource.data.referrerId);
-        allow create; // Creation logic is handled server-side
-        allow update: if isAdmin();
-    }
-
-    // Publicly readable content
+    // --- Public Read-Only Collections ---
     match /courses/{courseId} {
       allow read: if true;
-      allow write: if isAdmin(); // Only admins can modify courses
-    }
-
-    match /quizSets/{quizId} {
-      allow read: if true;
-      allow write: if isAdmin(); // Only admins can modify quizzes
-    }
-
-    match /faqs/{faqId} {
-      allow read: if true;
-      allow write: if isAdmin(); // Only admins can modify FAQs
+      allow write: if false;
     }
     
     match /blogPosts/{slug} {
       allow read: if true;
-      allow write: if isAdmin(); // Only admins can modify blog posts
+      allow write: if false; 
+    }
+
+    match /faqs/{faqId} {
+        allow read: if true;
+        allow write: if false;
+    }
+    
+    match /quizSets/{setId} {
+        allow read: if true;
+        allow write: if false;
     }
     
     match /siteBanners/{bannerId} {
       allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /promotionalPosters/{posterId} {
-        allow read: if true;
-        allow write: if isAdmin();
+      allow write: if false;
     }
 
-    // Admin collection for role-based access control
-    match /admins/{adminId} {
-      allow read: if isAdmin();
+    match /promotionalPosters/{posterId} {
+        allow read: if true;
+        allow write: if false;
+    }
+
+    // --- User-Specific Collections ---
+    match /customers/{userId} {
+      // Allow a user to create their own profile document.
+      allow create: if isOwner(userId);
+      // Allow a user to read and update their own document.
+      allow read, update: if isAuthenticated() && isOwner(userId);
+      // Prevent users from deleting their own accounts through the client.
+      allow delete: if false;
+    }
+    
+    match /trainers/{userId} {
+      // Allow a user to create their own profile document.
+      allow create: if isOwner(userId);
+      // Allow a user to read and update their own document.
+      allow read, update: if isAuthenticated() && isOwner(userId);
+      // Prevent users from deleting their own accounts through the client.
+      allow delete: if false;
+    }
+
+    // --- Other Collections (Default to Locked Down) ---
+    // These collections should only be written to by admins or server-side logic.
+    match /lessonRequests/{requestId} {
+      allow read, write: if isAuthenticated(); // Allow logged-in users to manage their requests
+    }
+
+    match /rescheduleRequests/{requestId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    match /feedback/{feedbackId} {
+        allow read, write: if isAuthenticated();
+    }
+    
+    match /referrals/{referralId} {
+        allow read, write: if isAuthenticated();
     }
   }
 }
