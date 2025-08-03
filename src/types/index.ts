@@ -138,9 +138,9 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   trainerCertificateNumber: z.string().min(1, 'Certificate number is required.'),
   aadhaarCardNumber: z.string().min(1, 'Aadhaar number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-  trainerCertificateFile: requiredFileSchema,
-  drivingLicenseFile: requiredFileSchema,
-  aadhaarCardFile: requiredFileSchema,
+  trainerCertificateFile: requiredFileSchema.nullable(),
+  drivingLicenseFile: requiredFileSchema.nullable(),
+  aadhaarCardFile: requiredFileSchema.nullable(),
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
