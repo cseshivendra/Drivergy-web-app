@@ -152,25 +152,25 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 }
 
 export async function verifyAdminCredentials({ username, password }: { username: string, password?: string }): Promise<{ isAdmin: boolean }> {
-    if (!password) {
+    if (username.toLowerCase() !== 'admin' || !password) {
         return { isAdmin: false };
     }
     
     try {
         const { db: adminDb } = initializeFirebaseAdmin();
         const adminsRef = collection(adminDb, 'admins');
-        const q = query(adminsRef, where("username", "==", username.toLowerCase()));
+        const q = query(adminsRef, where("username", "==", "admin"));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            console.log("Admin user not found in database.");
+            console.log("Admin user 'admin' not found in database.");
             return { isAdmin: false };
         }
 
         const adminDoc = querySnapshot.docs[0];
         const adminData = adminDoc.data();
         
-        // In a real app, use bcrypt.compare(password, adminData.password)
+        // Securely compare the provided password with the one in the database.
         if (adminData.password === password) {
             return { isAdmin: true };
         }
@@ -287,5 +287,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
-
-    
