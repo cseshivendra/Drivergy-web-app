@@ -6,7 +6,7 @@ import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { initializeFirebaseAdmin } from './firebase/admin';
+import { adminAuth, adminDb } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
 
@@ -46,8 +46,6 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
-        const { auth: adminAuth, db: adminDb } = initializeFirebaseAdmin();
-
         const data = Object.fromEntries(formData.entries());
         
         if (!data.gender || data.gender === '' || typeof data.gender !== 'string') {
@@ -156,7 +154,6 @@ export async function verifyAdminCredentials({ username, password }: { username:
     }
     
     try {
-        const { db: adminDb } = initializeFirebaseAdmin();
         const adminQuery = query(collection(adminDb, 'admins'), where('username', '==', username.toLowerCase()));
         const querySnapshot = await getDocs(adminQuery);
 
@@ -191,7 +188,6 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
-    const { db: adminDb } = initializeFirebaseAdmin();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -222,7 +218,6 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    const { db: adminDb } = initializeFirebaseAdmin();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -291,7 +286,6 @@ const createSampleUser = async (userData: {
   name: string;
   role: 'customer' | 'trainer';
 }) => {
-  const { auth: adminAuth, db: adminDb } = initializeFirebaseAdmin();
   const { email, name, role } = userData;
 
   try {
