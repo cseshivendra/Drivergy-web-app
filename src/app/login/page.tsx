@@ -92,11 +92,11 @@ export default function LoginPage() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleCredentialSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
+                <Label htmlFor="identifier" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Email or Username</Label>
                 <Input id="identifier" type="text" placeholder="Enter your email or username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={loading} autoComplete="email username" />
               </div>
               <div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-1">
                   <Label htmlFor="password">Password</Label>
                   <Link href="/forgot-password" passHref><Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button></Link>
                 </div>
