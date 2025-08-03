@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { listenToBlogPosts } from '@/lib/mock-data'; 
+import { fetchBlogPosts } from '@/lib/mock-data'; 
 import { BlogPost } from '@/types';
 
 // This file generates a sitemap, which is an XML file that lists the important pages on your website.
@@ -23,14 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // 2. Fetch dynamic routes, like blog posts, from the data source.
-  const posts: BlogPost[] = await new Promise((resolve) => {
-    // listenToBlogPosts uses a listener, so we wrap it in a promise
-    // that resolves with the first batch of data.
-    const unsubscribe = listenToBlogPosts((data) => {
-      resolve(data);
-      unsubscribe(); // Stop listening after we get the data
-    });
-  });
+  const posts: BlogPost[] = await fetchBlogPosts();
 
   const blogRoutes = posts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,

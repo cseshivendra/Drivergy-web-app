@@ -243,16 +243,31 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
     return snapshot.exists() ? { slug: snapshot.id, ...snapshot.data() } as BlogPost : null;
 }
 
+// Server-side function to fetch all blog posts for the sitemap
+export async function fetchBlogPosts(): Promise<BlogPost[]> {
+    const db = adminDb;
+    try {
+        const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
+        return snapshot.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost));
+    } catch (error) {
+        console.error("Error fetching blog posts for sitemap:", error);
+        return [];
+    }
+}
+
+// Client-side function to listen for real-time updates
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
     const db = getClientDb();
     if (!db) {
         callback([]);
         return () => {};
     }
-    return onSnapshot(query(collection(db, 'blogPosts'), orderBy('date', 'desc')), snap => {
+    const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
+    return onSnapshot(q, (snap) => {
         callback(snap.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost)));
     });
 }
+
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
     const db = getClientDb();
