@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { User, UserCog, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { registerUserAction } from '@/lib/server-actions';
 
 const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: React.ElementType, title: string, description: string, onClick: () => void }) => (
     <Card 
@@ -75,7 +74,7 @@ export default function UnifiedRegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RegistrationForm userRole={selectedRole} registerUserAction={registerUserAction} />
+            <RegistrationForm userRole={selectedRole} />
           </CardContent>
         </Card>
       )}

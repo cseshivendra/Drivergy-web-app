@@ -32,7 +32,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import type { registerUserAction } from '@/lib/server-actions';
+import { registerUserAction } from '@/lib/server-actions';
 
 function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     const { pending } = useFormStatus();
@@ -47,10 +47,9 @@ function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
-  registerUserAction: (prevState: any, formData: FormData) => Promise<{ success: boolean; error?: string }>;
 }
 
-export default function RegistrationForm({ userRole, registerUserAction }: RegistrationFormProps) {
+export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
