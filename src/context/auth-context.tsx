@@ -10,6 +10,7 @@ import { fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
 import { initializeFirebaseApp } from '@/lib/firebase/client';
 import { doc, setDoc } from 'firebase/firestore';
+import { verifyAdminCredentials } from '@/lib/server-actions';
 
 
 interface AuthContextType {
@@ -142,8 +143,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
-        // Hardcoded admin check
-        if (identifier === 'admin' && password === 'admin') {
+        setLoading(true);
+
+        // Step 1: Check if the credentials are for an admin user in the database
+        const adminCheck = await verifyAdminCredentials({ username: identifier, password });
+
+        if (adminCheck.isAdmin) {
             const adminUser: UserProfile = {
                 id: 'admin',
                 uniqueId: 'ADMIN-001',
@@ -160,11 +165,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(adminUser);
             toast({ title: 'Admin Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
+            setLoading(false);
             return;
         }
+        
+        // If not an admin, proceed with standard Firebase email/password auth
+        if (!auth) {
+            setLoading(false);
+            return;
+        };
 
-        if (!auth) return;
-        setLoading(true);
         try {
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });

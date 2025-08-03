@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, setDoc, getDoc, updateDoc, collection } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { initializeFirebaseAdmin } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
@@ -47,7 +47,6 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
-        // Explicitly initialize Firebase Admin at the start of the action.
         const { auth: adminAuth, db: adminDb } = initializeFirebaseAdmin();
 
         const data = Object.fromEntries(formData.entries());
@@ -149,6 +148,36 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
         const errorMessage = error.message || "An unexpected server error occurred.";
         return { success: false, error: errorMessage };
+    }
+}
+
+export async function verifyAdminCredentials({ username, password }: { username: string, password?: string }): Promise<{ isAdmin: boolean }> {
+    if (!password) {
+        return { isAdmin: false };
+    }
+    
+    try {
+        const { db: adminDb } = initializeFirebaseAdmin();
+        const adminsRef = collection(adminDb, 'admins');
+        const q = query(adminsRef, where("username", "==", username));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return { isAdmin: false };
+        }
+
+        const adminDoc = querySnapshot.docs[0];
+        const adminData = adminDoc.data();
+        
+        // In a real app, use bcrypt.compare(password, adminData.password)
+        if (adminData.password === password) {
+            return { isAdmin: true };
+        }
+
+        return { isAdmin: false };
+    } catch (error) {
+        console.error("Admin verification error:", error);
+        return { isAdmin: false };
     }
 }
 
