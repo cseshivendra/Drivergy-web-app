@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -186,8 +187,8 @@ export default function PortfolioSitePage() {
   const heroSlides: SiteBanner[] = [
     {
         id: "banner-1",
-        title: "Start Your Driving Journey Today",
-        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform.",
+        title: "India's #1 Driving School",
+        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform. Start your car driving lessons today.",
         imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_zcrb88zcrb88zcrb_s6hlap.png",
         imageHint: "driving road car sunset",
     },
@@ -200,7 +201,7 @@ export default function PortfolioSitePage() {
     },
     {
         id: "banner-3",
-        title: "Master the Roads with Confidence",
+        title: "Master Indian Roads with Confidence",
         description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
         imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
         imageHint: "city traffic modern car",
@@ -280,7 +281,7 @@ export default function PortfolioSitePage() {
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
               asChild
             >
-              <Link href="#courses">Explore Courses &rarr;</Link>
+              <Link href="#courses">Explore Driving Courses &rarr;</Link>
             </Button>
             <Button 
               size="lg" 
@@ -288,7 +289,7 @@ export default function PortfolioSitePage() {
               className="w-full sm:w-auto font-semibold px-8 py-3 text-base transition-colors duration-300"
               asChild
             >
-              <Link href="/register">Become a Trainer</Link>
+              <Link href="/register">Become a Driving Trainer</Link>
             </Button>
           </div>
         </div>
@@ -309,7 +310,7 @@ export default function PortfolioSitePage() {
               title="Expert Driving Lessons"
               description="Tailored one-on-one training sessions with certified instructors for both two-wheelers and four-wheelers. Learn at your own pace, focusing on your specific needs and building confidence behind the wheel."
               imageSrc="https://res.cloudinary.com/dssbgilba/image/upload/v1753184436/ChatGPT_Image_Jul_22_2025_05_10_07_PM_of3qij.png"
-              imageHint="driving lesson car instructor"
+              imageHint="car driving lesson instructor"
             />
             <ServiceCard
               icon={BookOpen}
@@ -431,7 +432,7 @@ export default function PortfolioSitePage() {
       {/* Subscription Plans Section */}
         <section id="subscriptions" className="py-16 md:py-24 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
-            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Flexible Subscription Plans</h2>
+            <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Affordable Driving Lesson Prices</h2>
             <p className="text-lg text-muted-foreground mb-12 max-w-xl mx-auto">
                 Choose a plan that fits your learning pace and budget. All plans include expert guidance and progress tracking.
             </p>
@@ -552,9 +553,9 @@ export default function PortfolioSitePage() {
       {/* Contact Section */}
       <section id="contact" className="py-16 md:py-24 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center animate-fade-in-up">
-          <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Get In Touch</h2>
+          <h2 className="font-headline text-3xl sm:text-4xl font-bold text-primary mb-6">Questions About Driving Lessons?</h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Have questions or ready to enroll? We'd love to hear from you! Reach out to our team for assistance or visit our FAQ page.
+            Have questions or ready to enroll in the best driving school in India? We'd love to hear from you! Reach out to our team for assistance or visit our FAQ page.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button size="lg" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -62,6 +63,10 @@ export default function BlogPage() {
 
   return (
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
+        <head>
+          <title>Driving School Blog | RTO Tips, Safety Rules | Drivergy</title>
+          <meta name="description" content="The Drivergy blog is your expert source for RTO exam tips, safe driving tricks, car maintenance guides, and road safety news in India. Learn to be a better driver with us." />
+        </head>
         <Card className="shadow-lg overflow-hidden mb-12">
             <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
                 <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -45,6 +46,10 @@ export default function CareerPage() {
 
     return (
         <div className="container mx-auto max-w-6xl p-4 py-8 sm:p-6 lg:p-8">
+            <head>
+                <title>Careers at Drivergy | Driving Instructor Jobs in India</title>
+                <meta name="description" content="Join the Drivergy team! We're hiring driving instructors, customer support executives, and marketing managers. Drive your career forward with India's leading driving school platform." />
+            </head>
             <Card className="shadow-lg overflow-hidden mb-12">
                 <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
                     <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">

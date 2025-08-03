@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -13,8 +14,8 @@ export default function RtoServicesPage() {
     return (
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
             <head>
-                <title>Online RTO Services - Drivergy</title>
-                <meta name="description" content="Access official Indian RTO services like applying for a driving license, checking challan status, paying fines, and more, directly via Drivergy." />
+                <title>Online RTO Services India | Driving License, Challan | Drivergy</title>
+                <meta name="description" content="Access official Indian RTO services like applying for a driving license, checking challan status, paying fines, and more, directly via Drivergy. We link you to the official Parivahan Sewa portal." />
             </head>
             <Card className="shadow-lg overflow-hidden mb-12 bg-muted/30">
                 <div className="flex flex-col items-center justify-center text-center p-6">

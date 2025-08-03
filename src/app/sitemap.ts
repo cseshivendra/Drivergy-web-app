@@ -1,3 +1,4 @@
+
 import { MetadataRoute } from 'next';
 import { fetchBlogPosts } from '@/lib/server-data'; 
 import { BlogPost } from '@/types';
@@ -11,9 +12,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     '', // Homepage
     '/register',
+    '/login',
     '/faq',
     '/career',
     '/rto-services',
+    '/about',
     '/blog',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
@@ -24,18 +27,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Temporarily removing dynamic blog post fetching to fix build.
   // To re-enable, add environment variables and uncomment the following:
-  /*
   // 2. Fetch dynamic routes, like blog posts, from the data source.
-  const posts: BlogPost[] = await fetchBlogPosts();
-
-  const blogRoutes = posts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.date).toISOString(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.7,
-  }));
-  */
+  let blogRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const posts: BlogPost[] = await fetchBlogPosts();
+    blogRoutes = posts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: new Date(post.date).toISOString(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    console.error("Sitemap generation: Could not fetch blog posts.", error);
+  }
 
   // 3. Combine static and dynamic routes into a single sitemap.
-  return [...staticRoutes];
+  return [...staticRoutes, ...blogRoutes];
 }

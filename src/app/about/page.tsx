@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Info, Users, Target, Car, UserCircle, Linkedin, Instagram } from 'lucide-react';
 import Image from 'next/image';
@@ -5,8 +6,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-    title: 'About Drivergy | Our Mission and Founder',
-    description: "Learn about Drivergy's mission to revolutionize driving education and our Founder & CEO, Shivendra Singh, a Senior Software Engineer with global experience.",
+    title: 'About Our Driving School | Drivergy',
+    description: "Learn about Drivergy's mission to revolutionize driving education in India. Meet our Founder & CEO, Shivendra Singh, and discover why we are the best choice for car and motorcycle driving lessons.",
+    keywords: "about drivergy, driving school mission, learn to drive, Shivendra Singh, driving education India",
 };
 
 export default function AboutPage() {
@@ -25,10 +27,10 @@ export default function AboutPage() {
               Our Mission
             </h2>
             <p className="text-lg text-foreground leading-relaxed">
-              At Drivergy, our mission is to revolutionize driving education by providing a seamless,
+              At Drivergy, our mission is to revolutionize driving education in India by providing a seamless,
               efficient, and transparent platform for both students and instructors. We aim to empower
               learners with the skills and confidence needed for safe driving, while supporting instructors
-              with robust tools to manage their services.
+              with robust tools to manage their services and grow their driving school business.
             </p>
           </section>
 
@@ -51,8 +53,8 @@ export default function AboutPage() {
               What We Offer
             </h2>
             <ul className="list-disc list-inside space-y-2 text-foreground leading-relaxed">
-              <li>Easy scheduling and booking of driving lessons.</li>
-              <li>Verified and professional driving instructors.</li>
+              <li>Easy scheduling and booking of car & motorcycle driving lessons.</li>
+              <li>Verified and professional driving instructors near you.</li>
               <li>Comprehensive tracking of progress for students.</li>
               <li>A user-friendly platform for instructors to manage their business.</li>
               <li>Secure payment processing and flexible subscription management.</li>

@@ -26,7 +26,7 @@ import type { Metadata } from 'next';
 // However, adding a <head> tag helps with SEO for client-rendered pages.
 const PageHead = () => (
     <head>
-        <title>Contact Support | Drivergy</title>
+        <title>Contact Support | Drivergy Driving School</title>
         <meta name="description" content="Have an issue or feedback? Contact the Drivergy support team. We're here to help you with your driving lesson queries and platform issues." />
     </head>
 );
