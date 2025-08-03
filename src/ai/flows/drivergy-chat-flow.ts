@@ -126,6 +126,8 @@ const drivergyChatFlow = ai.defineFlow(
   },
   async (input) => {
     let userProfile: UserProfile | null = null;
+    // We only fetch the user profile if a userId is actually passed.
+    // The prompt is designed to handle cases where there is no user.
     if (input.userId) {
       userProfile = await fetchUserById(input.userId);
     }
