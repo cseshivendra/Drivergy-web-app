@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { adminAuth, adminDb } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
@@ -280,7 +280,23 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
     }
 };
 
-// Function to create sample users if they don't exist
+const ensureAdminExists = async () => {
+    const adminRef = doc(adminDb, 'admins', 'default_admin');
+    try {
+        const adminSnap = await getDoc(adminRef);
+        if (!adminSnap.exists()) {
+            console.log("Default admin not found, creating one...");
+            await setDoc(adminRef, {
+                username: 'admin',
+                password: 'admin' // In a real app, this should be a securely hashed password
+            });
+            console.log("Default admin created successfully.");
+        }
+    } catch (error) {
+        console.error("Error ensuring admin exists:", error);
+    }
+};
+
 const createSampleUser = async (userData: {
   email: string;
   name: string;
@@ -289,26 +305,21 @@ const createSampleUser = async (userData: {
   const { email, name, role } = userData;
 
   try {
-    // Check if user already exists
     try {
       await adminAuth.getUserByEmail(email);
-      console.log(`User ${email} already exists.`);
-      return; // User exists, so we do nothing.
+      return; 
     } catch (error: any) {
       if (error.code !== 'auth/user-not-found') {
-        throw error; // Re-throw other errors
+        throw error;
       }
-      // User does not exist, so we can proceed to create them.
     }
     
     console.log(`Creating user: ${email}`);
-
-    // 1. Create Firebase Auth user
     const userRecord = await adminAuth.createUser({
       email,
-      password: 'password', // Set a default secure password
+      password: 'password',
       displayName: name,
-      emailVerified: true, // Mark as verified for simplicity
+      emailVerified: true,
     });
 
     const uid = userRecord.uid;
@@ -338,7 +349,7 @@ const createSampleUser = async (userData: {
         drivingLicenseUrl: 'https://placehold.co/file.pdf',
         aadhaarCardUrl: 'https://placehold.co/file.pdf',
       };
-    } else { // Customer
+    } else {
       newUserProfile = {
         uniqueId: `CU-${uid.slice(-6).toUpperCase()}`,
         name,
@@ -353,7 +364,7 @@ const createSampleUser = async (userData: {
         photoURL: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
         myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
         trainerPreference: 'Any',
-        assignedTrainerId: null, // Can be assigned later
+        assignedTrainerId: null,
         assignedTrainerName: null,
         upcomingLesson: 'Not yet scheduled',
         subscriptionStartDate: format(new Date(), 'MMM dd, yyyy'),
@@ -380,9 +391,9 @@ const createSampleUser = async (userData: {
   }
 };
 
-// Self-invoking async function to create users on server startup/first run
 (async () => {
     try {
+        await ensureAdminExists();
         await createSampleUser({ email: 'trainer@drivergy.com', name: 'Sample Trainer', role: 'trainer' });
         await createSampleUser({ email: 'customer@drivergy.com', name: 'Sample Customer', role: 'customer' });
     } catch(e) {
