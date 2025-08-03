@@ -1,10 +1,15 @@
 
+'use server';
+
 import admin from 'firebase-admin';
 
 // This function ensures the Firebase Admin SDK is initialized only once.
 export const initializeFirebaseAdmin = () => {
     if (admin.apps.length > 0) {
-        return;
+        return {
+            auth: admin.auth(),
+            db: admin.firestore(),
+        };
     }
 
     const projectId = process.env.FIREBASE_PROJECT_ID;
@@ -30,9 +35,9 @@ export const initializeFirebaseAdmin = () => {
         console.error("Firebase Admin SDK Initialization Error:", error);
         throw new Error(`Failed to initialize Firebase Admin SDK: ${error.message}`);
     }
-};
 
-// Initialize and export admin services immediately.
-initializeFirebaseAdmin();
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
+    return {
+        auth: admin.auth(),
+        db: admin.firestore(),
+    };
+};

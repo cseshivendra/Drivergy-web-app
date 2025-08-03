@@ -6,7 +6,7 @@ import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { doc, setDoc, getDoc, updateDoc, collection } from 'firebase/firestore';
-import { initializeFirebaseAdmin, adminAuth, adminDb } from './firebase/admin';
+import { initializeFirebaseAdmin } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
 import admin from 'firebase-admin';
@@ -48,7 +48,7 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
         // Explicitly initialize Firebase Admin at the start of the action.
-        initializeFirebaseAdmin();
+        const { auth: adminAuth, db: adminDb } = initializeFirebaseAdmin();
 
         const data = Object.fromEntries(formData.entries());
         
@@ -163,7 +163,7 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
-    initializeFirebaseAdmin();
+    const { db: adminDb } = initializeFirebaseAdmin();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -194,7 +194,7 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    initializeFirebaseAdmin();
+    const { db: adminDb } = initializeFirebaseAdmin();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
