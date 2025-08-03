@@ -27,3 +27,4 @@ export function initializeFirebaseApp() {
 
     return { app, auth, db };
 }
+
