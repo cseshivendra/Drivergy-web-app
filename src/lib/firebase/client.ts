@@ -18,18 +18,19 @@ export function initializeFirebaseApp() {
         return { app: firebaseApp, auth: firebaseAuth!, db: firestoreDb! };
     }
 
+    // Hardcoded configuration to ensure keys are always valid on the client.
     const firebaseConfig: FirebaseOptions = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+        apiKey: "AIzaSyDNz72w3Cbs0PsOUfuQYJF35An-wJb3Pvs",
+        authDomain: "driveview-pfyzq.firebaseapp.com",
+        projectId: "driveview-pfyzq",
+        storageBucket: "driveview-pfyzq.firebasestorage.app",
+        messagingSenderId: "964264958585",
+        appId: "1:964264958585:web:a4449ae823cef0c57d92a8"
     };
     
     // Check if the configuration is complete.
     if (!firebaseConfig.apiKey) {
-        throw new Error("Firebase configuration is missing or incomplete. Make sure your .env file is correctly set up and the Next.js server is restarted.");
+        throw new Error("Firebase configuration is missing or incomplete.");
     }
     
     // Initialize the Firebase app.
