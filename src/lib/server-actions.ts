@@ -6,9 +6,16 @@ import { RegistrationFormSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { doc, setDoc, getDoc, updateDoc, collection } from 'firebase/firestore';
-import { getFirebaseAdmin } from './firebase/admin';
+import { initializeFirebaseAdmin } from './firebase/admin';
 import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
 import { format } from 'date-fns';
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin SDK right away
+initializeFirebaseAdmin();
+const adminAuth = admin.auth();
+const adminDb = admin.firestore();
+
 
 const initializeCloudinary = async () => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
@@ -45,8 +52,6 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
     try {
-        const { adminAuth, adminDb } = getFirebaseAdmin();
-
         const data = Object.fromEntries(formData.entries());
         
         if (!data.gender || data.gender === '' || typeof data.gender !== 'string') {
@@ -160,7 +165,6 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
-    const { adminDb } = getFirebaseAdmin();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -191,7 +195,6 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    const { adminDb } = getFirebaseAdmin();
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
