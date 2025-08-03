@@ -150,18 +150,33 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
     }
 }
 
-export async function verifyAdminCredentials({ username, password }: { username: string, password?: string }): Promise<{ isAdmin: boolean }> {
+export async function verifyAdminCredentials({ username, password }: { username: string, password?: string }): Promise<{ isAdmin: boolean, error?: string }> {
     if (username.toLowerCase() !== 'admin' || !password) {
         return { isAdmin: false };
     }
     
-    // For simplicity in this environment, we'll use a hardcoded check.
-    // In a real production scenario, this should query a secure database.
-    if (username.toLowerCase() === 'admin' && password === 'admin') {
-        return { isAdmin: true };
+    try {
+        const { db: adminDb } = initializeFirebaseAdmin();
+        const adminQuery = query(collection(adminDb, 'admins'), where('username', '==', username.toLowerCase()));
+        const querySnapshot = await getDocs(adminQuery);
+
+        if (querySnapshot.empty) {
+            console.log("Admin user not found in database.");
+            return { isAdmin: false, error: 'Admin user not found.' };
+        }
+
+        const adminDoc = querySnapshot.docs[0];
+        const adminData = adminDoc.data();
+
+        if (adminData.password === password) {
+            return { isAdmin: true };
+        } else {
+            return { isAdmin: false, error: 'Invalid password.' };
+        }
+    } catch(e: any) {
+        console.error("Error verifying admin credentials:", e);
+        return { isAdmin: false, error: `Database error: ${e.message}` };
     }
-    
-    return { isAdmin: false };
 }
 
 
