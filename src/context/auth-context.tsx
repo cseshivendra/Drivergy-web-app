@@ -46,11 +46,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
             return () => unsubscribe();
         } catch (error) {
-            console.warn("Firebase initialization failed in AuthContext:", error);
+            console.error("Firebase initialization failed in AuthContext:", error);
+            toast({
+                title: "Configuration Error",
+                description: "Could not connect to services. Please check your setup.",
+                variant: "destructive",
+            });
             setLoading(false);
             return;
         }
-    }, []);
+    }, [toast]);
 
     const signInWithGoogle = async () => {
         if (!auth) return;
@@ -87,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                     approvalStatus: 'Pending',
                     photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
+                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
                     trainerPreference: 'Any',
                 };
                 
@@ -102,8 +107,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (error.code === 'auth/popup-closed-by-user') {
                 return; // User closed popup, do not show error
             }
-            if (error.code === 'auth/missing-or-insufficient-permissions') {
-                 toast({ title: "Sign-In Failed", description: "The Identity Toolkit API may not be enabled in your Google Cloud project.", variant: "destructive" });
+            if (error.code === 'auth/account-exists-with-different-credential') {
+                 toast({ title: "Sign-In Failed", description: "An account with this email already exists using a different sign-in method.", variant: "destructive" });
             } else {
                 toast({ title: "Sign-In Failed", description: error.message || "An error occurred.", variant: "destructive" });
             }
@@ -119,8 +124,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
+            router.push('/dashboard');
         } catch (error: any) {
-            setLoading(false);
             let description = 'An unexpected error occurred. Please try again.';
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                  description = 'Invalid credentials. Please check your email and password.';
@@ -130,6 +135,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 description: description,
                 variant: 'destructive',
             });
+        } finally {
+            setLoading(false);
         }
     };
 

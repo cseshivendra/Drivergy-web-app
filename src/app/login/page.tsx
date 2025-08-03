@@ -5,61 +5,50 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
-
-const LoginSchema = z.object({
-  identifier: z.string().min(1, 'Please enter your email or username.'),
-  password: z.string().min(1, 'Please enter your password.'),
-});
-type LoginValues = z.infer<typeof LoginSchema>;
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
+  const { toast } = useToast();
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  const form = useForm<LoginValues>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: { identifier: '', password: '' },
-  });
-  
-  const { formState: { isSubmitting } } = form;
-
   useEffect(() => {
     setIsMounted(true);
-    // Only redirect if loading is finished and a user exists.
     if (!loading && user) {
       router.push(redirect); 
     }
   }, [user, loading, router, redirect]);
-
-  const onSubmit = async (data: LoginValues) => {
-    await signInWithCredentials(data.identifier, data.password);
+  
+  const handleCredentialSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!identifier || !password) {
+        toast({ title: 'Error', description: 'Please enter both your identifier and password.', variant: 'destructive' });
+        return;
+    }
+    await signInWithCredentials(identifier, password);
   };
-
+  
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
       <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
     </svg>
   );
 
-  // Show a loading spinner if the auth state is loading OR if a user exists (and we're about to redirect).
-  // This prevents the login form from flashing on screen for an already logged-in user.
   if (loading || user) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -101,54 +90,34 @@ export default function LoginPage() {
             <CardDescription className="text-muted-foreground pt-1 px-2">Sign in to access your dashboard and unlock new opportunities.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-                <FormField
-                  control={form.control}
-                  name="identifier"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
-                      <FormControl>
-                        <Input id="identifier" type="text" placeholder="Enter your email or username" {...field} disabled={loading || isSubmitting} autoComplete="email username" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
-                        <Link href="/forgot-password" passHref><Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button></Link>
-                      </div>
-                      <div className="relative">
-                        <FormControl>
-                          <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" {...field} disabled={loading || isSubmitting} autoComplete="current-password" className="pr-10" />
-                        </FormControl>
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full h-12 text-base bg-primary hover:bg-primary/90" disabled={loading || isSubmitting}>
-                  {isSubmitting || loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
-                </Button>
-              </form>
-            </Form>
+            <form onSubmit={handleCredentialSignIn} className="space-y-3">
+              <div>
+                <Label htmlFor="identifier" className="flex items-center"><User className="mr-2 h-4 w-4" />Email or Username</Label>
+                <Input id="identifier" type="text" placeholder="Enter your email or username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={loading} autoComplete="email username" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link href="/forgot-password" passHref><Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button></Link>
+                </div>
+                <div className="relative">
+                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="current-password" className="pr-10" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full h-12 text-base bg-primary hover:bg-primary/90" disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
+              </Button>
+            </form>
 
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
               <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or continue with</span></div>
             </div>
 
-            <Button variant="outline" className="w-full h-12 text-base border-border hover:bg-accent/50" onClick={() => signInWithGoogle()} disabled={loading || isSubmitting}>
+            <Button variant="outline" className="w-full h-12 text-base border-border hover:bg-accent/50" onClick={signInWithGoogle} disabled={loading}>
               <GoogleIcon /> Sign in with Google
             </Button>
           </CardContent>
