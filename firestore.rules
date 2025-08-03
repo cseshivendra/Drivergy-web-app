@@ -3,82 +3,84 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions ---
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
     
-    // --- Public Read-Only Collections ---
+    // Helper function to check if a user is an authenticated admin.
+    // For this to work, you must create a document in an 'admins' collection
+    // where the document ID is the UID of the admin user.
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Publicly readable collections
     match /courses/{courseId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin(); // Only admins can write
+    }
+
+    match /quizSets/{quizId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
     
     match /blogPosts/{slug} {
       allow read: if true;
-      allow write: if false; 
+      allow write: if isAdmin();
     }
 
-    match /faqs/{faqId} {
-        allow read: if true;
-        allow write: if false;
-    }
-    
-    match /quizSets/{setId} {
-        allow read: if true;
-        allow write: if false;
-    }
-    
     match /siteBanners/{bannerId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
     }
-
+    
     match /promotionalPosters/{posterId} {
         allow read: if true;
-        allow write: if false;
+        allow write: if isAdmin();
     }
 
-    // --- User-Specific Collections ---
+    // Authenticated users can read their own data.
     match /customers/{userId} {
-      // Allow a user to create their own profile document.
-      allow create: if isOwner(userId);
-      // Allow a user to read and update their own document.
-      allow read, update: if isAuthenticated() && isOwner(userId);
-      // Prevent users from deleting their own accounts through the client.
-      allow delete: if false;
-    }
-    
-    match /trainers/{userId} {
-      // Allow a user to create their own profile document.
-      allow create: if isOwner(userId);
-      // Allow a user to read and update their own document.
-      allow read, update: if isAuthenticated() && isOwner(userId);
-      // Prevent users from deleting their own accounts through the client.
-      allow delete: if false;
+      allow read, write: if request.auth.uid == userId || isAdmin();
     }
 
-    // --- Other Collections (Default to Locked Down) ---
-    // These collections should only be written to by admins or server-side logic.
-    match /lessonRequests/{requestId} {
-      allow read, write: if isAuthenticated(); // Allow logged-in users to manage their requests
-    }
-
-    match /rescheduleRequests/{requestId} {
-      allow read, write: if isAuthenticated();
+    match /trainers/{trainerId} {
+      allow read, write: if request.auth.uid == trainerId || isAdmin();
+      allow create: if request.auth != null; // Allow any authenticated user to apply to be a trainer
     }
     
+    // Feedback can be read by admins and the trainer being reviewed.
+    // Customers can only create feedback.
     match /feedback/{feedbackId} {
-        allow read, write: if isAuthenticated();
+      allow read: if isAdmin() || request.auth.uid == resource.data.trainerId;
+      allow create: if request.auth.uid == request.resource.data.customerId;
+      allow update, delete: if isAdmin();
     }
     
-    match /referrals/{referralId} {
-        allow read, write: if isAuthenticated();
+    // Lesson requests can only be read/written by admins.
+    match /lessonRequests/{reqId} {
+        allow read, write: if isAdmin();
+    }
+    
+    // Reschedule requests can be created by the user, and read/updated by the admin or assigned trainer.
+    match /rescheduleRequests/{reqId} {
+        allow create: if request.auth.uid == request.resource.data.userId;
+        allow read, update: if isAdmin(); // Simplified for now, could add trainer logic later
+        allow delete: if isAdmin();
+    }
+    
+    // Referrals can be read by the referrer or an admin.
+    match /referrals/{refId} {
+        allow read: if request.auth.uid == resource.data.referrerId || isAdmin();
+        allow write: if isAdmin();
+    }
+    
+    // Admin collection can only be read/written by other admins.
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
     }
   }
 }
