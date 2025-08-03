@@ -9,67 +9,52 @@ The project is structured for a dual-purpose experience: a public-facing marketi
 - `src/app/(app)`: Contains all routes and components for the authenticated application dashboard. This includes user profiles, course management, and role-specific views.
 - `src/app/site`: Contains all routes for the public-facing website, including the homepage, blog, FAQ, and registration pages.
 - `src/components`: Shared React components used across the application.
-  - `components/ui`: ShadCN UI components.
-  - `components/dashboard`: Components specific to the admin/user dashboards.
-  - `components/forms`: Reusable form components.
 - `src/lib`: Core logic, utility functions, and data fetching.
-  - `lib/mock-data.ts`: Contains all the data fetching logic. It's designed to work with a live Firebase database but falls back to local mock data if Firebase keys are not provided.
 - `src/ai`: Contains AI-related code, primarily Genkit flows for features like the chatbot.
 - `src/context`: React context providers for managing state like authentication and theme.
 - `src/types`: TypeScript type definitions and Zod schemas for data validation.
 
-## Environment Configuration (`.env.local`)
+## Environment Configuration
 
-To connect the application to your own Firebase backend and enable AI features, you need to create a `.env.local` file in the root of your project.
+To run the application, you need to provide environment variables. These are stored in the `.env` file in the root of the project.
 
-1.  **Create the file:**
-    ```bash
-    touch .env.local
-    ```
-2.  **Add your configuration keys:** Open the `.env.local` file and add the following variables, replacing the placeholder values with your actual keys.
+### 1. Firebase Configuration
 
-    ```
-    # Firebase Configuration
-    # You can get these from your Firebase project settings
-    NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_API_KEY
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=YOUR_AUTH_DOMAIN
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=YOUR_STORAGE_BUCKET
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
-    NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
+**Client-Side Keys (Public):**
+These keys are prefixed with `NEXT_PUBLIC_` and are safe to expose in the browser.
+- Go to your **Firebase project settings** (click the ⚙️ gear icon).
+- Under the **General** tab, scroll down to **Your apps**.
+- Select your web app and find the `firebaseConfig` object.
+- Copy the values into the corresponding `NEXT_PUBLIC_` variables in your `.env` file.
 
-    # Google AI (for Genkit Chatbot)
-    # Get this from Google AI Studio: https://aistudio.google.com/app/apikey
-    GOOGLE_API_KEY=YOUR_GOOGLE_AI_API_KEY
-    ```
+**Admin/Server-Side Keys (Secret):**
+These keys are used for server-side operations and **must be kept secret**.
+- In your Firebase project, go to **Project settings > Service accounts**.
+- Click **"Generate new private key"**. A JSON file will be downloaded.
+- Open the JSON file and copy the following values into your `.env` file:
+    - `project_id` -> `NEXT_PUBLIC_FIREBASE_PROJECT_ID` (this can be the same as the client-side one)
+    - `client_email` -> `FIREBASE_CLIENT_EMAIL`
+    - `private_key` -> `FIREBASE_PRIVATE_KEY` (Copy the entire key, including the `-----BEGIN...` and `-----END...` lines).
 
-**Important:** If these keys are not provided, the app will run in a local-only "mock" mode, which is useful for UI development but will not connect to a live database.
+### 2. Google AI Key (for Genkit)
+- Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
+- Create and copy your API key into `GOOGLE_API_KEY`.
+
+### 3. Other Services
+The `.env` file also contains placeholders for email (Nodemailer) and file storage (Cloudinary). Fill these in if you are using these services.
+
+### IMPORTANT: Deployment
+When you deploy to a hosting service like **Vercel** or **Firebase App Hosting**, you must add these same environment variables to your project's settings on that platform. They will not be deployed from your local `.env` file.
 
 ## Local Development
 
-To run the application on your local machine, follow these steps:
-
-1.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-2.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
-    This will start the Next.js application on `http://localhost:9002`.
+1.  **Install dependencies:** `npm install`
+2.  **Run the development server:** `npm run dev`
+    - The app will be available at `http://localhost:9002`.
 
 ## Deployment to Vercel
 
 This project is configured for seamless deployment to Vercel.
 
-- **Automatic Deployments:** Every time you push a commit to the `main` branch on GitHub, Vercel will automatically start a new build and deploy the changes.
-
-- **Manual Redeployment:** If for any reason a new commit does not trigger a build, you can manually redeploy the latest version:
-    1.  Go to your project on the Vercel Dashboard.
-    2.  Navigate to the **"Deployments"** tab.
-    3.  Find the most recent deployment from the `main` branch at the top of the list.
-    4.  Click the `...` (more options) menu on the right side of that deployment row.
-    5.  Select **"Redeploy"** from the menu.
-
-This will force Vercel to start a new build using the latest committed code.
+- **Automatic Deployments:** Every time you push a commit to the `main` branch on GitHub, Vercel will automatically start a new build and deploy the changes, provided your environment variables are set correctly on Vercel.
+- **Manual Redeployment:** To manually trigger a new build, go to your project on the Vercel Dashboard, navigate to the **"Deployments"** tab, and use the "Redeploy" option on the latest deployment from the `main` branch.
