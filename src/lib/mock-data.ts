@@ -2,7 +2,6 @@
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { adminDb } from '@/lib/firebase/admin';
 import { initializeFirebaseApp } from '@/lib/firebase/client';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
 import type { FirebaseOptions } from 'firebase/app';
@@ -33,7 +32,9 @@ const getClientDb = () => {
 // =================================================================
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
-    const db = adminDb; // Use admin SDK on server
+    const db = getClientDb();
+    if (!db) return null;
+
     const collectionsToSearch = ['customers', 'trainers'];
     for (const col of collectionsToSearch) {
         try {
@@ -243,18 +244,6 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
     return snapshot.exists() ? { slug: snapshot.id, ...snapshot.data() } as BlogPost : null;
 }
 
-// Server-side function to fetch all blog posts for the sitemap
-export async function fetchBlogPosts(): Promise<BlogPost[]> {
-    const db = adminDb;
-    try {
-        const snapshot = await getDocs(query(collection(db, 'blogPosts'), orderBy('date', 'desc')));
-        return snapshot.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost));
-    } catch (error) {
-        console.error("Error fetching blog posts for sitemap:", error);
-        return [];
-    }
-}
-
 // Client-side function to listen for real-time updates
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
     const db = getClientDb();
@@ -289,7 +278,8 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
 const generateId = (): string => Math.random().toString(36).substring(2, 10);
 
 export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';
     // File upload is handled by server action now
     const newPostData: Omit<BlogPost, 'slug'> = {
@@ -303,7 +293,8 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | 
 }
 
 export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const updateData: Partial<BlogPostFormValues> = { ...data };
     // File upload handled by server action
     delete updateData.imageFile;
@@ -312,13 +303,15 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
 }
 
 export async function deleteBlogPost(slug: string): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     await deleteDoc(doc(db, 'blogPosts', slug));
     return true;
 }
 
 export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
     if (!courseSnap.exists()) return null;
@@ -330,7 +323,8 @@ export async function addCourseModule(courseId: string, moduleData: Omit<CourseM
 }
 
 export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
     if (!courseSnap.exists()) return null;
@@ -341,7 +335,8 @@ export async function updateCourseModule(courseId: string, moduleId: string, mod
 }
 
 export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const courseRef = doc(db, 'courses', courseId);
     const courseSnap = await getDoc(courseRef);
     if (!courseSnap.exists()) return false;
@@ -352,25 +347,29 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
 }
 
 export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     const docRef = await addDoc(collection(db, 'faqs'), data);
     return { id: docRef.id, ...data };
 }
 
 export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     await updateDoc(doc(db, 'faqs', id), data as any);
     return true;
 }
 
 export async function deleteFaq(id: string): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     await deleteDoc(doc(db, 'faqs', id));
     return true;
 }
 
 export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const updateData: Partial<VisualContentFormValues> = { ...data };
     // File upload handled by server action
     delete updateData.imageFile;
@@ -379,7 +378,8 @@ export async function updateSiteBanner(id: string, data: VisualContentFormValues
 }
 
 export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const updateData: Partial<VisualContentFormValues> = { ...data };
     // File upload handled by server action
     delete updateData.imageFile;
@@ -388,7 +388,8 @@ export async function updatePromotionalPoster(id: string, data: VisualContentFor
 }
 
 export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     const setRef = doc(db, 'quizSets', quizSetId);
     const setSnap = await getDoc(setRef);
     if (!setSnap.exists()) return null;
@@ -409,7 +410,8 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 }
 
 export async function changeUserPassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const collections = ['customers', 'trainers'];
     for (const col of collections) {
         const userRef = doc(db, col, userId);
@@ -431,7 +433,8 @@ const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => coursesToH
 });
 
 export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return [];
     let q = query(collection(db, "trainers"), where("approvalStatus", "==", "Approved"));
     if (filters.location) {
         q = query(q, where("location", "==", filters.location));
@@ -444,7 +447,8 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
 };
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const customerRef = doc(db, "customers", customerId);
     const trainerRef = doc(db, "trainers", trainerId);
     const [customerSnap, trainerSnap] = await Promise.all([getDoc(customerRef), getDoc(trainerRef)]);
@@ -458,7 +462,8 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 };
 
 export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const customerRef = doc(db, "customers", customerId);
     const updates: { [key: string]: any } = { approvalStatus: newStatus };
 
@@ -488,7 +493,8 @@ export async function updateAssignmentStatusByTrainer(customerId: string, newSta
 }
 
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const studentRef = doc(db, "customers", studentId);
     const studentSnap = await getDoc(studentRef);
     if (!studentSnap.exists()) return false;
@@ -502,7 +508,8 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
 }
 
 export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     const firstLessonDate = addDays(newDate, 2);
     firstLessonDate.setHours(9, 0, 0, 0);
     const updates = {
@@ -516,7 +523,8 @@ export async function updateSubscriptionStartDate(customerId: string, newDate: D
 }
 
 export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<RescheduleRequest | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     const newRequest: Omit<RescheduleRequest, 'id'> = {
         userId, customerName,
         originalLessonDate: format(originalDate, 'MMM dd, yyyy, h:mm a'),
@@ -528,7 +536,8 @@ export async function addRescheduleRequest(userId: string, customerName: string,
 }
 
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const requestRef = doc(db, 'rescheduleRequests', requestId);
     await updateDoc(requestRef, { status: newStatus });
     if (newStatus === 'Approved') {
@@ -541,7 +550,8 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
 }
 
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     const newFeedback: Omit<Feedback, 'id'> = { customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date().toISOString() };
     await addDoc(collection(db, 'feedback'), newFeedback);
     await updateDoc(doc(db, 'customers', customerId), { feedbackSubmitted: true });
@@ -549,7 +559,8 @@ export async function addFeedback(customerId: string, customerName: string, trai
 }
 
 export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return false;
     await updateDoc(doc(db, 'referrals', referralId), { payoutStatus: status });
     return true;
 }
@@ -579,7 +590,8 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 }
 
 export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
-    const db = adminDb;
+    const db = getClientDb();
+    if (!db) return null;
     let userRef;
 
     const collectionsToSearch = ['customers', 'trainers'];

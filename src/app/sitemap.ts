@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { fetchBlogPosts } from '@/lib/mock-data'; 
+import { fetchBlogPosts } from '@/lib/server-data'; 
 import { BlogPost } from '@/types';
 
 // This file generates a sitemap, which is an XML file that lists the important pages on your website.
