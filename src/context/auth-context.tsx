@@ -87,13 +87,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     contact: email,
                     phone: firebaseUser.phoneNumber || '',
                     gender: 'Prefer not to say',
-                    location: 'TBD',
+                    location: 'TBD', // To be determined
                     subscriptionPlan: "None",
                     registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                     approvalStatus: 'Pending',
                     photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
                     myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
                     trainerPreference: 'Any',
+                    // Set default values for all dashboard-related fields
+                    totalLessons: 0,
+                    completedLessons: 0,
+                    upcomingLesson: '',
+                    feedbackSubmitted: false,
+                    totalReferralPoints: 0,
                 };
                 
                 await setDoc(userRef, newUserProfile);
