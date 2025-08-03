@@ -145,37 +145,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
 
-        // Step 1: Check if the credentials are for an admin user in the database
-        const adminCheck = await verifyAdminCredentials({ username: identifier, password });
+        // Step 1: Check if the identifier is 'admin'.
+        if (identifier.toLowerCase() === 'admin') {
+            const adminCheck = await verifyAdminCredentials({ username: identifier, password });
 
-        if (adminCheck.isAdmin) {
-            const adminUser: UserProfile = {
-                id: 'admin',
-                uniqueId: 'ADMIN-001',
-                name: 'Admin',
-                isAdmin: true,
-                contact: 'admin@drivergy.com',
-                location: 'HQ',
-                subscriptionPlan: 'Admin',
-                approvalStatus: 'Approved',
-                registrationTimestamp: new Date().toISOString(),
-                gender: 'Any'
-            };
-            sessionStorage.setItem('isAdmin', 'true'); // Flag for session persistence
-            setUser(adminUser);
-            toast({ title: 'Admin Login Successful!', description: 'Redirecting to your dashboard...' });
-            router.push('/dashboard');
-            setLoading(false);
-            return;
+            if (adminCheck.isAdmin) {
+                const adminUser: UserProfile = {
+                    id: 'admin',
+                    uniqueId: 'ADMIN-001',
+                    name: 'Admin',
+                    isAdmin: true,
+                    contact: 'admin@drivergy.com',
+                    location: 'HQ',
+                    subscriptionPlan: 'Admin',
+                    approvalStatus: 'Approved',
+                    registrationTimestamp: new Date().toISOString(),
+                    gender: 'Any'
+                };
+                sessionStorage.setItem('isAdmin', 'true');
+                setUser(adminUser);
+                toast({ title: 'Admin Login Successful!', description: 'Redirecting to your dashboard...' });
+                router.push('/dashboard');
+                setLoading(false);
+                return;
+            } else {
+                toast({ title: 'Login Failed', description: 'Invalid admin credentials.', variant: 'destructive' });
+                setLoading(false);
+                return;
+            }
         }
         
-        // If not an admin, proceed with standard Firebase email/password auth
+        // Step 2: If not admin, proceed with standard Firebase email/password auth
         if (!auth) {
             setLoading(false);
             return;
         };
 
         try {
+            // Here, identifier must be an email for Firebase to work
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
