@@ -37,10 +37,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             const unsubscribe = onAuthStateChanged(initializedAuth, async (firebaseUser) => {
                 if (firebaseUser) {
-                    const profile = await fetchUserById(firebaseUser.uid);
-                    setUser(profile);
+                    // Check for hardcoded admin user session
+                    if (sessionStorage.getItem('isAdmin') === 'true') {
+                         setUser({
+                            id: 'admin',
+                            uniqueId: 'ADMIN-001',
+                            name: 'Admin',
+                            isAdmin: true,
+                            contact: 'admin@drivergy.com',
+                            location: 'HQ',
+                            subscriptionPlan: 'Admin',
+                            approvalStatus: 'Approved',
+                            registrationTimestamp: new Date().toISOString(),
+                            gender: 'Any'
+                        });
+                    } else {
+                        const profile = await fetchUserById(firebaseUser.uid);
+                        setUser(profile);
+                    }
                 } else {
                     setUser(null);
+                    sessionStorage.removeItem('isAdmin');
                 }
                 setLoading(false);
             });
@@ -125,6 +142,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
+        // Hardcoded admin check
+        if (identifier === 'admin' && password === 'admin') {
+            const adminUser: UserProfile = {
+                id: 'admin',
+                uniqueId: 'ADMIN-001',
+                name: 'Admin',
+                isAdmin: true,
+                contact: 'admin@drivergy.com',
+                location: 'HQ',
+                subscriptionPlan: 'Admin',
+                approvalStatus: 'Approved',
+                registrationTimestamp: new Date().toISOString(),
+                gender: 'Any'
+            };
+            sessionStorage.setItem('isAdmin', 'true'); // Flag for session persistence
+            setUser(adminUser);
+            toast({ title: 'Admin Login Successful!', description: 'Redirecting to your dashboard...' });
+            router.push('/dashboard');
+            return;
+        }
+
         if (!auth) return;
         setLoading(true);
         try {
@@ -147,6 +185,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signOut = async () => {
+        // Clear admin session flag
+        sessionStorage.removeItem('isAdmin');
+
         if (!auth) return;
         try {
             setLoading(true);
