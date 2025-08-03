@@ -32,13 +32,17 @@ These keys are used for server-side operations and **must be kept secret**.
 - In your Firebase project, go to **Project settings > Service accounts**.
 - Click **"Generate new private key"**. A JSON file will be downloaded.
 - Open the JSON file and copy the following values into your `.env` file:
-    - `project_id` -> `NEXT_PUBLIC_FIREBASE_PROJECT_ID` (this can be the same as the client-side one)
+    - `project_id` -> `FIREBASE_PROJECT_ID`
     - `client_email` -> `FIREBASE_CLIENT_EMAIL`
     - `private_key` -> `FIREBASE_PRIVATE_KEY` (Copy the entire key, including the `-----BEGIN...` and `-----END...` lines).
 
 ### 2. Google AI Key (for Genkit)
-- Go to [Google AI Studio](https://aistudio.google.com/app/apikey).
-- Create and copy your API key into `GOOGLE_API_KEY`.
+
+This key is required for all AI-powered features, such as the chatbot.
+- Go to [**Google AI Studio**](https://aistudio.google.com/app/apikey).
+- Click **"Create API key"** in a new or existing Google Cloud project.
+- Copy the generated API key.
+- Paste it into the `GOOGLE_API_KEY` variable in your `.env` file.
 
 ### 3. Other Services
 The `.env` file also contains placeholders for email (Nodemailer) and file storage (Cloudinary). Fill these in if you are using these services.
