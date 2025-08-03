@@ -2,7 +2,7 @@
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword, type Auth } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
@@ -26,13 +26,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [auth, setAuth] = useState<Auth | null>(null);
     const router = useRouter();
     const { toast } = useToast();
     
     useEffect(() => {
         try {
-            const { auth } = initializeFirebaseApp();
-            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            const { auth: initializedAuth } = initializeFirebaseApp();
+            setAuth(initializedAuth);
+
+            const unsubscribe = onAuthStateChanged(initializedAuth, async (firebaseUser) => {
                 if (firebaseUser) {
                     const profile = await fetchUserById(firebaseUser.uid);
                     setUser(profile);
@@ -50,8 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const signInWithGoogle = async () => {
+        if (!auth) return;
         try {
-            const { auth, db } = initializeFirebaseApp();
+            const { db } = initializeFirebaseApp();
             const provider = new GoogleAuthProvider();
 
             setLoading(true);
@@ -83,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                     approvalStatus: 'Pending',
                     photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
                     trainerPreference: 'Any',
                 };
                 
@@ -110,9 +114,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
+        if (!auth) return;
         setLoading(true);
         try {
-            const { auth } = initializeFirebaseApp();
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
         } catch (error: any) {
@@ -130,8 +134,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signOut = async () => {
+        if (!auth) return;
         try {
-            const { auth } = initializeFirebaseApp();
             setLoading(true);
             await firebaseSignOut(auth);
             setUser(null);
