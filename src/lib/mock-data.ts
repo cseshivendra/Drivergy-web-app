@@ -344,10 +344,7 @@ const allQuizSets: QuizSet[] = [
 ];
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
-    const db = getClientDb();
-    if (!db) return [];
-    const snapshot = await getDocs(collection(db, "quizSets"));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
+    return allQuizSets;
 }
 
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
