@@ -2,13 +2,13 @@
 'use client';
 
 import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, signInWithEmailAndPassword, type Auth } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, type Auth, signInWithEmailAndPassword } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { initializeFirebaseApp } from '@/lib/firebase/client';
+import { auth, db } from '@/lib/firebase/client';
 import { doc, setDoc } from 'firebase/firestore';
 import { verifyAdminCredentials } from '@/lib/server-actions';
 
@@ -27,60 +27,49 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [auth, setAuth] = useState<Auth | null>(null);
     const router = useRouter();
     const { toast } = useToast();
 
     useEffect(() => {
-        try {
-            const { auth: initializedAuth } = initializeFirebaseApp();
-            setAuth(initializedAuth);
-
-            const unsubscribe = onAuthStateChanged(initializedAuth, async (firebaseUser) => {
-                if (firebaseUser) {
-                    // Check for hardcoded admin user session
-                    if (sessionStorage.getItem('isAdmin') === 'true') {
-                        setUser({
-                            id: 'admin',
-                            uniqueId: 'ADMIN-001',
-                            name: 'Admin',
-                            isAdmin: true,
-                            contact: 'admin@drivergy.com',
-                            location: 'HQ',
-                            subscriptionPlan: 'Admin',
-                            approvalStatus: 'Approved',
-                            registrationTimestamp: new Date().toISOString(),
-                            gender: 'Any'
-                        });
-                    } else {
-                        const profile = await fetchUserById(firebaseUser.uid);
-                        setUser(profile);
-                    }
-                } else {
-                    setUser(null);
-                    sessionStorage.removeItem('isAdmin');
-                }
-                setLoading(false);
-            });
-            return () => unsubscribe();
-        } catch (error) {
-            console.error("Firebase initialization failed in AuthContext:", error);
-            toast({
-                title: "Configuration Error",
-                description: "Could not connect to services. This usually means your environment variables are not set correctly. See the README for instructions on setting up Firebase credentials.",
-                variant: "destructive",
-            });
+        if (!auth) {
+            console.error("Firebase Auth is not initialized.");
             setLoading(false);
             return;
         }
-    }, [toast]);
+
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                if (sessionStorage.getItem('isAdmin') === 'true') {
+                    setUser({
+                        id: 'admin',
+                        uniqueId: 'ADMIN-001',
+                        name: 'Admin',
+                        isAdmin: true,
+                        contact: 'admin@drivergy.com',
+                        location: 'HQ',
+                        subscriptionPlan: 'Admin',
+                        approvalStatus: 'Approved',
+                        registrationTimestamp: new Date().toISOString(),
+                        gender: 'Any'
+                    });
+                } else {
+                    const profile = await fetchUserById(firebaseUser.uid);
+                    setUser(profile);
+                }
+            } else {
+                setUser(null);
+                sessionStorage.removeItem('isAdmin');
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const signInWithGoogle = async () => {
-        if (!auth) return;
+        if (!auth || !db) return;
         try {
-            const { db } = initializeFirebaseApp();
             const provider = new GoogleAuthProvider();
-
             setLoading(true);
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
@@ -112,7 +101,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
                     myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
                     trainerPreference: 'Any',
-                    // Set default values for all dashboard-related fields
                     totalLessons: 0,
                     completedLessons: 0,
                     upcomingLesson: '',
@@ -129,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         } catch (error: any) {
             if (error.code === 'auth/popup-closed-by-user') {
-                return; // User closed popup, do not show error
+                return;
             }
             if (error.code === 'auth/account-exists-with-different-credential') {
                 toast({ title: "Sign-In Failed", description: "An account with this email already exists using a different sign-in method.", variant: "destructive" });
@@ -145,7 +133,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
 
-        // Step 1: Check if the identifier is 'admin'.
         if (identifier.toLowerCase() === 'admin') {
             const adminCheck = await verifyAdminCredentials({ username: identifier, password });
 
@@ -175,14 +162,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         }
 
-        // Step 2: If not admin, proceed with standard Firebase email/password auth
         if (!auth) {
             setLoading(false);
             return;
         };
 
         try {
-            // Here, identifier must be an email for Firebase to work
             await signInWithEmailAndPassword(auth, identifier, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
@@ -204,7 +189,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const signOut = async () => {
-        // Clear admin session flag
         sessionStorage.removeItem('isAdmin');
 
         if (!auth) return;

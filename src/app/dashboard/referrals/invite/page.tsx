@@ -32,7 +32,7 @@ export default function InviteReferralsPage() {
         }
     }, [user, authLoading]);
 
-    const referralUrl = referralCode ? `https://drivergy.in/site/register?ref=${referralCode}` : '';
+    const referralUrl = referralCode ? `https://drivergy.in/register?ref=${referralCode}` : '';
 
     const handleCopy = (textToCopy: string, type: 'Link' | 'Code') => {
         if (!textToCopy) return;
