@@ -62,9 +62,6 @@ Follow these steps to fix it:
 5.  Click **"Save"**.
 6.  **Wait for 1-2 minutes** for the permission to apply across Google's systems, then try accessing your application again.
 
-### IMPORTANT: Deployment
-When you deploy to a hosting service like **Vercel** or **Firebase App Hosting**, you must add these same environment variables to your project's settings on that platform. They will not be deployed from your local `.env` file.
-
 ## Local Development
 
 1.  **Install dependencies:** `npm install`
@@ -77,3 +74,15 @@ This project is configured for seamless deployment to Vercel.
 
 - **Automatic Deployments:** Every time you push a commit to the `main` branch on GitHub, Vercel will automatically start a new build and deploy the changes, provided your environment variables are set correctly on Vercel.
 - **Manual Redeployment:** To manually trigger a new build, go to your project on the Vercel Dashboard, navigate to the **"Deployments"** tab, and use the "Redeploy" option on the latest deployment from the `main` branch.
+
+### IMPORTANT: Deployment
+When you deploy to a hosting service like **Vercel** or **Firebase App Hosting**, you must add these same environment variables to your project's settings on that platform. They will not be deployed from your local `.env` file.
+
+**Steps to add Environment Variables on Vercel:**
+1.  Go to your project on the Vercel Dashboard.
+2.  Click on the **"Settings"** tab.
+3.  Click on **"Environment Variables"** in the left sidebar.
+4.  For each key from your `.env` file (e.g., `NEXT_PUBLIC_FIREBASE_API_KEY`), copy the key and its corresponding value into the form.
+5.  Ensure you add all necessary variables (`NEXT_PUBLIC_*`, `FIREBASE_*`, `GOOGLE_API_KEY`, etc.).
+6.  Click **"Save"** for each variable.
+7.  After adding all variables, go to the **"Deployments"** tab and redeploy your latest `main` branch deployment to apply the changes.
