@@ -45,12 +45,12 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 };
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
+    if (!adminAuth || !adminDb) {
+        return { success: false, error: 'Firebase Admin SDK not initialized.' };
+    }
+
     try {
         const data = Object.fromEntries(formData.entries());
-        
-        if (!data.gender || data.gender === '' || typeof data.gender !== 'string') {
-            return { success: false, error: "Please select a gender." };
-        }
         
         const files: { [key: string]: File | null } = {
             trainerCertificateFile: formData.get('trainerCertificateFile') as File | null,
@@ -59,7 +59,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         };
         
         const combinedData = { ...data, ...files };
-
         const validationResult = RegistrationFormSchema.safeParse(combinedData);
 
         if (!validationResult.success) {
@@ -69,73 +68,77 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
 
         const validatedData = validationResult.data;
-        const fileUrls: { [key: string]: string | null } = {};
-
-        const userRecord = await adminAuth.createUser({
-            email: validatedData.email,
-            password: validatedData.password,
-            displayName: validatedData.name,
-            emailVerified: false,
-        });
+        const { email, password, name, userRole } = validatedData;
+        
+        const existingUser = await adminAuth.getUserByEmail(email).catch(() => null);
+        if (existingUser) {
+            return { success: false, error: "A user is already registered with this email." };
+        }
+        
+        const userRecord = await adminAuth.createUser({ email, password, displayName: name, emailVerified: false });
         const uid = userRecord.uid;
 
-        const targetCollection = validatedData.userRole === 'customer' ? 'customers' : 'trainers';
+        const targetCollection = userRole === 'customer' ? 'customers' : 'trainers';
         const userRef = doc(adminDb, targetCollection, uid);
 
-        let newUserProfile: Omit<UserProfile, 'id' | 'password'>;
+        const fileUrls: { [key: string]: string | null } = {};
         
-        if (validatedData.userRole === 'trainer') {
+        let newUserProfileData: Omit<UserProfile, 'id'>;
+
+        if (userRole === 'trainer') {
+            const trainerData = validatedData as z.infer<typeof import('@/types').TrainerRegistrationFormSchema>;
             const fileUploadPromises = [];
-            if (validatedData.trainerCertificateFile && validatedData.trainerCertificateFile.size > 0) {
-                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.trainerCertificateFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['trainerCertificateUrl'] = url; }));
+             if (trainerData.trainerCertificateFile && trainerData.trainerCertificateFile.size > 0) {
+                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await trainerData.trainerCertificateFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['trainerCertificateUrl'] = url; }));
             }
-             if (validatedData.drivingLicenseFile && validatedData.drivingLicenseFile.size > 0) {
-                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.drivingLicenseFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['drivingLicenseUrl'] = url; }));
+             if (trainerData.drivingLicenseFile && trainerData.drivingLicenseFile.size > 0) {
+                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await trainerData.drivingLicenseFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['drivingLicenseUrl'] = url; }));
             }
-             if (validatedData.aadhaarCardFile && validatedData.aadhaarCardFile.size > 0) {
-                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await validatedData.aadhaarCardFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['aadhaarCardUrl'] = url; }));
+             if (trainerData.aadhaarCardFile && trainerData.aadhaarCardFile.size > 0) {
+                fileUploadPromises.push(uploadFileToCloudinary(Buffer.from(await trainerData.aadhaarCardFile.arrayBuffer()), `user_documents`).then(url => { fileUrls['aadhaarCardUrl'] = url; }));
             }
             await Promise.all(fileUploadPromises);
-            
-            newUserProfile = {
+
+            newUserProfileData = {
                 uniqueId: `TR-${uid.slice(-6).toUpperCase()}`,
-                name: validatedData.name,
-                username: validatedData.username,
-                contact: validatedData.email,
-                phone: validatedData.phone,
-                gender: validatedData.gender,
-                location: validatedData.location,
+                name: trainerData.name,
+                username: trainerData.username,
+                contact: trainerData.email,
+                phone: trainerData.phone,
+                gender: trainerData.gender,
+                location: trainerData.location,
                 subscriptionPlan: "Trainer",
                 registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
                 approvalStatus: 'Pending',
-                photoURL: `https://placehold.co/100x100.png?text=${validatedData.name.charAt(0)}`,
-                myReferralCode: `${validatedData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
-                vehicleInfo: validatedData.trainerVehicleType,
-                specialization: validatedData.specialization,
-                yearsOfExperience: Number(validatedData.yearsOfExperience),
+                photoURL: `https://placehold.co/100x100.png?text=${trainerData.name.charAt(0)}`,
+                myReferralCode: `${trainerData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                vehicleInfo: trainerData.trainerVehicleType,
+                specialization: trainerData.specialization,
+                yearsOfExperience: Number(trainerData.yearsOfExperience),
                 trainerCertificateUrl: fileUrls.trainerCertificateUrl || '',
                 drivingLicenseUrl: fileUrls.drivingLicenseUrl || '',
                 aadhaarCardUrl: fileUrls.aadhaarCardUrl || '',
             };
         } else {
-             newUserProfile = {
+             const customerData = validatedData as z.infer<typeof import('@/types').CustomerRegistrationFormSchema>;
+             newUserProfileData = {
                 uniqueId: `CU-${uid.slice(-6).toUpperCase()}`,
-                name: validatedData.name,
-                username: validatedData.username,
-                contact: validatedData.email,
-                phone: validatedData.phone,
-                gender: validatedData.gender,
+                name: customerData.name,
+                username: customerData.username,
+                contact: customerData.email,
+                phone: customerData.phone,
+                gender: customerData.gender,
                 location: 'TBD',
                 subscriptionPlan: "None",
                 registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
                 approvalStatus: 'Pending',
-                photoURL: `https://placehold.co/100x100.png?text=${validatedData.name.charAt(0)}`,
-                myReferralCode: `${validatedData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
-                trainerPreference: validatedData.trainerPreference || 'Any',
+                photoURL: `https://placehold.co/100x100.png?text=${customerData.name.charAt(0)}`,
+                myReferralCode: `${customerData.name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
+                trainerPreference: customerData.trainerPreference || 'Any',
             };
         }
 
-        await setDoc(userRef, newUserProfile);
+        await setDoc(userRef, newUserProfileData);
         return { success: true };
 
     } catch (error: any) {
@@ -149,6 +152,8 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 }
 
 export async function verifyAdminCredentials({ username, password }: { username: string, password?: string }): Promise<{ isAdmin: boolean, error?: string }> {
+    if (!adminDb) return { isAdmin: false, error: 'Firebase Admin not initialized.' };
+
     if (username.toLowerCase() !== 'admin' || !password) {
         return { isAdmin: false };
     }
@@ -188,6 +193,8 @@ interface UpdateStatusArgs {
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStatusArgs): Promise<{ success: boolean; error?: string }> {
+    if (!adminDb) return { success: false, error: 'Firebase Admin not initialized.' };
+
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -218,6 +225,8 @@ export async function updateUserApprovalStatus({ userId, newStatus }: UpdateStat
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
+    if (!adminDb) return { success: false, error: 'Firebase Admin not initialized.' };
+    
     if (!userId) {
         return { success: false, error: 'User ID is missing.' };
     }
@@ -281,6 +290,7 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
 };
 
 const ensureAdminExists = async () => {
+    if (!adminDb) return;
     const adminRef = doc(adminDb, 'admins', 'default_admin');
     try {
         const adminSnap = await getDoc(adminRef);
@@ -302,6 +312,7 @@ const createSampleUser = async (userData: {
   name: string;
   role: 'customer' | 'trainer';
 }) => {
+  if (!adminAuth || !adminDb) return;
   const { email, name, role } = userData;
 
   try {
@@ -394,8 +405,6 @@ const createSampleUser = async (userData: {
 (async () => {
     try {
         await ensureAdminExists();
-        // This is a dev-only convenience to ensure sample users exist.
-        // It's safe to run multiple times.
         await createSampleUser({ email: 'trainer@drivergy.com', name: 'Sample Trainer', role: 'trainer' });
         await createSampleUser({ email: 'customer@drivergy.com', name: 'Sample Customer', role: 'customer' });
     } catch(e) {
