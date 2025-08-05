@@ -11,7 +11,7 @@ import { PayoutStatusOptions } from '@/types';
 import { User, Gift, Star, DollarSign, Calendar, AlertCircle, Settings2, Check, Fingerprint, IndianRupee, Users, BarChart3, ChevronRight, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { updateReferralPayoutStatus } from '@/lib/mock-data';
+import { updateReferralPayoutStatus } from '@/lib/server-actions';
 import { format, parseISO } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '../ui/badge';

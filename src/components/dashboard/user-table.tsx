@@ -12,14 +12,12 @@ import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, 
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus } from '@/lib/server-actions';
+import { updateUserApprovalStatus, assignTrainerToCustomer } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { assignTrainerToCustomer as assignTrainerToCustomerAction } from '@/lib/mock-data';
-
 
 interface UserTableProps {
   title: ReactNode;
@@ -89,7 +87,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
     }
     
     setIsAssigning(true);
-    const success = await assignTrainerToCustomerAction(selectedUserForAssignment.id, selectedTrainerId);
+    const success = await assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
     
     if (success) {
       toast({

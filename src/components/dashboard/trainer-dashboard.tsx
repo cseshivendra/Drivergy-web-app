@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToTrainerStudents, updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/mock-data';
+import { listenToTrainerStudents } from '@/lib/mock-data';
+import { updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/server-actions';
 import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';

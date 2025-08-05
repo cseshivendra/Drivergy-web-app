@@ -302,10 +302,6 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
 
 const generateId = (): string => Math.random().toString(36).substring(2, 10);
 
-// =================================================================
-// WRITE OPERATIONS MOVED FROM MOCK-DATA
-// =================================================================
-
 export async function addBlogPost(data: BlogPostFormValues): Promise<BlogPost | null> {
     if (!adminDb) return null;
     let imageUrl = data.imageSrc || 'https://placehold.co/1200x800.png';

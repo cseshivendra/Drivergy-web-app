@@ -10,7 +10,7 @@ import type { RescheduleRequest, RescheduleRequestStatusType } from '@/types';
 import { User, CalendarDays, AlertCircle, Check, X, Settings2, HelpCircle, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { updateRescheduleRequestStatus } from '@/lib/mock-data';
+import { updateRescheduleRequestStatus } from '@/lib/server-actions';
 
 interface RescheduleRequestTableProps {
   title: ReactNode;
