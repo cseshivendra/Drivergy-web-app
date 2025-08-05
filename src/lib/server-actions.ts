@@ -394,6 +394,8 @@ const createSampleUser = async (userData: {
 (async () => {
     try {
         await ensureAdminExists();
+        // This is a dev-only convenience to ensure sample users exist.
+        // It's safe to run multiple times.
         await createSampleUser({ email: 'trainer@drivergy.com', name: 'Sample Trainer', role: 'trainer' });
         await createSampleUser({ email: 'customer@drivergy.com', name: 'Sample Customer', role: 'customer' });
     } catch(e) {

@@ -9,22 +9,24 @@ if (!admin.apps.length) {
 
     if (!projectId || !clientEmail || !privateKey) {
         console.error("Firebase Admin credentials not fully provided in environment variables.");
-        throw new Error("Firebase Admin credentials are not fully configured.");
-    }
+        // We don't throw an error here to allow the app to build,
+        // but server-side Firebase operations will fail.
+    } else {
+        try {
+            admin.initializeApp({
+                credential: admin.credential.cert({
+                    projectId,
+                    clientEmail,
+                    privateKey: privateKey.replace(/\\n/g, '\n'),
+                }),
+                projectId: projectId,
+            });
 
-    try {
-        admin.initializeApp({
-            credential: admin.credential.cert({
-                projectId,
-                clientEmail,
-                privateKey: privateKey.replace(/\\n/g, '\n'),
-            }),
-            projectId: projectId,
-        });
-
-    } catch (error: any) {
-        console.error("Firebase Admin SDK Initialization Error:", error);
-        throw new Error(`Failed to initialize Firebase Admin SDK: ${error.message}`);
+        } catch (error: any) {
+            console.error("Firebase Admin SDK Initialization Error:", error);
+            // We don't throw an error here to allow the app to build,
+            // but server-side Firebase operations will fail.
+        }
     }
 }
 
