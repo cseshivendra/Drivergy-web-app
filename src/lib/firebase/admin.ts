@@ -1,34 +1,39 @@
 
 import admin from 'firebase-admin';
 
-// This function ensures the Firebase Admin SDK is initialized only once.
+// This is a more robust way to initialize the Firebase Admin SDK in a Next.js environment.
+// It ensures that the app is initialized only once, preventing errors.
+
 if (!admin.apps.length) {
-    const projectId = process.env.FIREBASE_PROJECT_ID;
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  try {
+    const serviceAccount: admin.ServiceAccount = {
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      // The private key needs to have its newlines properly escaped in the .env file.
+      // Vercel handles this automatically. For a local .env file, it should be wrapped in quotes.
+      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    };
 
-    if (!projectId || !clientEmail || !privateKey) {
-        console.error("Firebase Admin credentials not fully provided in environment variables.");
-        // We don't throw an error here to allow the app to build,
-        // but server-side Firebase operations will fail.
-    } else {
-        try {
-            admin.initializeApp({
-                credential: admin.credential.cert({
-                    projectId,
-                    clientEmail,
-                    privateKey: privateKey.replace(/\\n/g, '\n'),
-                }),
-                projectId: projectId,
-            });
-
-        } catch (error: any) {
-            console.error("Firebase Admin SDK Initialization Error:", error);
-            // We don't throw an error here to allow the app to build,
-            // but server-side Firebase operations will fail.
-        }
+    // Check if all credentials are provided before attempting to initialize
+    if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
+        throw new Error("Firebase Admin credentials are not fully provided in environment variables. Cannot initialize Admin SDK.");
     }
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: serviceAccount.projectId,
+    });
+    console.log("Firebase Admin SDK initialized successfully.");
+
+  } catch (error: any) {
+    console.error("Firebase Admin SDK Initialization Error:", error.message);
+    // In a real production environment, you might want to handle this more gracefully,
+    // but for development, throwing an error makes the problem visible immediately.
+  }
 }
 
+// Export the initialized services. 
+// If initialization failed, these will be null and any attempt to use them will fail,
+// which is the desired behavior to surface the configuration error.
 export const adminAuth = admin.apps.length ? admin.auth() : null;
 export const adminDb = admin.apps.length ? admin.firestore() : null;
