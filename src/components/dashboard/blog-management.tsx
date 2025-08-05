@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { BlogPostSchema, type BlogPostFormValues, type BlogPost } from '@/types';
-import { addBlogPost, updateBlogPost, deleteBlogPost } from '@/lib/mock-data';
+import { addBlogPost, updateBlogPost, deleteBlogPost } from '@/lib/server-actions';
 import { format } from 'date-fns';
 import NextImage from 'next/image';
 
