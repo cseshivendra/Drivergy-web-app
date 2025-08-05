@@ -97,14 +97,15 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   
   const onClientSubmit = (data: RegistrationFormValues) => {
     const formData = new FormData();
-    for (const key in data) {
-        const value = (data as any)[key];
+    // A more robust way to handle form data, especially files.
+    Object.keys(data).forEach(key => {
+        const value = data[key as keyof typeof data];
         if (value instanceof File) {
             formData.append(key, value);
-        } else if (value !== undefined && value !== null) {
+        } else if (value !== null && value !== undefined) {
             formData.append(key, String(value));
         }
-    }
+    });
     formAction(formData);
   };
 
@@ -208,3 +209,5 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
+
+    

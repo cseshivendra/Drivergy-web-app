@@ -273,17 +273,22 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         };
 
         const userRef = doc(adminDb, 'customers', userId);
+        const customerDoc = await getDoc(userRef);
+        if (!customerDoc.exists()) {
+            return { success: false, error: 'Customer profile not found.' };
+        }
+
         await updateDoc(userRef, profileData);
         
         // After updating the profile, create the lesson request
         const lessonRequestData = {
             customerId: userId,
-            customerName: (await getDoc(userRef)).data()?.name,
+            customerName: customerDoc.data()?.name,
             vehicleType: validatedData.vehiclePreference,
             status: 'Pending' as const,
             requestTimestamp: new Date().toISOString(),
         };
-        await setDoc(doc(collection(adminDb, 'lessonRequests')), lessonRequestData);
+        await addDoc(collection(adminDb, 'lessonRequests'), lessonRequestData);
 
 
         return { success: true };
@@ -416,3 +421,5 @@ const createSampleUser = async (userData: {
     } catch(e) {
     }
 })();
+
+    
