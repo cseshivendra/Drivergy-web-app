@@ -5,18 +5,19 @@ import { initializeApp, getApps, getApp, type FirebaseApp, type FirebaseOptions 
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Hardcoded configuration to ensure keys are always valid on the client.
+// This function is now responsible for initializing the client-side Firebase app
+// It reads the configuration directly from NEXT_PUBLIC_ environment variables.
 const firebaseConfig: FirebaseOptions = {
-    apiKey: "AIzaSyDNz72w3Cbs0PsOUfuQYJF35An-wJb3Pvs",
-    authDomain: "driveview-pfyzq.firebaseapp.com",
-    projectId: "driveview-pfyzq",
-    storageBucket: "driveview-pfyzq.appspot.com",
-    messagingSenderId: "964264958585",
-    appId: "1:964264958585:web:a4449ae823cef0c57d92a8"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 if (!firebaseConfig.apiKey) {
-    throw new Error("Firebase configuration is missing or incomplete.");
+    throw new Error("Firebase configuration is missing or incomplete. Make sure your .env file is correctly set up with NEXT_PUBLIC_ variables and the Next.js server is restarted.");
 }
 
 // Initialize Firebase
@@ -25,4 +26,3 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 export { app, auth, db };
-
