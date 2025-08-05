@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -442,15 +443,34 @@ export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => v
 
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
-    if (!db) {
-        callback([]);
-        return () => {};
-    }
-    return onSnapshot(collection(db, 'promotionalPosters'), snap => {
-        callback(snap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)));
-    }, (error) => {
-        console.error("Error listening to promotional posters:", error);
-    });
+    const posterData: PromotionalPoster[] = [
+        {
+            id: 'customer-offer-1',
+            title: '20% Off Premium Plan!',
+            description: 'Get started with our best plan and save big. Limited time only!',
+            href: '/payment?plan=Premium&price=9999',
+            imageSrc: 'https://placehold.co/600x800/ef4444/ffffff.png',
+            imageHint: 'discount sale offer',
+        },
+        {
+            id: 'trainer-offer-1',
+            title: 'Join as a Trainer!',
+            description: 'Sign up this month and get a ₹1000 joining bonus after your first student.',
+            href: '/register',
+            imageSrc: 'https://placehold.co/600x800/3b82f6/ffffff.png',
+            imageHint: 'driving instructor welcome',
+        },
+        {
+            id: 'referral-offer-1',
+            title: 'Double Referral Points!',
+            description: 'For a limited time, earn double the points for every friend you refer.',
+            href: '/dashboard/referrals/invite',
+            imageSrc: 'https://placehold.co/600x800/22c55e/ffffff.png',
+            imageHint: 'gift points reward',
+        },
+    ];
+    callback(posterData);
+    return () => {}; // No-op for cleanup since it's static data
 }
 
 // =================================================================
