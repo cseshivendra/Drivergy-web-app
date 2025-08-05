@@ -6,8 +6,6 @@ import { RegistrationFormSchema, FullCustomerDetailsSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
-// Import the initialized admin SDK instances directly.
-// The new logic in admin.ts ensures these are valid.
 import { adminAuth, adminDb } from './firebase/admin';
 import type { ApprovalStatusType, UserProfile } from '@/types';
 import { format } from 'date-fns';
@@ -46,7 +44,6 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 };
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
-    // This is the critical check. If adminDb is not initialized, we cannot proceed.
     if (!adminAuth || !adminDb) {
         const errorMessage = "Firebase Admin SDK is not initialized on the server. Check server logs and environment variables.";
         console.error("registerUserAction:", errorMessage);
@@ -302,127 +299,3 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
-
-// ... (rest of the file remains unchanged for now to minimize disruption)
-
-const ensureAdminExists = async () => {
-    if (!adminDb) return;
-    const adminRef = doc(adminDb, 'admins', 'default_admin');
-    try {
-        const adminSnap = await getDoc(adminRef);
-        if (!adminSnap.exists()) {
-            console.log("Default admin not found, creating one...");
-            await setDoc(adminRef, {
-                username: 'admin',
-                password: 'admin'
-            });
-            console.log("Default admin created successfully.");
-        }
-    } catch (error) {
-        console.error("Error ensuring admin exists:", error);
-    }
-};
-
-const createSampleUser = async (userData: {
-  email: string;
-  name: string;
-  role: 'customer' | 'trainer';
-}) => {
-  if (!adminAuth || !adminDb) return;
-  const { email, name, role } = userData;
-
-  try {
-    try {
-      await adminAuth.getUserByEmail(email);
-      return; 
-    } catch (error: any) {
-      if (error.code !== 'auth/user-not-found') {
-        throw error;
-      }
-    }
-    
-    console.log(`Creating user: ${email}`);
-    const userRecord = await adminAuth.createUser({
-      email,
-      password: 'password',
-      displayName: name,
-      emailVerified: true,
-    });
-
-    const uid = userRecord.uid;
-    const targetCollection = role === 'customer' ? 'customers' : 'trainers';
-    const userRef = doc(adminDb, targetCollection, uid);
-
-    let newUserProfile;
-
-    if (role === 'trainer') {
-      newUserProfile = {
-        uniqueId: `TR-${uid.slice(-6).toUpperCase()}`,
-        name,
-        username: name.toLowerCase().replace(' ', ''),
-        contact: email,
-        phone: '9876543210',
-        gender: 'Male',
-        location: 'Gurugram',
-        subscriptionPlan: 'Trainer',
-        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-        approvalStatus: 'Approved' as ApprovalStatusType,
-        photoURL: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-        myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
-        vehicleInfo: 'Car (Manual)',
-        specialization: 'Car',
-        yearsOfExperience: 5,
-        trainerCertificateUrl: 'https://placehold.co/file.pdf',
-        drivingLicenseUrl: 'https://placehold.co/file.pdf',
-        aadhaarCardUrl: 'https://placehold.co/file.pdf',
-      };
-    } else {
-      newUserProfile = {
-        uniqueId: `CU-${uid.slice(-6).toUpperCase()}`,
-        name,
-        username: name.toLowerCase().replace(' ', ''),
-        contact: email,
-        phone: '1234567890',
-        gender: 'Female',
-        location: 'Gurugram',
-        subscriptionPlan: 'Premium',
-        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
-        approvalStatus: 'Approved' as ApprovalStatusType,
-        photoURL: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-        myReferralCode: `${name.split(' ')[0].toUpperCase()}${uid.slice(-4)}`,
-        trainerPreference: 'Any',
-        assignedTrainerId: null,
-        assignedTrainerName: null,
-        upcomingLesson: 'Not yet scheduled',
-        subscriptionStartDate: format(new Date(), 'MMM dd, yyyy'),
-        totalLessons: 20,
-        completedLessons: 5,
-        feedbackSubmitted: false,
-        totalReferralPoints: 100,
-        flatHouseNumber: '123, Sample Apartments',
-        street: 'Main Road',
-        district: 'Gurugram',
-        state: 'Haryana',
-        pincode: '122001',
-        dlStatus: 'New Learner',
-        photoIdType: 'Aadhaar Card',
-        photoIdNumber: '123456789012',
-        photoIdUrl: 'https://placehold.co/file.pdf'
-      };
-    }
-
-    await setDoc(userRef, newUserProfile);
-    console.log(`Successfully created ${role}: ${email}`);
-  } catch (error) {
-    console.error(`Failed to create sample user ${email}:`, error);
-  }
-};
-
-(async () => {
-    try {
-        await ensureAdminExists();
-        await createSampleUser({ email: 'trainer@drivergy.com', name: 'Sample Trainer', role: 'trainer' });
-        await createSampleUser({ email: 'customer@drivergy.com', name: 'Sample Customer', role: 'customer' });
-    } catch(e) {
-    }
-})();

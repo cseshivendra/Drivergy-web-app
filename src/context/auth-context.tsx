@@ -133,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
 
+        // Special case for admin login
         if (identifier.toLowerCase() === 'admin') {
             const adminCheck = await verifyAdminCredentials({ username: identifier, password });
 
@@ -162,6 +163,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         }
 
+        // Regular user login
         if (!auth) {
             setLoading(false);
             return;
@@ -169,13 +171,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         try {
             await signInWithEmailAndPassword(auth, identifier, password);
+            // onAuthStateChanged will handle setting the user and redirecting
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
         } catch (error: any) {
             let description = 'An unexpected error occurred. Please try again.';
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 description = 'Invalid credentials. Please check your email and password.';
-            } else if (error.code === 'permission-denied') {
+            } else if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
                 description = 'Database access was denied. This is likely a cloud configuration issue. Please see the README file for instructions on fixing "Permission Denied" errors by granting the "Service Usage Consumer" role to your service account.'
             }
             toast({
