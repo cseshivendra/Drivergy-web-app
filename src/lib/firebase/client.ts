@@ -17,7 +17,7 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 if (!firebaseConfig.apiKey) {
-    console.error("Firebase configuration is missing or incomplete. Check next.config.js and environment variables.");
+    console.error("Firebase configuration is missing or incomplete. Check your .env file and Vercel environment variables.");
     // We don't throw here to avoid crashing the app, but auth will fail.
     // The console error will be visible in the browser dev tools.
 }
