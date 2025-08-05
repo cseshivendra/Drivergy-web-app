@@ -2,14 +2,13 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { adminAuth, adminDb } from './firebase/admin';
-import type { ApprovalStatusType, FirebaseOptions, UserProfile } from '@/types';
+import type { ApprovalStatusType, UserProfile } from '@/types';
 import { format } from 'date-fns';
-
 
 const initializeCloudinary = async () => {
     if (!process.env.CLOUDINARY_CLOUD_NAME) {
@@ -233,35 +232,42 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
 
     try {
         const data = Object.fromEntries(formData.entries());
-        const photoIdFile = formData.get('photoIdFile') as File | null;
         
-        if (!photoIdFile || photoIdFile.size === 0) {
-            return { success: false, error: 'Photo ID file is required and cannot be empty.' };
+        const file = formData.get('photoIdFile') as File | null;
+        if (!file || file.size === 0) {
+             return { success: false, error: 'Photo ID file is required.' };
+        }
+
+        const validationResult = FullCustomerDetailsSchema.safeParse({ ...data, photoIdFile: file });
+         if (!validationResult.success) {
+            const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            return { success: false, error: `Invalid form data: ${errorMessages}` };
         }
         
-        const buffer = await photoIdFile.arrayBuffer();
+        const validatedData = validationResult.data;
+        const buffer = await validatedData.photoIdFile.arrayBuffer();
         const photoIdUrl = await uploadFileToCloudinary(Buffer.from(buffer), `user_documents/${userId}`);
 
         const getLessonsForPlan = (plan: string): number => ({ Premium: 20, Gold: 15, Basic: 10 }[plan] || 0);
 
         const profileData = {
-            subscriptionPlan: data.subscriptionPlan as string,
-            vehiclePreference: data.vehiclePreference as string,
-            trainerPreference: data.trainerPreference as string,
-            flatHouseNumber: data.flatHouseNumber as string,
-            street: data.street as string,
-            district: data.district as string,
-            state: data.state as string,
-            pincode: data.pincode as string,
-            location: data.district as string, 
-            dlStatus: data.dlStatus as string,
-            dlNumber: (data.dlNumber as string) || '',
-            dlTypeHeld: (data.dlTypeHeld as string) || '',
-            photoIdType: data.photoIdType as string,
-            photoIdNumber: data.photoIdNumber as string,
+            subscriptionPlan: validatedData.subscriptionPlan,
+            vehiclePreference: validatedData.vehiclePreference,
+            trainerPreference: validatedData.trainerPreference,
+            flatHouseNumber: validatedData.flatHouseNumber,
+            street: validatedData.street,
+            district: validatedData.district,
+            state: validatedData.state,
+            pincode: validatedData.pincode,
+            location: validatedData.district,
+            dlStatus: validatedData.dlStatus,
+            dlNumber: validatedData.dlNumber || '',
+            dlTypeHeld: validatedData.dlTypeHeld || '',
+            photoIdType: validatedData.photoIdType,
+            photoIdNumber: validatedData.photoIdNumber,
             photoIdUrl: photoIdUrl,
-            subscriptionStartDate: data.subscriptionStartDate as string,
-            totalLessons: getLessonsForPlan(data.subscriptionPlan as string),
+            subscriptionStartDate: format(validatedData.subscriptionStartDate, 'MMM dd, yyyy'),
+            totalLessons: getLessonsForPlan(validatedData.subscriptionPlan),
             completedLessons: 0,
             approvalStatus: 'Pending' as ApprovalStatusType,
         };
@@ -269,18 +275,16 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         const userRef = doc(adminDb, 'customers', userId);
         await updateDoc(userRef, profileData);
         
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-            const newRequestData = {
-                customerId: userId,
-                customerName: userSnap.data().name,
-                vehicleType: data.vehiclePreference as 'Two-Wheeler' | 'Four-Wheeler' | 'Both',
-                status: 'Pending' as const,
-                requestTimestamp: new Date().toISOString(),
-            };
-            const lessonRequestsCollection = collection(adminDb, 'lessonRequests');
-            await setDoc(doc(lessonRequestsCollection), newRequestData);
-        }
+        // After updating the profile, create the lesson request
+        const lessonRequestData = {
+            customerId: userId,
+            customerName: (await getDoc(userRef)).data()?.name,
+            vehicleType: validatedData.vehiclePreference,
+            status: 'Pending' as const,
+            requestTimestamp: new Date().toISOString(),
+        };
+        await setDoc(doc(collection(adminDb, 'lessonRequests')), lessonRequestData);
+
 
         return { success: true };
     } catch (error: any) {
@@ -288,6 +292,8 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         return { success: false, error: error.message || 'An unexpected error occurred during profile update.' };
     }
 };
+
+// ... (rest of the file remains unchanged for now to minimize disruption)
 
 const ensureAdminExists = async () => {
     if (!adminDb) return;
@@ -298,7 +304,7 @@ const ensureAdminExists = async () => {
             console.log("Default admin not found, creating one...");
             await setDoc(adminRef, {
                 username: 'admin',
-                password: 'admin' // In a real app, this should be a securely hashed password
+                password: 'admin'
             });
             console.log("Default admin created successfully.");
         }
@@ -408,7 +414,5 @@ const createSampleUser = async (userData: {
         await createSampleUser({ email: 'trainer@drivergy.com', name: 'Sample Trainer', role: 'trainer' });
         await createSampleUser({ email: 'customer@drivergy.com', name: 'Sample Customer', role: 'customer' });
     } catch(e) {
-        // This might run multiple times during development due to hot-reloading.
-        // We can safely ignore errors here, especially "user already exists".
     }
 })();

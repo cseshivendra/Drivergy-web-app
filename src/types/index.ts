@@ -101,7 +101,8 @@ const requiredFileSchema = z
 const optionalFileSchema = z
   .instanceof(File)
   .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
-  .optional();
+  .optional()
+  .nullable();
 
 
 const passwordSchema = z.string()
