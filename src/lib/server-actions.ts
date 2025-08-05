@@ -5,7 +5,8 @@ import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema } from '@/types';
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
-import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+// Correctly import the initialized admin SDK instances
 import { adminAuth, adminDb } from './firebase/admin';
 import type { ApprovalStatusType, UserProfile } from '@/types';
 import { format } from 'date-fns';
@@ -44,8 +45,10 @@ const uploadFileToCloudinary = async (fileBuffer: Buffer, folder: string): Promi
 };
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
+    // Check if admin SDK is initialized right at the start. This is the crucial fix.
     if (!adminAuth || !adminDb) {
-        return { success: false, error: 'Firebase Admin SDK not initialized.' };
+        console.error("Firebase Admin SDK is not initialized. Check server logs for details.");
+        return { success: false, error: 'Firebase Admin SDK not initialized on the server.' };
     }
 
     try {
@@ -78,6 +81,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const uid = userRecord.uid;
 
         const targetCollection = userRole === 'customer' ? 'customers' : 'trainers';
+        // Use the validated adminDb instance here
         const userRef = doc(adminDb, targetCollection, uid);
 
         const fileUrls: { [key: string]: string | null } = {};
