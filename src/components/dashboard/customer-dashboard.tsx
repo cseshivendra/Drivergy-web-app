@@ -455,30 +455,26 @@ export default function CustomerDashboard() {
         </Card>
         )}
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <BarChart2 className="h-7 w-7 text-primary" />
-              </div>
-              <div>
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col justify-center items-center">
+            <CardHeader className="text-center">
+                <div className="p-3 bg-primary/10 rounded-lg w-fit mx-auto">
+                    <BarChart2 className="h-7 w-7 text-primary" />
+                </div>
                 <CardTitle className="font-headline text-xl">Lesson Progress</CardTitle>
-                <CardDescription>Your completed driving sessions.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow flex flex-col items-center justify-center space-y-2">
-            <CircularProgress 
-              progress={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100}
-              completed={profile?.completedLessons ?? 0}
-              total={profile?.totalLessons ?? 0}
-            />
-          </CardContent>
-          <CardFooter className="flex-grow flex items-end">
-              <p className="text-xs text-muted-foreground text-center w-full">
-                Your trainer marks attendance after each lesson.
-              </p>
-          </CardFooter>
+                <CardDescription>Your completed sessions.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col items-center justify-center space-y-2">
+                <CircularProgress 
+                    progress={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100}
+                    completed={profile?.completedLessons ?? 0}
+                    total={profile?.totalLessons ?? 0}
+                />
+            </CardContent>
+            <CardFooter className="flex-grow flex items-end">
+                <p className="text-xs text-muted-foreground text-center w-full">
+                    Your trainer marks attendance after each lesson.
+                </p>
+            </CardFooter>
         </Card>
 
         {/* Feedback Card */}
@@ -506,56 +502,6 @@ export default function CustomerDashboard() {
               disabled={!profile?.assignedTrainerId || profile?.feedbackSubmitted}
             >
               {profile?.feedbackSubmitted ? "Feedback Submitted" : "Give Feedback"}
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* RTO Quiz Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <ClipboardCheck className="h-7 w-7 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="font-headline text-xl">RTO Test Quiz</CardTitle>
-                <CardDescription>Practice for your official test.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Take our mock tests to build your confidence and knowledge for the RTO exam.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full">
-              <Link href="/dashboard/rto-quiz">Start Quiz</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-
-        {/* Referral Program Card */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-lg">
-                <Gift className="h-7 w-7 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="font-headline text-xl">Referral Program</CardTitle>
-                <CardDescription>Invite friends and earn rewards.</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="flex-grow">
-            <p className="text-sm text-muted-foreground mb-4">
-              Share your unique referral code with friends. You'll earn points when they sign up and subscribe!
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full">
-              <Link href="/dashboard/referrals/invite">Go to Referrals</Link>
             </Button>
           </CardFooter>
         </Card>
