@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
-import { DrivergyLogo } from '../ui/logo';
+import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
 
 export default function Footer() {
   return (
@@ -12,6 +12,7 @@ export default function Footer() {
         
         <div className="flex justify-center mb-4">
             <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
+                <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
                 <DrivergyLogo className="h-8 w-auto text-primary" />
             </Link>
         </div>
