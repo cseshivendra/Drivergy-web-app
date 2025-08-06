@@ -88,21 +88,26 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
     return { success: false, error: 'User not found' };
 }
 
-export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
+export const completeCustomerProfileAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
     try {
+        const data = Object.fromEntries(formData.entries());
+
+        // The user ID is now part of the form data
+        const userId = data.userId as string;
+        if (!userId) {
+            return { success: false, error: 'User ID is missing.' };
+        }
+        
         const user = await fetchUserById(userId);
         if (!user) {
             return { success: false, error: 'User not found.' };
         }
 
-        const data = Object.fromEntries(formData.entries());
         // Manually handle date conversion for validation
         if (typeof data.subscriptionStartDate === 'string') {
             data.subscriptionStartDate = new Date(data.subscriptionStartDate);
         }
 
-        // The file is already part of `data` from `Object.fromEntries(formData.entries())`
-        // so no special handling is needed before parsing.
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
         if (!validationResult.success) {
@@ -230,3 +235,6 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     }
     return null;
 };
+
+
+    

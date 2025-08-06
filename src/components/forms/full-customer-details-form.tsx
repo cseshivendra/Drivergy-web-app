@@ -48,6 +48,7 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   const form = useForm<FullCustomerDetailsValues>({
     resolver: zodResolver(FullCustomerDetailsSchema),
     defaultValues: {
+        userId: user.id, // Include user ID in the form data
         subscriptionPlan: plan || '',
         vehiclePreference: '',
         trainerPreference: '',
@@ -98,7 +99,8 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
     });
     
     try {
-      const result = await completeCustomerProfileAction(user.id, formData);
+      // Pass the entire formData object to the server action
+      const result = await completeCustomerProfileAction(formData);
       if (result.success) {
         toast({
           title: "Profile Complete!",
@@ -483,4 +485,6 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   );
 }
     
+    
+
     

@@ -159,6 +159,7 @@ export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 
 // This schema is for the second step of customer registration (during payment)
 export const FullCustomerDetailsSchema = z.object({
+    userId: z.string(), // Added userId to the schema
     subscriptionPlan: z.enum(SubscriptionPlans),
     vehiclePreference: z.enum(VehiclePreferenceOptions),
     trainerPreference: z.enum(TrainerPreferenceOptions),
@@ -485,3 +486,5 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
+
+    
