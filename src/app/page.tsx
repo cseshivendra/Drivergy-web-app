@@ -450,15 +450,15 @@ export default function PortfolioSitePage() {
                         <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
                             <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Basic</CardTitle><CardDescription>Perfect for beginners to get started.</CardDescription></CardHeader>
                             <CardContent className="flex-grow space-y-4">
-                                <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹3,999</p></div>
+                                <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹999</p></div>
                                 <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />10 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Basic Theory Classes</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Learner's License Assistance</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Slot Booking</li></ul>
                             </CardContent>
-                            <CardFooter className="mt-auto pt-6 grid grid-cols-2 gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('basic-plan')}>Details</Button><Button className="w-full" asChild><Link href="/payment?plan=Basic&price=3999">Buy Course</Link></Button></CardFooter>
+                            <CardFooter className="mt-auto pt-6 flex gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('basic-plan')}>Details</Button><Button className="w-full" asChild><Link href="/payment?plan=Basic&price=999">Buy Course</Link></Button></CardFooter>
                         </Card>
                         <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                             <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Basic Plan Details</CardTitle></CardHeader>
                             <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Great for new learners.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Focus on fundamental driving skills.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Ideal for city driving practice.</li></ul></CardContent>
-                            <CardFooter className="grid grid-cols-2 gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Basic&price=3999">Buy Course</Link></Button></CardFooter>
+                            <CardFooter className="flex gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Basic&price=999">Buy Course</Link></Button></CardFooter>
                         </Card>
                     </div>
                 </div>
@@ -472,16 +472,16 @@ export default function PortfolioSitePage() {
                                 <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center"><Star className="h-3 w-3 mr-1.5" /> POPULAR</div>
                                 <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Premium</CardTitle><CardDescription>Our most comprehensive package.</CardDescription></CardHeader>
                                 <CardContent className="flex-grow space-y-4">
-                                    <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹9,999</p></div>
+                                    <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹1,499</p></div>
                                     <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li></ul>
                                 </CardContent>
-                                <CardFooter className="mt-auto pt-6 grid grid-cols-2 gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('premium-plan')}>Details</Button><Button className="w-full bg-primary hover:bg-primary/90" asChild><Link href="/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
+                                <CardFooter className="mt-auto pt-6 flex gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('premium-plan')}>Details</Button><Button className="w-full bg-primary hover:bg-primary/90" asChild><Link href="/payment?plan=Premium&price=1499">Buy Course</Link></Button></CardFooter>
                             </Card>
                             {/* Back */}
                             <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                                 <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Premium Plan Details</CardTitle></CardHeader>
                                 <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>For those who want to master driving.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes advanced safety techniques.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Full RTO and test support.</li></ul></CardContent>
-                                <CardFooter className="grid grid-cols-2 gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
+                                <CardFooter className="flex gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Premium&price=1499">Buy Course</Link></Button></CardFooter>
                             </Card>
                         </div>
                     </div>
@@ -493,15 +493,15 @@ export default function PortfolioSitePage() {
                         <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
                             <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Gold</CardTitle><CardDescription>Excellent value with extra benefits.</CardDescription></CardHeader>
                             <CardContent className="flex-grow space-y-4">
-                                <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹7,499</p></div>
+                                <div className="flex items-center justify-center gap-x-2 mb-2"><p className="text-4xl font-bold">₹1,299</p></div>
                                 <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Comprehensive Theory & Mock Tests</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Scheduling</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Progress Tracking App Access</li></ul>
                             </CardContent>
-                            <CardFooter className="mt-auto pt-6 grid grid-cols-2 gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('gold-plan')}>Details</Button><Button className="w-full" asChild><Link href="/payment?plan=Gold&price=7499">Buy Course</Link></Button></CardFooter>
+                            <CardFooter className="mt-auto pt-6 flex gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('gold-plan')}>Details</Button><Button className="w-full" asChild><Link href="/payment?plan=Gold&price=1299">Buy Course</Link></Button></CardFooter>
                         </Card>
                          <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                             <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Gold Plan Details</CardTitle></CardHeader>
                             <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>A balanced approach to learning.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>More practice sessions than Basic.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes mock tests for confidence.</li></ul></CardContent>
-                            <CardFooter className="grid grid-cols-2 gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Gold&price=7499">Buy Course</Link></Button></CardFooter>
+                            <CardFooter className="flex gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Gold&price=1299">Buy Course</Link></Button></CardFooter>
                         </Card>
                     </div>
                 </div>
