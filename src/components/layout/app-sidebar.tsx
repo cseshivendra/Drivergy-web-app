@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -244,18 +245,6 @@ export default function AppSidebar() {
               <Link href="/dashboard/contact">
                 <MessageSquareText /> 
                 <span>Support</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              isActive={pathname === '/about'}
-              tooltip={{ children: "About Us", side: "right", align: "center" }}
-            >
-              <Link href="/about">
-                <Info />
-                <span>About Us</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
