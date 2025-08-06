@@ -341,14 +341,14 @@ export default function PortfolioSitePage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {skillModules.map((mod) => (
-                        <Card key={mod.title} className="shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 overflow-hidden bg-card border-l-4 border-primary">
+                        <Card key={mod.title} className="shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1 overflow-hidden bg-card border-l-4 border-primary flex flex-col">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-3 font-headline text-2xl font-bold text-primary">
                                     <DrivergyLogoMini />
                                     {mod.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-4 flex-grow">
                                 <Accordion type="single" collapsible defaultValue="item-1">
                                     <AccordionItem value="item-1" className="border rounded-md px-4 bg-muted/50 border-border">
                                         <AccordionTrigger className="py-2.5 font-semibold hover:no-underline text-foreground">
@@ -372,6 +372,11 @@ export default function PortfolioSitePage() {
                                     <p className="text-2xl font-bold text-primary">₹999</p>
                                 </div>
                             </CardContent>
+                            <CardFooter className="mt-auto pt-4 border-t border-border/50">
+                                <Button className="w-full" asChild>
+                                    <Link href="/register">Ride Now</Link>
+                                </Button>
+                            </CardFooter>
                         </Card>
                     ))}
                 </div>
