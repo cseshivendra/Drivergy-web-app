@@ -88,22 +88,20 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
     return { success: false, error: 'User not found' };
 }
 
-export const completeCustomerProfileAction = async (formData: FormData): Promise<{ success: boolean, error?: string }> => {
+export const completeCustomerProfileAction = async (formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
     try {
         const data = Object.fromEntries(formData.entries());
 
-        // The user ID is now part of the form data
         const userId = data.userId as string;
         if (!userId) {
             return { success: false, error: 'User ID is missing.' };
         }
         
-        const user = await fetchUserById(userId);
+        let user = await fetchUserById(userId);
         if (!user) {
             return { success: false, error: 'User not found.' };
         }
 
-        // Manually handle date conversion for validation
         if (typeof data.subscriptionStartDate === 'string') {
             data.subscriptionStartDate = new Date(data.subscriptionStartDate);
         }
@@ -116,14 +114,11 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
         }
 
         const profileData = validationResult.data;
-
-        // Simulate file upload by creating a placeholder URL
         const photoIdUrl = `https://placehold.co/file-mock-path/${Date.now()}.pdf`;
 
-        // Update the user profile object
         Object.assign(user, {
             subscriptionPlan: profileData.subscriptionPlan,
-            vehicleInfo: profileData.vehiclePreference, // Use vehicleInfo to store preference
+            vehicleInfo: profileData.vehiclePreference,
             trainerPreference: profileData.trainerPreference,
             flatHouseNumber: profileData.flatHouseNumber,
             street: profileData.street,
@@ -138,13 +133,15 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
             photoIdUrl: photoIdUrl,
             subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
             referralCode: profileData.referralCode,
-            // When profile is completed, move status to Pending for admin verification
             approvalStatus: 'Pending', 
         });
 
         updateUserInMockDB(user);
         console.log(`Successfully completed profile for user ${userId}.`);
-        return { success: true };
+        
+        // Fetch the user again to get the most up-to-date version
+        const updatedUser = await fetchUserById(userId);
+        return { success: true, user: updatedUser || undefined };
 
     } catch (error) {
         console.error("Error in completeCustomerProfileAction:", error);

@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
+import { useAuth } from '@/context/auth-context';
 
 interface FullCustomerDetailsFormProps {
   user: UserProfile;
@@ -44,6 +45,7 @@ interface FullCustomerDetailsFormProps {
 
 export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: FullCustomerDetailsFormProps) {
   const { toast } = useToast();
+  const { logInUser } = useAuth();
 
   const form = useForm<FullCustomerDetailsValues>({
     resolver: zodResolver(FullCustomerDetailsSchema),
@@ -101,11 +103,13 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
     try {
       // Pass the entire formData object to the server action
       const result = await completeCustomerProfileAction(formData);
-      if (result.success) {
+      if (result.success && result.user) {
         toast({
           title: "Profile Complete!",
           description: "Your details have been saved. You can now proceed to payment.",
         });
+        // Update the user in the global auth context without redirecting
+        logInUser(result.user, false);
         onFormSubmit();
       } else {
         throw new Error(result.error || "Failed to update profile.");
