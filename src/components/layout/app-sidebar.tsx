@@ -27,17 +27,6 @@ export default function AppSidebar() {
   const [createOpen, setCreateOpen] = useState(false);
   const [referralsOpen, setReferralsOpen] = useState(false);
 
-  const AppLogo = () => (
-    <Link href="/dashboard" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
-      <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
-      <span className={cn(
-        "font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter",
-      )}>
-        <span className="sr-only">Drivergy</span>
-      </span>
-    </Link>
-  );
-
   useEffect(() => {
     if (pathname.startsWith('/dashboard/create')) {
       setCreateOpen(true);
