@@ -120,6 +120,23 @@ export default function LoginPage() {
             <Button variant="outline" className="w-full h-12 text-base border-border hover:bg-accent/50" onClick={signInWithGoogle} disabled={loading}>
               <GoogleIcon /> Sign in with Google
             </Button>
+            
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">For Demo & Testing</span></div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Button variant="secondary" onClick={() => signInWithCredentials('admin', 'admin')} disabled={loading}>
+                    Admin
+                </Button>
+                <Button variant="secondary" onClick={() => signInWithCredentials('customer@drivergy.com', 'password')} disabled={loading}>
+                    Customer
+                </Button>
+                <Button variant="secondary" onClick={() => signInWithCredentials('trainer@drivergy.com', 'password')} disabled={loading}>
+                    Trainer
+                </Button>
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col items-center justify-center pt-4 pb-6 gap-3">
              <p className="text-sm text-muted-foreground">Don't have an account? <Link href="/register" className="font-semibold text-primary hover:underline">Sign Up</Link></p>
