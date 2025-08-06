@@ -214,7 +214,7 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
             id: 'customer-offer-1',
             title: 'Learn Car driving at just Rs. 999',
             description: 'Get started with our best plan and save big. Limited time only!',
-            href: '/payment?plan=Premium&price=9999',
+            href: '/payment?plan=Premium&price=999',
             imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478493/ChatGPT_Image_Aug_6_2025_04_37_53_PM_qxaaye.png',
             imageHint: 'discount sale offer',
         },

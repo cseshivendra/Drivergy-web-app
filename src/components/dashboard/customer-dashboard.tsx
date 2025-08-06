@@ -4,7 +4,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToUser, addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/mock-data';
+import { listenToUser } from '@/lib/mock-data';
+import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
 import type { UserProfile, FeedbackFormValues } from '@/types';
 import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
