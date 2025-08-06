@@ -100,7 +100,9 @@ export const completeCustomerProfileAction = async (userId: string, formData: Fo
         if (typeof data.subscriptionStartDate === 'string') {
             data.subscriptionStartDate = new Date(data.subscriptionStartDate);
         }
-        
+
+        // The file is already part of `data` from `Object.fromEntries(formData.entries())`
+        // so no special handling is needed before parsing.
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
         if (!validationResult.success) {
