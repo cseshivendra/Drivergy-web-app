@@ -15,6 +15,7 @@ export let allUsers: UserProfile[] = [
         name: 'Priya Sharma',
         username: 'priya',
         contact: 'customer@drivergy.com',
+        password: 'password',
         phone: '1234567890',
         gender: 'Female',
         location: 'Gurugram',
@@ -48,6 +49,7 @@ export let allUsers: UserProfile[] = [
         name: 'Rajesh Kumar',
         username: 'rajesh',
         contact: 'trainer@drivergy.com',
+        password: 'password',
         phone: '9876543210',
         gender: 'Male',
         location: 'Gurugram',
@@ -62,6 +64,20 @@ export let allUsers: UserProfile[] = [
         trainerCertificateUrl: 'https://placehold.co/file.pdf',
         drivingLicenseUrl: 'https://placehold.co/file.pdf',
         aadhaarCardUrl: 'https://placehold.co/file.pdf',
+    },
+    {
+        id: 'admin',
+        uniqueId: 'ADMIN-001',
+        name: 'Admin',
+        username: 'admin',
+        isAdmin: true,
+        contact: 'admin@drivergy.com',
+        password: 'admin',
+        location: 'HQ',
+        subscriptionPlan: 'Admin',
+        approvalStatus: 'Approved',
+        registrationTimestamp: new Date().toISOString(),
+        gender: 'Any'
     }
 ];
 
@@ -160,7 +176,10 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         status: 'Successful',
         pointsEarned: 100,
         payoutStatus: 'Pending',
-        timestamp: format(new Date(), 'MMM dd, yyyy')
+        timestamp: format(new Date(), 'MMM dd, yyyy'),
+        refereeUniqueId: 'CU-NEW01',
+        refereeSubscriptionPlan: 'Premium',
+        refereeApprovalStatus: 'Approved'
     }];
     
     const mockCourses: Course[] = [];
