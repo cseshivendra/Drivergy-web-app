@@ -212,7 +212,7 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
     const posterData: PromotionalPoster[] = [
         {
             id: 'customer-offer-1',
-            title: '20% Off Premium Plan!',
+            title: 'Learn Car driving at just Rs. 999',
             description: 'Get started with our best plan and save big. Limited time only!',
             href: '/payment?plan=Premium&price=9999',
             imageSrc: 'https://placehold.co/600x800/ef4444/ffffff.png',
