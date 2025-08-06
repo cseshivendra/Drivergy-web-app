@@ -10,11 +10,13 @@ export default function SiteFooter() {
     <footer className="border-t border-border/40 bg-background py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
         
-        <div className="flex justify-center mb-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-2 mb-4">
             <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
               <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
               <DrivergyLogo className="h-8 w-auto text-primary" />
             </Link>
+             <div className="hidden sm:block h-6 w-px bg-border"></div>
+            <p className="font-headline text-lg text-muted-foreground tracking-wide">Learn. Drive. Live.</p>
         </div>
 
         <div className="flex justify-center items-center gap-6">
