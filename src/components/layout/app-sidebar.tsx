@@ -18,6 +18,7 @@ import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send,
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
+import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -28,14 +29,11 @@ export default function AppSidebar() {
 
   const AppLogo = () => (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-3 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
-      <div className="p-1.5 bg-primary/10 rounded-lg group-data-[state=collapsed]:rounded-full transition-all duration-300">
-        <Car className="h-7 w-7 text-primary shrink-0 animate-car-slide-logo" />
-      </div>
+      <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
       <span className={cn(
         "font-headline text-2xl font-extrabold text-primary group-data-[state=collapsed]:hidden tracking-tighter",
-        "animate-typing-drivergy" // Apply typing animation class
       )}>
-        Drivergy
+        <span className="sr-only">Drivergy</span>
       </span>
     </Link>
   );
@@ -59,7 +57,12 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
       <SidebarHeader className="p-0"> 
-        <AppLogo />
+        <Link href="/dashboard" className="flex items-center gap-2 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
+          <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
+          <div className="group-data-[state=expanded]:block hidden">
+            <DrivergyLogo className="w-auto h-7 text-primary" />
+          </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>

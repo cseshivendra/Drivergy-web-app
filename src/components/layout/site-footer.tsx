@@ -1,16 +1,13 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { DrivergyLogo } from '../ui/logo';
 
 const SiteLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
-      <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
-        <Car className="h-7 w-7 text-primary shrink-0" />
-      </div>
-      <span className="font-headline text-2xl font-extrabold text-primary tracking-tighter">
-        Drivergy
-      </span>
+      <DrivergyLogo className="h-8 w-auto text-primary" />
     </Link>
 );
 

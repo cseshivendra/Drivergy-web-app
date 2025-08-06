@@ -48,7 +48,7 @@ export default function RootLayout({
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-            <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><path fill=%22%2360a5fa%22 d=%22M89.6,40.6H69.2V21.3c0-4.9-3.9-8.8-8.8-8.8H39.6c-4.9,0-8.8,3.9-8.8,8.8v19.3H10.4C4.7,40.6,0,45.3,0,51v18.7c0,4,2.5,7.4,6,8.4V84c0,2.4,2,4.4,4.4,4.4h10.4c2.4,0,4.4-2,4.4-4.4v-4h40.8v4c0,2.4,2,4.4,4.4,4.4h10.4c2.4,0,4.4-2,4.4-4.4v-5.8c3.5-1,6-4.4,6-8.4V51C100,45.3,95.3,40.6,89.6,40.6z M24,79.6H15.2V73h8.8V79.6z M84.8,79.6H76V73h8.8V79.6z M90.4,59.6c-2,0-3.6-1.6-3.6-3.6s1.6-3.6,3.6-3.6s3.6,1.6,3.6,3.6S92.4,59.6,90.4,59.6z M9.6,59.6c-2,0-3.6-1.6-3.6-3.6s1.6-3.6,3.6-3.6s3.6,1.6,3.6,3.6S11.6,59.6,9.6,59.6z%22/></svg>" />
+            <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><path fill='%23ef4444' d='M50,10c22.1,0,40,17.9,40,40S72.1,90,50,90S10,72.1,10,50S27.9,10,50,10z M50,18c-17.7,0-32,14.3-32,32s14.3,32,32,32s32-14.3,32-32S67.7,18,50,18z'/><path fill='%23ef4444' d='M50,34c-8.8,0-16,7.2-16,16s7.2,16,16,16s16-7.2,16-16S58.8,34,50,34z M50,42.8c-2.4-3.9,1.3-8.8,6.1-8.1c3.4,0.5,6.1,3.2,6.7,6.6c0.8,4.8-3.9,8.7-8.1,6.7L50,42.8z'/></svg>" />
             <title>Best Driving School India | Car Driving Lessons Near Me | Drivergy</title>
             <meta name="description" content="Drivergy is the top-rated driving school in India. Offering affordable car and motorcycle driving lessons with male & female instructors. Prepare for your RTO test and learn to drive safely. Sign up now!" />
             <meta name="keywords" content="driving school, car driving school, driving lessons, car driving lessons near me, learn to drive car, driving school in India, RTO test, two wheeler driving school, motorcycle training, female driving instructor" />
@@ -63,5 +63,3 @@ export default function RootLayout({
         </html>
     );
 }
-
-    

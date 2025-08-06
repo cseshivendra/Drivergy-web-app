@@ -18,6 +18,7 @@ import {
 import { useState, useEffect } from 'react';
 import PromotionalPopup from '@/components/popups/promotional-popup';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { DrivergyLogoIcon } from '@/components/ui/logo';
 
 
 interface ServiceCardProps {
@@ -174,7 +175,7 @@ const skillModules = [
 
 const DrivergyLogoMini = ({className} : {className?: string}) => (
     <div className={cn("inline-flex items-center justify-center p-1 rounded-full bg-primary/10 shadow-inner", className)}>
-        <Car className="h-4 w-4 text-primary" />
+        <DrivergyLogoIcon className="h-4 w-4 text-primary" />
     </div>
 );
 

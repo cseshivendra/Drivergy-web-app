@@ -1,20 +1,15 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, Car } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { DrivergyLogo } from '../ui/logo';
 
 // A simplified logo component for the footer.
 const FooterLogo = () => (
     <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
-      <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
-        <Car className="h-7 w-7 text-primary shrink-0" />
-      </div>
-      <span className={cn(
-        "font-headline text-2xl font-extrabold text-primary tracking-tighter"
-      )}>
-        Drivergy
-      </span>
+      <DrivergyLogo className="h-8 w-auto text-primary" />
     </Link>
 );
 

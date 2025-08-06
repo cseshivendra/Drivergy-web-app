@@ -39,18 +39,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
+import { DrivergyLogo } from '@/components/ui/logo';
 
 const SiteLogo = () => (
   <Link
     href="/"
     className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md"
   >
-    <div className="p-1.5 bg-primary/10 rounded-lg transition-all duration-300">
-      <Car className="h-7 w-7 text-primary shrink-0" />
-    </div>
-    <span className="font-headline text-2xl font-extrabold text-primary tracking-tighter">
-      Drivergy
-    </span>
+    <DrivergyLogo className="h-8 w-auto text-primary" />
   </Link>
 );
 

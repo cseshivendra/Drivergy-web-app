@@ -15,6 +15,7 @@ import {
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
 
 export default function Header() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -35,11 +36,8 @@ export default function Header() {
           )}
           {(isMobile || (!isMobile && sidebarState === 'collapsed')) && (
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <Car className="h-7 w-7 text-primary animate-car-slide-logo" />
-              <span className={cn(
-                "font-headline text-2xl font-bold text-primary",
-                "animate-typing-drivergy" // Apply typing animation class
-              )}>Drivergy</span>
+              <DrivergyLogoIcon className="h-8 w-8 text-primary" />
+              <DrivergyLogo className="h-7 w-auto text-primary" />
             </Link>
           )}
         </div>
