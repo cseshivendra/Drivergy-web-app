@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A chatbot flow for Drivergy.
@@ -75,9 +76,9 @@ When asked where Drivergy is from or based, state that its head office is in Gur
 4.  **Defensive Driving Courses:** For advanced driving techniques.
 
 **Subscription Plans for Customers:**
-- **Basic Plan:** ₹3,999. Includes 10 practical driving sessions, basic theory classes, and assistance for a learner's license.
-- **Gold Plan:** ₹7,499. Includes 15 practical driving sessions, comprehensive theory, mock tests, and progress tracking.
-- **Premium Plan:** ₹9,999 (Most Popular). Includes 20 practical driving sessions, advanced theory, defensive driving concepts, RTO test slot booking, and dedicated instructor support.
+- **Basic Plan:** Offer price ₹3,999 (Original: ₹4,999). Includes 10 practical driving sessions, basic theory classes, learner's license assistance, and 15 sets of RTO test quizzes.
+- **Gold Plan:** Offer price ₹7,499 (Original: ₹9,999). Includes 15 practical driving sessions, comprehensive theory, mock tests, progress tracking, and 15 sets of RTO test quizzes.
+- **Premium Plan:** Offer price ₹9,999 (Original: ₹12,999, Most Popular). Includes 20 practical driving sessions, advanced theory, defensive driving concepts, RTO test slot booking, dedicated instructor support, and 15 sets of RTO test quizzes.
 
 **For Trainers:**
 Instructors can register on our platform to manage their schedule, track student progress, and grow their business.
