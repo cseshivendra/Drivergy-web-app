@@ -18,19 +18,16 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const validationResult = RegistrationFormSchema.safeParse(data);
 
         if (!validationResult.success) {
-            // This case should ideally not be hit with client-side validation, but is a good failsafe.
             const formattedErrors = validationResult.error.format();
-            // A more detailed error message could be constructed here from formattedErrors
-            return { success: false, error: 'Invalid form data provided.' };
+            return { success: false, error: 'Invalid form data provided. Please check the fields and try again.' };
         }
         
         const { email, username, userRole } = validationResult.data;
-        const existingUser = allUsers.find(u => u.contact === email || u.username === username);
+        const existingUser = allUsers.find(u => u.contact.toLowerCase() === email.toLowerCase() || (u.username && u.username.toLowerCase() === username.toLowerCase()));
         if (existingUser) {
             return { success: false, error: 'A user is already registered with this email or username.' };
         }
 
-        // Create a new user object and add it to our in-memory "database"
         const newUser: UserProfile = {
             id: `mock-user-${Date.now()}`,
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${Date.now().toString().slice(-6)}`,
@@ -39,14 +36,13 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             contact: validationResult.data.email,
             phone: validationResult.data.phone,
             gender: validationResult.data.gender,
-            password: validationResult.data.password, // Storing plain text for mock login
+            password: validationResult.data.password, 
             subscriptionPlan: userRole === 'customer' ? 'None' : 'Trainer',
             location: userRole === 'trainer' ? validationResult.data.location : '',
             registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
             approvalStatus: 'Pending',
         };
         
-        // Add trainer-specific fields if applicable
         if (userRole === 'trainer') {
             Object.assign(newUser, {
                 specialization: validationResult.data.specialization,

@@ -81,6 +81,138 @@ export let allUsers: UserProfile[] = [
     }
 ];
 
+let mockCourses: Course[] = [
+    {
+        id: 'car-driving',
+        title: 'Comprehensive Car Program',
+        description: 'Master the art of car driving with our comprehensive program covering everything from basics to advanced defensive techniques.',
+        totalEnrolled: 1250,
+        totalCertified: 980,
+        image: 'https://placehold.co/600x400.png',
+        icon: Car,
+        modules: [
+            { id: 'm1', title: 'Vehicle Controls & Basics', description: 'Understanding the car and its controls.', duration: '2 Hours' },
+            { id: 'm2', title: 'On-Road Practice (City)', description: 'Navigating city traffic and roads.', duration: '8 Hours' },
+        ]
+    },
+    {
+        id: 'motorcycle-riding',
+        title: 'Motorcycle Rider Course',
+        description: 'Learn to ride a two-wheeler safely and confidently on all types of roads.',
+        totalEnrolled: 850,
+        totalCertified: 720,
+        image: 'https://placehold.co/600x400.png',
+        icon: Bike,
+        modules: [
+            { id: 'm1', title: 'Balancing and Control', description: 'Mastering the fundamentals of bike balance.', duration: '2 Hours' },
+        ]
+    },
+    {
+        id: 'rto-prep',
+        title: 'RTO Test Preparation',
+        description: 'A specialized course to help you ace the official RTO driving test with confidence.',
+        totalEnrolled: 2500,
+        totalCertified: 2300,
+        image: 'https://placehold.co/600x400.png',
+        icon: FileText,
+        modules: [
+            { id: 'm1', title: 'Theory and Signs', description: 'In-depth review of all traffic signs and rules.', duration: '3 Hours' },
+        ]
+    }
+];
+
+let mockFaqs: FaqItem[] = [
+    {
+        id: "faq1",
+        question: "What documents do I need to enroll in a driving course?",
+        answer: "For customer registration, you'll need a valid photo ID (like Aadhaar, PAN card, or Passport). If you already have a Learner's or Permanent License, you'll be asked to provide its details. Trainers need to provide their professional certifications and vehicle documents.",
+    },
+    {
+        id: "faq2",
+        question: "Can I choose my driving instructor?",
+        answer: "Yes! Our platform allows you to specify your preference for a male or female instructor during registration. We do our best to accommodate your choice based on instructor availability in your location.",
+    }
+];
+
+let mockQuizSets: QuizSet[] = [
+    {
+        id: 'set1', title: 'Practice Set 1', questions: [
+            { id: 'q1', question: { en: 'What does a red traffic light indicate?', hi: 'लाल बत्ती क्या संकेत देती है?' }, options: { en: ['Stop', 'Go', 'Slow Down'], hi: ['रुकें', 'जाएँ', 'धीमे चलें'] }, correctAnswer: { en: 'Stop', hi: 'रुकें' } }
+        ]
+    },
+    {
+        id: 'set2', title: 'Practice Set 2', questions: [
+             { id: 'q1', question: { en: 'What does a yellow traffic light indicate?', hi: 'पीली बत्ती क्या संकेत देती है?' }, options: { en: ['Stop', 'Go', 'Slow Down'], hi: ['रुकें', 'जाएँ', 'धीमे चलें'] }, correctAnswer: { en: 'Slow Down', hi: 'धीमे चलें' } }
+        ]
+    }
+];
+
+let mockBlogPosts: BlogPost[] = [
+    {
+        slug: 'first-post',
+        title: '10 Tips for Passing Your Driving Test',
+        category: 'Tips & Tricks',
+        excerpt: 'Passing your driving test can be a daunting experience, but with the right preparation, you can significantly increase your chances of success. Here are 10 essential tips to help you ace your test.',
+        content: 'Full content of the blog post goes here...',
+        author: 'Shivendra Singh',
+        date: 'Jul 22, 2024',
+        imageSrc: 'https://placehold.co/1200x800.png',
+        imageHint: 'driving test road',
+        tags: 'driving test, rto, tips'
+    }
+];
+
+let mockSiteBanners: SiteBanner[] = [
+    {
+        id: "banner-1",
+        title: "India's #1 Driving School",
+        description: "Join thousands of students who have successfully learned to drive with our expert instructors and state-of-the-art platform. Start your car driving lessons today.",
+        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_zcrb88zcrb88zcrb_s6hlap.png",
+        imageHint: "driving road car sunset",
+    },
+    {
+        id: "banner-2",
+        title: "Become a Certified Driving Trainer",
+        description: "Empower the next generation of drivers. Join our platform to manage your schedule, connect with students, and grow your business.",
+        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180604/Gemini_Generated_Image_4j07z44j07z44j07_nhtkry.png",
+        imageHint: "driving instructor teaching student",
+    },
+    {
+        id: "banner-3",
+        title: "Master Indian Roads with Confidence",
+        description: "Our advanced courses will equip you with defensive driving techniques and skills for all road conditions. Sign up now!",
+        imageSrc: "https://res.cloudinary.com/dssbgilba/image/upload/v1753180603/Gemini_Generated_Image_7pzsi77pzsi77pzs_um61ih.png",
+        imageHint: "city traffic modern car",
+    }
+];
+
+let mockPromotionalPosters: PromotionalPoster[] = [
+    {
+        id: 'customer-offer-1',
+        title: 'Learn Car driving at just Rs. 999',
+        description: 'Get started with our best plan and save big. Limited time only!',
+        href: '/payment?plan=Premium&price=999',
+        imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478493/ChatGPT_Image_Aug_6_2025_04_37_53_PM_qxaaye.png',
+        imageHint: 'discount sale offer',
+    },
+    {
+        id: 'trainer-offer-1',
+        title: 'Join as a Trainer!',
+        description: 'Sign up this month and get a ₹1000 joining bonus after your first student.',
+        href: '/register',
+        imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478297/ChatGPT_Image_Aug_6_2025_04_34_41_PM_nwyvmi.png',
+        imageHint: 'driving instructor welcome',
+    },
+    {
+        id: 'referral-offer-1',
+        title: 'Double Referral Points!',
+        description: 'For a limited time, earn double the points for every friend you refer.',
+        href: '/dashboard/referrals/invite',
+        imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478271/ChatGPT_Image_Aug_6_2025_04_28_56_PM_b2sdin.png',
+        imageHint: 'gift points reward',
+    },
+];
+
 // Helper to update a user in the mock DB
 export const updateUserInMockDB = (updatedUser: UserProfile) => {
     const index = allUsers.findIndex(u => u.id === updatedUser.id);
@@ -182,13 +314,6 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         refereeApprovalStatus: 'Approved'
     }];
     
-    const mockCourses: Course[] = [];
-    const mockQuizSets: QuizSet[] = [];
-    const mockFaqs: FaqItem[] = [];
-    const mockBlogPosts: BlogPost[] = [];
-    const mockSiteBanners: SiteBanner[] = [];
-    const mockPromotionalPosters: PromotionalPoster[] = [];
-
     const data: AdminDashboardData = {
         summaryData: {
             totalCustomers, totalInstructors, activeSubscriptions, 
@@ -261,42 +386,16 @@ export function listenToTrainerStudents(trainerId: string, callback: (data: { st
 }
 
 export async function fetchCourses(): Promise<Course[]> {
-    return [];
+    return mockCourses;
 }
 
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
-    callback([]);
+    callback(mockBlogPosts);
     return () => {};
 }
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
-    const posterData: PromotionalPoster[] = [
-        {
-            id: 'customer-offer-1',
-            title: 'Learn Car driving at just Rs. 999',
-            description: 'Get started with our best plan and save big. Limited time only!',
-            href: '/payment?plan=Premium&price=999',
-            imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478493/ChatGPT_Image_Aug_6_2025_04_37_53_PM_qxaaye.png',
-            imageHint: 'discount sale offer',
-        },
-        {
-            id: 'trainer-offer-1',
-            title: 'Join as a Trainer!',
-            description: 'Sign up this month and get a ₹1000 joining bonus after your first student.',
-            href: '/register',
-            imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478297/ChatGPT_Image_Aug_6_2025_04_34_41_PM_nwyvmi.png',
-            imageHint: 'driving instructor welcome',
-        },
-        {
-            id: 'referral-offer-1',
-            title: 'Double Referral Points!',
-            description: 'For a limited time, earn double the points for every friend you refer.',
-            href: '/dashboard/referrals/invite',
-            imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478271/ChatGPT_Image_Aug_6_2025_04_28_56_PM_b2sdin.png',
-            imageHint: 'gift points reward',
-        },
-    ];
-    callback(posterData);
+    callback(mockPromotionalPosters);
     return () => {};
 }
 
@@ -332,50 +431,93 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
 }
 
 export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
-    console.log("Mock addCourseModule called");
+    const course = mockCourses.find(c => c.id === courseId);
+    if (course) {
+        const newModule = { ...moduleData, id: `mod-${Date.now()}` };
+        course.modules.push(newModule);
+        return course;
+    }
     return null;
 }
 
 export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<Course | null> {
-    console.log("Mock updateCourseModule called");
+    const course = mockCourses.find(c => c.id === courseId);
+    if (course) {
+        const moduleIndex = course.modules.findIndex(m => m.id === moduleId);
+        if (moduleIndex !== -1) {
+            course.modules[moduleIndex] = { ...course.modules[moduleIndex], ...moduleData };
+            return course;
+        }
+    }
     return null;
 }
 
 export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
-    console.log("Mock deleteCourseModule called");
-    return true;
+    const course = mockCourses.find(c => c.id === courseId);
+    if (course) {
+        const initialLength = course.modules.length;
+        course.modules = course.modules.filter(m => m.id !== moduleId);
+        return course.modules.length < initialLength;
+    }
+    return false;
 }
 
 export async function addFaq(data: FaqFormValues): Promise<FaqItem | null> {
-    console.log("Mock addFaq called");
-    return null;
+    const newFaq: FaqItem = { ...data, id: `faq-${Date.now()}` };
+    mockFaqs.push(newFaq);
+    return newFaq;
 }
 
 export async function updateFaq(id: string, data: FaqFormValues): Promise<boolean> {
-    console.log("Mock updateFaq called");
-    return true;
+    const faqIndex = mockFaqs.findIndex(f => f.id === id);
+    if (faqIndex !== -1) {
+        mockFaqs[faqIndex] = { ...mockFaqs[faqIndex], ...data };
+        return true;
+    }
+    return false;
 }
 
 export async function deleteFaq(id: string): Promise<boolean> {
-    console.log("Mock deleteFaq called");
-    return true;
+    const initialLength = mockFaqs.length;
+    mockFaqs = mockFaqs.filter(f => f.id !== id);
+    return mockFaqs.length < initialLength;
 }
 
 export async function updateSiteBanner(id: string, data: VisualContentFormValues): Promise<boolean> {
-    console.log("Mock updateSiteBanner called");
-    return true;
+    const bannerIndex = mockSiteBanners.findIndex(b => b.id === id);
+    if (bannerIndex !== -1) {
+        mockSiteBanners[bannerIndex] = { ...mockSiteBanners[bannerIndex], ...data };
+        return true;
+    }
+    return false;
 }
 
 export async function updatePromotionalPoster(id: string, data: VisualContentFormValues): Promise<boolean> {
-    console.log("Mock updatePromotionalPoster called");
-    return true;
+    const posterIndex = mockPromotionalPosters.findIndex(p => p.id === id);
+    if (posterIndex !== -1) {
+        mockPromotionalPosters[posterIndex] = { ...mockPromotionalPosters[posterIndex], ...data, href: data.href || '#' };
+        return true;
+    }
+    return false;
 }
 
 export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<QuizSet | null> {
-    console.log("Mock updateQuizQuestion called");
+    const quizSet = mockQuizSets.find(qs => qs.id === quizSetId);
+    if (quizSet) {
+        const questionIndex = quizSet.questions.findIndex(q => q.id === questionId);
+        if (questionIndex !== -1) {
+            quizSet.questions[questionIndex] = {
+                ...quizSet.questions[questionIndex],
+                question: { en: data.question_en, hi: data.question_hi },
+                options: { en: data.options_en.split('\n'), hi: data.options_hi.split('\n') },
+                correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+            };
+            return quizSet;
+        }
+    }
     return null;
 }
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
-    return [];
+    return mockQuizSets;
 }

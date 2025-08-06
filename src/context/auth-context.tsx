@@ -39,18 +39,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const mockCustomer = allUsers.find(u => u.id === 'mock-customer-1');
         setTimeout(() => {
             if (mockCustomer) {
-                sessionStorage.setItem('mockUser', JSON.stringify(mockCustomer));
-                setUser(mockCustomer);
+                logInUser(mockCustomer);
             }
             setLoading(false);
-            router.push('/dashboard');
         }, 1000);
     };
 
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         
-        // Find user by email or username in our mock database
         const userToLogin = allUsers.find(u => 
             (u.contact.toLowerCase() === identifier.toLowerCase() || (u.username && u.username.toLowerCase() === identifier.toLowerCase())) &&
             u.password === password
@@ -58,14 +55,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         setTimeout(() => {
             if (userToLogin) {
-                sessionStorage.setItem('mockUser', JSON.stringify(userToLogin));
-                setUser(userToLogin);
+                logInUser(userToLogin);
                 toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
-                router.push('/dashboard');
             } else {
                 toast({ 
                     title: 'Login Failed', 
-                    description: 'Invalid credentials. Please try again or register.', 
+                    description: 'Invalid credentials. Please try again or register a new account.', 
                     variant: 'destructive' 
                 });
             }
@@ -82,9 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/');
     };
     
-    const logInUser = (user: UserProfile, redirect = true) => {
-        setUser(user);
-        sessionStorage.setItem('mockUser', JSON.stringify(user));
+    const logInUser = (userToLog: UserProfile, redirect = true) => {
+        setUser(userToLog);
+        sessionStorage.setItem('mockUser', JSON.stringify(userToLog));
         if (redirect) {
             router.push('/dashboard');
         }

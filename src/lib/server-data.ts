@@ -2,6 +2,7 @@
 'use server';
 
 import type { BlogPost } from '@/types';
+import { listenToBlogPosts } from './mock-data';
 
 // This file is for server-side data fetching and data seeding logic only.
 
@@ -12,5 +13,10 @@ import type { BlogPost } from '@/types';
  */
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
     console.log("Mock fetchBlogPosts called for sitemap.");
-    return [];
+    return new Promise((resolve) => {
+        const unsubscribe = listenToBlogPosts((posts) => {
+            resolve(posts);
+            unsubscribe();
+        });
+    });
 }
