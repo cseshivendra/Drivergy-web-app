@@ -159,6 +159,17 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton
                         asChild
+                        isActive={pathname === '/dashboard/create/customer'}
+                      >
+                        <Link href="/dashboard/create/customer">
+                          <User className="mr-2 h-4 w-4" />
+                          New Customer
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton
+                        asChild
                         isActive={pathname === '/dashboard/create/trainer'}
                       >
                         <Link href="/dashboard/create/trainer">
