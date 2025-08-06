@@ -44,12 +44,14 @@ import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
 const SiteLogo = () => (
   <Link
     href="/"
-    className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md"
+    className="flex flex-col sm:flex-row sm:items-center sm:gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md"
   >
-    <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
-    <DrivergyLogo className="h-8 w-auto text-primary" />
-    <div className="hidden sm:block h-6 w-px bg-border mx-2"></div>
-    <p className="hidden sm:block font-headline text-lg text-muted-foreground tracking-wide">Learn. Drive. Live.</p>
+    <div className="flex items-center gap-2.5">
+        <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
+        <DrivergyLogo className="h-8 w-auto text-primary" />
+    </div>
+    <div className="hidden sm:block h-6 w-px bg-border sm:mx-2"></div>
+    <p className="block font-headline text-sm sm:text-lg text-muted-foreground tracking-wide -mt-1 sm:mt-0 ml-11 sm:ml-0">Learn. Drive. Live.</p>
   </Link>
 );
 
