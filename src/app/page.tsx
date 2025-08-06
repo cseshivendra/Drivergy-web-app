@@ -459,7 +459,7 @@ export default function PortfolioSitePage() {
                         <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                             <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Basic Plan Details</CardTitle></CardHeader>
                             <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Great for new learners.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Focus on fundamental driving skills.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Ideal for city driving practice.</li></ul></CardContent>
-                            <CardFooter className="flex gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Basic&price=3999">Buy Course</Link></Button></CardFooter>
+                            <CardFooter className="flex justify-between items-center"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Basic&price=3999">Buy Course</Link></Button></CardFooter>
                         </Card>
                     </div>
                 </div>
@@ -482,7 +482,7 @@ export default function PortfolioSitePage() {
                             <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                                 <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Premium Plan Details</CardTitle></CardHeader>
                                 <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>For those who want to master driving.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes advanced safety techniques.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Full RTO and test support.</li></ul></CardContent>
-                                <CardFooter className="flex gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
+                                <CardFooter className="flex justify-between items-center"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Premium&price=9999">Buy Course</Link></Button></CardFooter>
                             </Card>
                         </div>
                     </div>
@@ -502,7 +502,7 @@ export default function PortfolioSitePage() {
                          <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
                             <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Gold Plan Details</CardTitle></CardHeader>
                             <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>A balanced approach to learning.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>More practice sessions than Basic.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes mock tests for confidence.</li></ul></CardContent>
-                            <CardFooter className="flex gap-2"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Gold&price=7499">Buy Course</Link></Button></CardFooter>
+                            <CardFooter className="flex justify-between items-center"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Gold&price=7499">Buy Course</Link></Button></CardFooter>
                         </Card>
                     </div>
                 </div>
