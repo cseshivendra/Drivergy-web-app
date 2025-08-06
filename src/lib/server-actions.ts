@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema } from '@/types';
 import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues } from '@/types';
 import { allUsers, fetchUserById, updateUserInMockDB } from './mock-data';
 import { format } from 'date-fns';
@@ -89,8 +89,60 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
 }
 
 export const completeCustomerProfileAction = async (userId: string, formData: FormData): Promise<{ success: boolean, error?: string }> => {
-    console.log(`Simulating completion of profile for user ${userId}.`);
-    return { success: true };
+    try {
+        const user = await fetchUserById(userId);
+        if (!user) {
+            return { success: false, error: 'User not found.' };
+        }
+
+        const data = Object.fromEntries(formData.entries());
+        // Manually handle date conversion for validation
+        if (typeof data.subscriptionStartDate === 'string') {
+            data.subscriptionStartDate = new Date(data.subscriptionStartDate);
+        }
+        
+        const validationResult = FullCustomerDetailsSchema.safeParse(data);
+
+        if (!validationResult.success) {
+            console.error("Profile completion validation error:", validationResult.error.format());
+            return { success: false, error: "Invalid data submitted. Please check your entries." };
+        }
+
+        const profileData = validationResult.data;
+
+        // Simulate file upload by creating a placeholder URL
+        const photoIdUrl = `https://placehold.co/file-mock-path/${Date.now()}.pdf`;
+
+        // Update the user profile object
+        Object.assign(user, {
+            subscriptionPlan: profileData.subscriptionPlan,
+            vehicleInfo: profileData.vehiclePreference, // Use vehicleInfo to store preference
+            trainerPreference: profileData.trainerPreference,
+            flatHouseNumber: profileData.flatHouseNumber,
+            street: profileData.street,
+            district: profileData.district,
+            state: profileData.state,
+            pincode: profileData.pincode,
+            dlStatus: profileData.dlStatus,
+            dlNumber: profileData.dlNumber,
+            dlTypeHeld: profileData.dlTypeHeld,
+            photoIdType: profileData.photoIdType,
+            photoIdNumber: profileData.photoIdNumber,
+            photoIdUrl: photoIdUrl,
+            subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
+            referralCode: profileData.referralCode,
+            // When profile is completed, move status to Pending for admin verification
+            approvalStatus: 'Pending', 
+        });
+
+        updateUserInMockDB(user);
+        console.log(`Successfully completed profile for user ${userId}.`);
+        return { success: true };
+
+    } catch (error) {
+        console.error("Error in completeCustomerProfileAction:", error);
+        return { success: false, error: "An unexpected server error occurred." };
+    }
 };
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {

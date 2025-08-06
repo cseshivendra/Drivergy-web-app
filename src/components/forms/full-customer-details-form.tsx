@@ -29,7 +29,7 @@ import {
   type UserProfile,
 } from '@/types';
 import { completeCustomerProfileAction } from '@/lib/server-actions';
-import { UserCheck as UserCheckIcon, Home, MapPin, CalendarIcon, Loader2, Gift, Car, Bike, BadgePercent, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
+import { UserCheck as UserCheckIcon, Home, MapPin, CalendarIcon as CalendarIconLucid, Loader2, Gift, Car, Bike, BadgePercent, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -201,7 +201,7 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
               name="subscriptionStartDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col pt-2">
-                  <FormLabel className="flex items-center"><CalendarIcon className="mr-2 h-4 w-4 text-primary" />Subscription Start Date<span className="text-destructive ml-1">*</span></FormLabel>
+                  <FormLabel className="flex items-center"><CalendarIconLucid className="mr-2 h-4 w-4 text-primary" />Subscription Start Date<span className="text-destructive ml-1">*</span></FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -217,7 +217,7 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
                           ) : (
                             <span>Pick a date</span>
                           )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <CalendarIconLucid className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>

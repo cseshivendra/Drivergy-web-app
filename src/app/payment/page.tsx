@@ -16,12 +16,15 @@ import Loading from '@/app/loading';
 import { useState, useEffect } from 'react';
 import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
 import type { UserProfile } from '@/types';
+import { listenToUser } from '@/lib/mock-data';
 
 function PaymentGateway() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const plan = searchParams.get('plan') || 'Selected Plan';
   const price = searchParams.get('price') || '0';
@@ -32,9 +35,20 @@ function PaymentGateway() {
   const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
-    // If user's profile is already complete, show payment options directly.
-    if (user && user.pincode && user.dlStatus) {
-        setShowPayment(true);
+    if (user?.id) {
+        setLoading(true);
+        const unsubscribe = listenToUser(user.id, (userProfile) => {
+            if (userProfile) {
+                setProfile(userProfile);
+                if (userProfile.pincode && userProfile.dlStatus) {
+                    setShowPayment(true);
+                }
+            }
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    } else {
+        setLoading(false);
     }
   }, [user]);
 
@@ -46,7 +60,7 @@ function PaymentGateway() {
       description: `Your subscription for the ${plan} plan has been activated using ${method}. Redirecting to your dashboard.`,
     });
     // In a real app, you would redirect to a success page or dashboard.
-    router.push('/');
+    router.push('/dashboard');
   };
   
   const handleApplyCode = () => {
@@ -71,7 +85,7 @@ function PaymentGateway() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <Loading />;
   }
 
