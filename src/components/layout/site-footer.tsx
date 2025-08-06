@@ -2,22 +2,20 @@
 'use client';
 
 import Link from 'next/link';
-import { Car, Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { DrivergyLogo } from '../ui/logo';
-
-const SiteLogo = () => (
-    <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
-      <DrivergyLogo className="h-8 w-auto text-primary" />
-    </Link>
-);
 
 export default function SiteFooter() {
   return (
     <footer className="border-t border-border/40 bg-background py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-4">
+        
         <div className="flex justify-center mb-4">
-          <SiteLogo />
+            <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
+              <DrivergyLogo className="h-8 w-auto text-primary" />
+            </Link>
         </div>
+
         <div className="flex justify-center items-center gap-6">
           <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
             <Facebook className="h-5 w-5" />
@@ -40,6 +38,7 @@ export default function SiteFooter() {
             <span className="sr-only">Youtube</span>
           </a>
         </div>
+
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">
           <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
             <span className="font-bold" style={{ letterSpacing: '-0.5px' }}>
@@ -56,6 +55,7 @@ export default function SiteFooter() {
             <span className="font-semibold text-foreground">Made in India</span>
           </div>
         </div>
+
         <p className="text-sm pt-2">
           &copy; {new Date().getFullYear()} Drivergy. All rights reserved. <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
         </p>
