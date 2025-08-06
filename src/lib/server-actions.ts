@@ -11,7 +11,7 @@ import { format } from 'date-fns';
 // MOCK SERVER ACTIONS - NO DATABASE INTERACTION
 // =================================================================
 
-export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string }> {
+export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     console.log("Mock registerUserAction called.");
     try {
         const data = Object.fromEntries(formData.entries());
@@ -60,7 +60,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         console.log("Simulating successful user registration for:", email);
         console.log("Total users in mock DB:", allUsers.length);
         
-        return { success: true };
+        return { success: true, user: newUser };
 
     } catch (error: any) {
         console.error("Error in mock registerUserAction:", error);

@@ -33,6 +33,7 @@ import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { registerUserAction } from '@/lib/server-actions';
+import { useAuth } from '@/context/auth-context';
 
 function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     const { pending } = useFormStatus();
@@ -52,6 +53,7 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { logInUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -86,14 +88,15 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
 
   useEffect(() => {
-    if (state.success) {
+    if (state.success && state.user) {
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created. Please log in to continue.",
+        description: "Your account has been created. Redirecting to your dashboard...",
       });
-      router.push('/login');
+      // Automatically log the user in
+      logInUser(state.user);
     }
-  }, [state, toast, router]);
+  }, [state, toast, router, logInUser]);
   
   const onClientSubmit = (data: RegistrationFormValues) => {
     const formData = new FormData();
@@ -209,5 +212,3 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
-
-    
