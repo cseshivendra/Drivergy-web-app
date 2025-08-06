@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { RegistrationFormSchema } from '@/types';
 import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues } from '@/types';
 import { allUsers, fetchUserById, updateUserInMockDB } from './mock-data';
+import { format } from 'date-fns';
 
 // =================================================================
 // MOCK SERVER ACTIONS - NO DATABASE INTERACTION
@@ -17,17 +18,48 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const validationResult = RegistrationFormSchema.safeParse(data);
 
         if (!validationResult.success) {
-            return { success: false, error: 'Invalid form data.' };
+            // This case should ideally not be hit with client-side validation, but is a good failsafe.
+            const formattedErrors = validationResult.error.format();
+            // A more detailed error message could be constructed here from formattedErrors
+            return { success: false, error: 'Invalid form data provided.' };
         }
         
-        const { email } = validationResult.data;
-        const existingUser = allUsers.find(u => u.contact === email);
+        const { email, username, userRole } = validationResult.data;
+        const existingUser = allUsers.find(u => u.contact === email || u.username === username);
         if (existingUser) {
-            return { success: false, error: 'A user is already registered with this email.' };
+            return { success: false, error: 'A user is already registered with this email or username.' };
         }
 
-        // Simulate successful registration
+        // Create a new user object and add it to our in-memory "database"
+        const newUser: UserProfile = {
+            id: `mock-user-${Date.now()}`,
+            uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${Date.now().toString().slice(-6)}`,
+            name: validationResult.data.name,
+            username: validationResult.data.username,
+            contact: validationResult.data.email,
+            phone: validationResult.data.phone,
+            gender: validationResult.data.gender,
+            password: validationResult.data.password, // Storing plain text for mock login
+            subscriptionPlan: userRole === 'customer' ? 'None' : 'Trainer',
+            location: userRole === 'trainer' ? validationResult.data.location : '',
+            registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+            approvalStatus: 'Pending',
+        };
+        
+        // Add trainer-specific fields if applicable
+        if (userRole === 'trainer') {
+            Object.assign(newUser, {
+                specialization: validationResult.data.specialization,
+                yearsOfExperience: validationResult.data.yearsOfExperience,
+                vehicleInfo: validationResult.data.trainerVehicleType,
+            });
+        }
+        
+        allUsers.push(newUser);
+        
         console.log("Simulating successful user registration for:", email);
+        console.log("Total users in mock DB:", allUsers.length);
+        
         return { success: true };
 
     } catch (error: any) {

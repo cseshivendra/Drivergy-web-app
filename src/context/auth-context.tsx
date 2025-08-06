@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { allUsers, fetchUserById } from '@/lib/mock-data';
 
 // Mock users for demonstration
 const mockCustomer: UserProfile = {
@@ -13,6 +14,7 @@ const mockCustomer: UserProfile = {
     name: 'Priya Sharma',
     username: 'priya',
     contact: 'customer@drivergy.com',
+    password: 'password',
     phone: '1234567890',
     gender: 'Female',
     location: 'Gurugram',
@@ -38,6 +40,7 @@ const mockTrainer: UserProfile = {
     name: 'Rajesh Kumar',
     username: 'rajesh',
     contact: 'trainer@drivergy.com',
+    password: 'password',
     phone: '9876543210',
     gender: 'Male',
     location: 'Gurugram',
@@ -55,14 +58,28 @@ const mockAdmin: UserProfile = {
     id: 'admin',
     uniqueId: 'ADMIN-001',
     name: 'Admin',
+    username: 'admin',
     isAdmin: true,
     contact: 'admin@drivergy.com',
+    password: 'admin',
     location: 'HQ',
     subscriptionPlan: 'Admin',
     approvalStatus: 'Approved',
     registrationTimestamp: new Date().toISOString(),
     gender: 'Any'
 };
+
+// Add the initial mock users to the main list if they don't already exist.
+if (!allUsers.find(u => u.id === 'mock-customer-1')) {
+    allUsers.push(mockCustomer);
+}
+if (!allUsers.find(u => u.id === 'mock-trainer-1')) {
+    allUsers.push(mockTrainer);
+}
+if (!allUsers.find(u => u.id === 'admin')) {
+    allUsers.push(mockAdmin);
+}
+
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -92,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signInWithGoogle = async () => {
         setLoading(true);
-        toast({ title: "Simulating Google Sign-In...", description: "Logging in as a sample customer." });
+        toast({ title: "Simulating Google Sign-In...", description: "Logging in as the sample customer." });
         setTimeout(() => {
             sessionStorage.setItem('mockUser', JSON.stringify(mockCustomer));
             setUser(mockCustomer);
@@ -104,15 +121,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         
-        let userToLogin: UserProfile | null = null;
-        
-        if (identifier.toLowerCase() === 'admin' && password === 'admin') {
-            userToLogin = mockAdmin;
-        } else if (identifier.toLowerCase() === 'customer@drivergy.com' && password === 'password') {
-            userToLogin = mockCustomer;
-        } else if (identifier.toLowerCase() === 'trainer@drivergy.com' && password === 'password') {
-            userToLogin = mockTrainer;
-        }
+        // Find user by email or username in our mock database
+        const userToLogin = allUsers.find(u => 
+            (u.contact.toLowerCase() === identifier.toLowerCase() || u.username?.toLowerCase() === identifier.toLowerCase()) &&
+            u.password === password
+        );
 
         setTimeout(() => {
             if (userToLogin) {
@@ -121,7 +134,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
                 router.push('/dashboard');
             } else {
-                toast({ title: 'Login Failed', description: 'Invalid credentials. Use customer@drivergy.com, trainer@drivergy.com, or admin.', variant: 'destructive' });
+                toast({ 
+                    title: 'Login Failed', 
+                    description: 'Invalid credentials. Please try again or register.', 
+                    variant: 'destructive' 
+                });
             }
             setLoading(false);
         }, 1000);
