@@ -215,7 +215,7 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
             title: 'Learn Car driving at just Rs. 999',
             description: 'Get started with our best plan and save big. Limited time only!',
             href: '/payment?plan=Premium&price=9999',
-            imageSrc: 'https://placehold.co/600x800/ef4444/ffffff.png',
+            imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478493/ChatGPT_Image_Aug_6_2025_04_37_53_PM_qxaaye.png',
             imageHint: 'discount sale offer',
         },
         {
@@ -223,7 +223,7 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
             title: 'Join as a Trainer!',
             description: 'Sign up this month and get a ₹1000 joining bonus after your first student.',
             href: '/register',
-            imageSrc: 'https://placehold.co/600x800/3b82f6/ffffff.png',
+            imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478297/ChatGPT_Image_Aug_6_2025_04_34_41_PM_nwyvmi.png',
             imageHint: 'driving instructor welcome',
         },
         {
@@ -231,7 +231,7 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
             title: 'Double Referral Points!',
             description: 'For a limited time, earn double the points for every friend you refer.',
             href: '/dashboard/referrals/invite',
-            imageSrc: 'https://placehold.co/600x800/22c55e/ffffff.png',
+            imageSrc: 'https://res.cloudinary.com/dssbgilba/image/upload/v1754478271/ChatGPT_Image_Aug_6_2025_04_28_56_PM_b2sdin.png',
             imageHint: 'gift points reward',
         },
     ];
