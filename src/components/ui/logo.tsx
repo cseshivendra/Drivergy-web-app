@@ -20,7 +20,7 @@ const DrivergyLogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
-const DrivergyLogo = (props: React.SVGProps<SVGSVGElement>) => (
+const DrivergyLogo = (props: React.SVGProps<SVGSVGElement> & {className?: string}) => (
     // This component now only returns the text part of the logo.
     // The icon is handled separately in the sidebar to allow for independent show/hide logic.
     <span className={cn("font-headline text-2xl font-extrabold text-primary tracking-tighter", props.className)}>

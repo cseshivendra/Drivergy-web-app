@@ -13,7 +13,7 @@ import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, User
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from '@/hooks/use-toast';
-import { DrivergyLogoIcon } from '@/components/ui/logo';
+import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
@@ -83,8 +83,9 @@ export default function LoginPage() {
       <div className="relative z-20 flex min-h-screen flex-col items-center justify-center p-4">
         <Card className={`w-full max-w-md bg-card/90 backdrop-blur-md shadow-2xl rounded-xl border-border/50 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <CardHeader className="text-center p-6 space-y-2">
-            <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
-               <DrivergyLogoIcon className="h-16 w-auto text-primary" />
+            <div className="mx-auto mb-3 flex items-center justify-center gap-2">
+               <DrivergyLogoIcon className="h-12 w-auto text-primary" />
+               <DrivergyLogo className="h-12 w-auto text-primary text-4xl" />
             </div>
             <p className="text-xl font-semibold text-foreground/90 mt-1">Steer Your Success</p>
             <CardDescription className="text-muted-foreground pt-1 px-2">Sign in to access your dashboard and unlock new opportunities.</CardDescription>
