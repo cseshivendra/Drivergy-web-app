@@ -567,3 +567,5 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     const updatedDoc = await getDoc(userRef);
     return updatedDoc.exists() ? { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile : null;
 };
+
+    

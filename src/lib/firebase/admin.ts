@@ -37,3 +37,5 @@ if (!admin.apps.length) {
 // which is the desired behavior to surface the configuration error.
 export const adminAuth = admin.apps.length ? admin.auth() : null;
 export const adminDb = admin.apps.length ? admin.firestore() : null;
+
+    

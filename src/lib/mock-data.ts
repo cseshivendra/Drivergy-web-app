@@ -282,3 +282,5 @@ export async function fetchReferralsByUserId(userId: string | undefined): Promis
         return { ...ref, refereeUniqueId: referee?.uniqueId, refereeSubscriptionPlan: referee?.subscriptionPlan, refereeApprovalStatus: referee?.approvalStatus };
     });
 }
+
+    
