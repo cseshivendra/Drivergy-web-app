@@ -116,22 +116,22 @@ const timeSlots = [
 ];
 
 const CircularProgress = ({ progress = 0, completed, total }: { progress: number; completed: number; total: number; }) => {
-    const strokeWidth = 10;
-    const radius = 50 - strokeWidth / 2;
+    const strokeWidth = 8;
+    const radius = 40 - strokeWidth / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (progress / 100) * circumference;
 
     return (
-        <div className="relative flex items-center justify-center w-32 h-32">
+        <div className="relative flex items-center justify-center w-28 h-28">
             <svg className="absolute w-full h-full transform -rotate-90">
                 <circle
-                    className="text-muted"
+                    className="text-muted/40"
                     strokeWidth={strokeWidth}
                     stroke="currentColor"
                     fill="transparent"
                     r={radius}
-                    cx="50"
-                    cy="50"
+                    cx="50%"
+                    cy="50%"
                 />
                 <circle
                     className="text-primary"
@@ -142,13 +142,13 @@ const CircularProgress = ({ progress = 0, completed, total }: { progress: number
                     stroke="currentColor"
                     fill="transparent"
                     r={radius}
-                    cx="50"
-                    cy="50"
+                    cx="50%"
+                    cy="50%"
                 />
             </svg>
             <div className="flex flex-col items-center">
               <span className="text-2xl font-bold text-primary">{completed}</span>
-              <span className="text-sm text-muted-foreground">/ {total} lessons</span>
+              <span className="text-xs text-muted-foreground">/ {total} lessons</span>
             </div>
         </div>
     );
@@ -455,7 +455,7 @@ export default function CustomerDashboard() {
         </Card>
         )}
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col xl:col-span-2">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
           <CardHeader>
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary/10 rounded-lg">
@@ -474,7 +474,7 @@ export default function CustomerDashboard() {
               total={profile?.totalLessons ?? 0}
             />
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-grow flex items-end">
               <p className="text-xs text-muted-foreground text-center w-full">
                 Your trainer marks attendance after each lesson.
               </p>
