@@ -34,12 +34,6 @@ export default function Header() {
                <PanelLeft className="h-5 w-5" />
             </Button>
           )}
-          {(!isMobile && sidebarState === 'collapsed') && (
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <DrivergyLogoIcon className="h-8 w-8 text-primary" />
-              <DrivergyLogo className="h-7 w-auto text-primary" />
-            </Link>
-          )}
         </div>
         <nav className="flex items-center space-x-4">
           <Button
