@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         // Find user by email or username in our mock database
         const userToLogin = allUsers.find(u => 
-            (u.contact.toLowerCase() === identifier.toLowerCase() || u.username?.toLowerCase() === identifier.toLowerCase()) &&
+            (u.contact.toLowerCase() === identifier.toLowerCase() || (u.username && u.username.toLowerCase() === identifier.toLowerCase())) &&
             u.password === password
         );
 
