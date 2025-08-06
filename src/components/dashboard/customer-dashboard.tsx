@@ -115,6 +115,45 @@ const timeSlots = [
   "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"
 ];
 
+const CircularProgress = ({ progress = 0, completed, total }: { progress: number; completed: number; total: number; }) => {
+    const strokeWidth = 10;
+    const radius = 50 - strokeWidth / 2;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+    return (
+        <div className="relative flex items-center justify-center w-32 h-32">
+            <svg className="absolute w-full h-full transform -rotate-90">
+                <circle
+                    className="text-muted"
+                    strokeWidth={strokeWidth}
+                    stroke="currentColor"
+                    fill="transparent"
+                    r={radius}
+                    cx="50"
+                    cy="50"
+                />
+                <circle
+                    className="text-primary"
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="transparent"
+                    r={radius}
+                    cx="50"
+                    cy="50"
+                />
+            </svg>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold text-primary">{completed}</span>
+              <span className="text-sm text-muted-foreground">/ {total} lessons</span>
+            </div>
+        </div>
+    );
+};
+
 export default function CustomerDashboard() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -428,14 +467,12 @@ export default function CustomerDashboard() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="flex-grow flex flex-col justify-center space-y-4">
-            <div className="flex justify-between items-baseline">
-              <p className="text-muted-foreground">Progress</p>
-              <p className="text-2xl font-bold text-primary">
-                {profile?.completedLessons ?? 0} / {profile?.totalLessons ?? 0}
-              </p>
-            </div>
-            <Progress value={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100} />
+          <CardContent className="flex-grow flex flex-col items-center justify-center space-y-2">
+            <CircularProgress 
+              progress={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100}
+              completed={profile?.completedLessons ?? 0}
+              total={profile?.totalLessons ?? 0}
+            />
           </CardContent>
           <CardFooter>
               <p className="text-xs text-muted-foreground text-center w-full">
