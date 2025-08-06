@@ -1,12 +1,14 @@
 
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, documentId, orderBy, limit, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
 
-export const allUsers: UserProfile[] = [
+
+// =================================================================
+// MOCK IN-MEMORY DATABASE
+// =================================================================
+
+export let allUsers: UserProfile[] = [
     {
         id: 'mock-customer-1',
         uniqueId: 'CU-MOCK01',
@@ -63,9 +65,21 @@ export const allUsers: UserProfile[] = [
     }
 ];
 
+// Helper to update a user in the mock DB
+export const updateUserInMockDB = (updatedUser: UserProfile) => {
+    const index = allUsers.findIndex(u => u.id === updatedUser.id);
+    if (index !== -1) {
+        allUsers[index] = updatedUser;
+    }
+};
+
+
+// =================================================================
+// MOCK DATA FETCHING FUNCTIONS (Simulating DB calls)
+// =================================================================
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
-    const user = allUsers.find(u => u.id === userId || u.username === userId);
+    const user = allUsers.find(u => u.id === userId || u.username === userId || u.contact === userId);
     if (user) {
         if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
             const trainer = allUsers.find(t => t.id === user.assignedTrainerId);
@@ -77,33 +91,7 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
         }
         return { ...user };
     }
-    
-    if (!db) return null;
-
-    const collectionsToSearch = ['customers', 'trainers'];
-    for (const col of collectionsToSearch) {
-        try {
-            const userRef = doc(db, col, userId);
-            const userSnap = await getDoc(userRef);
-
-            if (userSnap.exists()) {
-                const user = { id: userSnap.id, ...userSnap.data() } as UserProfile;
-                if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-                    const trainerSnap = await getDoc(doc(db, "trainers", user.assignedTrainerId));
-                    if (trainerSnap.exists()) {
-                        const trainer = trainerSnap.data() as UserProfile;
-                        user.assignedTrainerPhone = trainer.phone;
-                        user.assignedTrainerExperience = trainer.yearsOfExperience;
-                        user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
-                    }
-                }
-                return user;
-            }
-        } catch (error: any) {
-            console.error(`Error fetching user ${userId} from ${col}:`, error);
-        }
-    }
-    return null; // Not found in any collection
+    return null; 
 };
 
 export function listenToAdminDashboardData(callback: (data: AdminDashboardData) => void): () => void {
@@ -204,9 +192,6 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
     }
     
     callback(data);
-
-    // This listener is now a mock, so it doesn't need a real Firebase connection.
-    // It returns an empty cleanup function.
     return () => {};
 }
 
@@ -257,22 +242,13 @@ export function listenToTrainerStudents(trainerId: string, callback: (data: { st
 }
 
 export async function fetchCourses(): Promise<Course[]> {
-    if (!db) return [];
-    const snapshot = await getDocs(collection(db, "courses"));
-    return reAssignCourseIcons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course)));
+    return [];
 }
 
 export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => void {
-    if (!db) {
-        callback([]);
-        return () => {};
-    }
-    const q = query(collection(db, 'blogPosts'), orderBy('date', 'desc'));
-    return onSnapshot(q, (snap) => {
-        callback(snap.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost)));
-    });
+    callback([]);
+    return () => {};
 }
-
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
     const posterData: PromotionalPoster[] = [
@@ -302,16 +278,8 @@ export function listenToPromotionalPosters(callback: (data: PromotionalPoster[])
         },
     ];
     callback(posterData);
-    return () => {}; // No-op for cleanup since it's static data
+    return () => {};
 }
-
-const reAssignCourseIcons = (coursesToHydrate: Course[]): Course[] => coursesToHydrate.map(course => {
-    let newIcon;
-    if (course.title.includes('Car')) newIcon = Car;
-    else if (course.title.includes('Motorcycle')) newIcon = Bike;
-    else newIcon = FileText;
-    return { ...course, icon: newIcon };
-});
 
 export async function fetchApprovedInstructors(filters: { location?: string; gender?: string } = {}): Promise<UserProfile[]> {
     let instructors = allUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus === 'Approved');
@@ -388,4 +356,7 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
     console.log("Mock updateQuizQuestion called");
     return null;
 }
-    
+
+export async function fetchQuizSets(): Promise<QuizSet[]> {
+    return [];
+}

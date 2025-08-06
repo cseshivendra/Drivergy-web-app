@@ -1,17 +1,68 @@
 
 'use client';
 
-import type { User as FirebaseUser } from 'firebase/auth';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut as firebaseSignOut, type Auth, signInWithEmailAndPassword } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
-import { fetchUserById } from '@/lib/mock-data';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db } from '@/lib/firebase/client';
-import { doc, setDoc } from 'firebase/firestore';
-import { verifyAdminCredentials } from '@/lib/server-actions';
 
+// Mock users for demonstration
+const mockCustomer: UserProfile = {
+    id: 'mock-customer-1',
+    uniqueId: 'CU-MOCK01',
+    name: 'Priya Sharma',
+    username: 'priya',
+    contact: 'customer@drivergy.com',
+    phone: '1234567890',
+    gender: 'Female',
+    location: 'Gurugram',
+    subscriptionPlan: 'Premium',
+    registrationTimestamp: 'Jul 20, 2024',
+    approvalStatus: 'Approved',
+    photoURL: 'https://placehold.co/100x100.png?text=P',
+    myReferralCode: 'PRIYA1234',
+    trainerPreference: 'Any',
+    assignedTrainerId: 'mock-trainer-1',
+    assignedTrainerName: 'Rajesh Kumar',
+    upcomingLesson: 'Aug 01, 2024, 9:00 AM',
+    subscriptionStartDate: 'Jul 22, 2024',
+    totalLessons: 20,
+    completedLessons: 5,
+    feedbackSubmitted: false,
+    totalReferralPoints: 100,
+};
+
+const mockTrainer: UserProfile = {
+    id: 'mock-trainer-1',
+    uniqueId: 'TR-MOCK01',
+    name: 'Rajesh Kumar',
+    username: 'rajesh',
+    contact: 'trainer@drivergy.com',
+    phone: '9876543210',
+    gender: 'Male',
+    location: 'Gurugram',
+    subscriptionPlan: 'Trainer',
+    registrationTimestamp: 'Jul 15, 2024',
+    approvalStatus: 'Approved',
+    photoURL: `https://placehold.co/100x100.png?text=R`,
+    myReferralCode: `RAJESH5678`,
+    vehicleInfo: 'Car (Manual)',
+    specialization: 'Car',
+    yearsOfExperience: 5,
+};
+
+const mockAdmin: UserProfile = {
+    id: 'admin',
+    uniqueId: 'ADMIN-001',
+    name: 'Admin',
+    isAdmin: true,
+    contact: 'admin@drivergy.com',
+    location: 'HQ',
+    subscriptionPlan: 'Admin',
+    approvalStatus: 'Approved',
+    registrationTimestamp: new Date().toISOString(),
+    gender: 'Any'
+};
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -31,193 +82,68 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
 
     useEffect(() => {
-        if (!auth) {
-            console.error("Firebase Auth is not initialized.");
-            setLoading(false);
-            return;
+        // Check session storage to see if a user was previously "logged in"
+        const storedUser = sessionStorage.getItem('mockUser');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
         }
-
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (firebaseUser) {
-                if (sessionStorage.getItem('isAdmin') === 'true') {
-                    setUser({
-                        id: 'admin',
-                        uniqueId: 'ADMIN-001',
-                        name: 'Admin',
-                        isAdmin: true,
-                        contact: 'admin@drivergy.com',
-                        location: 'HQ',
-                        subscriptionPlan: 'Admin',
-                        approvalStatus: 'Approved',
-                        registrationTimestamp: new Date().toISOString(),
-                        gender: 'Any'
-                    });
-                } else {
-                    const profile = await fetchUserById(firebaseUser.uid);
-                    setUser(profile);
-                }
-            } else {
-                setUser(null);
-                sessionStorage.removeItem('isAdmin');
-            }
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
+        setLoading(false);
     }, []);
 
     const signInWithGoogle = async () => {
-        if (!auth || !db) return;
-        try {
-            const provider = new GoogleAuthProvider();
-            setLoading(true);
-            const result = await signInWithPopup(auth, provider);
-            const firebaseUser = result.user;
-
-            let profile = await fetchUserById(firebaseUser.uid);
-
-            if (profile) {
-                setUser(profile);
-                toast({ title: `Welcome back, ${profile.name}!`, description: 'Redirecting to your dashboard...' });
-            } else {
-                const userRef = doc(db, "customers", firebaseUser.uid);
-                const name = firebaseUser.displayName || 'New User';
-                const email = firebaseUser.email;
-
-                if (!email) {
-                    throw new Error("Could not retrieve email from Google.");
-                }
-
-                const newUserProfile: Omit<UserProfile, 'id'> = {
-                    uniqueId: `CU-${firebaseUser.uid.slice(-6).toUpperCase()}`,
-                    name,
-                    contact: email,
-                    phone: firebaseUser.phoneNumber || '',
-                    gender: 'Prefer not to say',
-                    location: 'TBD', // To be determined
-                    subscriptionPlan: "None",
-                    registrationTimestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                    approvalStatus: 'Pending',
-                    photoURL: firebaseUser.photoURL || `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-                    myReferralCode: `${name.split(' ')[0].toUpperCase()}${firebaseUser.uid.slice(-4)}`,
-                    trainerPreference: 'Any',
-                    totalLessons: 0,
-                    completedLessons: 0,
-                    upcomingLesson: '',
-                    feedbackSubmitted: false,
-                    totalReferralPoints: 0,
-                };
-
-                await setDoc(userRef, newUserProfile);
-                profile = { id: firebaseUser.uid, ...newUserProfile } as UserProfile;
-                setUser(profile);
-                toast({ title: "Welcome to Drivergy!", description: "Your account has been created." });
-            }
-            router.push('/dashboard');
-
-        } catch (error: any) {
-            if (error.code === 'auth/popup-closed-by-user') {
-                return;
-            }
-            if (error.code === 'auth/account-exists-with-different-credential') {
-                toast({ title: "Sign-In Failed", description: "An account with this email already exists using a different sign-in method.", variant: "destructive" });
-            } else {
-                toast({ title: "Sign-In Failed", description: error.message || "An error occurred.", variant: "destructive" });
-            }
-            console.error("Google Sign-in Error:", error);
-        } finally {
+        setLoading(true);
+        toast({ title: "Simulating Google Sign-In...", description: "Logging in as a sample customer." });
+        setTimeout(() => {
+            sessionStorage.setItem('mockUser', JSON.stringify(mockCustomer));
+            setUser(mockCustomer);
             setLoading(false);
-        }
+            router.push('/dashboard');
+        }, 1000);
     };
 
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
+        
+        let userToLogin: UserProfile | null = null;
+        
+        if (identifier.toLowerCase() === 'admin' && password === 'admin') {
+            userToLogin = mockAdmin;
+        } else if (identifier.toLowerCase() === 'customer@drivergy.com' && password === 'password') {
+            userToLogin = mockCustomer;
+        } else if (identifier.toLowerCase() === 'trainer@drivergy.com' && password === 'password') {
+            userToLogin = mockTrainer;
+        }
 
-        // Special case for admin login
-        if (identifier.toLowerCase() === 'admin') {
-            const adminCheck = await verifyAdminCredentials({ username: identifier, password });
-
-            if (adminCheck.isAdmin) {
-                const adminUser: UserProfile = {
-                    id: 'admin',
-                    uniqueId: 'ADMIN-001',
-                    name: 'Admin',
-                    isAdmin: true,
-                    contact: 'admin@drivergy.com',
-                    location: 'HQ',
-                    subscriptionPlan: 'Admin',
-                    approvalStatus: 'Approved',
-                    registrationTimestamp: new Date().toISOString(),
-                    gender: 'Any'
-                };
-                sessionStorage.setItem('isAdmin', 'true');
-                setUser(adminUser);
-                toast({ title: 'Admin Login Successful!', description: 'Redirecting to your dashboard...' });
+        setTimeout(() => {
+            if (userToLogin) {
+                sessionStorage.setItem('mockUser', JSON.stringify(userToLogin));
+                setUser(userToLogin);
+                toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
                 router.push('/dashboard');
-                setLoading(false);
-                return;
             } else {
-                toast({ title: 'Login Failed', description: adminCheck.error || 'Invalid admin credentials.', variant: 'destructive' });
-                setLoading(false);
-                return;
+                toast({ title: 'Login Failed', description: 'Invalid credentials. Use customer@drivergy.com, trainer@drivergy.com, or admin.', variant: 'destructive' });
             }
-        }
-
-        // Regular user login
-        if (!auth) {
             setLoading(false);
-            return;
-        };
-
-        try {
-            await signInWithEmailAndPassword(auth, identifier, password);
-            // onAuthStateChanged will handle setting the user and redirecting
-            toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
-            router.push('/dashboard');
-        } catch (error: any) {
-            let description = 'An unexpected error occurred. Please try again.';
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                description = 'Invalid credentials. Please check your email and password.';
-            } else if (error.code === 'permission-denied' || error.code === 'PERMISSION_DENIED') {
-                description = 'Database access was denied. This is likely a cloud configuration issue. Please see the README file for instructions on fixing "Permission Denied" errors by granting the "Service Usage Consumer" role to your service account.'
-            }
-            toast({
-                title: 'Login Failed',
-                description: description,
-                variant: 'destructive',
-            });
-        } finally {
-            setLoading(false);
-        }
+        }, 1000);
     };
 
     const signOut = async () => {
-        sessionStorage.removeItem('isAdmin');
-
-        if (!auth) return;
-        try {
-            setLoading(true);
-            await firebaseSignOut(auth);
-            setUser(null);
-            toast({
-                title: 'Logged Out',
-                description: 'You have been successfully signed out.',
-            });
-            router.push('/');
-        } catch(error) {
-            console.error("Error signing out:", error);
-            toast({ title: 'Logout Failed', description: 'An error occurred while signing out.', variant: 'destructive' });
-        } finally {
-            setLoading(false);
-        }
+        setLoading(true);
+        sessionStorage.removeItem('mockUser');
+        setUser(null);
+        toast({ title: 'Logged Out', description: 'You have been successfully signed out.' });
+        setLoading(false);
+        router.push('/');
     };
-
+    
     const logInUser = (user: UserProfile, redirect = true) => {
         setUser(user);
+        sessionStorage.setItem('mockUser', JSON.stringify(user));
         if (redirect) {
             router.push('/dashboard');
         }
     };
+
 
     const value: AuthContextType = {
         user,
@@ -242,5 +168,3 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
-
-    
