@@ -101,9 +101,10 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
         if (!user) {
             return { success: false, error: 'User not found.' };
         }
-
-        if (typeof data.subscriptionStartDate === 'string') {
-            data.subscriptionStartDate = new Date(data.subscriptionStartDate);
+        
+        const rawDate = data.subscriptionStartDate;
+        if (typeof rawDate === 'string' && !isNaN(Date.parse(rawDate))) {
+            data.subscriptionStartDate = new Date(rawDate);
         }
 
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
@@ -131,7 +132,7 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
             photoIdType: profileData.photoIdType,
             photoIdNumber: profileData.photoIdNumber,
             photoIdUrl: photoIdUrl,
-            subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
+            subscriptionStartDate: format(new Date(profileData.subscriptionStartDate), 'MMM dd, yyyy'),
             referralCode: profileData.referralCode,
             approvalStatus: 'Pending', 
         });
