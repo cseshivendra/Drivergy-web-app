@@ -228,7 +228,12 @@ export const updateUserInMockDB = (updatedUser: UserProfile) => {
 // =================================================================
 
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
-    const user = allUsers.find(u => u.id === userId || u.username === userId || u.contact === userId);
+    const user = allUsers.find(u => 
+        u.id === userId || 
+        u.uniqueId === userId || 
+        u.username === userId || 
+        u.contact === userId
+    );
     if (user) {
         if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
             const trainer = allUsers.find(t => t.id === user.assignedTrainerId);
