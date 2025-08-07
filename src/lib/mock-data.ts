@@ -1,4 +1,5 @@
 
+
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
@@ -242,7 +243,7 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
     return null; 
 };
 
-export function listenToAdminDashboardData(callback: (data: AdminDashboardData) => void): () => void {
+const getDashboardData = (): AdminDashboardData => {
     const mockLessonRequests: LessonRequest[] = allUsers
         .filter(u => u.uniqueId?.startsWith('CU'))
         .map(u => ({
@@ -314,14 +315,14 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         refereeApprovalStatus: 'Approved'
     }];
     
-    const data: AdminDashboardData = {
+    return {
         summaryData: {
             totalCustomers, totalInstructors, activeSubscriptions, 
             pendingRequests: mockLessonRequests.filter(r => r.status === 'Pending').length,
             pendingRescheduleRequests: mockRescheduleRequests.filter(r => r.status === 'Pending').length,
             totalEarnings, totalCertifiedTrainers
         },
-        allUsers,
+        allUsers: JSON.parse(JSON.stringify(allUsers)), // Deep copy
         lessonRequests: mockLessonRequests,
         rescheduleRequests: mockRescheduleRequests,
         feedback: mockFeedback,
@@ -333,27 +334,36 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
         blogPosts: mockBlogPosts,
         siteBanners: mockSiteBanners,
         promotionalPosters: mockPromotionalPosters
-    }
-    
+    };
+};
+
+export function listenToAdminDashboardData(callback: (data: AdminDashboardData) => void): () => void {
+    const data = getDashboardData();
     callback(data);
+    
+    // In a real app, this would return an unsubscribe function.
+    // For this mock, we don't need a persistent listener, as re-fetch is manual.
     return () => {};
 }
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void): () => void {
     const user = allUsers.find(u => u.id === userId);
     if(user){
-        if (user.uniqueId?.startsWith('CU') && user.assignedTrainerId) {
-            const trainer = allUsers.find(t => t.id === user.assignedTrainerId);
+        // Make a deep copy to avoid direct mutation
+        const userCopy = JSON.parse(JSON.stringify(user));
+        if (userCopy.uniqueId?.startsWith('CU') && userCopy.assignedTrainerId) {
+            const trainer = allUsers.find(t => t.id === userCopy.assignedTrainerId);
             if (trainer) {
-                user.assignedTrainerPhone = trainer.phone;
-                user.assignedTrainerExperience = trainer.yearsOfExperience;
-                user.assignedTrainerVehicleDetails = trainer.vehicleInfo;
+                userCopy.assignedTrainerPhone = trainer.phone;
+                userCopy.assignedTrainerExperience = trainer.yearsOfExperience;
+                userCopy.assignedTrainerVehicleDetails = trainer.vehicleInfo;
             }
         }
-        callback(user);
+        callback(userCopy);
     } else {
         callback(null);
     }
+    // No-op for unsubscribe in mock environment
     return () => {};
 };
 

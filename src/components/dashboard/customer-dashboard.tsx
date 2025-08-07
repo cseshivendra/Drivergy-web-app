@@ -11,7 +11,7 @@ import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift, Hourglass } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +26,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import { Badge } from '../ui/badge';
 
 
 // Helper component for Star Rating input
@@ -153,6 +154,17 @@ const CircularProgress = ({ progress = 0, completed, total }: { progress: number
         </div>
     );
 };
+
+const getStatusBadgeClass = (status: UserProfile['approvalStatus']): string => {
+     switch (status) {
+      case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
+      case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
+      case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
+      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+    }
+}
+
 
 export default function CustomerDashboard() {
   const router = useRouter();
@@ -307,6 +319,36 @@ export default function CustomerDashboard() {
           <Skeleton className="h-64 w-full" />
         </div>
       </div>
+    );
+  }
+
+  if (profile && profile.approvalStatus !== 'Approved') {
+    return (
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
+            <Card className="shadow-xl text-center p-8">
+                <CardHeader>
+                    <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
+                        <Hourglass className="h-12 w-12 text-yellow-500" />
+                    </div>
+                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
+                    <CardDescription className="text-lg mt-4">
+                        <div className="flex items-center justify-center gap-2">
+                            <span>Verification Status:</span>
+                            <Badge className={`text-base ${getStatusBadgeClass(profile.approvalStatus)}`}>
+                                {profile.approvalStatus}
+                            </Badge>
+                        </div>
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                        Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
+                        <br /><br />
+                        Thank you for your patience.
+                    </p>
+                </CardContent>
+            </Card>
+        </div>
     );
   }
 
