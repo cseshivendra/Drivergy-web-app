@@ -105,13 +105,15 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
         const rawDate = data.subscriptionStartDate;
         if (typeof rawDate === 'string' && !isNaN(Date.parse(rawDate))) {
             data.subscriptionStartDate = new Date(rawDate);
+        } else if (rawDate === 'undefined' || !rawDate) {
+             return { success: false, error: 'Subscription Start Date is required.' };
         }
 
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
         if (!validationResult.success) {
             console.error("Profile completion validation error:", validationResult.error.format());
-            return { success: false, error: "Invalid data submitted. Please check your entries." };
+            return { success: false, error: "An unexpected response was received from the server." };
         }
 
         const profileData = validationResult.data;
@@ -140,7 +142,6 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
         updateUserInMockDB(user);
         console.log(`Successfully completed profile for user ${userId}.`);
         
-        // Fetch the user again to get the most up-to-date version
         const updatedUser = await fetchUserById(userId);
         return { success: true, user: updatedUser || undefined };
 
