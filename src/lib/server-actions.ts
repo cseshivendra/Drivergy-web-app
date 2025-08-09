@@ -89,36 +89,40 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
     return { success: false, error: 'User not found' };
 }
 
-export const completeCustomerProfileAction = async (formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
+export const completeCustomerProfileAction = async (prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
     try {
         const data = Object.fromEntries(formData.entries());
+        
         const userId = data.userId as string;
-        
         if (!userId) {
-            return { success: false, error: 'User ID is missing.' };
-        }
-        
-        let user = await fetchUserById(userId);
-        if (!user) {
-            return { success: false, error: 'User not found.' };
-        }
-        
-        const rawDate = data.subscriptionStartDate;
-        if (typeof rawDate === 'string' && !isNaN(Date.parse(rawDate))) {
-            data.subscriptionStartDate = new Date(rawDate);
-        } else {
-             return { success: false, error: 'Subscription Start Date is invalid or missing.' };
+            return { success: false, error: 'User ID is missing from the form submission.' };
         }
 
+        let user = await fetchUserById(userId);
+        if (!user) {
+            return { success: false, error: `User with ID ${userId} not found.` };
+        }
+        
+        // Convert date string back to Date object for validation if it's a string
+        if (typeof data.subscriptionStartDate === 'string') {
+            const parsedDate = new Date(data.subscriptionStartDate);
+            if (!isNaN(parsedDate.getTime())) {
+                data.subscriptionStartDate = parsedDate;
+            } else {
+                return { success: false, error: 'Invalid subscription start date format.' };
+            }
+        }
+        
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
         if (!validationResult.success) {
             console.error("Profile completion validation error:", validationResult.error.format());
-            return { success: false, error: "An unexpected response was received from the server." };
+            return { success: false, error: "The provided information was invalid. Please check the fields and try again." };
         }
 
         const profileData = validationResult.data;
-        const photoIdUrl = `https://placehold.co/file-mock-path/${Date.now()}.pdf`;
+        // Simulate file upload
+        const photoIdUrl = `https://placehold.co/mock-file/${Date.now()}.pdf`;
 
         Object.assign(user, {
             subscriptionPlan: profileData.subscriptionPlan,
@@ -134,7 +138,7 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
             dlTypeHeld: profileData.dlTypeHeld,
             photoIdType: profileData.photoIdType,
             photoIdNumber: profileData.photoIdNumber,
-            photoIdUrl: photoIdUrl,
+            photoIdUrl: photoIdUrl, // Use the mock URL
             subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
             referralCode: profileData.referralCode,
             approvalStatus: 'Pending', 
@@ -144,11 +148,11 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
         console.log(`Successfully completed profile for user ${userId}.`);
         
         const updatedUser = await fetchUserById(userId);
-        return { success: true, user: updatedUser || undefined };
+        return { success: true, user: updatedUser };
 
     } catch (error) {
         console.error("Error in completeCustomerProfileAction:", error);
-        return { success: false, error: "An unexpected server error occurred." };
+        return { success: false, error: "An unexpected server error occurred during profile update." };
     }
 };
 

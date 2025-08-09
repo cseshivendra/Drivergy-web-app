@@ -79,6 +79,7 @@ export const UserProfileSchema = z.object({
   attendance: z.string().optional(), // 'Present', 'Absent', 'Pending'
   feedbackSubmitted: z.boolean().optional(),
   totalReferralPoints: z.number().optional(),
+  referralCode: z.string().optional(),
 
   // Trainer specific
   specialization: z.string().optional(),

@@ -17,7 +17,6 @@ import Loading from '@/app/loading';
 import { useState, useEffect } from 'react';
 import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
 import type { UserProfile } from '@/types';
-import { listenToUser } from '@/lib/mock-data';
 
 function PaymentGateway() {
   const router = useRouter();
@@ -47,6 +46,8 @@ function PaymentGateway() {
         } else {
             setIsProfileComplete(false);
         }
+    } else {
+        setIsProfileComplete(false);
     }
     setLoading(false); // Stop loading once we have the auth user info
   }, [user]);

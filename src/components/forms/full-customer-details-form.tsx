@@ -4,6 +4,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useFormState } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -48,6 +49,8 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   const { toast } = useToast();
   const { logInUser } = useAuth();
 
+  const [state, formAction] = useFormState(completeCustomerProfileAction, { success: false, error: undefined, user: undefined });
+
   const form = useForm<FullCustomerDetailsValues>({
     resolver: zodResolver(FullCustomerDetailsSchema),
     defaultValues: {
@@ -75,6 +78,24 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   const dlStatus = form.watch('dlStatus');
   const selectedState = form.watch('state');
 
+  useEffect(() => {
+    if (state.success && state.user) {
+        toast({
+            title: "Profile Complete!",
+            description: "Your details have been saved. You can now proceed to payment.",
+        });
+        logInUser(state.user, false);
+        onFormSubmit();
+    } else if (state.error) {
+        toast({
+            title: "Update Failed",
+            description: state.error,
+            variant: "destructive",
+        });
+    }
+  }, [state, toast, onFormSubmit, logInUser]);
+
+
   const availableDistricts = useMemo(() => {
     if (selectedState && DistrictsByState[selectedState as keyof typeof DistrictsByState]) {
       return DistrictsByState[selectedState as keyof typeof DistrictsByState];
@@ -89,45 +110,25 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
     }
   }, [selectedState, form, availableDistricts]);
 
-  async function onSubmit(data: FullCustomerDetailsValues) {
+  const onClientSubmit = (data: FullCustomerDetailsValues) => {
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (key === 'photoIdFile' && value instanceof File) {
-        formData.append(key, value);
-      } else if (key === 'subscriptionStartDate' && value instanceof Date) {
-        formData.append(key, value.toISOString());
-      } else if (value !== null && value !== undefined) {
-        formData.append(key, String(value));
-      }
+    // A more robust way to handle form data, especially files.
+    Object.keys(data).forEach(key => {
+        const value = data[key as keyof typeof data];
+        if (value instanceof File) {
+            formData.append(key, value);
+        } else if (value instanceof Date) {
+            formData.append(key, value.toISOString());
+        } else if (value !== null && value !== undefined) {
+            formData.append(key, String(value));
+        }
     });
-    
-    try {
-      // Pass the entire formData object to the server action
-      const result = await completeCustomerProfileAction(formData);
-      if (result.success && result.user) {
-        toast({
-          title: "Profile Complete!",
-          description: "Your details have been saved. You can now proceed to payment.",
-        });
-        // Update the user in the global auth context without redirecting
-        logInUser(result.user, false);
-        onFormSubmit();
-      } else {
-        throw new Error(result.error || "Failed to update profile.");
-      }
-    } catch (error) {
-      console.error('Profile completion failed:', error);
-      toast({
-        title: "Update Failed",
-        description: error instanceof Error ? error.message : "An unexpected error occurred during profile update.",
-        variant: "destructive",
-      });
-    }
-  }
+    formAction(formData);
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onClientSubmit)} className="space-y-8">
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Course & License Details</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
           <FormField
