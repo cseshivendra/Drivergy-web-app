@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -41,7 +42,7 @@ function PaymentGateway() {
     if (user) {
         setProfile(user);
         // Check if the profile is complete enough to show payment options
-        if (user.pincode && user.dlStatus && user.subscriptionPlan !== 'None') {
+        if (user.pincode && user.dlStatus) {
             setIsProfileComplete(true);
         } else {
             setIsProfileComplete(false);
@@ -87,8 +88,8 @@ function PaymentGateway() {
       // This function is called by the form on successful submission.
       // It triggers a re-evaluation of the user's profile completeness.
       if (user) {
-         const updatedUser = { ...user, pincode: 'dummy', dlStatus: 'dummy', subscriptionPlan: plan };
-         setProfile(updatedUser);
+         // The auth context is now the source of truth, so we just need to ensure
+         // the component re-renders to pick up the new state from the context.
          setIsProfileComplete(true);
       }
   };

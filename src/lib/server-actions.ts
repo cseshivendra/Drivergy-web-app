@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -105,8 +106,8 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
         const rawDate = data.subscriptionStartDate;
         if (typeof rawDate === 'string' && !isNaN(Date.parse(rawDate))) {
             data.subscriptionStartDate = new Date(rawDate);
-        } else if (rawDate === 'undefined' || !rawDate) {
-             return { success: false, error: 'Subscription Start Date is required.' };
+        } else {
+             return { success: false, error: 'Subscription Start Date is invalid or missing.' };
         }
 
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
@@ -134,7 +135,7 @@ export const completeCustomerProfileAction = async (formData: FormData): Promise
             photoIdType: profileData.photoIdType,
             photoIdNumber: profileData.photoIdNumber,
             photoIdUrl: photoIdUrl,
-            subscriptionStartDate: format(new Date(profileData.subscriptionStartDate), 'MMM dd, yyyy'),
+            subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
             referralCode: profileData.referralCode,
             approvalStatus: 'Pending', 
         });

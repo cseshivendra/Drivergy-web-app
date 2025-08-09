@@ -94,9 +94,9 @@ export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approval
 
 // Registration Forms
 const requiredFileSchema = z
-  .instanceof(File, { message: "File is required." })
-  .refine((file) => file.size > 0, "File cannot be empty.")
-  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
+  .any()
+  .refine((file) => file instanceof File && file.size > 0, "File is required and cannot be empty.")
+  .refine((file) => file instanceof File && file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
 
 const optionalFileSchema = z
   .instanceof(File)
@@ -174,9 +174,7 @@ export const FullCustomerDetailsSchema = z.object({
     photoIdType: z.enum(PhotoIdTypeOptions),
     photoIdNumber: z.string().min(1, 'ID number is required.'),
     photoIdFile: requiredFileSchema,
-    subscriptionStartDate: z.union([z.date(), z.string()]).refine(val => {
-        return (typeof val === 'string' && val.length > 0) || val instanceof Date;
-    }, { message: "Please select a start date." }),
+    subscriptionStartDate: z.date({required_error: "Please select a start date."}),
     referralCode: z.string().optional(),
 }).refine((data) => {
     if (data.dlStatus === 'Already Have DL') {

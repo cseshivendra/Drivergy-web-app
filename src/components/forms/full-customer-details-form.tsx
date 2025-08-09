@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -94,7 +95,7 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
       if (key === 'photoIdFile' && value instanceof File) {
         formData.append(key, value);
       } else if (key === 'subscriptionStartDate' && value instanceof Date) {
-        formData.append(key, format(value, 'MMM dd, yyyy'));
+        formData.append(key, value.toISOString());
       } else if (value !== null && value !== undefined) {
         formData.append(key, String(value));
       }
