@@ -17,13 +17,14 @@ import Loading from '@/app/loading';
 import { useState, useEffect } from 'react';
 import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
 import type { UserProfile } from '@/types';
+import { listenToUser } from '@/lib/mock-data';
 
 function PaymentGateway() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(user); // Initialize with user from auth
+  const [profile, setProfile] = useState<UserProfile | null>(user);
   const [loading, setLoading] = useState(true);
   
   const plan = searchParams.get('plan') || 'Selected Plan';
@@ -33,38 +34,40 @@ function PaymentGateway() {
   const [finalPrice, setFinalPrice] = useState(price);
   const [discountApplied, setDiscountApplied] = useState(false);
   
-  // This state now determines whether to show the details form or the payment form
   const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   useEffect(() => {
-    // Whenever the user object from auth context changes, update our local profile
-    if (user) {
-        setProfile(user);
-        // Check if the profile is complete enough to show payment options
-        if (user.pincode && user.dlStatus) {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = listenToUser(user.id, (userProfile) => {
+      if (userProfile) {
+        setProfile(userProfile);
+        // A user profile is considered "complete" for payment if they have an address and DL status.
+        if (userProfile.pincode && userProfile.dlStatus) {
             setIsProfileComplete(true);
         } else {
             setIsProfileComplete(false);
         }
-    } else {
-        setIsProfileComplete(false);
-    }
-    setLoading(false); // Stop loading once we have the auth user info
+      }
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
     e.preventDefault();
-    // Simulate payment processing
     toast({
       title: "Payment Successful!",
       description: `Your subscription for the ${plan} plan has been activated using ${method}. Redirecting to your dashboard.`,
     });
-    // In a real app, you would redirect to a success page or dashboard.
     router.push('/dashboard');
   };
   
   const handleApplyCode = () => {
-    // Simple mock logic for demonstration
     if (referralCode.trim().toUpperCase() === 'DRIVERGY10') {
       const originalPrice = parseInt(price, 10);
       if (isNaN(originalPrice) || originalPrice <= 0) return;
@@ -86,13 +89,9 @@ function PaymentGateway() {
   };
 
   const handleProfileCompletion = () => {
-      // This function is called by the form on successful submission.
-      // It triggers a re-evaluation of the user's profile completeness.
-      if (user) {
-         // The auth context is now the source of truth, so we just need to ensure
-         // the component re-renders to pick up the new state from the context.
-         setIsProfileComplete(true);
-      }
+      // This is now called after the form submission successfully updates the user
+      // in the mock DB and the auth context. The useEffect will handle the state change.
+      setIsProfileComplete(true);
   };
 
   if (authLoading || loading) {
@@ -133,7 +132,6 @@ function PaymentGateway() {
     )
   }
   
-  // If user is logged in, but profile is not complete, show the details form.
   if (!isProfileComplete) {
       return (
           <Card className="w-full max-w-3xl shadow-xl">

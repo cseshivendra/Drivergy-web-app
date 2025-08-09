@@ -44,10 +44,10 @@ export const UserProfileSchema = z.object({
   isAdmin: z.boolean().optional(),
   contact: z.string().email(),
   phone: z.string().optional(),
-  location: z.string(),
+  location: z.string().optional(),
   subscriptionPlan: z.string(),
   registrationTimestamp: z.string(),
-  approvalStatus: z.enum(ApprovalStatusOptions),
+  approvalStatus: z.string(),
   vehicleInfo: z.string().optional(),
   myReferralCode: z.string().optional(),
   photoURL: z.string().optional(),
@@ -91,7 +91,8 @@ export const UserProfileSchema = z.object({
   expertise: z.string().optional()
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
-export type ApprovalStatusType = z.infer<typeof UserProfileSchema.shape.approvalStatus>;
+export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
+
 
 // Registration Forms
 const requiredFileSchema = z
