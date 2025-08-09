@@ -131,11 +131,11 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
-  location: z.enum(Locations),
+  location: z.enum(Locations, { required_error: "Location is required." }),
   yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative."),
-  specialization: z.enum(SpecializationOptions),
-  trainerVehicleType: z.enum(TrainerVehicleTypeOptions),
-  fuelType: z.enum(FuelTypeOptions),
+  specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
+  trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
+  fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   trainerCertificateNumber: z.string().min(1, 'Certificate number is required.'),
   aadhaarCardNumber: z.string().min(1, 'Aadhaar number is required.'),
@@ -487,3 +487,4 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
+
