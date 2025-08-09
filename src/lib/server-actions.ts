@@ -2,9 +2,9 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues } from '@/types';
-import { allUsers, fetchUserById, updateUserInMockDB } from './mock-data';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, BlogPostSchema } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, BlogPostFormValues } from '@/types';
+import { allUsers, fetchUserById, updateUserInMockDB, mockBlogPosts } from './mock-data';
 import { format } from 'date-fns';
 
 // =================================================================
@@ -91,8 +91,8 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
 export const completeCustomerProfileAction = async (formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
     try {
         const data = Object.fromEntries(formData.entries());
-
         const userId = data.userId as string;
+        
         if (!userId) {
             return { success: false, error: 'User ID is missing.' };
         }
@@ -235,5 +235,59 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     return null;
 };
 
+// Blog Post Actions
+export async function addBlogPost(data: BlogPostFormValues): Promise<boolean> {
+    const existingPost = mockBlogPosts.find(p => p.slug === data.slug);
+    if (existingPost) {
+        throw new Error("A post with this slug already exists.");
+    }
+    // In a real app, you would handle file upload to a service like Cloudinary here
+    const newPost = {
+        ...data,
+        imageSrc: data.imageSrc || 'https://placehold.co/1200x800.png', // Fallback image
+        date: format(new Date(), 'LLL d, yyyy'),
+    };
+    mockBlogPosts.unshift(newPost);
+    return true;
+}
 
+export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
+    const postIndex = mockBlogPosts.findIndex(p => p.slug === slug);
+    if (postIndex === -1) {
+        return false;
+    }
+    // In a real app, you would handle file upload here if a new file is provided
+    const updatedPost = {
+        ...mockBlogPosts[postIndex],
+        ...data,
+        slug: slug, // Ensure slug is not changed on update
+    };
+    mockBlogPosts[postIndex] = updatedPost;
+    return true;
+}
+
+export async function deleteBlogPost(slug: string): Promise<boolean> {
+    const initialLength = mockBlogPosts.length;
+    let posts = mockBlogPosts.filter(p => p.slug !== slug);
+    const success = posts.length < initialLength;
+    if (success) {
+        // This is a mock, so we have to re-assign the array
+        while (mockBlogPosts.length > 0) {
+            mockBlogPosts.pop();
+        }
+        posts.forEach(p => mockBlogPosts.push(p));
+    }
+    return success;
+}
+
+export async function changeUserPassword(userId: string, currentPass: string, newPass: string): Promise<boolean> {
+    console.log(`Simulating password change for user ${userId}.`);
+    const user = await fetchUserById(userId);
+    if (user && user.password === currentPass) {
+        user.password = newPass;
+        updateUserInMockDB(user);
+        return true;
+    }
+    return false;
+}
     

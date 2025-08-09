@@ -148,7 +148,7 @@ let mockQuizSets: QuizSet[] = [
     }
 ];
 
-let mockBlogPosts: BlogPost[] = [
+export let mockBlogPosts: BlogPost[] = [
     {
         slug: 'first-post',
         title: '10 Tips for Passing Your Driving Test',
@@ -535,4 +535,9 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 
 export async function fetchQuizSets(): Promise<QuizSet[]> {
     return mockQuizSets;
+}
+
+export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+    const post = mockBlogPosts.find(p => p.slug === slug);
+    return post ? { ...post } : null;
 }
