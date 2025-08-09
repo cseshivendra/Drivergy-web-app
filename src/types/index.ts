@@ -175,7 +175,9 @@ export const FullCustomerDetailsSchema = z.object({
     photoIdType: z.enum(PhotoIdTypeOptions),
     photoIdNumber: z.string().min(1, 'ID number is required.'),
     photoIdFile: requiredFileSchema,
-    subscriptionStartDate: z.date({required_error: "Please select a start date."}),
+    subscriptionStartDate: z.preprocess((arg) => {
+        if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
+    }, z.date({required_error: "Please select a start date."})),
     referralCode: z.string().optional(),
 }).refine((data) => {
     if (data.dlStatus === 'Already Have DL') {
@@ -488,3 +490,6 @@ export interface AdminDashboardData {
     promotionalPosters: PromotionalPoster[];
 }
 
+
+
+    
