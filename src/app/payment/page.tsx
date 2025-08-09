@@ -23,7 +23,7 @@ function PaymentGateway() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(user); // Initialize with user from auth
   const [loading, setLoading] = useState(true);
   
   const plan = searchParams.get('plan') || 'Selected Plan';
@@ -32,24 +32,22 @@ function PaymentGateway() {
   const [referralCode, setReferralCode] = useState('');
   const [finalPrice, setFinalPrice] = useState(price);
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
+  
+  // This state now determines whether to show the details form or the payment form
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
-        setLoading(true);
-        const unsubscribe = listenToUser(user.id, (userProfile) => {
-            if (userProfile) {
-                setProfile(userProfile);
-                if (userProfile.pincode && userProfile.dlStatus) {
-                    setShowPayment(true);
-                }
-            }
-            setLoading(false);
-        });
-        return () => unsubscribe();
-    } else {
-        setLoading(false);
+    // Whenever the user object from auth context changes, update our local profile
+    if (user) {
+        setProfile(user);
+        // Check if the profile is complete enough to show payment options
+        if (user.pincode && user.dlStatus && user.subscriptionPlan !== 'None') {
+            setIsProfileComplete(true);
+        } else {
+            setIsProfileComplete(false);
+        }
     }
+    setLoading(false); // Stop loading once we have the auth user info
   }, [user]);
 
   const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
@@ -83,6 +81,16 @@ function PaymentGateway() {
         variant: "destructive"
       });
     }
+  };
+
+  const handleProfileCompletion = () => {
+      // This function is called by the form on successful submission.
+      // It triggers a re-evaluation of the user's profile completeness.
+      if (user) {
+         const updatedUser = { ...user, pincode: 'dummy', dlStatus: 'dummy', subscriptionPlan: plan };
+         setProfile(updatedUser);
+         setIsProfileComplete(true);
+      }
   };
 
   if (authLoading || loading) {
@@ -124,7 +132,7 @@ function PaymentGateway() {
   }
   
   // If user is logged in, but profile is not complete, show the details form.
-  if (!showPayment) {
+  if (!isProfileComplete) {
       return (
           <Card className="w-full max-w-3xl shadow-xl">
             <CardHeader>
@@ -134,7 +142,7 @@ function PaymentGateway() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <FullCustomerDetailsForm user={user} onFormSubmit={() => setShowPayment(true)} plan={plan} />
+                <FullCustomerDetailsForm user={user} plan={plan} onFormSubmit={handleProfileCompletion} />
             </CardContent>
           </Card>
       );

@@ -45,6 +45,23 @@ export let allUsers: UserProfile[] = [
         photoIdUrl: 'https://placehold.co/file.pdf'
     },
     {
+        id: 'mock-customer-2',
+        uniqueId: 'CU-MOCK02',
+        name: 'Amit Singh',
+        username: 'amit',
+        contact: 'newcustomer@drivergy.com',
+        password: 'password',
+        phone: '9999888877',
+        gender: 'Male',
+        location: '', // Initially blank
+        subscriptionPlan: 'None', // Initially no plan
+        registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
+        approvalStatus: 'Pending',
+        photoURL: 'https://placehold.co/100x100.png?text=A',
+        myReferralCode: 'AMIT5678',
+        trainerPreference: 'Any',
+    },
+    {
         id: 'mock-trainer-1',
         uniqueId: 'TR-MOCK01',
         name: 'Rajesh Kumar',

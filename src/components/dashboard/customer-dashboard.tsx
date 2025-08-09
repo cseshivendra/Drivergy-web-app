@@ -191,7 +191,6 @@ export default function CustomerDashboard() {
         return;
     }
     
-    // For real users, listen to Firestore
     setLoading(true);
     const unsubscribe = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
@@ -323,6 +322,7 @@ export default function CustomerDashboard() {
   }
 
   if (profile && profile.approvalStatus !== 'Approved') {
+    const isPlanSelected = profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
             <Card className="shadow-xl text-center p-8">
@@ -341,11 +341,22 @@ export default function CustomerDashboard() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                   {!isPlanSelected ? (
+                       <>
+                        <p className="text-muted-foreground max-w-md mx-auto">
+                            Your account is registered. To begin your learning journey, please select a subscription plan.
+                        </p>
+                        <Button asChild className="mt-6">
+                            <Link href="/#subscriptions">Choose a Plan</Link>
+                        </Button>
+                       </>
+                   ) : (
                     <p className="text-muted-foreground max-w-md mx-auto">
                         Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
                         <br /><br />
                         Thank you for your patience.
                     </p>
+                   )}
                 </CardContent>
             </Card>
         </div>
