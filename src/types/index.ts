@@ -491,6 +491,3 @@ export interface AdminDashboardData {
     promotionalPosters: PromotionalPoster[];
 }
 
-
-
-    

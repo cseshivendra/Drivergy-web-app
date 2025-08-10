@@ -46,7 +46,8 @@ function PaymentGateway() {
     const unsubscribe = listenToUser(user.id, (userProfile) => {
       if (userProfile) {
         setProfile(userProfile);
-        // A user profile is considered "complete" for payment if they have an address and DL status.
+        // A user profile is considered "complete" for payment if they have a pincode and DL status.
+        // This is the key check to decide which view to show.
         if (userProfile.pincode && userProfile.dlStatus) {
           setIsProfileComplete(true);
         } else {
@@ -92,9 +93,10 @@ function PaymentGateway() {
   };
 
   const handleProfileCompletion = () => {
-      // This is now called after the form submission successfully updates the user
-      // in the mock DB and the auth context. The useEffect will handle the state change.
-      setIsProfileComplete(true);
+      // This function is called by the child form upon successful submission.
+      // The useEffect listening to the user data will handle the UI transition.
+      // This function is now mainly for logging/debugging if needed.
+      console.log("Profile completion signal received. The listener will now update the UI.");
   };
 
   if (authLoading || loading) {

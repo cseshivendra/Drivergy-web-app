@@ -113,6 +113,16 @@ export const completeCustomerProfileAction = async (prevState: any, formData: Fo
             }
         }
         
+        // Convert file-like objects from FormData back to something Zod can handle
+        if (data.photoIdFile && typeof data.photoIdFile === 'object' && 'size' in data.photoIdFile) {
+           if ((data.photoIdFile as File).size === 0) {
+               // Handle empty file input if necessary, or let validation catch it
+               data.photoIdFile = undefined;
+           }
+        } else {
+            data.photoIdFile = undefined;
+        }
+
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
         if (!validationResult.success) {
@@ -148,7 +158,7 @@ export const completeCustomerProfileAction = async (prevState: any, formData: Fo
         console.log(`Successfully completed profile for user ${userId}.`);
         
         const updatedUser = await fetchUserById(userId);
-        return { success: true, user: updatedUser };
+        return { success: true, user: updatedUser! };
 
     } catch (error) {
         console.error("Error in completeCustomerProfileAction:", error);

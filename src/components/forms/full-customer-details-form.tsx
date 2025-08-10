@@ -113,15 +113,14 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   const onClientSubmit = (data: FullCustomerDetailsValues) => {
     const formData = new FormData();
     // A more robust way to handle form data, especially files.
-    Object.keys(data).forEach(key => {
-        const value = data[key as keyof typeof data];
-        if (value instanceof File) {
-            formData.append(key, value);
-        } else if (value instanceof Date) {
-            formData.append(key, value.toISOString());
-        } else if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-        }
+    Object.entries(data).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (value instanceof Date) {
+        formData.append(key, value.toISOString());
+      } else if (value !== null && value !== undefined && value !== '') {
+        formData.append(key, String(value));
+      }
     });
     formAction(formData);
   };
