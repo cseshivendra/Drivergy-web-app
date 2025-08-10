@@ -1,4 +1,5 @@
 
+'use client';
 import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { UserCheck } from 'lucide-react';
@@ -9,13 +10,6 @@ import { DYNAMIC_SERVER_USAGE } from 'next/dist/client/components/hooks-server-c
 // This is a wrapper component to handle the client-side logic
 // within a server component page, using Suspense for loading.
 function CompleteProfileClientBoundary() {
-    // This marks the component as using dynamic server features.
-    // It's a way to opt into dynamic rendering for this part of the tree.
-    (React as any).use(new Promise((resolve) => {
-        if (typeof window !== 'undefined') {
-            resolve(true);
-        }
-    }));
     
     return (
         <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">

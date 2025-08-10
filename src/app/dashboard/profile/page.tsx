@@ -3,7 +3,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchUserById, updateUserProfile, changeUserPassword } from '@/lib/mock-data';
+import { fetchUserById } from '@/lib/mock-data';
+import { updateUserProfile, changeUserPassword } from '@/lib/server-actions';
 import type { UserProfile, UserProfileUpdateValues, ChangePasswordValues } from '@/types';
 import { UserProfileUpdateSchema, ChangePasswordSchema, IndianStates, DistrictsByState } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
