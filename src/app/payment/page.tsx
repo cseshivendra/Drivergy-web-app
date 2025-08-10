@@ -41,16 +41,19 @@ function PaymentGateway() {
       setLoading(false);
       return;
     }
-
+  
+    setLoading(true);
     const unsubscribe = listenToUser(user.id, (userProfile) => {
       if (userProfile) {
         setProfile(userProfile);
         // A user profile is considered "complete" for payment if they have an address and DL status.
         if (userProfile.pincode && userProfile.dlStatus) {
-            setIsProfileComplete(true);
+          setIsProfileComplete(true);
         } else {
-            setIsProfileComplete(false);
+          setIsProfileComplete(false);
         }
+      } else {
+        setIsProfileComplete(false);
       }
       setLoading(false);
     });
