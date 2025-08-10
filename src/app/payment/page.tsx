@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -14,18 +13,13 @@ import { CreditCard, Calendar, Lock, User, QrCode, ShieldCheck, UserPlus, LogIn,
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
-import { useState, useEffect, useCallback } from 'react';
-import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
-import type { UserProfile } from '@/types';
-import { listenToUser } from '@/lib/mock-data';
+import { useState, useCallback } from 'react';
 
 function PaymentGateway() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user, logInUser, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   
   const plan = searchParams.get('plan') || 'Selected Plan';
   const price = searchParams.get('price') || '0';
@@ -33,61 +27,33 @@ function PaymentGateway() {
   const [referralCode, setReferralCode] = useState('');
   const [finalPrice, setFinalPrice] = useState(price);
   const [discountApplied, setDiscountApplied] = useState(false);
-  
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-  
-    setLoading(true);
-    const unsubscribe = listenToUser(user.id, (userProfile) => {
-      setProfile(userProfile);
-      if (userProfile) {
-        // A user profile is considered "complete" for payment if they have a pincode and DL status.
-        // This is the key check to decide which view to show.
-        if (userProfile.pincode && userProfile.dlStatus) {
-          setIsProfileComplete(true);
-        } else {
-          setIsProfileComplete(false);
-        }
-      } else {
-        setIsProfileComplete(false);
-      }
-      setLoading(false);
-    });
-    
-    return () => unsubscribe();
-  }, [user]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSuccessfulPayment = useCallback(async () => {
-    if (!profile) return;
-  
-    // Create an updated profile object reflecting the new subscription
-    const updatedProfile: UserProfile = {
-      ...profile,
-      subscriptionPlan: plan, // Update the plan
-      approvalStatus: 'Pending', // Set status to pending verification by admin/trainer
-    };
+    if (!user) return;
+    setIsProcessing(true);
   
     // In a real app, this would be a server action to update the user's subscription.
     // Here, we simulate it by updating the client-side state and session storage.
-    logInUser(updatedProfile, false); // Update context without redirecting yet
+    const updatedProfile = {
+      ...user,
+      subscriptionPlan: plan, 
+      approvalStatus: 'Pending',
+    };
+    logInUser(updatedProfile, false);
   
     toast({
       title: "Payment Successful!",
-      description: `Your subscription for the ${plan} plan has been activated. Redirecting to your dashboard.`,
+      description: `Your subscription for the ${plan} plan has been activated. Please complete your profile.`,
     });
   
-    // Redirect to dashboard after a short delay
+    // Redirect to the new profile completion page
     setTimeout(() => {
-      router.push('/dashboard');
+      router.push('/dashboard/complete-profile');
     }, 1500);
-  }, [profile, plan, logInUser, router, toast]);
+  }, [user, plan, logInUser, router, toast]);
 
-  const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     handleSuccessfulPayment();
   };
@@ -113,17 +79,13 @@ function PaymentGateway() {
     }
   };
 
-  const handleProfileCompletion = useCallback(() => {
-      setIsProfileComplete(true);
-  }, []);
-
-  if (authLoading || loading) {
+  if (authLoading) {
     return <Loading />;
   }
 
   if (!user) {
     const redirectUrl = encodeURIComponent(`/payment?plan=${plan}&price=${price}`);
-    const registerUrl = `/register`;
+    const registerUrl = `/register?redirect=${redirectUrl}`;
     
     return (
        <Card className="w-full max-w-lg shadow-xl">
@@ -154,22 +116,6 @@ function PaymentGateway() {
       </Card>
     )
   }
-  
-  if (!isProfileComplete) {
-      return (
-          <Card className="w-full max-w-3xl shadow-xl">
-            <CardHeader>
-                <CardTitle className="font-headline text-2xl font-bold">Complete Your Profile</CardTitle>
-                <CardDescription>
-                    Please provide the following details to proceed with your <span className="font-semibold text-primary">{plan}</span> plan purchase.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <FullCustomerDetailsForm user={user} plan={plan} onFormSubmit={handleProfileCompletion} />
-            </CardContent>
-          </Card>
-      );
-  }
 
   return (
     <Card className="w-full max-w-lg shadow-xl">
@@ -191,13 +137,13 @@ function PaymentGateway() {
                       placeholder="e.g., DRIVERGY10"
                       value={referralCode}
                       onChange={(e) => setReferralCode(e.target.value)}
-                      disabled={discountApplied}
+                      disabled={discountApplied || isProcessing}
                   />
                   <Button
                       type="button"
                       variant="outline"
                       onClick={handleApplyCode}
-                      disabled={discountApplied || !referralCode.trim()}
+                      disabled={discountApplied || !referralCode.trim() || isProcessing}
                   >
                       {discountApplied ? "Applied" : "Apply"}
                   </Button>
@@ -221,41 +167,41 @@ function PaymentGateway() {
 
             <Tabs defaultValue="card" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="card"><CreditCard className="mr-2 h-4 w-4" />Card</TabsTrigger>
-                    <TabsTrigger value="upi"><QrCode className="mr-2 h-4 w-4" />UPI / QR Code</TabsTrigger>
+                    <TabsTrigger value="card" disabled={isProcessing}><CreditCard className="mr-2 h-4 w-4" />Card</TabsTrigger>
+                    <TabsTrigger value="upi" disabled={isProcessing}><QrCode className="mr-2 h-4 w-4" />UPI / QR Code</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="card" className="pt-6">
-                   <form onSubmit={(e) => handleSubmit(e, 'Card')} className="space-y-6">
+                   <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <Label htmlFor="cardNumber" className="flex items-center mb-1"><CreditCard className="mr-2 h-4 w-4" />Card Number</Label>
-                            <Input id="cardNumber" placeholder="1234 5678 9012 3456" required />
+                            <Input id="cardNumber" placeholder="1234 5678 9012 3456" required disabled={isProcessing} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="expiryDate" className="flex items-center mb-1"><Calendar className="mr-2 h-4 w-4" />Expiry Date</Label>
-                                <Input id="expiryDate" placeholder="MM / YY" required />
+                                <Input id="expiryDate" placeholder="MM / YY" required disabled={isProcessing} />
                             </div>
                             <div>
                                 <Label htmlFor="cvv" className="flex items-center mb-1"><Lock className="mr-2 h-4 w-4" />CVV</Label>
-                                <Input id="cvv" placeholder="123" required />
+                                <Input id="cvv" placeholder="123" required disabled={isProcessing} />
                             </div>
                         </div>
                         <div>
                             <Label htmlFor="cardHolderName" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Cardholder Name</Label>
-                            <Input id="cardHolderName" placeholder="John Doe" required />
+                            <Input id="cardHolderName" placeholder="John Doe" required disabled={isProcessing} />
                         </div>
-                        <Button type="submit" className="w-full h-11">
-                            Pay ₹{finalPrice}
+                        <Button type="submit" className="w-full h-11" disabled={isProcessing}>
+                            {isProcessing ? "Processing..." : `Pay ₹${finalPrice}`}
                         </Button>
                     </form>
                 </TabsContent>
 
                 <TabsContent value="upi" className="pt-6">
-                    <form onSubmit={(e) => handleSubmit(e, 'UPI')} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <Label htmlFor="upiId" className="flex items-center mb-1">Enter your UPI ID</Label>
-                            <Input id="upiId" placeholder="yourname@bank" required />
+                            <Input id="upiId" placeholder="yourname@bank" required disabled={isProcessing}/>
                         </div>
                         
                         <div className="flex items-center space-x-4">
@@ -277,8 +223,8 @@ function PaymentGateway() {
                             </div>
                         </div>
 
-                        <Button type="submit" className="w-full h-11">
-                            Verify & Pay ₹{finalPrice}
+                        <Button type="submit" className="w-full h-11" disabled={isProcessing}>
+                             {isProcessing ? "Processing..." : `Verify & Pay ₹${finalPrice}`}
                         </Button>
                     </form>
                 </TabsContent>
@@ -295,5 +241,3 @@ export default function PaymentPage() {
     </div>
   );
 }
-
-    

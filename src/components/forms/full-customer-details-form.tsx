@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useFormState } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -25,39 +24,39 @@ import {
   SubscriptionPlans,
   DLStatusOptions,
   PhotoIdTypeOptions,
-  TrainerPreferenceOptions,
   IndianStates,
   DistrictsByState,
-  type UserProfile,
 } from '@/types';
 import { completeCustomerProfileAction } from '@/lib/server-actions';
-import { UserCheck as UserCheckIcon, Home, MapPin, CalendarIcon as CalendarIconLucid, Loader2, Gift, Car, Bike, BadgePercent, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
+import { Home, MapPin, CalendarIcon as CalendarIconLucid, Loader2, Gift, Car, Bike, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Calendar } from '../ui/calendar';
 import { format } from 'date-fns';
 import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
 
-interface FullCustomerDetailsFormProps {
-  user: UserProfile;
-  plan: string;
-  onFormSubmit: () => void;
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
+            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving Details...</> : "Save and Finish"}
+        </Button>
+    );
 }
 
-export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: FullCustomerDetailsFormProps) {
+export default function FullCustomerDetailsForm() {
   const { toast } = useToast();
-  const { logInUser } = useAuth();
+  const { user, logInUser } = useAuth();
+  const router = useRouter();
 
   const [state, formAction] = useFormState(completeCustomerProfileAction, { success: false, error: undefined, user: undefined });
 
   const form = useForm<FullCustomerDetailsValues>({
     resolver: zodResolver(FullCustomerDetailsSchema),
     defaultValues: {
-        userId: user.id, // Include user ID in the form data
-        subscriptionPlan: plan || '',
-        vehiclePreference: '',
-        trainerPreference: '',
+        userId: user?.id || '',
         flatHouseNumber: '',
         street: '',
         district: '',
@@ -69,7 +68,6 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
         photoIdType: '',
         photoIdNumber: '',
         photoIdFile: undefined,
-        subscriptionStartDate: undefined,
         referralCode: '',
     },
     mode: 'onChange',
@@ -79,13 +77,22 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
   const selectedState = form.watch('state');
 
   useEffect(() => {
+    if (!user) {
+        router.push('/login');
+        return;
+    }
+    form.setValue('userId', user.id);
+  }, [user, router, form]);
+
+
+  useEffect(() => {
     if (state.success && state.user) {
         toast({
             title: "Profile Complete!",
-            description: "Your details have been saved. You can now proceed to payment.",
+            description: "Your details have been saved. Welcome to your dashboard!",
         });
-        logInUser(state.user, false); // Update user data in context
-        onFormSubmit(); // Signal to the parent component that the profile is complete
+        logInUser(state.user, false); 
+        router.push('/dashboard');
     } else if (state.error) {
         toast({
             title: "Update Failed",
@@ -93,7 +100,7 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
             variant: "destructive",
         });
     }
-  }, [state, toast, onFormSubmit, logInUser]);
+  }, [state, toast, logInUser, router]);
 
 
   const availableDistricts = useMemo(() => {
@@ -124,136 +131,21 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
     formAction(formData);
   };
 
+  if (!user) {
+      return <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />;
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onClientSubmit)} className="space-y-8">
-        <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Course & License Details</h3>
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="vehiclePreference"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Vehicle Preference<span className="text-destructive ml-1">*</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select vehicle type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {VehiclePreferenceOptions.map(option => (
-                      <SelectItem key={option} value={option}>
-                        {option === 'Two-Wheeler' && <Bike className="inline-block mr-2 h-4 w-4" />}
-                        {option === 'Four-Wheeler' && <Car className="inline-block mr-2 h-4 w-4" />}
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="subscriptionPlan"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center"><BadgePercent className="mr-2 h-4 w-4 text-primary" />Subscription Plan<span className="text-destructive ml-1">*</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''} disabled={!!plan}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select plan" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SubscriptionPlans.map(p => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
         
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-            <FormField
-            control={form.control}
-            name="trainerPreference"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference<span className="text-destructive ml-1">*</span></FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select trainer preference" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {TrainerPreferenceOptions.map(option => (
-                        <SelectItem key={option} value={option}>{option}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-              control={form.control}
-              name="subscriptionStartDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col pt-2">
-                  <FormLabel className="flex items-center"><CalendarIconLucid className="mr-2 h-4 w-4 text-primary" />Subscription Start Date<span className="text-destructive ml-1">*</span></FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIconLucid className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormDescription>
-                    Your lesson plan will start from this date.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </div>
-
-        <FormField
+        <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">License Details</h3>
+         <FormField
           control={form.control}
           name="dlStatus"
           render={({ field }) => (
               <FormItem>
-              <FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Driving License Status<span className="text-destructive ml-1">*</span></FormLabel>
+              <FormLabel className="flex items-center">Driving License Status<span className="text-destructive ml-1">*</span></FormLabel>
               <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                   <SelectTrigger>
@@ -303,7 +195,7 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
             </div>
           </>
         )}
-
+        
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Address & ID Details</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
           <FormField
@@ -480,13 +372,9 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
         />
         
         <div className="flex justify-end pt-4 border-t">
-          <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving Details...</> : "Continue to Payment"}
-          </Button>
+          <SubmitButton />
         </div>
       </form>
     </Form>
   );
 }
-
-    
