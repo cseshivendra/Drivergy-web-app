@@ -52,6 +52,10 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 yearsOfExperience: validationResult.data.yearsOfExperience,
                 vehicleInfo: validationResult.data.trainerVehicleType,
             });
+        } else if (userRole === 'customer') {
+            Object.assign(newUser, {
+                trainerPreference: validationResult.data.trainerPreference
+            });
         }
         
         allUsers.push(newUser);
@@ -114,6 +118,9 @@ export const completeCustomerProfileAction = async (prevState: any, formData: Fo
         } else {
             data.photoIdFile = undefined;
         }
+        
+        data.subscriptionStartDate = new Date(data.subscriptionStartDate as string);
+
 
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 

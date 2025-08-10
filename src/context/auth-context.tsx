@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const mockCustomer = allUsers.find(u => u.id === 'mock-customer-1');
         setTimeout(() => {
             if (mockCustomer) {
-                logInUser(mockCustomer);
+                logInUser(mockCustomer, true);
             }
             setLoading(false);
         }, 1000);
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         setTimeout(() => {
             if (userToLogin) {
-                logInUser(userToLogin);
+                logInUser(userToLogin, true);
                 toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             } else {
                 toast({ 

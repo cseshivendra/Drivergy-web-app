@@ -57,7 +57,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined });
+  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -94,18 +94,23 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         description: "Your account has been created. Redirecting to your dashboard...",
       });
       // Automatically log the user in
-      logInUser(state.user);
+      logInUser(state.user, true);
+    } else if (state.error) {
+       toast({
+        title: "Registration Error",
+        description: state.error,
+        variant: "destructive",
+      });
     }
   }, [state, toast, router, logInUser]);
   
   const onClientSubmit = (data: RegistrationFormValues) => {
     const formData = new FormData();
     // A more robust way to handle form data, especially files.
-    Object.keys(data).forEach(key => {
-        const value = data[key as keyof typeof data];
+    Object.entries(data).forEach(([key, value]) => {
         if (value instanceof File) {
             formData.append(key, value);
-        } else if (value !== null && value !== undefined) {
+        } else if (value !== null && value !== undefined && value !== '') {
             formData.append(key, String(value));
         }
     });
@@ -116,7 +121,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={handleSubmit(onClientSubmit)} className="space-y-8">
-        {state.error && (
+        {state.error && !state.success && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
