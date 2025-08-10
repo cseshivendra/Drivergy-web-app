@@ -101,10 +101,9 @@ const requiredFileSchema = z
   .refine((file) => file instanceof File && file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
 
 const optionalFileSchema = z
-  .instanceof(File)
-  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`)
-  .optional()
-  .nullable();
+  .any()
+  .refine((file) => file === undefined || (file instanceof File && file.size <= 5 * 1024 * 1024), `Max file size is 5MB.`)
+  .optional();
 
 
 const passwordSchema = z.string()
@@ -177,7 +176,7 @@ export const FullCustomerDetailsSchema = z.object({
     photoIdNumber: z.string().min(1, 'ID number is required.'),
     photoIdFile: requiredFileSchema,
     subscriptionStartDate: z.preprocess((arg) => {
-        if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
+        if (typeof arg === "string" || arg instanceof Date) return new Date(arg);
     }, z.date({required_error: "Please select a start date."})),
     referralCode: z.string().optional(),
 }).refine((data) => {
@@ -491,3 +490,4 @@ export interface AdminDashboardData {
     promotionalPosters: PromotionalPoster[];
 }
 
+    

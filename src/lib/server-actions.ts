@@ -20,6 +20,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
         if (!validationResult.success) {
             const formattedErrors = validationResult.error.format();
+            console.error("Registration validation failed:", formattedErrors);
             return { success: false, error: 'Invalid form data provided. Please check the fields and try again.' };
         }
         
@@ -38,14 +39,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             phone: validationResult.data.phone,
             gender: validationResult.data.gender,
             password: validationResult.data.password, 
-            subscriptionPlan: userRole === 'customer' ? 'None' : 'Trainer',
-            location: userRole === 'trainer' ? validationResult.data.location : '',
+            subscriptionPlan: 'None',
             registrationTimestamp: format(new Date(), 'MMM dd, yyyy'),
             approvalStatus: 'Pending',
         };
         
-        if (userRole === 'trainer') {
+        if (userRole === 'trainer' && 'location' in validationResult.data) {
             Object.assign(newUser, {
+                subscriptionPlan: 'Trainer',
+                location: validationResult.data.location,
                 specialization: validationResult.data.specialization,
                 yearsOfExperience: validationResult.data.yearsOfExperience,
                 vehicleInfo: validationResult.data.trainerVehicleType,
@@ -103,20 +105,10 @@ export const completeCustomerProfileAction = async (prevState: any, formData: Fo
             return { success: false, error: `User with ID ${userId} not found.` };
         }
         
-        // Convert date string back to Date object for validation if it's a string
-        if (typeof data.subscriptionStartDate === 'string') {
-            const parsedDate = new Date(data.subscriptionStartDate);
-            if (!isNaN(parsedDate.getTime())) {
-                data.subscriptionStartDate = parsedDate;
-            } else {
-                return { success: false, error: 'Invalid subscription start date format.' };
-            }
-        }
-        
-        // Convert file-like objects from FormData back to something Zod can handle
+        // Zod schema expects a file, so if we get a file from FormData, we keep it.
+        // If not, we set it to undefined so validation doesn't fail on an empty string.
         if (data.photoIdFile && typeof data.photoIdFile === 'object' && 'size' in data.photoIdFile) {
            if ((data.photoIdFile as File).size === 0) {
-               // Handle empty file input if necessary, or let validation catch it
                data.photoIdFile = undefined;
            }
         } else {
@@ -148,10 +140,10 @@ export const completeCustomerProfileAction = async (prevState: any, formData: Fo
             dlTypeHeld: profileData.dlTypeHeld,
             photoIdType: profileData.photoIdType,
             photoIdNumber: profileData.photoIdNumber,
-            photoIdUrl: photoIdUrl, // Use the mock URL
+            photoIdUrl: photoIdUrl,
             subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
             referralCode: profileData.referralCode,
-            approvalStatus: 'Pending', 
+            // We keep the approval status as is, to be updated later by admin/payment flow
         });
 
         updateUserInMockDB(user);
@@ -305,4 +297,5 @@ export async function changeUserPassword(userId: string, currentPass: string, ne
     }
     return false;
 }
+    
     

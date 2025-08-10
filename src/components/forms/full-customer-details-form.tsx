@@ -84,8 +84,8 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
             title: "Profile Complete!",
             description: "Your details have been saved. You can now proceed to payment.",
         });
-        logInUser(state.user, false);
-        onFormSubmit();
+        logInUser(state.user, false); // Update user data in context
+        onFormSubmit(); // Signal to the parent component that the profile is complete
     } else if (state.error) {
         toast({
             title: "Update Failed",
@@ -112,7 +112,6 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
 
   const onClientSubmit = (data: FullCustomerDetailsValues) => {
     const formData = new FormData();
-    // A more robust way to handle form data, especially files.
     Object.entries(data).forEach(([key, value]) => {
       if (value instanceof File) {
         formData.append(key, value);
@@ -489,3 +488,5 @@ export default function FullCustomerDetailsForm({ user, plan, onFormSubmit }: Fu
     </Form>
   );
 }
+
+    

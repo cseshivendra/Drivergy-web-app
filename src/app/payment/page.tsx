@@ -14,7 +14,7 @@ import { CreditCard, Calendar, Lock, User, QrCode, ShieldCheck, UserPlus, LogIn,
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
 import type { UserProfile } from '@/types';
 import { listenToUser } from '@/lib/mock-data';
@@ -23,8 +23,8 @@ function PaymentGateway() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(user);
+  const { user, logInUser, loading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   
   const plan = searchParams.get('plan') || 'Selected Plan';
@@ -44,8 +44,8 @@ function PaymentGateway() {
   
     setLoading(true);
     const unsubscribe = listenToUser(user.id, (userProfile) => {
+      setProfile(userProfile);
       if (userProfile) {
-        setProfile(userProfile);
         // A user profile is considered "complete" for payment if they have a pincode and DL status.
         // This is the key check to decide which view to show.
         if (userProfile.pincode && userProfile.dlStatus) {
@@ -62,13 +62,34 @@ function PaymentGateway() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
-    e.preventDefault();
+  const handleSuccessfulPayment = useCallback(async () => {
+    if (!profile) return;
+  
+    // Create an updated profile object reflecting the new subscription
+    const updatedProfile: UserProfile = {
+      ...profile,
+      subscriptionPlan: plan, // Update the plan
+      approvalStatus: 'Pending', // Set status to pending verification by admin/trainer
+    };
+  
+    // In a real app, this would be a server action to update the user's subscription.
+    // Here, we simulate it by updating the client-side state and session storage.
+    logInUser(updatedProfile, false); // Update context without redirecting yet
+  
     toast({
       title: "Payment Successful!",
-      description: `Your subscription for the ${plan} plan has been activated using ${method}. Redirecting to your dashboard.`,
+      description: `Your subscription for the ${plan} plan has been activated. Redirecting to your dashboard.`,
     });
-    router.push('/dashboard');
+  
+    // Redirect to dashboard after a short delay
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 1500);
+  }, [profile, plan, logInUser, router, toast]);
+
+  const handleSubmit = (e: React.FormEvent, method: 'Card' | 'UPI') => {
+    e.preventDefault();
+    handleSuccessfulPayment();
   };
   
   const handleApplyCode = () => {
@@ -92,12 +113,9 @@ function PaymentGateway() {
     }
   };
 
-  const handleProfileCompletion = () => {
-      // This function is called by the child form upon successful submission.
-      // The useEffect listening to the user data will handle the UI transition.
-      // This function is now mainly for logging/debugging if needed.
-      console.log("Profile completion signal received. The listener will now update the UI.");
-  };
+  const handleProfileCompletion = useCallback(() => {
+      setIsProfileComplete(true);
+  }, []);
 
   if (authLoading || loading) {
     return <Loading />;
@@ -277,3 +295,5 @@ export default function PaymentPage() {
     </div>
   );
 }
+
+    
