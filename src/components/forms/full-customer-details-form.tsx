@@ -20,20 +20,14 @@ import { useToast } from "@/hooks/use-toast";
 import {
   FullCustomerDetailsSchema,
   type FullCustomerDetailsValues,
-  VehiclePreferenceOptions,
-  SubscriptionPlans,
   DLStatusOptions,
   PhotoIdTypeOptions,
   IndianStates,
   DistrictsByState,
 } from '@/types';
 import { completeCustomerProfileAction } from '@/lib/server-actions';
-import { Home, MapPin, CalendarIcon as CalendarIconLucid, Loader2, Gift, Car, Bike, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
+import { Home, MapPin, Loader2, Gift, Car, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
-import { format } from 'date-fns';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 
@@ -76,6 +70,7 @@ export default function FullCustomerDetailsForm() {
   const dlStatus = form.watch('dlStatus');
   const selectedState = form.watch('state');
 
+  // This effect ensures the form has the correct userId, especially after a fresh registration.
   useEffect(() => {
     if (!user) {
         router.push('/login');
@@ -122,8 +117,6 @@ export default function FullCustomerDetailsForm() {
     Object.entries(data).forEach(([key, value]) => {
       if (value instanceof File) {
         formData.append(key, value);
-      } else if (value instanceof Date) {
-        formData.append(key, value.toISOString());
       } else if (value !== null && value !== undefined && value !== '') {
         formData.append(key, String(value));
       }
