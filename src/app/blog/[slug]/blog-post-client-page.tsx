@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -114,7 +115,7 @@ export default function BlogPostClientPage({ initialPost }: { initialPost: BlogP
                         {post.content}
                     </article>
                 </CardContent>
-                {post.tags && (
+                {post.tags && post.tags.length > 0 && (
                     <CardFooter className="p-6 md:p-8 pt-4 border-t">
                         <div className="flex flex-wrap items-center gap-2">
                             <Tag className="h-5 w-5 text-muted-foreground" />

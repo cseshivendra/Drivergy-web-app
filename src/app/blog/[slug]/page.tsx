@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { fetchBlogPostBySlug } from '@/lib/mock-data';
 import BlogPostClientPage from './blog-post-client-page';
@@ -14,6 +15,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
         };
     }
 
+    // Use a new Date object for metadata generation, but don't pass it to the client
+    const postDate = new Date(post.date);
+
     return {
         title: post.title,
         description: post.excerpt,
@@ -23,7 +27,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
             title: post.title,
             description: post.excerpt,
             type: 'article',
-            publishedTime: new Date(post.date).toISOString(),
+            publishedTime: postDate.toISOString(),
             authors: [post.author],
             images: [
                 {
@@ -49,6 +53,14 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     if (!post) {
         notFound();
     }
+    
+    // Ensure the post object passed to the client is serializable
+    const serializablePost = {
+        ...post,
+        // The date is already a string, so this is safe. We are just ensuring it.
+        date: post.date,
+    };
 
-    return <BlogPostClientPage initialPost={post} />;
+
+    return <BlogPostClientPage initialPost={serializablePost} />;
 }
