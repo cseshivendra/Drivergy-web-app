@@ -83,17 +83,14 @@ export default function SiteHeader() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const renderAuthButtons = (isMobile = false) => {
+  const renderDesktopAuth = () => {
     if (user) {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className={cn(
-                'flex items-center gap-2',
-                isMobile && 'w-full justify-start text-lg py-6'
-              )}
+              className='flex items-center gap-2'
             >
               <Avatar className="h-6 w-6">
                 <AvatarImage
@@ -125,26 +122,65 @@ export default function SiteHeader() {
       );
     }
     return (
-      <div
-        className={cn('flex items-center gap-2', isMobile && 'flex-col gap-4 w-full')}
-      >
-        <SheetClose asChild>
-            <Link href="/login" className='w-full'>
-              <Button className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}>
-                  <Lock className="mr-2 h-4 w-4" />Login
-              </Button>
-            </Link>
-        </SheetClose>
-         <SheetClose asChild>
-            <Link href="/register" className='w-full'>
-              <Button className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}>
-                  <UserPlus className="mr-2 h-4 w-4" />Register
-              </Button>
-            </Link>
-        </SheetClose>
+      <div className='flex items-center gap-2'>
+        <Button asChild className={'bg-primary hover:bg-primary/90 text-primary-foreground'}>
+          <Link href="/login">
+            <Lock className="mr-2 h-4 w-4" />Login
+          </Link>
+        </Button>
+        <Button asChild className={'bg-primary hover:bg-primary/90 text-primary-foreground'}>
+          <Link href="/register">
+            <UserPlus className="mr-2 h-4 w-4" />Register
+          </Link>
+        </Button>
       </div>
     );
   };
+
+  const renderMobileAuth = () => {
+    if (user) {
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className='w-full justify-start text-lg py-6 flex items-center gap-2'>
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={user.photoURL || undefined} alt={user.name || 'User'} />
+                            <AvatarFallback>{(user.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <span>{user.name || 'User'}</span>
+                        <ChevronDown className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                        <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" />My Dashboard</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut}><Power className="mr-2 h-4 w-4" />Log Out</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    }
+    return (
+        <div className={'flex flex-col gap-4 w-full'}>
+            <SheetClose asChild>
+                <Link href="/login" className="w-full">
+                    <Button className={'w-full text-lg py-6 bg-primary hover:bg-primary/90 text-primary-foreground'}>
+                        <Lock className="mr-2 h-4 w-4" />Login
+                    </Button>
+                </Link>
+            </SheetClose>
+            <SheetClose asChild>
+                <Link href="/register" className="w-full">
+                    <Button className={'w-full text-lg py-6 bg-primary hover:bg-primary/90 text-primary-foreground'}>
+                        <UserPlus className="mr-2 h-4 w-4" />Register
+                    </Button>
+                </Link>
+            </SheetClose>
+        </div>
+    );
+  };
+
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -180,7 +216,7 @@ export default function SiteHeader() {
               )}
             </nav>
 
-            {renderAuthButtons()}
+            {renderDesktopAuth()}
 
             <Button
             variant="ghost"
@@ -261,7 +297,7 @@ export default function SiteHeader() {
                   )}
                 </nav>
                 <div className="border-t border-border pt-6">
-                  {renderAuthButtons(true)}
+                  {renderMobileAuth()}
                 </div>
               </div>
             </SheetContent>
