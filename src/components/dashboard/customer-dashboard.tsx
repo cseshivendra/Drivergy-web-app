@@ -179,11 +179,20 @@ export default function CustomerDashboard() {
   const [isStartDateDialogOpen, setIsStartDateDialogOpen] = useState(false);
   const [newStartDate, setNewStartDate] = useState<Date | undefined>(new Date());
   const [isStartDateEditable, setIsStartDateEditable] = useState(false);
+  const [rescheduleRequested, setRescheduleRequested] = useState(false);
 
-  // State for reschedule dialog
+
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
+  
+  const refetchProfile = () => {
+    if (user?.id) {
+        listenToUser(user.id, (userProfile) => {
+            setProfile(userProfile);
+        });
+    }
+  }
 
   useEffect(() => {
     if (!user?.id) {
@@ -202,16 +211,13 @@ export default function CustomerDashboard() {
 
   useEffect(() => {
     if (profile) {
-      // Determine if start date can be edited
       if (profile.subscriptionStartDate) {
         const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
         setIsStartDateEditable(!isPast(startDate));
       } else {
-        // If no start date is set, it can be edited
         setIsStartDateEditable(true);
       }
 
-      // Determine upcoming lesson and if it can be rescheduled
       const lessonDateString = profile.upcomingLesson;
       const now = new Date();
       let lessonDate: Date | null = null;
@@ -293,8 +299,8 @@ export default function CustomerDashboard() {
             title: 'Reschedule Request Sent',
             description: 'Your request has been sent for approval. You will be notified of the outcome.',
         });
+        setRescheduleRequested(true);
         setIsRescheduleDialogOpen(false);
-        setIsReschedulable(false);
     } catch (error) {
         toast({
             title: 'Error',
@@ -399,13 +405,14 @@ export default function CustomerDashboard() {
           <CardFooter>
             <Button 
                 className="w-full"
-                disabled={!isReschedulable || isSubmitting}
+                disabled={!isReschedulable || isSubmitting || rescheduleRequested}
                 onClick={() => setIsRescheduleDialogOpen(true)}
             >
-              <Repeat className="mr-2 h-4 w-4" />Reschedule
+              <Repeat className="mr-2 h-4 w-4" />
+              {rescheduleRequested ? "Request Sent" : "Reschedule"}
             </Button>
           </CardFooter>
-           {!isReschedulable && upcomingLessonDate && (
+           {(!isReschedulable && upcomingLessonDate) && (
                 <p className="text-xs text-muted-foreground text-center px-6 pb-4">
                     Lessons can only be rescheduled more than 24 hours in advance.
                 </p>
@@ -574,6 +581,7 @@ export default function CustomerDashboard() {
               profile={profile}
               onSubmitted={() => {
                 setIsFeedbackDialogOpen(false);
+                refetchProfile();
               }}
             />
           )}
@@ -620,7 +628,7 @@ export default function CustomerDashboard() {
                 mode="single"
                 selected={newRescheduleDate}
                 onSelect={setNewRescheduleDate}
-                disabled={(date) => date <= addDays(new Date(), 1)} // Can only schedule for tomorrow onwards
+                disabled={(date) => date <= addDays(new Date(), 1)}
               />
             </div>
             <Select value={newRescheduleTime} onValueChange={setNewRescheduleTime}>

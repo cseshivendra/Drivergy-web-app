@@ -1,12 +1,11 @@
 
-
 import type { UserProfile, LessonRequest, SummaryData, VehicleType, Course, CourseModule, ApprovalStatusType, RescheduleRequest, RescheduleRequestStatusType, UserProfileUpdateValues, TrainerSummaryData, Feedback, LessonProgressData, Referral, PayoutStatusType, QuizSet, Question, CourseModuleFormValues, QuizQuestionFormValues, FaqItem, BlogPost, SiteBanner, PromotionalPoster, FaqFormValues, BlogPostFormValues, VisualContentFormValues, FullCustomerDetailsValues, RegistrationFormValues, AdminDashboardData } from '@/types';
 import { addDays, format, isFuture, parse } from 'date-fns';
 import { Car, Bike, FileText } from 'lucide-react';
 
 
 // =================================================================
-// MOCK IN-MEMORY DATABASE
+// MOCK IN-MEMORY DATABASE (STATEFUL)
 // =================================================================
 
 export let allUsers: UserProfile[] = [
@@ -99,7 +98,7 @@ export let allUsers: UserProfile[] = [
     }
 ];
 
-let mockCourses: Course[] = [
+export let mockCourses: Course[] = [
     {
         id: 'car-driving',
         title: 'Comprehensive Car Program',
@@ -139,7 +138,7 @@ let mockCourses: Course[] = [
     }
 ];
 
-let mockFaqs: FaqItem[] = [
+export let mockFaqs: FaqItem[] = [
     {
         id: "faq1",
         question: "What documents do I need to enroll in a driving course?",
@@ -152,7 +151,7 @@ let mockFaqs: FaqItem[] = [
     }
 ];
 
-let mockQuizSets: QuizSet[] = [
+export let mockQuizSets: QuizSet[] = [
     {
         id: 'set1', title: 'Practice Set 1', questions: [
             { id: 'q1', question: { en: 'What does a red traffic light indicate?', hi: 'लाल बत्ती क्या संकेत देती है?' }, options: { en: ['Stop', 'Go', 'Slow Down'], hi: ['रुकें', 'जाएँ', 'धीमे चलें'] }, correctAnswer: { en: 'Stop', hi: 'रुकें' } }
@@ -180,7 +179,7 @@ export let mockBlogPosts: BlogPost[] = [
     }
 ];
 
-let mockSiteBanners: SiteBanner[] = [
+export let mockSiteBanners: SiteBanner[] = [
     {
         id: "banner-1",
         title: "India's #1 Driving School",
@@ -204,7 +203,7 @@ let mockSiteBanners: SiteBanner[] = [
     }
 ];
 
-let mockPromotionalPosters: PromotionalPoster[] = [
+export let mockPromotionalPosters: PromotionalPoster[] = [
     {
         id: 'customer-offer-1',
         title: 'Learn Car driving at just Rs. 999',
@@ -230,6 +229,11 @@ let mockPromotionalPosters: PromotionalPoster[] = [
         imageHint: 'gift points reward',
     },
 ];
+
+export let mockLessonRequests: LessonRequest[] = [];
+export let mockRescheduleRequests: RescheduleRequest[] = [];
+export let mockFeedback: Feedback[] = [];
+export let mockReferrals: Referral[] = [];
 
 // Helper to update a user in the mock DB
 export const updateUserInMockDB = (updatedUser: UserProfile) => {
@@ -266,40 +270,6 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 };
 
 const getDashboardData = (): AdminDashboardData => {
-    const mockLessonRequests: LessonRequest[] = allUsers
-        .filter(u => u.uniqueId?.startsWith('CU'))
-        .map(u => ({
-            id: `req-${u.id}`,
-            customerId: u.id,
-            customerName: u.name,
-            vehicleType: (u.vehicleInfo as VehicleType) || 'Four-Wheeler',
-            status: 'Pending',
-            requestTimestamp: u.registrationTimestamp
-        }));
-    
-    const mockRescheduleRequests: RescheduleRequest[] = allUsers
-     .filter(u => u.uniqueId?.startsWith('CU') && u.upcomingLesson)
-     .map(u => ({
-        id: `resched-${u.id}`,
-        userId: u.id,
-        customerName: u.name,
-        originalLessonDate: u.upcomingLesson!,
-        requestedRescheduleDate: format(addDays(new Date(), 5), 'MMM dd, yyyy, h:mm a'),
-        status: 'Pending',
-        requestTimestamp: u.registrationTimestamp
-     }));
-
-    const mockFeedback: Feedback[] = allUsers.filter(u => u.assignedTrainerId).map(u => ({
-        id: `fb-${u.id}`,
-        customerId: u.id,
-        customerName: u.name,
-        trainerId: u.assignedTrainerId!,
-        trainerName: u.assignedTrainerName!,
-        rating: 5,
-        comment: "Excellent and very patient trainer!",
-        submissionDate: format(new Date(), 'MMM dd, yyyy')
-    }));
-    
     const customerUsers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
     const trainerUsers = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
     const totalCustomers = customerUsers.length;
@@ -323,20 +293,6 @@ const getDashboardData = (): AdminDashboardData => {
             remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
         })).sort((a, b) => a.remainingLessons - b.remainingLessons);
 
-    const mockReferrals: Referral[] = [{
-        id: 'ref-1',
-        referrerId: 'mock-customer-1',
-        refereeId: 'new-customer-id',
-        refereeName: 'New Customer',
-        status: 'Successful',
-        pointsEarned: 100,
-        payoutStatus: 'Pending',
-        timestamp: format(new Date(), 'MMM dd, yyyy'),
-        refereeUniqueId: 'CU-NEW01',
-        refereeSubscriptionPlan: 'Premium',
-        refereeApprovalStatus: 'Approved'
-    }];
-    
     return {
         summaryData: {
             totalCustomers, totalInstructors, activeSubscriptions, 
@@ -363,15 +319,12 @@ export function listenToAdminDashboardData(callback: (data: AdminDashboardData) 
     const data = getDashboardData();
     callback(data);
     
-    // In a real app, this would return an unsubscribe function.
-    // For this mock, we don't need a persistent listener, as re-fetch is manual.
     return () => {};
 }
 
 export function listenToUser(userId: string, callback: (data: UserProfile | null) => void): () => void {
     const user = allUsers.find(u => u.id === userId);
     if(user){
-        // Make a deep copy to avoid direct mutation
         const userCopy = JSON.parse(JSON.stringify(user));
         if (userCopy.uniqueId?.startsWith('CU') && userCopy.assignedTrainerId) {
             const trainer = allUsers.find(t => t.id === userCopy.assignedTrainerId);
@@ -385,34 +338,22 @@ export function listenToUser(userId: string, callback: (data: UserProfile | null
     } else {
         callback(null);
     }
-    // No-op for unsubscribe in mock environment
     return () => {};
 };
 
 export function listenToTrainerStudents(trainerId: string, callback: (data: { students: UserProfile[]; feedback: Feedback[]; rescheduleRequests: RescheduleRequest[]; profile: UserProfile | null; }) => void): () => void {
     const trainerProfile = allUsers.find(u => u.id === trainerId) || null;
     const students = allUsers.filter(u => u.assignedTrainerId === trainerId);
-    const feedback = allUsers.filter(u => u.assignedTrainerId === trainerId).map(u => ({
-        id: `fb-${u.id}`,
-        customerId: u.id,
-        customerName: u.name,
-        trainerId: trainerId,
-        trainerName: trainerProfile?.name || 'Trainer',
-        rating: 5,
-        comment: "Excellent and very patient trainer!",
-        submissionDate: format(new Date(), 'MMM dd, yyyy')
-    }));
-    const rescheduleRequests = allUsers.filter(u => u.assignedTrainerId === trainerId && u.upcomingLesson).map(u => ({
-        id: `resched-${u.id}`,
-        userId: u.id,
-        customerName: u.name,
-        originalLessonDate: u.upcomingLesson!,
-        requestedRescheduleDate: format(addDays(new Date(), 5), 'MMM dd, yyyy, h:mm a'),
-        status: 'Pending' as RescheduleRequestStatusType,
-        requestTimestamp: u.registrationTimestamp
-     }));
-
-    callback({ students, feedback, rescheduleRequests, profile: trainerProfile });
+    
+    callback({ 
+        students: JSON.parse(JSON.stringify(students)), 
+        feedback: mockFeedback.filter(f => f.trainerId === trainerId), 
+        rescheduleRequests: mockRescheduleRequests.filter(r => {
+            const student = students.find(s => s.id === r.userId);
+            return !!student;
+        }), 
+        profile: trainerProfile ? JSON.parse(JSON.stringify(trainerProfile)) : null 
+    });
 
     return () => {};
 }
@@ -425,6 +366,12 @@ export function listenToBlogPosts(callback: (data: BlogPost[]) => void): () => v
     callback(mockBlogPosts);
     return () => {};
 }
+
+export function listenToSiteBanners(callback: (data: SiteBanner[]) => void): () => void {
+    callback(mockSiteBanners);
+    return () => {};
+}
+
 
 export function listenToPromotionalPosters(callback: (data: PromotionalPoster[]) => void): () => void {
     callback(mockPromotionalPosters);
@@ -444,22 +391,7 @@ export async function fetchApprovedInstructors(filters: { location?: string; gen
 
 export async function fetchReferralsByUserId(userId: string | undefined): Promise<Referral[]> {
     if (!userId) return [];
-    
-    const mockReferrals: Referral[] = [{
-        id: 'ref-1',
-        referrerId: userId,
-        refereeId: 'new-customer-id',
-        refereeName: 'New Mock Customer',
-        status: 'Successful',
-        pointsEarned: 100,
-        payoutStatus: 'Pending',
-        timestamp: format(new Date(), 'MMM dd, yyyy'),
-        refereeUniqueId: 'CU-NEW01',
-        refereeSubscriptionPlan: 'Premium',
-        refereeApprovalStatus: 'Approved'
-    }];
-
-    return allUsers.find(u => u.id === userId) ? mockReferrals : [];
+    return mockReferrals.filter(r => r.referrerId === userId);
 }
 
 export async function addCourseModule(courseId: string, moduleData: Omit<CourseModule, 'id'>): Promise<Course | null> {
