@@ -24,12 +24,20 @@ import {
   PhotoIdTypeOptions,
   IndianStates,
   DistrictsByState,
+  SubscriptionPlans,
+  VehiclePreferenceOptions,
+  TrainerPreferenceOptions,
 } from '@/types';
 import { completeCustomerProfileAction } from '@/lib/server-actions';
-import { Home, MapPin, Loader2, Gift, Car, ScanLine, CreditCard, FileUp } from 'lucide-react'; 
+import { Home, MapPin, Loader2, Gift, Car, ScanLine, CreditCard, FileUp, ShieldCheck, UserCheck, CalendarDays, Bike } from 'lucide-react'; 
 import { useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Calendar } from '../ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -44,6 +52,8 @@ export default function FullCustomerDetailsForm() {
   const { toast } = useToast();
   const { user, logInUser } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planFromUrl = searchParams.get('plan');
 
   const [state, formAction] = useFormState(completeCustomerProfileAction, { success: false, error: undefined, user: undefined });
 
@@ -51,24 +61,37 @@ export default function FullCustomerDetailsForm() {
     resolver: zodResolver(FullCustomerDetailsSchema),
     defaultValues: {
         userId: user?.id || '',
+        subscriptionPlan: planFromUrl && SubscriptionPlans.includes(planFromUrl as any) ? planFromUrl as any : undefined,
+        vehiclePreference: undefined,
+        trainerPreference: undefined,
+        subscriptionStartDate: new Date(),
         flatHouseNumber: '',
         street: '',
         district: '',
         state: '',
         pincode: '',
-        dlStatus: '',
+        dlStatus: undefined,
         dlNumber: '',
         dlTypeHeld: '',
-        photoIdType: '',
+        photoIdType: undefined,
         photoIdNumber: '',
         photoIdFile: undefined,
         referralCode: '',
     },
     mode: 'onChange',
   });
+  
+  const { watch } = form;
+  const dlStatus = watch('dlStatus');
+  const selectedState = watch('state');
+  const selectedGender = user?.gender;
 
-  const dlStatus = form.watch('dlStatus');
-  const selectedState = form.watch('state');
+  const trainerOptions = useMemo(() => {
+    if (selectedGender === 'Male') return ['Male', 'Any'];
+    if (selectedGender === 'Female') return ['Female', 'Any'];
+    return TrainerPreferenceOptions.slice();
+  }, [selectedGender]);
+
 
   // This effect ensures the form has the correct userId, especially after a fresh registration.
   useEffect(() => {
@@ -117,6 +140,8 @@ export default function FullCustomerDetailsForm() {
     Object.entries(data).forEach(([key, value]) => {
       if (value instanceof File) {
         formData.append(key, value);
+      } else if (value instanceof Date) {
+        formData.append(key, value.toISOString());
       } else if (value !== null && value !== undefined && value !== '') {
         formData.append(key, String(value));
       }
@@ -132,6 +157,78 @@ export default function FullCustomerDetailsForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onClientSubmit)} className="space-y-8">
         
+        <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Plan & Preferences</h3>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+            <FormField
+                control={form.control}
+                name="subscriptionPlan"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Subscription Plan<span className="text-destructive ml-1">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!!planFromUrl}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select your plan" /></SelectTrigger></FormControl>
+                    <SelectContent>{SubscriptionPlans.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="vehiclePreference"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Vehicle Preference<span className="text-destructive ml-1">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{VehiclePreferenceOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="trainerPreference"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center"><UserCheck className="mr-2 h-4 w-4 text-primary" />Trainer Preference<span className="text-destructive ml-1">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!selectedGender}><FormControl><SelectTrigger><SelectValue placeholder={!selectedGender ? "Select gender first" : "Select trainer preference"} /></SelectTrigger></FormControl><SelectContent>{trainerOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="subscriptionStartDate"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel className="flex items-center"><CalendarDays className="mr-2 h-4 w-4 text-primary" />Preferred Start Date<span className="text-destructive ml-1">*</span></FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                            >
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">License Details</h3>
          <FormField
           control={form.control}
@@ -139,7 +236,7 @@ export default function FullCustomerDetailsForm() {
           render={({ field }) => (
               <FormItem>
               <FormLabel className="flex items-center">Driving License Status<span className="text-destructive ml-1">*</span></FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ''}>
+              <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                   <SelectTrigger>
                       <SelectValue placeholder="Select DL status" />
@@ -225,7 +322,7 @@ export default function FullCustomerDetailsForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State<span className="text-destructive ml-1">*</span></FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Select state" />
@@ -249,7 +346,7 @@ export default function FullCustomerDetailsForm() {
                   <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District<span className="text-destructive ml-1">*</span></FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value || ''}
+                    value={field.value}
                     disabled={!selectedState || availableDistricts.length === 0}
                   >
                       <FormControl>
@@ -294,7 +391,7 @@ export default function FullCustomerDetailsForm() {
                 render={({ field }) => (
                 <FormItem>
                     <FormLabel className="flex items-center"><CreditCard className="mr-2 h-4 w-4 text-primary" />Photo ID Type<span className="text-destructive ml-1">*</span></FormLabel>
-                     <Select onValueChange={field.onChange} value={field.value || ''}>
+                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select ID type" />
