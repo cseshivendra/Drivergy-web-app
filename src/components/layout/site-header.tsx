@@ -76,7 +76,7 @@ const navLinks: NavLink[] = [
   },
   { href: '/about', label: 'About Us' },
   { href: '/career', label: 'Careers' },
-  { href: '/#contact', label: 'Support' },
+  { href: '/contact', label: 'Support' },
 ];
 
 export default function SiteHeader() {
