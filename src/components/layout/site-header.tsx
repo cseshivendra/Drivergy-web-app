@@ -128,24 +128,20 @@ export default function SiteHeader() {
       <div
         className={cn('flex items-center gap-2', isMobile && 'flex-col gap-4 w-full')}
       >
-        <Button
-          asChild
-          className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}
-        >
-          <Link href="/login">
-            <Lock className="mr-2 h-4 w-4" />
-            Login
-          </Link>
-        </Button>
-        <Button
-          asChild
-          className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}
-        >
-          <Link href="/register">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Register
-          </Link>
-        </Button>
+        <SheetClose asChild>
+            <Link href="/login" className='w-full'>
+              <Button className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}>
+                  <Lock className="mr-2 h-4 w-4" />Login
+              </Button>
+            </Link>
+        </SheetClose>
+         <SheetClose asChild>
+            <Link href="/register" className='w-full'>
+              <Button className={cn('bg-primary hover:bg-primary/90 text-primary-foreground', isMobile && 'w-full text-lg py-6')}>
+                  <UserPlus className="mr-2 h-4 w-4" />Register
+              </Button>
+            </Link>
+        </SheetClose>
       </div>
     );
   };
