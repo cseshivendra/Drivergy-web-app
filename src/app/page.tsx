@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -69,7 +68,8 @@ const coursesData = [
         "Manual & Automatic Options",
         "Highway Driving Practice",
         "Night Driving Session",
-        "Basic Vehicle Maintenance"
+        "Basic Vehicle Maintenance",
+        "FREE Pick and Drop Service"
     ]
   },
   {
@@ -84,7 +84,8 @@ const coursesData = [
         "Advanced Braking Techniques",
         "Slalom & Cone Weaving Drills",
         "Group Riding Etiquette",
-        "All Safety Gear Provided"
+        "All Safety Gear Provided",
+        "FREE Pick and Drop Service"
     ]
   },
   {
@@ -99,7 +100,8 @@ const coursesData = [
         "Permanent License Slot Booking",
         "RTO Mock Test Simulation",
         "Documentation Checklist",
-        "Test Day Guidance"
+        "Test Day Guidance",
+        "FREE Pick and Drop Service"
     ]
   }
 ];
@@ -242,7 +244,10 @@ export default function PortfolioSitePage() {
           {heroSlides.length > 0 && heroSlides.map((slide, index) => (
               <div
                   key={slide.id}
-                  className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100" : "opacity-0"}`}
+                  className={cn(
+                    "absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out",
+                    index === currentSlide ? "opacity-100" : "opacity-0"
+                  )}
                   style={{ backgroundImage: `url(${slide.imageSrc})` }}
                   role="img"
                   aria-label={slide.description}
