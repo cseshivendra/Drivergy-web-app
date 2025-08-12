@@ -88,8 +88,8 @@ export default function LoginPage() {
                <DrivergyLogo className="h-12 w-auto text-primary text-4xl" />
             </div>
             <div className="flex flex-col">
-              <p className="text-xl font-semibold text-foreground/90 mt-1">Steer Your Success</p>
               <p className="font-headline text-lg text-muted-foreground tracking-wide">Learn. Drive. Live.</p>
+              <p className="text-xl font-semibold text-foreground/90 mt-1">Steer Your Success</p>
             </div>
             <CardDescription className="text-muted-foreground pt-1 px-2">Sign in to access your dashboard and unlock new opportunities.</CardDescription>
           </CardHeader>
