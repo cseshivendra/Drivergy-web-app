@@ -64,29 +64,18 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues: {
       userRole: userRole,
-      name: '', email: '', username: '', password: '', confirmPassword: '', phone: '', gender: undefined,
-      ...(userRole === 'customer' ? { trainerPreference: '' } : {
+      name: '', email: '', username: '', password: '', confirmPassword: '', phone: '',
+      ...(userRole === 'trainer' ? {
         location: undefined, yearsOfExperience: undefined, specialization: undefined, trainerVehicleType: undefined,
         fuelType: undefined, vehicleNumber: '', trainerCertificateNumber: '', aadhaarCardNumber: '',
         drivingLicenseNumber: '', trainerCertificateFile: undefined, drivingLicenseFile: undefined,
-        aadhaarCardFile: undefined,
-      })
+        aadhaarCardFile: undefined, gender: undefined,
+      }: {})
     },
     mode: 'onBlur',
   });
 
-  const { watch, handleSubmit } = form;
-  const selectedGender = watch('gender');
-  
-  const trainerOptions = useMemo(() => {
-    if (userRole === 'customer') {
-      if (selectedGender === 'Male') return ['Male', 'Any'];
-      if (selectedGender === 'Female') return ['Female', 'Any'];
-      return TrainerPreferenceOptions.slice();
-    }
-    return [];
-  }, [selectedGender, userRole]);
-
+  const { handleSubmit } = form;
 
   useEffect(() => {
     if (state.success && state.user) {
@@ -159,13 +148,17 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter full name" {...field} /></FormControl><FormMessage /></FormItem> )} />
            <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
-          <FormField
+        </div>
+
+        {userRole === 'trainer' && (
+          <>
+             <FormField
               control={form.control}
               name="gender"
               render={({ field }) => (
                   <FormItem>
                       <FormLabel className="flex items-center"><Users className="mr-2 h-4 w-4 text-primary" />Gender<span className="text-destructive ml-1">*</span></FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}>
+                      <Select onValueChange={field.onChange} value={field.value} name={field.name}>
                           <FormControl>
                               <SelectTrigger>
                                   <SelectValue placeholder="Select gender" />
@@ -180,15 +173,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                       <FormMessage />
                   </FormItem>
               )}
-          />
-        </div>
-        
-        {userRole === 'customer' && (
-            <FormField control={form.control} name="trainerPreference" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserCheckIcon className="mr-2 h-4 w-4 text-primary" />Trainer Preference</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!selectedGender} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select trainer preference" /></SelectTrigger></FormControl><SelectContent>{trainerOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-        )}
-
-        {userRole === 'trainer' && (
-          <>
+            />
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                  <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
