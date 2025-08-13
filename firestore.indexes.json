@@ -5,18 +5,22 @@
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "username", "order": "ASCENDING" },
-        { "fieldPath": "contact", "order": "ASCENDING" }
+        { "fieldPath": "username", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "uniqueId",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "uniqueId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "approvalStatus", "order": "ASCENDING" },
+        { "fieldPath": "assignedTrainerId", "order": "ASCENDING" }
       ]
     }
   ],

@@ -96,9 +96,9 @@ export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
 
 // Registration Forms
 const requiredFileSchema = z
-  .any()
-  .refine((file) => file instanceof File && file.size > 0, "File is required and cannot be empty.")
-  .refine((file) => file instanceof File && file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
+  .instanceof(File, { message: "File is required." })
+  .refine((file) => file.size > 0, "File cannot be empty.")
+  .refine((file) => file.size <= 5 * 1024 * 1024, `Max file size is 5MB.`);
 
 const optionalFileSchema = z
   .any()
