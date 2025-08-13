@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -130,13 +131,13 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <Button variant="secondary" onClick={() => signInWithCredentials('admin', 'admin')} disabled={loading}>
+                <Button variant="secondary" onClick={() => {setIdentifier('admin@drivergy.com'); setPassword('password');}} disabled={loading}>
                     Admin
                 </Button>
-                <Button variant="secondary" onClick={() => signInWithCredentials('customer@drivergy.com', 'password')} disabled={loading}>
+                <Button variant="secondary" onClick={() => {setIdentifier('customer@drivergy.com'); setPassword('password');}} disabled={loading}>
                     Customer
                 </Button>
-                <Button variant="secondary" onClick={() => signInWithCredentials('trainer@drivergy.com', 'password')} disabled={loading}>
+                <Button variant="secondary" onClick={() => {setIdentifier('trainer@drivergy.com'); setPassword('password');}} disabled={loading}>
                     Trainer
                 </Button>
             </div>

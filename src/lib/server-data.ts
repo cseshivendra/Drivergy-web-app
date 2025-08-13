@@ -2,9 +2,70 @@
 'use server';
 
 import type { BlogPost, UserProfile } from '@/types';
-import { adminDb } from './firebase/admin';
+import { adminAuth, adminDb } from './firebase/admin';
 
 // This file is for server-side data fetching and data seeding logic only.
+
+/**
+ * Creates a default admin user in Firebase Auth and Firestore if it doesn't exist.
+ * This is useful for seeding the database for development and testing.
+ */
+const createDefaultAdmin = async () => {
+    if (!adminAuth || !adminDb) {
+        console.error("Admin SDK not initialized. Cannot create default admin.");
+        return;
+    }
+
+    const adminEmail = 'admin@drivergy.com';
+    const adminPassword = 'password';
+
+    try {
+        // Check if the admin user already exists in Firebase Auth
+        await adminAuth.getUserByEmail(adminEmail);
+        // console.log("Default admin user already exists.");
+    } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+            // User does not exist, so create them
+            try {
+                const userRecord = await adminAuth.createUser({
+                    email: adminEmail,
+                    emailVerified: true,
+                    password: adminPassword,
+                    displayName: 'Admin User',
+                    disabled: false,
+                });
+
+                console.log('Successfully created new admin user:', userRecord.uid);
+
+                const adminProfile: Omit<UserProfile, 'id'> = {
+                    uniqueId: `AD-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                    name: 'Admin User',
+                    username: 'admin',
+                    contact: adminEmail,
+                    phone: '0000000000',
+                    gender: 'Prefer not to say',
+                    subscriptionPlan: 'Admin',
+                    registrationTimestamp: new Date().toISOString(),
+                    approvalStatus: 'Approved',
+                    isAdmin: true,
+                };
+
+                await adminDb.collection('users').doc(userRecord.uid).set(adminProfile);
+                console.log('Successfully created admin profile in Firestore.');
+
+            } catch (creationError) {
+                console.error('Error creating default admin user:', creationError);
+            }
+        } else {
+            // Some other error occurred
+            console.error('Error checking for admin user:', error);
+        }
+    }
+};
+
+// Call the function to ensure the admin exists when the server starts up.
+createDefaultAdmin();
+
 
 /**
  * Fetches all blog posts for server-side operations like sitemap generation.
@@ -45,7 +106,12 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
         const userDoc = await userDocRef.get();
 
         if (userDoc.exists) {
-            return { id: userDoc.id, ...userDoc.data() } as UserProfile;
+            const userData = userDoc.data();
+            // Ensure timestamp is a string
+            if (userData?.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
+                userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
+            }
+            return { id: userDoc.id, ...userData } as UserProfile;
         } else {
             console.log(`No user found with ID: ${userId}`);
             return null;
