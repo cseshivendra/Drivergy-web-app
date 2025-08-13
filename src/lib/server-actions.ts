@@ -26,7 +26,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             return { success: false, error: 'Invalid form data. Please check all fields.' };
         }
         
-        const { email, password, name, phone, userRole, username } = validationResult.data;
+        const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
         // Create user in Firebase Auth
         const userRecord = await adminAuth.createUser({
@@ -44,6 +44,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             username: username,
             contact: email,
             phone: phone,
+            gender: gender,
             subscriptionPlan: userRole === 'trainer' ? 'Trainer' : 'None',
             registrationTimestamp: new Date().toISOString(),
             approvalStatus: 'Pending',
@@ -107,7 +108,6 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
 // NOTE: For brevity, only a few key actions are fully converted.
 // The rest would follow a similar pattern of replacing mock data logic with Firestore logic.
 
-// Dummy implementations for the rest to avoid breaking the app
 export async function completeCustomerProfileAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     return { success: false, error: "Not implemented in live mode yet." };
 }
