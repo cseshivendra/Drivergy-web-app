@@ -7,7 +7,7 @@ import type { UserProfile } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/client';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -70,6 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
                     uniqueId: `CU-${Date.now().toString().slice(-6)}`,
                     name: firebaseUser.displayName || 'Google User',
+                    username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now().toString().slice(-4)}`,
                     contact: firebaseUser.email!,
                     phone: firebaseUser.phoneNumber || '',
                     photoURL: firebaseUser.photoURL || '',
@@ -111,12 +112,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
+        let emailToSignIn = identifier;
+
         try {
-            await signInWithEmailAndPassword(auth, identifier, password);
+            // Step 1: Check if the identifier is a username.
+            if (!identifier.includes('@')) {
+                const usersRef = collection(db, 'users');
+                const q = query(usersRef, where('username', '==', identifier), limit(1));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    // Username found, get the corresponding email
+                    emailToSignIn = querySnapshot.docs[0].data().contact;
+                } else {
+                    // If not a username, we'll proceed assuming it's an email.
+                    // Firebase will throw an error if it's not a valid email format or user.
+                }
+            }
+
+            // Step 2: Attempt to sign in with the resolved email.
+            await signInWithEmailAndPassword(auth, emailToSignIn, password);
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
+
         } catch (error: any) {
-             toast({ 
+            console.error("Login error:", error.code); // Log error code for debugging
+            toast({ 
                 title: 'Login Failed', 
                 description: 'Invalid credentials or user not found.', 
                 variant: 'destructive' 
