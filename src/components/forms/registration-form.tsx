@@ -65,11 +65,12 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     defaultValues: {
       userRole: userRole,
       name: '', email: '', username: '', password: '', confirmPassword: '', phone: '',
+      gender: undefined,
       ...(userRole === 'trainer' ? {
         location: undefined, yearsOfExperience: undefined, specialization: undefined, trainerVehicleType: undefined,
         fuelType: undefined, vehicleNumber: '', trainerCertificateNumber: '', aadhaarCardNumber: '',
         drivingLicenseNumber: '', trainerCertificateFile: undefined, drivingLicenseFile: undefined,
-        aadhaarCardFile: undefined, gender: undefined,
+        aadhaarCardFile: undefined,
       }: {})
     },
     mode: 'onBlur',
@@ -149,10 +150,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter full name" {...field} /></FormControl><FormMessage /></FormItem> )} />
            <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
         </div>
-
-        {userRole === 'trainer' && (
-          <>
-             <FormField
+        
+        <FormField
               control={form.control}
               name="gender"
               render={({ field }) => (
@@ -174,6 +173,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                   </FormItem>
               )}
             />
+
+        {userRole === 'trainer' && (
+          <>
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                  <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
