@@ -5,42 +5,21 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from '@/context/auth-context';
 import { ThemeProvider } from '@/context/theme-context';
-import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import SiteHeader from '@/components/layout/site-header';
 import SiteFooter from '@/components/layout/site-footer';
 import ChatWidget from '@/components/chatbot/chat-widget';
+import { usePathname } from 'next/navigation';
 
-// This component is a Client Component because it uses the usePathname hook.
-// It contains the logic to conditionally render layouts.
-function AppContent({ children }: { children: ReactNode }) {
-    const pathname = usePathname();
-    const isAppRoute = pathname.startsWith('/dashboard');
-
-    return (
-        <>
-            {isAppRoute ? (
-                children // The AuthenticatedAppLayout will provide its own header/footer
-            ) : (
-                <div className="flex flex-col min-h-screen bg-background text-foreground">
-                    <SiteHeader />
-                    <main className="flex-grow">{children}</main>
-                    <SiteFooter />
-                    <ChatWidget />
-                </div>
-            )}
-            <Toaster />
-        </>
-    );
-}
-
-// RootLayout is now a Server Component by default (no 'use client' at the top)
-// but since it renders a client component that needs context, we make the whole file a client component.
+// RootLayout is a client component because it uses AuthProvider and ThemeProvider
+// which rely on client-side state and hooks.
 export default function RootLayout({
-                                       children,
-                                   }: Readonly<{
+    children,
+}: Readonly<{
     children: React.ReactNode;
 }>) {
+    const pathname = usePathname();
+    const isAppRoute = pathname.startsWith('/dashboard');
 
     return (
         <html lang="en" suppressHydrationWarning>
@@ -54,11 +33,21 @@ export default function RootLayout({
             <meta name="keywords" content="driving school, car driving school, driving lessons, car driving lessons near me, learn to drive car, driving school in India, RTO test, two wheeler driving school, motorcycle training, female driving instructor" />
         </head>
         <body className="font-body antialiased">
-        <AuthProvider>
-            <ThemeProvider>
-                <AppContent>{children}</AppContent>
-            </ThemeProvider>
-        </AuthProvider>
+            <AuthProvider>
+                <ThemeProvider>
+                    {isAppRoute ? (
+                        children // The dashboard layout will provide its own structure
+                    ) : (
+                        <div className="flex flex-col min-h-screen bg-background text-foreground">
+                            <SiteHeader />
+                            <main className="flex-grow">{children}</main>
+                            <ChatWidget />
+                            <SiteFooter />
+                        </div>
+                    )}
+                    <Toaster />
+                </ThemeProvider>
+            </AuthProvider>
         </body>
         </html>
     );

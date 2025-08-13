@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
 import { Car, BookOpen, ShieldCheck, Users, Navigation, UserPlus, Bike, ClipboardCheck, Star, Check, MessageSquareText, Quote, MoveRight, CircleDot, TrendingUp, Target, KeyRound, Award, LogIn, Clock, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { listenToSiteBanners } from '@/lib/mock-data';
 import type { SiteBanner } from '@/types';
 import {
   Tooltip,
@@ -183,7 +182,7 @@ const DrivergyLogoMini = ({className} : {className?: string}) => (
 );
 
 
-export default function PortfolioSitePage() {
+export default function HomePage() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);

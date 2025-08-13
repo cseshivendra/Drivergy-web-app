@@ -6,7 +6,6 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import AppSidebar from '@/components/layout/app-sidebar';
 import { SidebarInset } from '@/components/ui/sidebar';
 import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
 import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -47,7 +46,6 @@ export default function AuthenticatedAppLayout({
               <main className="flex-1 overflow-y-auto">
                 {children}
               </main>
-              <Footer />
             </SidebarInset>
           </div>
         </SidebarProvider>
