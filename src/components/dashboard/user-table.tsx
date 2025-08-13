@@ -11,13 +11,13 @@ import { Locations, GenderOptions } from '@/types';
 import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus, assignTrainerToCustomer } from '@/lib/server-actions';
+import { fetchApprovedInstructors, updateUserApprovalStatus, assignTrainerToCustomer } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
+import { format, parseISO } from 'date-fns';
 
 interface UserTableProps {
   title: ReactNode;
@@ -227,7 +227,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                                 <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
                             </>
                         )}
-                        <TableCell>{user.registrationTimestamp}</TableCell>
+                        <TableCell>{user.registrationTimestamp ? format(parseISO(user.registrationTimestamp), 'PP') : 'N/A'}</TableCell>
                         {!isInterestedList && (
                             <TableCell>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus)}`}>

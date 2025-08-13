@@ -7,7 +7,7 @@ import type { UserProfile } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/client';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -33,7 +33,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const userDocRef = doc(db, 'users', firebaseUser.uid);
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists()) {
-                    setUser({ id: userDoc.id, ...userDoc.data() } as UserProfile);
+                    const userData = userDoc.data();
+                    // Firestore timestamps need to be converted to serializable format (ISO string)
+                    if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
+                        userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
+                    }
+                    setUser({ id: userDoc.id, ...userData } as UserProfile);
                 } else {
                     // This case might happen if a user is created in Auth but not Firestore
                     // Or you might want to create a profile here for new sign-ups
@@ -62,25 +67,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
             if (!userDoc.exists()) {
                 // New user, create a profile in Firestore
-                const newUserProfile: UserProfile = {
-                    id: firebaseUser.uid,
+                const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
                     uniqueId: `CU-${Date.now().toString().slice(-6)}`,
                     name: firebaseUser.displayName || 'Google User',
                     contact: firebaseUser.email!,
                     phone: firebaseUser.phoneNumber || '',
                     photoURL: firebaseUser.photoURL || '',
                     subscriptionPlan: 'None',
-                    registrationTimestamp: new Date().toISOString(),
                     approvalStatus: 'Pending',
                     gender: 'Prefer not to say', // Default value
+                    // Use serverTimestamp() for Firestore to handle date creation server-side
+                    registrationTimestamp: serverTimestamp(),
                 };
                 await setDoc(userDocRef, newUserProfile);
-                setUser(newUserProfile);
+                
+                // For client-side state, create a serializable user object immediately
+                const clientProfile: UserProfile = {
+                  ...newUserProfile,
+                  id: firebaseUser.uid,
+                  registrationTimestamp: new Date().toISOString(), // Use client date for immediate state update
+                };
+
+                setUser(clientProfile);
                 toast({ title: 'Welcome!', description: 'Your account has been created.' });
                 router.push('/#subscriptions');
             } else {
                  // Existing user
-                const userProfile = { id: userDoc.id, ...userDoc.data() } as UserProfile;
+                const userProfileData = userDoc.data();
+                 if (userProfileData.registrationTimestamp && typeof userProfileData.registrationTimestamp.toDate === 'function') {
+                    userProfileData.registrationTimestamp = userProfileData.registrationTimestamp.toDate().toISOString();
+                }
+                const userProfile = { id: userDoc.id, ...userProfileData } as UserProfile;
                 setUser(userProfile);
                 toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
                 router.push('/dashboard');
