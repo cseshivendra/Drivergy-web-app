@@ -5,17 +5,22 @@
 // We will keep this file for now to avoid breaking imports, but it will be empty.
 // In a real project, you would delete this file and update all imports.
 
-import type { UserProfile, LessonRequest, SummaryData, Course, CourseModule, RescheduleRequest, Feedback, LessonProgressData, Referral, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, AdminDashboardData } from '@/types';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase/client';
+import type { PromotionalPoster } from '@/types';
 
-// The mock data arrays are no longer needed as we will use Firestore.
-export let allUsers: UserProfile[] = [];
-export let mockCourses: Course[] = [];
-export let mockFaqs: FaqItem[] = [];
-export let mockQuizSets: QuizSet[] = [];
-export let mockBlogPosts: BlogPost[] = [];
-export let mockSiteBanners: SiteBanner[] = [];
-export let mockPromotionalPosters: PromotionalPoster[] = [];
-export let mockLessonRequests: LessonRequest[] = [];
-export let mockRescheduleRequests: RescheduleRequest[] = [];
-export let mockFeedback: Feedback[] = [];
-export let mockReferrals: Referral[] = [];
+export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster[]) => void) => {
+  if (!db) {
+    console.error('Firestore is not initialized.');
+    return () => {};
+  }
+  const postersCollectionRef = collection(db, 'promotionalPosters');
+  const unsubscribe = onSnapshot(postersCollectionRef, (querySnapshot) => {
+    const posters: PromotionalPoster[] = [];
+    querySnapshot.forEach((doc) => {
+      posters.push({ id: doc.id, ...doc.data() } as PromotionalPoster);
+    });
+    callback(posters);
+  });
+  return unsubscribe;
+};
