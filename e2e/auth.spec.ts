@@ -1,3 +1,4 @@
+
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
@@ -19,6 +20,9 @@ test.describe('Authentication Flow', () => {
     await page.getByLabel('Confirm Password').fill('Password123!');
     await page.getByLabel('Full Name').fill('Test User');
     await page.getByLabel('Phone Number').fill('1234567890');
+    await page.getByLabel('Gender').click();
+    await page.getByRole('option', { name: 'Male' }).click();
+
 
     // Submit the form
     await page.getByRole('button', { name: 'Register Customer' }).click();
@@ -31,6 +35,8 @@ test.describe('Authentication Flow', () => {
     await expect(page.getByText('Registration Successful!')).toBeVisible();
   });
 
+  // Note: For a live database, this test would need a pre-existing user.
+  // This might fail if the user doesn't exist in the Firestore DB.
   test('should allow a registered user to log in and see the dashboard', async ({ page }) => {
     await page.goto('/login');
 
@@ -43,7 +49,8 @@ test.describe('Authentication Flow', () => {
     await expect(page).toHaveURL(/.*\/dashboard/);
     
     // Check for a welcome message on the dashboard
-    await expect(page.getByRole('heading', { name: /Welcome, Priya Sharma!/ })).toBeVisible();
+    // This will depend on the data in the live database for this user
+    await expect(page.getByRole('heading', { name: /Welcome,/ })).toBeVisible();
   });
 
   test('should show an error for invalid login credentials', async ({ page }) => {
@@ -55,7 +62,7 @@ test.describe('Authentication Flow', () => {
     
     // Check for the error toast message
     await expect(page.getByText('Login Failed')).toBeVisible();
-    await expect(page.getByText('Invalid credentials. Please try again or register a new account.')).toBeVisible();
+    await expect(page.getByText('Invalid credentials or user not found.')).toBeVisible();
 
     // Ensure we are still on the login page
     await expect(page).toHaveURL(/.*\/login/);
