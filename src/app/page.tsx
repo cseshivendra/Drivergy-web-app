@@ -211,17 +211,17 @@ export default function HomePage() {
     }
   ];
 
-  useEffect(() => {
-    const popupShown = sessionStorage.getItem('promotionalPopupShown');
-    if (!popupShown) {
-      const popupTimer = setTimeout(() => {
-        setIsPopupOpen(true);
-        sessionStorage.setItem('promotionalPopupShown', 'true');
-      }, 2000); 
+  // useEffect(() => {
+  //   const popupShown = sessionStorage.getItem('promotionalPopupShown');
+  //   if (!popupShown) {
+  //     const popupTimer = setTimeout(() => {
+  //       setIsPopupOpen(true);
+  //       sessionStorage.setItem('promotionalPopupShown', 'true');
+  //     }, 2000); 
       
-      return () => clearTimeout(popupTimer);
-    }
-  }, []);
+  //     return () => clearTimeout(popupTimer);
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (heroSlides.length === 0) return;
@@ -235,7 +235,7 @@ export default function HomePage() {
 
   return (
     <>
-      <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} />
+      {/* <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} /> */}
       {/* Hero Section */}
       <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
         {/* Background container for images and overlay */}

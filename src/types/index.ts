@@ -50,7 +50,7 @@ export const UserProfileSchema = z.object({
   approvalStatus: z.string(),
   vehicleInfo: z.string().optional(),
   myReferralCode: z.string().optional(),
-  photoURL: z.string().optional(),
+  photoURL: z.string().url().optional(),
   gender: z.string(),
   password: z.string().optional(),
   
@@ -103,7 +103,7 @@ const requiredFileSchema = z
 
 const optionalFileSchema = z
   .any()
-  .refine((file) => file === undefined || (file instanceof File && file.size <= 50 * 1024 * 1024), `Max file size is 50MB.`) // Increased for video
+  .refine((file) => file === undefined || (file instanceof File && file.size <= 5 * 1024 * 1024), `Max file size is 5MB.`)
   .optional();
 
 
@@ -329,7 +329,6 @@ export interface Course {
   totalEnrolled: number;
   totalCertified: number;
   image: string;
-  icon: LucideIcon;
   modules: CourseModule[];
 }
 
@@ -337,6 +336,7 @@ export interface RescheduleRequest {
     id: string;
     userId: string;
     customerName: string;
+    trainerId: string;
     originalLessonDate: string;
     requestedRescheduleDate: string;
     status: RescheduleRequestStatusType;
@@ -377,6 +377,7 @@ export interface LessonProgressData {
 export interface Referral {
     id: string;
     referrerId: string;
+    referrerName: string;
     refereeId: string;
     refereeName: string;
     status: 'Successful' | 'Pending';
@@ -491,3 +492,5 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
+
+    

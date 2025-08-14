@@ -7,8 +7,9 @@ import streamifier from 'streamifier';
 // It is crucial that this configuration is ONLY done in a server-side context.
 // This function should be called within a Server Action or a Route Handler.
 export const initializeCloudinary = async () => {
-    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
         console.warn("Cloudinary environment variables not fully set. File uploads will fail.");
+        return;
     }
     cloudinary.config({
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

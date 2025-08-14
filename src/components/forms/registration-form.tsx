@@ -60,19 +60,36 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
+  // This is the corrected, stable way to define default values.
+  const defaultValuesForRole: RegistrationFormValues = {
+      userRole: userRole,
+      name: '', 
+      email: '', 
+      username: '', 
+      password: '', 
+      confirmPassword: '', 
+      phone: '',
+      gender: undefined,
+      // Trainer fields are always present, but will be undefined for customers.
+      // Zod will not validate them if userRole is 'customer'.
+      location: undefined, 
+      yearsOfExperience: undefined, 
+      specialization: undefined, 
+      trainerVehicleType: undefined,
+      fuelType: undefined, 
+      vehicleNumber: '', 
+      trainerCertificateNumber: '', 
+      aadhaarCardNumber: '',
+      drivingLicenseNumber: '', 
+      trainerCertificateFile: undefined, 
+      drivingLicenseFile: undefined,
+      aadhaarCardFile: undefined,
+  };
+
+
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
-    defaultValues: {
-      userRole: userRole,
-      name: '', email: '', username: '', password: '', confirmPassword: '', phone: '',
-      gender: undefined,
-      ...(userRole === 'trainer' ? {
-        location: undefined, yearsOfExperience: undefined, specialization: undefined, trainerVehicleType: undefined,
-        fuelType: undefined, vehicleNumber: '', trainerCertificateNumber: '', aadhaarCardNumber: '',
-        drivingLicenseNumber: '', trainerCertificateFile: undefined, drivingLicenseFile: undefined,
-        aadhaarCardFile: undefined,
-      }: {})
-    },
+    defaultValues: defaultValuesForRole,
     mode: 'onBlur',
   });
 

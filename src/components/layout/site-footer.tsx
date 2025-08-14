@@ -60,7 +60,7 @@ export default function SiteFooter() {
         </div>
 
         <p className="text-sm pt-2">
-          &copy; {new Date().getFullYear()} Drivergy. All rights reserved. <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
+          &copy; {new Date().getFullYear()} Drivergy. All rights reserved. <Link href="/privacy-policy" className="underline hover:text-primary">Privacy Policy</Link>.
         </p>
       </div>
     </footer>

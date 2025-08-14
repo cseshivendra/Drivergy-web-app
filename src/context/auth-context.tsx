@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/client';
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
@@ -14,6 +14,7 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signInWithCredentials: (identifier: string, password: string) => Promise<void>;
+    signInWithPhone: (phoneNumber: string, appVerifier: RecaptchaVerifier) => Promise<ConfirmationResult | null>;
     signOut: () => Promise<void>;
     logInUser: (user: UserProfile, redirect?: boolean) => void;
 }
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     }
                     setUser({ id: userDoc.id, ...userData } as UserProfile);
                 } else {
-                    // This case might happen if a user is created in Auth but not Firestore
+                    // This case can happen with phone auth where user doesn't have a profile yet
                     // Or you might want to create a profile here for new sign-ups
                     setUser(null);
                 }
@@ -146,6 +147,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    
+    const signInWithPhone = async (phoneNumber: string, appVerifier: RecaptchaVerifier): Promise<ConfirmationResult | null> => {
+        setLoading(true);
+        try {
+            const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+            return confirmationResult;
+        } catch (error: any) {
+            console.error("Phone sign-in error:", error);
+            toast({ title: 'Phone Sign-In Failed', description: "Could not send OTP. Please check the phone number or try again later.", variant: 'destructive' });
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const signOut = async () => {
         setLoading(true);
@@ -169,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loading,
         signInWithGoogle,
         signInWithCredentials,
+        signInWithPhone,
         signOut,
         logInUser
     };
