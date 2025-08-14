@@ -4,11 +4,11 @@
 import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema } from '@/types';
 import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues } from '@/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
-import { seedPromotionalPosters } from './server-data'; // Import the seeder
+import { seedPromotionalPosters } from './server-data'; 
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper to convert file to buffer
@@ -34,10 +34,10 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const data = Object.fromEntries(formData.entries());
         
         // Handle file inputs for Zod validation
-        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
+        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile', 'photoIdFile'];
         fileFields.forEach(field => {
-            if (formData.has(field)) {
-                data[field] = formData.get(field) as File;
+            if (formData.has(field) && formData.get(field) instanceof File) {
+                data[field] = formData.get(field);
             }
         });
 
@@ -45,12 +45,17 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
         if (!validationResult.success) {
             console.error("Registration validation failed:", validationResult.error.format());
-            // Zod's error messages are detailed. Let's return a specific one if possible.
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
         }
         
         const { email, password, name, phone, userRole, username, gender } = validationResult.data;
+
+        // Check if username is already taken
+        const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+        if (!usernameQuery.empty) {
+            return { success: false, error: 'This username is already taken. Please choose another one.' };
+        }
 
         // Create user in Firebase Auth
         const userRecord = await adminAuth.createUser({
@@ -117,9 +122,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         if (error.code === 'auth/email-already-exists') {
             return { success: false, error: 'A user is already registered with this email address.' };
         }
-        if (error.code === 'auth/username-already-exists') {
-            return { success: false, error: 'This username is already taken. Please choose another one.' };
-        }
         return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
     }
 }
@@ -160,6 +162,7 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
     try {
         const data = Object.fromEntries(formData.entries());
         data.photoIdFile = formData.get('photoIdFile') as File;
+        data.subscriptionStartDate = new Date(data.subscriptionStartDate as string);
         const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
         if (!validationResult.success) {
@@ -172,7 +175,12 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
         const photoIdUrl = await uploadFileToCloudinary(await fileToBuffer(photoIdFile), 'customer_documents');
         
         const userRef = adminDb.collection('users').doc(userId);
-        await userRef.update({ ...profileData, photoIdUrl, approvalStatus: 'In Progress' });
+        await userRef.update({ 
+            ...profileData, 
+            subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
+            photoIdUrl,
+            approvalStatus: 'In Progress' 
+        });
 
         const updatedDoc = await userRef.get();
         const updatedUser = { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
@@ -346,7 +354,7 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
     questions[qIndex] = {
         id: questionId,
         question: { en: data.question_en, hi: data.question_hi },
-        options: { en: data.options_en.split('\n'), hi: data.options_hi.split('\n') },
+        options: { en: data.options_en.split('\\n'), hi: data.options_hi.split('\\n') },
         correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
     };
 
@@ -412,12 +420,161 @@ export async function updatePromotionalPoster(posterId: string, data: VisualCont
     return true;
 }
 
-// Mocked functions to be replaced
-export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> { return false; }
-export async function updateAssignmentStatusByTrainer(customerId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> { return false; }
-export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> { return false; }
-export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> { return null; }
-export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<boolean> { return false; }
-export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> { return false; }
-export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> { return false; }
-export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> { return false; }
+export async function updateAssignmentStatusByTrainer(studentId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
+  if (!adminDb) return false;
+  const studentRef = adminDb.collection('users').doc(studentId);
+  await studentRef.update({ approvalStatus: newStatus });
+  if (newStatus === 'Approved') {
+    // Optionally trigger a notification or further action
+  }
+  revalidatePath('/dashboard');
+  return true;
+}
+
+
+export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
+  if (!adminDb) return false;
+  const studentRef = adminDb.collection('users').doc(studentId);
+  const studentDoc = await studentRef.get();
+  if (!studentDoc.exists) return false;
+
+  const currentCompleted = studentDoc.data()?.completedLessons || 0;
+  const newCompleted = status === 'Present' ? currentCompleted + 1 : currentCompleted;
+
+  await studentRef.update({
+    attendance: status,
+    completedLessons: newCompleted,
+    // Reset for next lesson
+    upcomingLesson: null,
+  });
+
+  revalidatePath('/dashboard');
+  return true;
+}
+
+
+export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
+    if (!adminDb) return null;
+    const userRef = adminDb.collection('users').doc(customerId);
+    
+    const lessonDate = addDays(newDate, 1);
+    
+    await userRef.update({
+        subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
+        upcomingLesson: format(lessonDate, 'MMM dd, yyyy, h:mm a')
+    });
+    const updatedDoc = await userRef.get();
+    return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+}
+
+export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<boolean> {
+    if (!adminDb) return false;
+    
+    const userRef = adminDb.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) return false;
+    
+    const trainerId = userDoc.data()?.assignedTrainerId;
+    if (!trainerId) return false;
+
+    const request: Omit<RescheduleRequest, 'id' | 'requestTimestamp'> = {
+        userId,
+        customerName,
+        trainerId,
+        originalLessonDate: originalDate.toISOString(),
+        requestedRescheduleDate: newDate.toISOString(),
+        status: 'Pending'
+    };
+
+    await adminDb.collection('rescheduleRequests').add({
+      ...request,
+      requestTimestamp: new Date(),
+    });
+
+    revalidatePath('/dashboard');
+    return true;
+}
+
+
+export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
+    if (!adminDb) return false;
+    const requestRef = adminDb.collection('rescheduleRequests').doc(requestId);
+    await requestRef.update({ status: newStatus });
+    
+    if (newStatus === 'Approved') {
+        const requestDoc = await requestRef.get();
+        const requestData = requestDoc.data();
+        if (requestData) {
+            const userRef = adminDb.collection('users').doc(requestData.userId);
+            await userRef.update({ upcomingLesson: requestData.requestedRescheduleDate });
+        }
+    }
+    revalidatePath('/dashboard');
+    return true;
+}
+
+
+export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('feedback').add({
+        customerId,
+        customerName,
+        trainerId,
+        trainerName,
+        rating,
+        comment,
+        submissionDate: new Date(),
+    });
+    
+    // Mark that the customer has submitted feedback to prevent multiple submissions
+    await adminDb.collection('users').doc(customerId).update({ feedbackSubmitted: true });
+
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('referrals').doc(referralId).update({ payoutStatus: status });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    
+    const customerRef = adminDb.collection('users').doc(customerId);
+    const trainerRef = adminDb.collection('users').doc(trainerId);
+
+    const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
+
+    if (!customerDoc.exists || !trainerDoc.exists) return false;
+
+    const customerData = customerDoc.data();
+    const trainerData = trainerDoc.data();
+
+    if (!customerData || !trainerData) return false;
+
+    const subscriptionPlan = customerData.subscriptionPlan;
+    let totalLessons = 0;
+    if (subscriptionPlan === 'Basic') totalLessons = 10;
+    else if (subscriptionPlan === 'Gold') totalLessons = 15;
+    else if (subscriptionPlan === 'Premium') totalLessons = 20;
+
+    const startDate = customerData.subscriptionStartDate ? parseISO(customerData.subscriptionStartDate) : new Date();
+
+    await customerRef.update({
+        approvalStatus: 'Approved',
+        assignedTrainerId: trainerId,
+        assignedTrainerName: trainerData.name,
+        assignedTrainerPhone: trainerData.phone,
+        assignedTrainerExperience: trainerData.yearsOfExperience,
+        assignedTrainerVehicleDetails: trainerData.vehicleInfo,
+        totalLessons: totalLessons,
+        completedLessons: 0,
+        upcomingLesson: format(addDays(startDate, 1), "MMM dd, yyyy, '09:00 AM'"),
+    });
+
+    revalidatePath('/dashboard');
+    return true;
+}

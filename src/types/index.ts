@@ -329,7 +329,6 @@ export interface Course {
   totalEnrolled: number;
   totalCertified: number;
   image: string;
-  icon: LucideIcon;
   modules: CourseModule[];
 }
 
@@ -337,6 +336,7 @@ export interface RescheduleRequest {
     id: string;
     userId: string;
     customerName: string;
+    trainerId: string;
     originalLessonDate: string;
     requestedRescheduleDate: string;
     status: RescheduleRequestStatusType;
@@ -377,6 +377,7 @@ export interface LessonProgressData {
 export interface Referral {
     id: string;
     referrerId: string;
+    referrerName: string;
     refereeId: string;
     refereeName: string;
     status: 'Successful' | 'Pending';

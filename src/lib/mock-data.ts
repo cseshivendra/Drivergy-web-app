@@ -3,7 +3,7 @@ import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } f
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest } from '@/types';
 import { format, parseISO } from 'date-fns';
-import { fetchCourses as serverFetchCourses, fetchQuizSets as serverFetchQuizSets, fetchBlogPosts as serverFetchBlogPosts, fetchBlogPostBySlug as serverFetchBlogPostBySlug } from './server-data';
+import { fetchCourses as serverFetchCourses, fetchQuizSets as serverFetchQuizSets, fetchBlogPosts as serverFetchBlogPosts, fetchBlogPostBySlug as serverFetchBlogPostBySlug, fetchUserById as serverFetchUserById } from './server-data';
 
 export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster[]) => void) => {
   if (!db) {
@@ -178,7 +178,7 @@ export async function fetchApprovedInstructors(filters: { location?: string, gen
     if (filters.location) {
         q = query(q, where('location', '==', filters.location));
     }
-    if (filters.gender) {
+    if (filters.gender && filters.gender !== 'Any') {
         q = query(q, where('gender', '==', filters.gender));
     }
 
@@ -191,6 +191,8 @@ export const fetchCourses = serverFetchCourses;
 export const fetchQuizSets = serverFetchQuizSets;
 export const fetchBlogPosts = serverFetchBlogPosts;
 export const fetchBlogPostBySlug = serverFetchBlogPostBySlug;
+export const fetchUserById = serverFetchUserById;
+
 
 export const listenToBlogPosts = (callback: (posts: BlogPost[]) => void) => {
     if (!db) {
@@ -221,19 +223,6 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
 };
 
 
-export const addCourseModule = async (courseId: string, moduleData: any) => {};
-export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: any) => {};
-export const deleteCourseModule = async (courseId: string, moduleId: string) => { return true; };
-
-export const updateQuizQuestion = async (quizSetId: string, questionId: string, questionData: any) => {};
-export const addFaq = async (faqData: any) => {};
-export const updateFaq = async (faqId: string, faqData: any) => {};
-export const deleteFaq = async (faqId: string) => { return true; };
-
-export const updateSiteBanner = async (bannerId: string, data: any) => {};
-export const updatePromotionalPoster = async (posterId: string, data: any) => {};
-
-
 export const listenToTrainerStudents = (
     trainerId: string,
     callback: (data: { students: UserProfile[], feedback: Feedback[], rescheduleRequests: RescheduleRequest[], profile: UserProfile | null }) => void
@@ -257,12 +246,19 @@ export const listenToTrainerStudents = (
                 getDocs(rescheduleQuery)
             ]);
             
-            const profile = trainerSnap.exists() ? { id: trainerSnap.id, ...trainerSnap.data() } as UserProfile : null;
+            const profileData = trainerSnap.exists() ? trainerSnap.data() : null;
+            const profile = profileData ? { 
+                id: trainerSnap.id, 
+                ...profileData,
+                registrationTimestamp: profileData.registrationTimestamp?.toDate ? profileData.registrationTimestamp.toDate().toISOString() : profileData.registrationTimestamp
+            } as UserProfile : null;
+
             
             const students = studentsSnap.docs.map(d => ({
                 id: d.id,
                 ...d.data(),
-                upcomingLesson: d.data().upcomingLesson ? format(parseISO(d.data().upcomingLesson), 'PPp') : 'N/A',
+                upcomingLesson: d.data().upcomingLesson,
+                registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
             } as UserProfile));
 
             const feedback = feedbackSnap.docs.map(d => ({
@@ -300,25 +296,3 @@ export const listenToTrainerStudents = (
         unsubReschedule();
     };
 };
-
-export async function fetchUserById(userId: string): Promise<UserProfile | null> {
-    if (!db) {
-        console.error("Firestore not initialized.");
-        return null;
-    }
-
-    try {
-        const userDoc = await getDoc(doc(db, "users", userId));
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
-                userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
-            }
-            return { id: userDoc.id, ...userData } as UserProfile;
-        }
-        return null;
-    } catch (error) {
-        console.error("Error fetching user by ID:", error);
-        return null;
-    }
-}
