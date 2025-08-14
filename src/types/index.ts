@@ -67,6 +67,7 @@ export const UserProfileSchema = z.object({
   photoIdNumber: z.string().optional(),
   photoIdUrl: z.string().optional(),
   trainerPreference: z.string().optional(),
+  vehiclePreference: z.string().optional(),
   assignedTrainerId: z.string().optional(),
   assignedTrainerName: z.string().optional(),
   assignedTrainerPhone: z.string().optional(),

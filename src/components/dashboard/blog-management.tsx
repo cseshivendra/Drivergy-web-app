@@ -74,7 +74,8 @@ function BlogForm({ post, onFormSubmit }: { post?: BlogPost; onFormSubmit: () =>
         setPreview(null);
       }
     } catch (error) {
-      toast({ title: "Error", description: `An error occurred: ${error instanceof Error ? error.message : String(error)}`, variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 

@@ -17,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { CourseModuleSchema, type CourseModuleFormValues, type Course, type CourseModule } from '@/types';
-import { addCourseModule, updateCourseModule, deleteCourseModule } from '@/lib/mock-data';
+import { addCourseModule, updateCourseModule, deleteCourseModule } from '@/lib/server-actions';
 
 // Dialog Form for adding/editing a module
 function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; module?: CourseModule; onFormSubmit: () => void }) {
@@ -50,7 +50,8 @@ function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; modu
       setOpen(false);
       form.reset();
     } catch (error) {
-      toast({ title: "Error", description: "An error occurred.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -120,11 +121,11 @@ function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; modu
 // Main Course Management Component
 export default function CourseManagement({ title, courses, isLoading, onAction }: { title: ReactNode; courses: Course[]; isLoading: boolean; onAction: () => void }) {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [moduleToDelete, setModuleToDelete] = useState<{ courseId: string; moduleId: string } | null>(null);
+  const [moduleToDelete, setModuleToDelete] = useState<{ courseId: string; moduleId: string; moduleTitle: string } | null>(null);
   const { toast } = useToast();
 
-  const handleDeleteClick = (courseId: string, moduleId: string) => {
-    setModuleToDelete({ courseId, moduleId });
+  const handleDeleteClick = (courseId: string, module: CourseModule) => {
+    setModuleToDelete({ courseId, moduleId: module.id, moduleTitle: module.title });
     setIsAlertOpen(true);
   };
 
@@ -172,7 +173,7 @@ export default function CourseManagement({ title, courses, isLoading, onAction }
                       <div className="flex justify-end mb-4">
                         <ModuleForm courseId={course.id} onFormSubmit={onAction} />
                       </div>
-                      {course.modules.length > 0 ? (
+                      {course.modules && course.modules.length > 0 ? (
                         <ul className="space-y-3">
                           {course.modules.map(module => (
                             <li key={module.id} className="flex justify-between items-start p-3 border rounded-md bg-muted/50">
@@ -186,7 +187,7 @@ export default function CourseManagement({ title, courses, isLoading, onAction }
                               </div>
                               <div className="flex items-center ml-4">
                                 <ModuleForm courseId={course.id} module={module} onFormSubmit={onAction} />
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(course.id, module.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(course.id, module)}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </div>
@@ -215,7 +216,7 @@ export default function CourseManagement({ title, courses, isLoading, onAction }
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the module from the course.
+              This action cannot be undone. This will permanently delete the module "{moduleToDelete?.moduleTitle}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

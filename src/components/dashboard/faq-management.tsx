@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -18,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { FaqSchema, type FaqFormValues, type FaqItem } from '@/types';
-import { addFaq, updateFaq, deleteFaq } from '@/lib/mock-data';
+import { addFaq, updateFaq, deleteFaq } from '@/lib/server-actions';
 
 function FaqForm({ faq, onFormSubmit }: { faq?: FaqItem; onFormSubmit: () => void }) {
   const { toast } = useToast();
@@ -47,7 +46,8 @@ function FaqForm({ faq, onFormSubmit }: { faq?: FaqItem; onFormSubmit: () => voi
       setOpen(false);
       form.reset();
     } catch (error) {
-      toast({ title: "Error", description: "An error occurred.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -163,7 +163,7 @@ export default function FaqManagement({ title, faqs, isLoading, onAction }: { ti
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the FAQ.
+              This action cannot be undone. This will permanently delete the FAQ: "{faqToDelete?.question}"
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

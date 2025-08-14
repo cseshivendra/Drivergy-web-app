@@ -2,13 +2,14 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, BlogPostFormValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues } from '@/types';
 import { format, parseISO } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
 import { seedPromotionalPosters } from './server-data'; // Import the seeder
+import { v4 as uuidv4 } from 'uuid';
 
 // Helper to convert file to buffer
 async function fileToBuffer(file: File): Promise<Buffer> {
@@ -185,7 +186,24 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
     }
 }
 
-// And so on... other server actions would be implemented here using adminDb and adminAuth
+export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
+  if (!adminDb) return null;
+  const { photo, ...profileData } = data;
+  const updatePayload: { [key: string]: any } = { ...profileData };
+
+  if (photo) {
+    const photoBuffer = await fileToBuffer(photo);
+    const photoURL = await uploadFileToCloudinary(photoBuffer, 'profile_pictures');
+    updatePayload.photoURL = photoURL;
+  }
+
+  const userRef = adminDb.collection('users').doc(userId);
+  await userRef.update(updatePayload);
+  const updatedDoc = await userRef.get();
+  
+  revalidatePath('/dashboard/profile');
+  return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+}
 
 export async function changeUserPassword(userId: string, currentPass: string, newPass: string): Promise<boolean> {
    if (!adminAuth) {
@@ -200,17 +218,160 @@ export async function changeUserPassword(userId: string, currentPass: string, ne
     return false;
 }
 
-export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
-    return null;
-}
+// And so on... other server actions would be implemented here using adminDb and adminAuth
+
+
 export async function addBlogPost(data: BlogPostFormValues): Promise<boolean> {
-    return false;
+    if (!adminDb) return false;
+    const { slug, imageFile, ...postData } = data;
+    let imageUrl = postData.imageSrc || '';
+
+    if (imageFile) {
+        const imageBuffer = await fileToBuffer(imageFile);
+        imageUrl = await uploadFileToCloudinary(imageBuffer, 'blog_images');
+    }
+
+    await adminDb.collection('blog').doc(slug).set({ ...postData, imageSrc: imageUrl });
+    revalidatePath('/dashboard');
+    return true;
 }
+
 export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
-    return false;
+    if (!adminDb) return false;
+    const { imageFile, ...postData } = data;
+    let imageUrl = postData.imageSrc || '';
+
+    if (imageFile) {
+        const imageBuffer = await fileToBuffer(imageFile);
+        imageUrl = await uploadFileToCloudinary(imageBuffer, 'blog_images');
+    }
+
+    await adminDb.collection('blog').doc(slug).update({ ...postData, imageSrc: imageUrl });
+    revalidatePath('/dashboard');
+    return true;
 }
+
 export async function deleteBlogPost(slug: string): Promise<boolean> {
-    return false;
+    if (!adminDb) return false;
+    await adminDb.collection('blog').doc(slug).delete();
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function addCourseModule(courseId: string, moduleData: CourseModuleFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const courseRef = adminDb.collection('courses').doc(courseId);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return false;
+
+    const newModule = { ...moduleData, id: uuidv4() };
+    const modules = courseDoc.data()?.modules || [];
+    modules.push(newModule);
+
+    await courseRef.update({ modules });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const courseRef = adminDb.collection('courses').doc(courseId);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return false;
+    
+    let modules = courseDoc.data()?.modules || [];
+    const moduleIndex = modules.findIndex((m: any) => m.id === moduleId);
+
+    if (moduleIndex === -1) return false;
+    modules[moduleIndex] = { ...modules[moduleIndex], ...moduleData };
+    
+    await courseRef.update({ modules });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function deleteCourseModule(courseId: string, moduleId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    const courseRef = adminDb.collection('courses').doc(courseId);
+    const courseDoc = await courseRef.get();
+    if (!courseDoc.exists) return false;
+
+    const modules = courseDoc.data()?.modules || [];
+    const updatedModules = modules.filter((m: any) => m.id !== moduleId);
+    
+    await courseRef.update({ modules: updatedModules });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const quizSetRef = adminDb.collection('quizSets').doc(quizSetId);
+    const doc = await quizSetRef.get();
+    if (!doc.exists) return false;
+
+    const questions = doc.data()?.questions || [];
+    const qIndex = questions.findIndex((q: any) => q.id === questionId);
+
+    if (qIndex === -1) return false;
+
+    questions[qIndex] = {
+        id: questionId,
+        question: { en: data.question_en, hi: data.question_hi },
+        options: { en: data.options_en.split('\n'), hi: data.options_hi.split('\n') },
+        correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
+    };
+
+    await quizSetRef.update({ questions });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function addFaq(data: FaqFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('faqs').add({ ...data, id: uuidv4() });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function updateFaq(faqId: string, data: FaqFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('faqs').doc(faqId).update(data);
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function deleteFaq(faqId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('faqs').doc(faqId).delete();
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function updateSiteBanner(bannerId: string, data: VisualContentFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const { imageFile, ...bannerData } = data;
+    let imageUrl = bannerData.imageSrc || '';
+
+    if (imageFile) {
+        imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'site_banners');
+    }
+    await adminDb.collection('siteBanners').doc(bannerId).update({ ...bannerData, imageSrc: imageUrl });
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function updatePromotionalPoster(posterId: string, data: VisualContentFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const { imageFile, ...posterData } = data;
+    let imageUrl = posterData.imageSrc || '';
+
+    if (imageFile) {
+        imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'promo_posters');
+    }
+    await adminDb.collection('promotionalPosters').doc(posterId).update({ ...posterData, imageSrc: imageUrl });
+    revalidatePath('/dashboard');
+    return true;
 }
 
 // Mocked functions to be replaced
@@ -222,4 +383,3 @@ export async function addRescheduleRequest(userId: string, customerName: string,
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> { return false; }
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> { return false; }
 export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> { return false; }
-

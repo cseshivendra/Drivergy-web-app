@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -16,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { QuizQuestionSchema, type QuizQuestionFormValues, type QuizSet, type Question, availableLanguages } from '@/types';
-import { updateQuizQuestion } from '@/lib/mock-data';
+import { updateQuizQuestion } from '@/lib/server-actions';
 
 // Dialog Form for editing a question
 function QuestionForm({ quizSetId, question, onFormSubmit }: { quizSetId: string; question: Question; onFormSubmit: () => void }) {
@@ -47,7 +48,8 @@ function QuestionForm({ quizSetId, question, onFormSubmit }: { quizSetId: string
       onFormSubmit();
       setOpen(false);
     } catch (error) {
-      toast({ title: "Error", description: "An error occurred while updating the question.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -62,7 +64,7 @@ function QuestionForm({ quizSetId, question, onFormSubmit }: { quizSetId: string
           <DialogDescription>Modify the question details for all languages below.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h4 className="font-semibold text-lg">English</h4>
@@ -77,7 +79,7 @@ function QuestionForm({ quizSetId, question, onFormSubmit }: { quizSetId: string
                 <FormField control={form.control} name="correctAnswer_hi" render={({ field }) => ( <FormItem><FormLabel>Correct Answer</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select correct answer" /></SelectTrigger></FormControl><SelectContent>{optionsHi.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )} />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="pt-4 sticky bottom-0 bg-background">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { VisualContentSchema, type VisualContentFormValues, type SiteBanner, type PromotionalPoster } from '@/types';
-import { updateSiteBanner, updatePromotionalPoster } from '@/lib/mock-data';
+import { updateSiteBanner, updatePromotionalPoster } from '@/lib/server-actions';
 
 type ContentItem = (SiteBanner | PromotionalPoster) & { type: 'banner' | 'poster' };
 
@@ -62,7 +62,8 @@ function VisualContentForm({ item, onFormSubmit }: { item: ContentItem; onFormSu
       onFormSubmit();
       setOpen(false);
     } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "An unexpected error occurred.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -110,9 +111,9 @@ function VisualContentForm({ item, onFormSubmit }: { item: ContentItem; onFormSu
             </div>
             <FormField control={form.control} name="imageHint" render={({ field }) => ( <FormItem><FormLabel>Image Hint</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             {item.type === 'poster' && (
-              <FormField control={form.control} name="href" render={({ field }) => ( <FormItem><FormLabel>Link URL (e.g., /site/register)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+              <FormField control={form.control} name="href" render={({ field }) => ( <FormItem><FormLabel>Link URL (e.g., /#subscriptions)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
             )}
-            <DialogFooter>
+            <DialogFooter className="pt-4 sticky bottom-0 bg-background">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -163,7 +164,7 @@ export default function VisualContentManagement({ title, banners, posters, isLoa
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 flex-grow flex flex-col">
-                  <div className="relative w-full aspect-[3/4] rounded-md overflow-hidden mb-4">
+                  <div className="relative w-full aspect-[4/3] rounded-md overflow-hidden mb-4">
                     <NextImage src={item.imageSrc} alt={item.title} layout="fill" objectFit="cover" />
                   </div>
                   <div className="space-y-2 flex-grow">
