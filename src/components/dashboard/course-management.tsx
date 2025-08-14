@@ -48,7 +48,9 @@ function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; modu
       }
       onFormSubmit();
       setOpen(false);
-      form.reset();
+      if (!module) {
+        form.reset();
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
       toast({ title: "Error", description: errorMessage, variant: "destructive" });
