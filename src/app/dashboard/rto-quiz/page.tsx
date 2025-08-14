@@ -8,7 +8,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Lightbulb, ClipboardCheck } from 'lucide-react';
-import { fetchQuizSets } from '@/lib/mock-data';
+import { fetchQuizSets } from '@/lib/server-data';
 import type { QuizSet } from '@/types';
 import RtoQuizClientPage from './rto-quiz-client-page';
 import type { Metadata } from 'next';
@@ -48,3 +48,4 @@ export default async function AppRtoQuizPage() {
     </div>
   );
 }
+

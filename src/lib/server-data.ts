@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { BlogPost, UserProfile, Course } from '@/types';
+import type { BlogPost, UserProfile, Course, QuizSet } from '@/types';
 import { adminAuth, adminDb } from './firebase/admin';
 
 // This file is for server-side data fetching and data seeding logic only.
@@ -163,6 +163,28 @@ export async function fetchCourses(): Promise<Course[]> {
     }
 }
 
+/**
+ * Fetches all quiz sets from Firestore.
+ * @returns A promise that resolves to an array of quiz sets.
+ */
+export async function fetchQuizSets(): Promise<QuizSet[]> {
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot fetch quiz sets.");
+        return [];
+    }
+
+    try {
+        const snapshot = await adminDb.collection('quizSets').get();
+        if (snapshot.empty) {
+            return [];
+        }
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
+    } catch (error) {
+        console.error("Error fetching quiz sets:", error);
+        return [];
+    }
+}
+
 
 /**
  * Fetches a single user profile from Firestore by their document ID.
@@ -192,6 +214,29 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
         }
     } catch (error) {
         console.error(`Error fetching user by ID ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Fetches a single blog post by its slug (document ID).
+ * @param slug The slug of the blog post to fetch.
+ * @returns A promise that resolves to the blog post or null if not found.
+ */
+export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot fetch blog post.");
+        return null;
+    }
+    try {
+        const docRef = adminDb.collection('blog').doc(slug);
+        const docSnap = await docRef.get();
+        if (docSnap.exists) {
+            return { slug: docSnap.id, ...docSnap.data() } as BlogPost;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching blog post by slug ${slug}:`, error);
         return null;
     }
 }

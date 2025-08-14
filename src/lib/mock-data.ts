@@ -3,7 +3,7 @@ import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } f
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest } from '@/types';
 import { format, parseISO } from 'date-fns';
-import { fetchCourses as serverFetchCourses } from './server-data';
+import { fetchCourses as serverFetchCourses, fetchQuizSets as serverFetchQuizSets, fetchBlogPosts as serverFetchBlogPosts, fetchBlogPostBySlug as serverFetchBlogPostBySlug } from './server-data';
 
 export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster[]) => void) => {
   if (!db) {
@@ -186,8 +186,40 @@ export async function fetchApprovedInstructors(filters: { location?: string, gen
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
 }
 
-// Re-exporting the server function for client-side usage if needed through this file.
+// Re-exporting server functions for client-side usage if needed through this file.
 export const fetchCourses = serverFetchCourses;
+export const fetchQuizSets = serverFetchQuizSets;
+export const fetchBlogPosts = serverFetchBlogPosts;
+export const fetchBlogPostBySlug = serverFetchBlogPostBySlug;
+
+export const listenToBlogPosts = (callback: (posts: BlogPost[]) => void) => {
+    if (!db) {
+        console.error("Firestore not initialized");
+        return () => {};
+    }
+    const blogCollectionRef = query(collection(db, 'blog'), orderBy('date', 'desc'));
+    const unsubscribe = onSnapshot(blogCollectionRef, (querySnapshot) => {
+        const posts: BlogPost[] = [];
+        querySnapshot.forEach((doc) => {
+            posts.push({ slug: doc.id, ...doc.data() } as BlogPost);
+        });
+        callback(posts);
+    });
+    return unsubscribe;
+};
+
+
+export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
+    if (!db) return [];
+    const referralsQuery = query(collection(db, 'referrals'), where('referrerId', '==', userId));
+    const snapshot = await getDocs(referralsQuery);
+    return snapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        timestamp: doc.data().timestamp?.toDate ? doc.data().timestamp.toDate().toISOString() : new Date().toISOString()
+    } as Referral));
+};
+
 
 export const addCourseModule = async (courseId: string, moduleData: any) => {};
 export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: any) => {};
@@ -268,3 +300,25 @@ export const listenToTrainerStudents = (
         unsubReschedule();
     };
 };
+
+export async function fetchUserById(userId: string): Promise<UserProfile | null> {
+    if (!db) {
+        console.error("Firestore not initialized.");
+        return null;
+    }
+
+    try {
+        const userDoc = await getDoc(doc(db, "users", userId));
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
+                userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
+            }
+            return { id: userDoc.id, ...userData } as UserProfile;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user by ID:", error);
+        return null;
+    }
+}
