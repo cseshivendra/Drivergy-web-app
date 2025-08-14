@@ -63,8 +63,60 @@ const createDefaultAdmin = async () => {
     }
 };
 
-// Call the function to ensure the admin exists when the server starts up.
-createDefaultAdmin();
+const seedPromotionalPosters = async () => {
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot seed promotional posters.");
+        return;
+    }
+
+    const postersRef = adminDb.collection('promotionalPosters');
+    const snapshot = await postersRef.limit(1).get();
+
+    if (snapshot.empty) {
+        console.log("Seeding promotional posters...");
+        const posters = [
+            {
+                id: 'poster-1',
+                href: '/#subscriptions',
+                imageSrc: 'https://placehold.co/600x800/ef4444/ffffff.png',
+                imageHint: 'discount offer driving',
+                title: 'Monsoon Special!',
+                description: 'Get 20% off on all Premium driving courses. Limited time offer!',
+            },
+            {
+                id: 'poster-2',
+                href: '/#courses',
+                imageSrc: 'https://placehold.co/600x800/3b82f6/ffffff.png',
+                imageHint: 'motorcycle safety gear',
+                title: 'New Bike Safety Course',
+                description: 'Master the two-wheeler with our new advanced safety course.',
+            },
+            {
+                id: 'poster-3',
+                href: '/dashboard/referrals/invite',
+                imageSrc: 'https://placehold.co/600x800/22c55e/ffffff.png',
+                imageHint: 'friends sharing gift',
+                title: 'Refer a Friend, Get Rewards!',
+                description: 'Invite your friends to Drivergy and earn points for every successful referral.',
+            }
+        ];
+
+        const batch = adminDb.batch();
+        posters.forEach(poster => {
+            const docRef = postersRef.doc(poster.id);
+            batch.set(docRef, poster);
+        });
+        await batch.commit();
+        console.log("Promotional posters seeded successfully.");
+    }
+};
+
+// Call the seeding functions when the server starts up.
+const initializeServerData = async () => {
+    await createDefaultAdmin();
+    await seedPromotionalPosters();
+};
+initializeServerData();
 
 
 /**
