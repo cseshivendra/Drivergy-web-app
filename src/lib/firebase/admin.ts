@@ -16,10 +16,11 @@ function initializeAdminApp() {
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 
   if (!projectId || !clientEmail || !privateKey) {
-    if (!projectId) console.error("Firebase Admin SDK Error: FIREBASE_PROJECT_ID is not set.");
-    if (!clientEmail) console.error("Firebase Admin SDK Error: FIREBASE_CLIENT_EMAIL is not set.");
-    if (!privateKey) console.error("Firebase Admin SDK Error: FIREBASE_PRIVATE_KEY is not set.");
-    console.error('Firebase Admin SDK environment variables not fully set. Server features requiring authentication will fail.');
+    console.error("Firebase Admin SDK Initialization Error: One or more required environment variables are missing.");
+    if (!projectId) console.error("-> FIREBASE_PROJECT_ID is not set.");
+    if (!clientEmail) console.error("-> FIREBASE_CLIENT_EMAIL is not set.");
+    if (!privateKey) console.error("-> FIREBASE_PRIVATE_KEY is not set.");
+    console.error("Please check your .env file and ensure all Firebase Admin credentials are provided.");
     return null;
   }
 
