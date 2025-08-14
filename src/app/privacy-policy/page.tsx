@@ -2,6 +2,7 @@
 import type { Metadata } from 'next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
     title: 'Privacy Policy | Drivergy',
