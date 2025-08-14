@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,14 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, User } from 'lucide-react';
+import { Car, ShieldAlert, Sun, Moon, Home, KeyRound, Loader2, Eye, EyeOff, User, Phone, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { useToast } from '@/hooks/use-toast';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { ConfirmationResult } from 'firebase/auth';
 
 export default function LoginPage() {
-  const { user, signInWithGoogle, signInWithCredentials, loading } = useAuth();
+  const { user, signInWithGoogle, signInWithCredentials, signInWithPhone, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
@@ -24,9 +26,19 @@ export default function LoginPage() {
 
   const { theme, toggleTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  
+  // State for Email/Password form
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // State for Phone Auth
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otp, setOtp] = useState('');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     setIsMounted(true);
@@ -44,6 +56,34 @@ export default function LoginPage() {
     await signInWithCredentials(identifier, password);
   };
   
+  const handleSendOtp = async () => {
+    if (!recaptchaContainerRef.current) {
+        toast({ title: 'Error', description: 'reCAPTCHA container not found.', variant: 'destructive' });
+        return;
+    }
+    setIsSubmitting(true);
+    const result = await signInWithPhone(`+91${phoneNumber}`, recaptchaContainerRef.current);
+    if (result) {
+        setConfirmationResult(result);
+        setIsOtpSent(true);
+        toast({ title: 'OTP Sent', description: 'Please check your phone for the verification code.' });
+    }
+    setIsSubmitting(false);
+  };
+  
+  const handleVerifyOtp = async () => {
+    if (!confirmationResult || !otp) return;
+    setIsSubmitting(true);
+    try {
+        await confirmationResult.confirm(otp);
+        toast({ title: 'Sign In Successful', description: 'You have been successfully signed in with your phone number.' });
+        router.push(redirect);
+    } catch (error) {
+        toast({ title: 'Verification Failed', description: 'The OTP you entered is incorrect. Please try again.', variant: 'destructive' });
+    }
+    setIsSubmitting(false);
+  };
+
   const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
       <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
@@ -60,6 +100,9 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full">
+      {/* reCAPTCHA container - must be visible to work */}
+      <div ref={recaptchaContainerRef} id="recaptcha-container" className="fixed bottom-0 right-0 z-0"></div>
+
       <Image
         src="https://placehold.co/1920x1080/1f2937/ffffff.png"
         alt="Scenic driving route"
@@ -94,27 +137,65 @@ export default function LoginPage() {
             <CardDescription className="text-muted-foreground pt-1 px-2">Sign in to access your dashboard and unlock new opportunities.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
-            <form onSubmit={handleCredentialSignIn} className="space-y-3">
-              <div>
-                <Label htmlFor="identifier" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Email or Username</Label>
-                <Input id="identifier" type="text" placeholder="Enter your email or username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={loading} autoComplete="email username" />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" passHref><Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button></Link>
+            <Tabs defaultValue="email" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="email">Email</TabsTrigger>
+                <TabsTrigger value="phone">Phone</TabsTrigger>
+              </TabsList>
+              <TabsContent value="email" className="pt-4">
+                <form onSubmit={handleCredentialSignIn} className="space-y-3">
+                  <div>
+                    <Label htmlFor="identifier" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Email or Username</Label>
+                    <Input id="identifier" type="text" placeholder="Enter your email or username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={loading} autoComplete="email username" />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <Label htmlFor="password">Password</Label>
+                      <Link href="/forgot-password" passHref><Button variant="link" className="p-0 h-auto text-xs text-primary">Forgot password?</Button></Link>
+                    </div>
+                    <div className="relative">
+                      <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="current-password" className="pr-10" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full h-12 text-base bg-primary hover:bg-primary/90" disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
+                  </Button>
+                </form>
+              </TabsContent>
+              <TabsContent value="phone" className="pt-4">
+                <div className="space-y-3">
+                  {!isOtpSent ? (
+                    <>
+                      <div>
+                        <Label htmlFor="phone" className="flex items-center mb-1"><Phone className="mr-2 h-4 w-4" />Phone Number</Label>
+                         <div className="flex items-center">
+                            <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span>
+                            <Input id="phone" type="tel" placeholder="Enter your 10-digit number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} disabled={isSubmitting} autoComplete="tel" />
+                        </div>
+                      </div>
+                      <Button onClick={handleSendOtp} className="w-full h-12 text-base" disabled={isSubmitting || phoneNumber.length !== 10}>
+                        {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending OTP...</> : 'Send OTP'}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <Label htmlFor="otp" className="flex items-center mb-1"><MessageSquare className="mr-2 h-4 w-4" />Enter OTP</Label>
+                        <Input id="otp" type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} disabled={isSubmitting} />
+                      </div>
+                      <Button onClick={handleVerifyOtp} className="w-full h-12 text-base" disabled={isSubmitting || otp.length !== 6}>
+                         {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying...</> : 'Verify & Sign In'}
+                      </Button>
+                      <Button variant="link" onClick={() => setIsOtpSent(false)} disabled={isSubmitting}>Change Number</Button>
+                    </>
+                  )}
                 </div>
-                <div className="relative">
-                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="current-password" className="pr-10" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-              <Button type="submit" className="w-full h-12 text-base bg-primary hover:bg-primary/90" disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Sign In'}
-              </Button>
-            </form>
+              </TabsContent>
+            </Tabs>
+            
 
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
