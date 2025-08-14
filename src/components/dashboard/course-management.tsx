@@ -12,12 +12,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BookOpen, Clock, Trash2, Edit, PlusCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { BookOpen, Clock, Trash2, Edit, PlusCircle, AlertCircle, Loader2, FileUp, PlayCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
 import { CourseModuleSchema, type CourseModuleFormValues, type Course, type CourseModule } from '@/types';
 import { addCourseModule, updateCourseModule, deleteCourseModule } from '@/lib/server-actions';
+import Link from 'next/link';
 
 // Dialog Form for adding/editing a module
 function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; module?: CourseModule; onFormSubmit: () => void }) {
@@ -30,6 +31,8 @@ function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; modu
       title: module?.title || '',
       description: module?.description || '',
       duration: module?.duration || '',
+      recordedLectureLink: module?.recordedLectureLink || '',
+      videoFile: undefined,
     },
   });
 
@@ -37,13 +40,20 @@ function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; modu
 
   const handleSubmit = async (data: CourseModuleFormValues) => {
     try {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+            if (value instanceof File) {
+                formData.append(key, value);
+            } else if (value) {
+                formData.append(key, String(value));
+            }
+        });
+
       if (module) {
-        // Update existing module
-        await updateCourseModule(courseId, module.id, data);
+        await updateCourseModule(courseId, module.id, formData);
         toast({ title: "Module Updated", description: "The module has been successfully updated." });
       } else {
-        // Add new module
-        await addCourseModule(courseId, data);
+        await addCourseModule(courseId, formData);
         toast({ title: "Module Added", description: "The new module has been successfully added." });
       }
       onFormSubmit();
@@ -66,47 +76,49 @@ function ModuleForm({ courseId, module, onFormSubmit }: { courseId: string; modu
           <Button size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Module</Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{module ? 'Edit' : 'Add'} Module</DialogTitle>
           <DialogDescription>Fill in the details for the course module below.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl><Input placeholder="e.g., Vehicle Controls" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl><Textarea placeholder="Describe the module content..." {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration</FormLabel>
-                  <FormControl><Input placeholder="e.g., 2 hours" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
+            <FormField control={form.control} name="title" render={({ field }) => ( <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="e.g., Vehicle Controls" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="description" render={({ field }) => ( <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Describe the module content..." {...field} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="duration" render={({ field }) => ( <FormItem><FormLabel>Duration</FormLabel><FormControl><Input placeholder="e.g., 2 hours" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            
+            <div className="space-y-2">
+                <FormField
+                    control={form.control}
+                    name="videoFile"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4" /> Upload New Video (Optional)</FormLabel>
+                        <FormControl>
+                            <Input
+                            type="file"
+                            accept="video/mp4,video/quicktime"
+                            onChange={(e) => field.onChange(e.target.files?.[0])}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="recordedLectureLink"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Or Enter Existing Video URL</FormLabel>
+                        <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+            
+            <DialogFooter className="pt-4 sticky bottom-0 bg-background">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -182,9 +194,13 @@ export default function CourseManagement({ title, courses, isLoading, onAction }
                               <div className="flex-1">
                                 <p className="font-semibold text-foreground">{module.title}</p>
                                 <p className="text-sm text-muted-foreground mt-1">{module.description}</p>
-                                <div className="flex items-center text-xs text-muted-foreground mt-2">
-                                  <Clock className="mr-1.5 h-3 w-3" />
-                                  <span>{module.duration}</span>
+                                <div className="flex items-center text-xs text-muted-foreground mt-2 gap-4">
+                                  <div className="flex items-center"><Clock className="mr-1.5 h-3 w-3" /><span>{module.duration}</span></div>
+                                  {module.recordedLectureLink && (
+                                     <Link href={module.recordedLectureLink} target="_blank" rel="noopener noreferrer" className="flex items-center text-primary hover:underline">
+                                       <PlayCircle className="mr-1.5 h-3 w-3" /> View Video
+                                    </Link>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center ml-4">

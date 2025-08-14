@@ -103,7 +103,7 @@ const requiredFileSchema = z
 
 const optionalFileSchema = z
   .any()
-  .refine((file) => file === undefined || (file instanceof File && file.size <= 5 * 1024 * 1024), `Max file size is 5MB.`)
+  .refine((file) => file === undefined || (file instanceof File && file.size <= 50 * 1024 * 1024), `Max file size is 50MB.`) // Increased for video
   .optional();
 
 
@@ -245,6 +245,8 @@ export const CourseModuleSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
   duration: z.string().min(1, "Duration is required."),
+  recordedLectureLink: z.string().optional(),
+  videoFile: optionalFileSchema,
 });
 export type CourseModuleFormValues = z.infer<typeof CourseModuleSchema>;
 

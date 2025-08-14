@@ -218,9 +218,6 @@ export async function changeUserPassword(userId: string, currentPass: string, ne
     return false;
 }
 
-// And so on... other server actions would be implemented here using adminDb and adminAuth
-
-
 export async function addBlogPost(data: BlogPostFormValues): Promise<boolean> {
     if (!adminDb) return false;
     const { slug, imageFile, ...postData } = data;
@@ -233,6 +230,7 @@ export async function addBlogPost(data: BlogPostFormValues): Promise<boolean> {
 
     await adminDb.collection('blog').doc(slug).set({ ...postData, imageSrc: imageUrl });
     revalidatePath('/dashboard');
+    revalidatePath('/blog');
     return true;
 }
 
@@ -248,6 +246,8 @@ export async function updateBlogPost(slug: string, data: BlogPostFormValues): Pr
 
     await adminDb.collection('blog').doc(slug).update({ ...postData, imageSrc: imageUrl });
     revalidatePath('/dashboard');
+    revalidatePath('/blog');
+    revalidatePath(`/blog/${slug}`);
     return true;
 }
 
@@ -255,26 +255,52 @@ export async function deleteBlogPost(slug: string): Promise<boolean> {
     if (!adminDb) return false;
     await adminDb.collection('blog').doc(slug).delete();
     revalidatePath('/dashboard');
+    revalidatePath('/blog');
     return true;
 }
 
-export async function addCourseModule(courseId: string, moduleData: CourseModuleFormValues): Promise<boolean> {
+export async function addCourseModule(courseId: string, formData: FormData): Promise<boolean> {
     if (!adminDb) return false;
+    
+    const data = Object.fromEntries(formData.entries());
+    const validationResult = CourseModuleSchema.safeParse(data);
+    if (!validationResult.success) return false;
+
+    const { videoFile, ...moduleData } = validationResult.data;
+    let videoUrl = moduleData.recordedLectureLink || '';
+
+    if (videoFile) {
+        videoUrl = await uploadFileToCloudinary(await fileToBuffer(videoFile), 'course_videos');
+    }
+
     const courseRef = adminDb.collection('courses').doc(courseId);
     const courseDoc = await courseRef.get();
     if (!courseDoc.exists) return false;
 
-    const newModule = { ...moduleData, id: uuidv4() };
+    const newModule = { ...moduleData, recordedLectureLink: videoUrl, id: uuidv4() };
     const modules = courseDoc.data()?.modules || [];
     modules.push(newModule);
 
     await courseRef.update({ modules });
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/courses');
     return true;
 }
 
-export async function updateCourseModule(courseId: string, moduleId: string, moduleData: CourseModuleFormValues): Promise<boolean> {
+export async function updateCourseModule(courseId: string, moduleId: string, formData: FormData): Promise<boolean> {
     if (!adminDb) return false;
+
+    const data = Object.fromEntries(formData.entries());
+    const validationResult = CourseModuleSchema.safeParse(data);
+    if (!validationResult.success) return false;
+
+    const { videoFile, ...moduleData } = validationResult.data;
+    let videoUrl = moduleData.recordedLectureLink || '';
+
+    if (videoFile) {
+        videoUrl = await uploadFileToCloudinary(await fileToBuffer(videoFile), 'course_videos');
+    }
+    
     const courseRef = adminDb.collection('courses').doc(courseId);
     const courseDoc = await courseRef.get();
     if (!courseDoc.exists) return false;
@@ -283,10 +309,11 @@ export async function updateCourseModule(courseId: string, moduleId: string, mod
     const moduleIndex = modules.findIndex((m: any) => m.id === moduleId);
 
     if (moduleIndex === -1) return false;
-    modules[moduleIndex] = { ...modules[moduleIndex], ...moduleData };
+    modules[moduleIndex] = { ...modules[moduleIndex], ...moduleData, recordedLectureLink: videoUrl };
     
     await courseRef.update({ modules });
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/courses');
     return true;
 }
 
@@ -301,6 +328,7 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
     
     await courseRef.update({ modules: updatedModules });
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/courses');
     return true;
 }
 
@@ -324,6 +352,7 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 
     await quizSetRef.update({ questions });
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/rto-quiz');
     return true;
 }
 
@@ -331,6 +360,7 @@ export async function addFaq(data: FaqFormValues): Promise<boolean> {
     if (!adminDb) return false;
     await adminDb.collection('faqs').add({ ...data, id: uuidv4() });
     revalidatePath('/dashboard');
+    revalidatePath('/faq');
     return true;
 }
 
@@ -340,6 +370,7 @@ export async function updateFaq(faqId: string, data: FaqFormValues): Promise<boo
     if (faqQuery.empty) return false;
     await faqQuery.docs[0].ref.update(data);
     revalidatePath('/dashboard');
+    revalidatePath('/faq');
     return true;
 }
 
@@ -349,6 +380,7 @@ export async function deleteFaq(faqId: string): Promise<boolean> {
     if (faqQuery.empty) return false;
     await faqQuery.docs[0].ref.delete();
     revalidatePath('/dashboard');
+    revalidatePath('/faq');
     return true;
 }
 
@@ -362,6 +394,7 @@ export async function updateSiteBanner(bannerId: string, data: VisualContentForm
     }
     await adminDb.collection('siteBanners').doc(bannerId).update({ ...bannerData, imageSrc: imageUrl });
     revalidatePath('/dashboard');
+    revalidatePath('/');
     return true;
 }
 
@@ -375,6 +408,7 @@ export async function updatePromotionalPoster(posterId: string, data: VisualCont
     }
     await adminDb.collection('promotionalPosters').doc(posterId).update({ ...posterData, imageSrc: imageUrl });
     revalidatePath('/dashboard');
+    revalidatePath('/');
     return true;
 }
 
