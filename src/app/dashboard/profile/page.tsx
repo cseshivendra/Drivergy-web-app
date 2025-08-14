@@ -26,7 +26,8 @@ import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera, Home } from 'luci
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Locations } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Image from 'next/image';
+import NextImage from 'next/image';
+import { cn } from '@/lib/utils';
 
 function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   const { toast } = useToast();

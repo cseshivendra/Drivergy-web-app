@@ -210,7 +210,11 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
   const updatedDoc = await userRef.get();
   
   revalidatePath('/dashboard/profile');
-  return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+  const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
+  if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
+      updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
+  }
+  return updatedData as UserProfile;
 }
 
 export async function changeUserPassword(userId: string, currentPass: string, newPass: string): Promise<boolean> {
