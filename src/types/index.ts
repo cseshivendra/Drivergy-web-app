@@ -245,7 +245,7 @@ export const CourseModuleSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
   duration: z.string().min(1, "Duration is required."),
-  recordedLectureLink: z.string().optional(),
+  recordedLectureLink: z.string().url().optional().or(z.literal('')),
   videoFile: optionalFileSchema,
 });
 export type CourseModuleFormValues = z.infer<typeof CourseModuleSchema>;
