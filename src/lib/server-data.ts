@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { BlogPost, UserProfile } from '@/types';
+import type { BlogPost, UserProfile, Course } from '@/types';
 import { adminAuth, adminDb } from './firebase/admin';
 
 // This file is for server-side data fetching and data seeding logic only.
@@ -140,6 +140,29 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
         return [];
     }
 }
+
+/**
+ * Fetches all courses from Firestore.
+ * @returns A promise that resolves to an array of courses.
+ */
+export async function fetchCourses(): Promise<Course[]> {
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot fetch courses.");
+        return [];
+    }
+    
+    try {
+        const snapshot = await adminDb.collection('courses').get();
+        if (snapshot.empty) {
+            return [];
+        }
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+    } catch (error) {
+        console.error("Error fetching courses:", error);
+        return [];
+    }
+}
+
 
 /**
  * Fetches a single user profile from Firestore by their document ID.

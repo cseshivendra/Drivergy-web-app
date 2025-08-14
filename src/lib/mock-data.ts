@@ -1,14 +1,9 @@
-// This file is being replaced by live Firestore data fetching.
-// The functions are now implemented in `src/lib/server-data.ts` (for server)
-// and directly within components/contexts using hooks (for client).
-
-// We will keep this file for now to avoid breaking imports, but it will be empty.
-// In a real project, you would delete this file and update all imports.
 
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest } from '@/types';
 import { format, parseISO } from 'date-fns';
+import { fetchCourses as serverFetchCourses } from './server-data';
 
 export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster[]) => void) => {
   if (!db) {
@@ -190,6 +185,9 @@ export async function fetchApprovedInstructors(filters: { location?: string, gen
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
 }
+
+// Re-exporting the server function for client-side usage if needed through this file.
+export const fetchCourses = serverFetchCourses;
 
 export const addCourseModule = async (courseId: string, moduleData: any) => {};
 export const updateCourseModule = async (courseId: string, moduleId: string, moduleData: any) => {};
