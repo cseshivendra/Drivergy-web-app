@@ -63,7 +63,7 @@ const createDefaultAdmin = async () => {
     }
 };
 
-const seedPromotionalPosters = async () => {
+export const seedPromotionalPosters = async () => {
     if (!adminDb) {
         console.error("Admin DB not initialized. Cannot seed promotional posters.");
         return;
@@ -114,7 +114,6 @@ const seedPromotionalPosters = async () => {
 // Call the seeding functions when the server starts up.
 const initializeServerData = async () => {
     await createDefaultAdmin();
-    await seedPromotionalPosters();
 };
 initializeServerData();
 

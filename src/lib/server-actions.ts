@@ -8,6 +8,7 @@ import { format, parseISO } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
+import { seedPromotionalPosters } from './server-data'; // Import the seeder
 
 // Helper to convert file to buffer
 async function fileToBuffer(file: File): Promise<Buffer> {
@@ -23,6 +24,10 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
+
+    // --- FIX: Trigger seeding on first registration attempt ---
+    await seedPromotionalPosters();
+    // ---------------------------------------------------------
 
     try {
         const data = Object.fromEntries(formData.entries());
@@ -217,3 +222,4 @@ export async function addRescheduleRequest(userId: string, customerName: string,
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> { return false; }
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> { return false; }
 export async function updateReferralPayoutStatus(referralId: string, status: PayoutStatusType): Promise<boolean> { return false; }
+
