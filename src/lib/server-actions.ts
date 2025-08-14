@@ -336,14 +336,18 @@ export async function addFaq(data: FaqFormValues): Promise<boolean> {
 
 export async function updateFaq(faqId: string, data: FaqFormValues): Promise<boolean> {
     if (!adminDb) return false;
-    await adminDb.collection('faqs').doc(faqId).update(data);
+    const faqQuery = await adminDb.collection('faqs').where('id', '==', faqId).limit(1).get();
+    if (faqQuery.empty) return false;
+    await faqQuery.docs[0].ref.update(data);
     revalidatePath('/dashboard');
     return true;
 }
 
 export async function deleteFaq(faqId: string): Promise<boolean> {
     if (!adminDb) return false;
-    await adminDb.collection('faqs').doc(faqId).delete();
+    const faqQuery = await adminDb.collection('faqs').where('id', '==', faqId).limit(1).get();
+    if (faqQuery.empty) return false;
+    await faqQuery.docs[0].ref.delete();
     revalidatePath('/dashboard');
     return true;
 }
