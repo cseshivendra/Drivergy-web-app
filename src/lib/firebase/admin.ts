@@ -8,6 +8,7 @@ function initializeAdminApp() {
   }
 
   // The private key needs to be parsed correctly from the environment variable.
+  // This replaces the literal string "\\n" with actual newline characters.
   const privateKey = process.env.FIREBASE_PRIVATE_KEY
     ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     : undefined;
