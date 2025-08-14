@@ -23,6 +23,14 @@ function initializeAdminApp() {
     console.error("Please check your .env file and ensure all Firebase Admin credentials are provided.");
     return null;
   }
+  
+  if (!privateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
+    console.error("Firebase Admin SDK Initialization Error: FIREBASE_PRIVATE_KEY is malformed.");
+    console.error("-> It must start with '-----BEGIN PRIVATE KEY-----'.");
+    console.error("-> Please ensure you have copied the entire private key value from your service account JSON file.");
+    return null;
+  }
+
 
   try {
     return admin.initializeApp({
@@ -33,8 +41,8 @@ function initializeAdminApp() {
       }),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
     });
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
+  } catch (error: any) {
+    console.error('Firebase admin initialization error:', error.message);
     return null;
   }
 }
