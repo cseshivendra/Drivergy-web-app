@@ -210,25 +210,6 @@ export default function AdminDashboard() {
                 isLoading={loading}
                 onAction={handleActioned}
             />
-            <VisualContentManagement
-                title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Banners & Posters Management</>}
-                banners={dashboardData?.siteBanners || []}
-                posters={dashboardData?.promotionalPosters || []}
-                isLoading={loading}
-                onAction={handleActioned}
-            />
-            <CourseManagement
-                title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Content Management</>}
-                courses={dashboardData?.courses || []}
-                isLoading={loading}
-                onAction={handleActioned}
-            />
-            <QuizManagement
-                title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
-                quizSets={dashboardData?.quizSets || []}
-                isLoading={loading}
-                onAction={handleActioned}
-            />
         </div>
     );
 
