@@ -14,7 +14,7 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signInWithCredentials: (identifier: string, password: string) => Promise<void>;
-    signInWithPhone: (phoneNumber: string, appVerifierContainer: HTMLElement) => Promise<ConfirmationResult | null>;
+    signInWithPhone: (phoneNumber: string, appVerifier: RecaptchaVerifier) => Promise<ConfirmationResult | null>;
     signOut: () => Promise<void>;
     logInUser: (user: UserProfile, redirect?: boolean) => void;
 }
@@ -148,13 +148,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     };
     
-    const signInWithPhone = async (phoneNumber: string, appVerifierContainer: HTMLElement): Promise<ConfirmationResult | null> => {
+    const signInWithPhone = async (phoneNumber: string, appVerifier: RecaptchaVerifier): Promise<ConfirmationResult | null> => {
         setLoading(true);
         try {
-            const recaptchaVerifier = new RecaptchaVerifier(auth, appVerifierContainer, {
-                'size': 'invisible',
-            });
-            const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+            const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
             return confirmationResult;
         } catch (error: any) {
             console.error("Phone sign-in error:", error);

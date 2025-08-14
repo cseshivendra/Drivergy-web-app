@@ -15,7 +15,8 @@ import { useTheme } from '@/context/theme-context';
 import { useToast } from '@/hooks/use-toast';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ConfirmationResult } from 'firebase/auth';
+import type { ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
+import { auth } from '@/lib/firebase/client'; // Import auth directly for RecaptchaVerifier
 
 export default function LoginPage() {
   const { user, signInWithGoogle, signInWithCredentials, signInWithPhone, loading } = useAuth();
@@ -38,14 +39,36 @@ export default function LoginPage() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   
+  // State and ref for reCAPTCHA
+  const [recaptcha, setRecaptcha] = useState<RecaptchaVerifier | null>(null);
+  const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setIsMounted(true);
     if (!loading && user) {
       router.push(redirect); 
     }
   }, [user, loading, router, redirect]);
+
+  // Effect to initialize RecaptchaVerifier only once on mount
+  useEffect(() => {
+    if (!recaptchaContainerRef.current) return;
+    
+    // Dynamically import RecaptchaVerifier to avoid SSR issues
+    import('firebase/auth').then(({ RecaptchaVerifier }) => {
+      if (!auth) return;
+      const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current!, {
+          'size': 'invisible',
+      });
+      setRecaptcha(verifier);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      recaptcha?.clear();
+    };
+  }, []);
   
   const handleCredentialSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,12 +80,12 @@ export default function LoginPage() {
   };
   
   const handleSendOtp = async () => {
-    if (!recaptchaContainerRef.current) {
-        toast({ title: 'Error', description: 'reCAPTCHA container not found.', variant: 'destructive' });
+    if (!recaptcha) {
+        toast({ title: 'Error', description: 'reCAPTCHA not ready. Please try again in a moment.', variant: 'destructive' });
         return;
     }
     setIsSubmitting(true);
-    const result = await signInWithPhone(`+91${phoneNumber}`, recaptchaContainerRef.current);
+    const result = await signInWithPhone(`+91${phoneNumber}`, recaptcha);
     if (result) {
         setConfirmationResult(result);
         setIsOtpSent(true);
@@ -100,8 +123,8 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full">
-      {/* reCAPTCHA container - must be visible to work */}
-      <div ref={recaptchaContainerRef} id="recaptcha-container" className="fixed bottom-0 right-0 z-0"></div>
+      {/* Container must be present in the DOM for reCAPTCHA to work */}
+      <div ref={recaptchaContainerRef} id="recaptcha-container"></div>
 
       <Image
         src="https://placehold.co/1920x1080/1f2937/ffffff.png"
