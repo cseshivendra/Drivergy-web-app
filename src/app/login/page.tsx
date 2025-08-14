@@ -58,16 +58,20 @@ export default function LoginPage() {
     // Dynamically import RecaptchaVerifier to avoid SSR issues
     import('firebase/auth').then(({ RecaptchaVerifier }) => {
       if (!auth) return;
-      const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current!, {
-          'size': 'invisible',
-      });
-      setRecaptcha(verifier);
+      // Ensure we don't re-create the verifier
+      if (!recaptcha) {
+        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current!, {
+            'size': 'invisible',
+        });
+        setRecaptcha(verifier);
+      }
     });
 
     // Cleanup on unmount
     return () => {
       recaptcha?.clear();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleCredentialSignIn = async (e: React.FormEvent) => {
@@ -100,7 +104,7 @@ export default function LoginPage() {
     try {
         await confirmationResult.confirm(otp);
         toast({ title: 'Sign In Successful', description: 'You have been successfully signed in with your phone number.' });
-        router.push(redirect);
+        // The onAuthStateChanged listener in AuthProvider will handle the redirect.
     } catch (error) {
         toast({ title: 'Verification Failed', description: 'The OTP you entered is incorrect. Please try again.', variant: 'destructive' });
     }
@@ -113,7 +117,7 @@ export default function LoginPage() {
     </svg>
   );
 
-  if (loading || user) { 
+  if (loading || (!isMounted && !user)) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -123,8 +127,8 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen w-full">
-      {/* Container must be present in the DOM for reCAPTCHA to work */}
-      <div ref={recaptchaContainerRef} id="recaptcha-container"></div>
+      {/* This invisible div is required for reCAPTCHA to mount */}
+      <div ref={recaptchaContainerRef}></div>
 
       <Image
         src="https://placehold.co/1920x1080/1f2937/ffffff.png"
@@ -196,7 +200,7 @@ export default function LoginPage() {
                         <Label htmlFor="phone" className="flex items-center mb-1"><Phone className="mr-2 h-4 w-4" />Phone Number</Label>
                          <div className="flex items-center">
                             <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span>
-                            <Input id="phone" type="tel" placeholder="Enter your 10-digit number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} disabled={isSubmitting} autoComplete="tel" />
+                            <Input id="phone" type="tel" placeholder="Enter your 10-digit number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} disabled={isSubmitting} autoComplete="tel" className="rounded-l-none"/>
                         </div>
                       </div>
                       <Button onClick={handleSendOtp} className="w-full h-12 text-base" disabled={isSubmitting || phoneNumber.length !== 10}>
