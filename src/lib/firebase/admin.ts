@@ -21,7 +21,7 @@ function initializeAdminApp() {
   const projectId = cleanEnvVar(process.env.FIREBASE_PROJECT_ID);
   const clientEmail = cleanEnvVar(process.env.FIREBASE_CLIENT_EMAIL);
   // Get the raw private key for logging before cleaning
-  const rawPrivateKey = cleanEnvVar(process.env.FIREBASE_PRIVATE_KEY);
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
   
   if (!projectId || !clientEmail || !rawPrivateKey) {
     console.error("Firebase Admin SDK Initialization Error: One or more required environment variables are missing.");
@@ -36,7 +36,7 @@ function initializeAdminApp() {
   // console.log("Raw private key from env:", rawPrivateKey);
 
   // This is the crucial step: replace the literal `\n` with actual newline characters.
-  const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
+  const privateKey = cleanEnvVar(rawPrivateKey)!.replace(/\\n/g, '\n');
 
   if (!privateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
     console.error("Firebase Admin SDK Initialization Error: FIREBASE_PRIVATE_KEY is malformed after processing.");
