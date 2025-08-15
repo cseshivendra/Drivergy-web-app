@@ -26,10 +26,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         return { success: false, error: "Server is not configured for authentication." };
     }
 
-    // --- FIX: Trigger seeding on first registration attempt ---
-    await seedPromotionalPosters();
-    // ---------------------------------------------------------
-
     try {
         const data = Object.fromEntries(formData.entries());
         
@@ -51,7 +47,20 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         
         const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
-        // Check if username is already taken
+        // Check if email is already in use in Firebase Auth
+        try {
+            await adminAuth.getUserByEmail(email);
+            return { success: false, error: 'A user is already registered with this email address.' };
+        } catch (error: any) {
+            if (error.code !== 'auth/user-not-found') {
+                // An unexpected error occurred while checking email
+                console.error("Error checking email existence:", error);
+                throw error;
+            }
+            // If user is not found, we can proceed with registration.
+        }
+
+        // Check if username is already taken in Firestore
         const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
         if (!usernameQuery.empty) {
             return { success: false, error: 'This username is already taken. Please choose another one.' };
@@ -119,9 +128,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     } catch (error: any) {
         console.error("Error in registerUserAction:", error);
-        if (error.code === 'auth/email-already-exists') {
-            return { success: false, error: 'A user is already registered with this email address.' };
-        }
         return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
     }
 }
@@ -582,3 +588,4 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     revalidatePath('/dashboard');
     return true;
 }
+
