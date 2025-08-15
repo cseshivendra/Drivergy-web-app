@@ -14,21 +14,25 @@ import { Badge } from '@/components/ui/badge';
 import { User, Calendar, ArrowLeft, AlertCircle, Tag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export default function BlogPostClientPage({ initialPost }: { initialPost: BlogPost }) {
+export default function BlogPostClientPage({ slug }: { slug: string }) {
     const router = useRouter();
-    const [post, setPost] = useState<BlogPost>(initialPost);
-    const [loading, setLoading] = useState(false); // Initial post is passed as prop
+    const [post, setPost] = useState<BlogPost | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Optional: If you need to re-fetch on client side for some reason
-    // useEffect(() => {
-    //   if (params.slug) {
-    //     setLoading(true);
-    //     fetchBlogPostBySlug(params.slug).then(data => {
-    //       setPost(data);
-    //       setLoading(false);
-    //     });
-    //   }
-    // }, [params.slug]);
+    useEffect(() => {
+      if (slug) {
+        setLoading(true);
+        fetchBlogPostBySlug(slug).then(data => {
+          if (data) {
+            setPost(data);
+            document.title = `${data.title} | Drivergy`;
+          }
+          setLoading(false);
+        }).catch(() => {
+            setLoading(false);
+        });
+      }
+    }, [slug]);
 
     if (loading) {
         return (

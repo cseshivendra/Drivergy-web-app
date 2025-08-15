@@ -86,7 +86,7 @@ export default function BlogPage() {
         ) : currentPosts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {currentPosts.map((post) => (
-                  <Link key={post.slug} href={`/blog/${post.slug}`} className="group block">
+                  <a key={post.slug} href={`/blog/${post.slug}`} className="group block">
                     <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
                         <div className="relative h-56 w-full">
                             <Image
@@ -129,7 +129,7 @@ export default function BlogPage() {
                             </p>
                         </CardFooter>
                     </Card>
-                  </Link>
+                  </a>
                 ))}
             </div>
         ) : (

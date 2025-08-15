@@ -1,7 +1,5 @@
 
 import { MetadataRoute } from 'next';
-import { fetchBlogPosts } from '@/lib/server-data'; 
-import { BlogPost } from '@/types';
 
 // This file generates a sitemap, which is an XML file that lists the important pages on your website.
 // It helps search engines like Google discover and index your content more efficiently.
@@ -26,21 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Temporarily removing dynamic blog post fetching to fix build.
-  // To re-enable, add environment variables and uncomment the following:
-  // 2. Fetch dynamic routes, like blog posts, from the data source.
-  let blogRoutes: MetadataRoute.Sitemap = [];
-  try {
-    const posts: BlogPost[] = await fetchBlogPosts();
-    blogRoutes = posts.map((post) => ({
-      url: `${baseUrl}/blog/${post.slug}`,
-      lastModified: new Date(post.date).toISOString(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }));
-  } catch (error) {
-    console.error("Sitemap generation: Could not fetch blog posts.", error);
-  }
-
+  const blogRoutes: MetadataRoute.Sitemap = [];
+  
   // 3. Combine static and dynamic routes into a single sitemap.
   return [...staticRoutes, ...blogRoutes];
 }
