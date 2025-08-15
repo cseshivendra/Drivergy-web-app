@@ -1,24 +1,53 @@
 
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Users, Award, Clock, PlayCircle, BookOpen } from 'lucide-react';
+import { Users, Award, Clock, PlayCircle, BookOpen, Car, Bike, FileText, AlertCircle } from 'lucide-react';
 import { fetchCourses } from '@/lib/server-data';
 import type { Course } from '@/types';
-import { Car, Bike, FileText } from 'lucide-react'; // Assuming these are used or defined elsewhere
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Assign icons to courses based on title or a dedicated field if available
 const getIconForCourse = (title: string): React.ElementType => {
     if (title.toLowerCase().includes('car')) return Car;
     if (title.toLowerCase().includes('motorcycle')) return Bike;
     if (title.toLowerCase().includes('rto') || title.toLowerCase().includes('license')) return FileText;
-    return BookOpen; // Default icon
+    return BookOpen;
 };
 
+export default function CoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
-export default async function CoursesPage() {
-  const courses: Course[] = await fetchCourses();
+  useEffect(() => {
+    fetchCourses().then(data => {
+        setCourses(data);
+        setLoading(false);
+    });
+  }, []);
+
+  const renderSkeletons = () => (
+    Array.from({ length: 3 }).map((_, i) => (
+      <Card key={`skeleton-${i}`} className="shadow-lg flex flex-col overflow-hidden rounded-xl border border-border/70 h-full">
+        <Skeleton className="h-48 w-full" />
+        <CardHeader className="pb-3">
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-full mt-2" />
+            <Skeleton className="h-4 w-5/6 mt-2" />
+        </CardHeader>
+        <CardContent className="space-y-5 flex-grow">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </CardContent>
+        <CardFooter className="mt-auto bg-muted/30 p-4 border-t border-border/50">
+          <Skeleton className="h-10 w-full" />
+        </CardFooter>
+      </Card>
+    ))
+  );
 
   return (
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
@@ -32,8 +61,20 @@ export default async function CoursesPage() {
         </p>
       </header>
       
-      {courses.length === 0 ? (
-        <p className="text-center text-muted-foreground text-xl">No courses available at the moment. Please check back later.</p>
+      {loading ? (
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+            {renderSkeletons()}
+         </div>
+      ) : courses.length === 0 ? (
+        <Card className="text-center p-8 shadow-lg">
+            <CardHeader>
+                <AlertCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
+                <CardTitle className="text-3xl font-bold">No Courses Available</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground mt-2">Courses are not available at the moment. Please check back later.</p>
+            </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
           {courses.map((course) => {

@@ -1,4 +1,5 @@
 
+'use client';
 import {
   Card,
   CardContent,
@@ -8,23 +9,16 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Lightbulb, ClipboardCheck } from 'lucide-react';
-import { fetchQuizSets } from '@/lib/server-data';
-import type { QuizSet } from '@/types';
 import RtoQuizClientPage from './rto-quiz-client-page';
-import type { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = {
-    title: 'RTO Mock Test Quiz | Drivergy',
-    description: "Practice for your official RTO driving license exam with our free mock tests. Available in multiple languages for all learners in India."
-};
-
-export default async function AppRtoQuizPage() {
-  const quizSets: QuizSet[] = await fetchQuizSets();
-
+// This is now a simple client-side container page.
+export default function AppRtoQuizPage() {
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
+      <head>
+          <title>RTO Mock Test Quiz | Drivergy</title>
+          <meta name="description" content="Practice for your official RTO driving license exam with our free mock tests. Available in multiple languages for all learners in India." />
+      </head>
       <Card className="shadow-xl overflow-hidden">
         <CardHeader>
              <div className="flex items-center gap-4">
@@ -38,7 +32,8 @@ export default async function AppRtoQuizPage() {
             </div>
         </CardHeader>
         <CardContent className="p-6">
-            <RtoQuizClientPage quizSets={quizSets} />
+            {/* The client page now handles its own data fetching */}
+            <RtoQuizClientPage />
         </CardContent>
          <CardFooter className="flex justify-center text-muted-foreground text-sm">
             <Lightbulb className="h-4 w-4 mr-2" />
@@ -48,4 +43,3 @@ export default async function AppRtoQuizPage() {
     </div>
   );
 }
-

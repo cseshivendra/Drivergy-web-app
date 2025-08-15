@@ -1,37 +1,34 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, XCircle, Clock, RefreshCw, User, LogIn, Globe } from 'lucide-react';
+import { Globe, LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { availableLanguages } from '@/types';
 import type { QuizSet } from '@/types';
 import QuizSetComponent from './quiz-set-component';
+import { Skeleton } from '@/components/ui/skeleton';
+import { fetchQuizSets } from '@/lib/server-data';
 
-export default function RtoQuizClientPage({ quizSets }: { quizSets: QuizSet[] }) {
+export default function RtoQuizClientPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const [quizSets, setQuizSets] = useState<QuizSet[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedLanguage, setSelectedLanguage] = useState('en');
+
+    useEffect(() => {
+        setLoading(true);
+        fetchQuizSets().then(data => {
+            setQuizSets(data);
+            setLoading(false);
+        });
+    }, []);
 
     const handleStartAttempt = () => {
         if (!user) {
@@ -39,6 +36,20 @@ export default function RtoQuizClientPage({ quizSets }: { quizSets: QuizSet[] })
         }
     };
     
+    if (loading) {
+        return (
+             <div className="space-y-6">
+                <Skeleton className="h-10 w-48 mx-auto" />
+                <Skeleton className="h-12 w-full" />
+                <div className="p-8 border rounded-lg">
+                    <Skeleton className="h-8 w-1/2 mb-4" />
+                    <Skeleton className="h-6 w-3/4 mb-6" />
+                    <Skeleton className="h-12 w-32" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
             <div className="mx-auto mb-6 w-full max-w-xs">
@@ -58,7 +69,8 @@ export default function RtoQuizClientPage({ quizSets }: { quizSets: QuizSet[] })
                 </Select>
             </div>
             {user ? (
-                <Tabs defaultValue={quizSets.length > 0 ? quizSets[0].id : ''} className="w-full">
+                quizSets.length > 0 ? (
+                <Tabs defaultValue={quizSets[0].id} className="w-full">
                     <TabsList className="flex h-auto flex-wrap justify-center gap-2">
                     {quizSets.map((set) => (
                         <TabsTrigger key={set.id} value={set.id}>
@@ -72,6 +84,12 @@ export default function RtoQuizClientPage({ quizSets }: { quizSets: QuizSet[] })
                     </TabsContent>
                     ))}
                 </Tabs>
+                ) : (
+                    <div className="flex flex-col items-center justify-center text-muted-foreground h-40">
+                        <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                        <p className="text-lg">No quiz sets found.</p>
+                    </div>
+                )
             ) : (
                 <div className="flex flex-col items-center justify-center text-center p-8 border rounded-lg shadow-sm bg-muted/50">
                     <h3 className="text-xl font-semibold mb-2 text-foreground">Please log in to start the quiz.</h3>
