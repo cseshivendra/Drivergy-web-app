@@ -22,9 +22,13 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // =================================================================
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+    console.log("registerUserAction: Starting user registration process.");
+
     if (!adminAuth || !adminDb) {
+        console.error("registerUserAction: FATAL: Server is not configured for authentication. Firebase Admin SDK failed to initialize.");
         return { success: false, error: "Server is not configured for authentication." };
     }
+    console.log("registerUserAction: Firebase Admin SDK appears to be configured.");
 
     try {
         const data = Object.fromEntries(formData.entries());
@@ -40,33 +44,41 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const validationResult = RegistrationFormSchema.safeParse(data);
 
         if (!validationResult.success) {
-            console.error("Registration validation failed:", validationResult.error.format());
+            console.error("registerUserAction: Form validation failed.", validationResult.error.flatten());
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
         }
         
+        console.log("registerUserAction: Form data validated successfully.");
         const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
         // Check if email is already in use in Firebase Auth
         try {
+            console.log(`registerUserAction: Checking if email '${email}' already exists in Firebase Auth...`);
             await adminAuth.getUserByEmail(email);
+            console.error(`registerUserAction: Email '${email}' is already registered.`);
             return { success: false, error: 'A user is already registered with this email address.' };
         } catch (error: any) {
-            if (error.code !== 'auth/user-not-found') {
-                // An unexpected error occurred while checking email
-                console.error("Error checking email existence:", error);
+            if (error.code === 'auth/user-not-found') {
+                console.log(`registerUserAction: Email '${email}' is available.`);
+                // If user is not found, we can proceed with registration.
+            } else {
+                console.error("registerUserAction: Unexpected error while checking email existence.", error);
                 throw error;
             }
-            // If user is not found, we can proceed with registration.
         }
 
         // Check if username is already taken in Firestore
+        console.log(`registerUserAction: Checking if username '${username}' is already taken...`);
         const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
         if (!usernameQuery.empty) {
+            console.error(`registerUserAction: Username '${username}' is already taken.`);
             return { success: false, error: 'This username is already taken. Please choose another one.' };
         }
+        console.log(`registerUserAction: Username '${username}' is available.`);
 
         // Create user in Firebase Auth
+        console.log(`registerUserAction: Creating user in Firebase Auth for email '${email}'...`);
         const userRecord = await adminAuth.createUser({
             email: email,
             emailVerified: false,
@@ -74,6 +86,8 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             displayName: name,
             disabled: false,
         });
+        console.log(`registerUserAction: Successfully created user in Firebase Auth with UID: ${userRecord.uid}`);
+
 
         // Base user profile
         let newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> = {
@@ -89,6 +103,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
         // Add trainer-specific fields
         if (userRole === 'trainer' && 'location' in validationResult.data) {
+            console.log("registerUserAction: Processing trainer-specific fields and uploading documents...");
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
                 trainerCertificateNumber, drivingLicenseNumber, aadhaarCardNumber,
@@ -101,6 +116,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 uploadFileToCloudinary(await fileToBuffer(drivingLicenseFile), 'trainer_documents'),
                 uploadFileToCloudinary(await fileToBuffer(aadhaarCardFile), 'trainer_documents')
             ]);
+            console.log("registerUserAction: All trainer documents uploaded successfully to Cloudinary.");
             
             Object.assign(newUserProfile, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
@@ -118,16 +134,19 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             registrationTimestamp: new Date().toISOString(), // Use ISO string for consistency
         };
 
+        console.log(`registerUserAction: Creating user profile in Firestore for UID: ${userRecord.uid}...`);
         await adminDb.collection('users').doc(userRecord.uid).set(finalProfile);
+        console.log("registerUserAction: Successfully created Firestore user profile.");
         
         const createdUser: UserProfile = { id: userRecord.uid, ...finalProfile };
         
         revalidatePath('/dashboard');
+        console.log("registerUserAction: Revalidated path and returning success.");
 
         return { success: true, user: createdUser };
 
     } catch (error: any) {
-        console.error("Error in registerUserAction:", error);
+        console.error("registerUserAction: An unexpected error occurred during the registration process.", error);
         return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
     }
 }
@@ -589,3 +608,6 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     return true;
 }
 
+
+
+    
