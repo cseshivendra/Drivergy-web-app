@@ -1,5 +1,14 @@
+
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
+
+// Helper to clean up environment variables
+const cleanEnvVar = (value?: string) => {
+  if (!value) return undefined;
+  // Trim whitespace and remove leading/trailing quotes
+  return value.trim().replace(/^"|"$/g, '');
+};
+
 
 // This function checks if the app is already initialized to prevent errors.
 function initializeAdminApp() {
@@ -7,14 +16,16 @@ function initializeAdminApp() {
     return admin.app();
   }
 
+  // Clean the environment variables before using them
+  const projectId = cleanEnvVar(process.env.FIREBASE_PROJECT_ID);
+  const clientEmail = cleanEnvVar(process.env.FIREBASE_CLIENT_EMAIL);
+  const rawPrivateKey = cleanEnvVar(process.env.FIREBASE_PRIVATE_KEY);
+  
   // The private key needs to be parsed correctly from the environment variable.
   // This replaces the literal string "\\n" with actual newline characters.
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+  const privateKey = rawPrivateKey
+    ? rawPrivateKey.replace(/\\n/g, '\n')
     : undefined;
-
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 
   if (!projectId || !clientEmail || !privateKey) {
     console.error("Firebase Admin SDK Initialization Error: One or more required environment variables are missing.");
