@@ -32,14 +32,17 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     try {
         const data = Object.fromEntries(formData.entries());
+        const userRole = formData.get('userRole');
         
-        // Handle file inputs for Zod validation
-        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile', 'photoIdFile'];
-        fileFields.forEach(field => {
-            if (formData.has(field) && formData.get(field) instanceof File) {
-                data[field] = formData.get(field);
-            }
-        });
+        // Handle file inputs specifically for the trainer role
+        if (userRole === 'trainer') {
+            const trainerFileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
+            trainerFileFields.forEach(field => {
+                if (formData.has(field) && formData.get(field) instanceof File) {
+                    data[field] = formData.get(field);
+                }
+            });
+        }
 
         const validationResult = RegistrationFormSchema.safeParse(data);
 
@@ -50,7 +53,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
         
         console.log("registerUserAction: Form data validated successfully.");
-        const { email, password, name, phone, userRole, username, gender } = validationResult.data;
+        const { email, password, name, phone, username, gender } = validationResult.data;
 
         // Check if email is already in use in Firebase Auth
         try {
