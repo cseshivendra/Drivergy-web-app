@@ -1,11 +1,9 @@
-
 'use client';
 import FullCustomerDetailsForm from '@/components/forms/full-customer-details-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { UserCheck } from 'lucide-react';
 import { Suspense } from 'react';
 import Loading from '@/app/loading';
-import { DYNAMIC_SERVER_USAGE } from 'next/dist/client/components/hooks-server-context';
 
 // This is a wrapper component to handle the client-side logic
 // within a server component page, using Suspense for loading.
