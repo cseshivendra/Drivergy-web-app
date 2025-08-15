@@ -10,20 +10,23 @@ function initializeAdminApp() {
 
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  // The private key from environment variables often has its newlines escaped.
-  // We need to replace the literal `\\n` with actual newline characters `\n`.
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  // Get the raw private key from the environment variable.
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
 
   // Check for missing environment variables and provide specific error messages.
-  if (!projectId || !clientEmail || !privateKey) {
+  if (!projectId || !clientEmail || !rawPrivateKey) {
     console.error("Firebase Admin SDK Initialization Error: One or more required environment variables are missing.");
     if (!projectId) console.error("-> FIREBASE_PROJECT_ID is not set.");
     if (!clientEmail) console.error("-> FIREBASE_CLIENT_EMAIL is not set.");
-    if (!privateKey) console.error("-> FIREBASE_PRIVATE_KEY is not set.");
+    if (!rawPrivateKey) console.error("-> FIREBASE_PRIVATE_KEY is not set.");
     console.error("Please check your .env file and ensure all Firebase Admin credentials are provided.");
     return null;
   }
   
+  // CRITICAL FIX: Replace the literal `\\n` strings with actual newline characters.
+  // This must be done *after* reading the variable and *before* using it.
+  const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
+
   // A sanity check to ensure the key looks correct after formatting.
   if (!privateKey.startsWith('-----BEGIN PRIVATE KEY-----')) {
     console.error("Firebase Admin SDK Initialization Error: FIREBASE_PRIVATE_KEY is malformed.");
