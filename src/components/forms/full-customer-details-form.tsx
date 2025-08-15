@@ -87,6 +87,7 @@ export default function FullCustomerDetailsForm() {
   const selectedGender = user?.gender;
 
   const trainerOptions = useMemo(() => {
+    // FIX: Add a null check for user and user.gender to prevent crashes
     if (selectedGender === 'Male') return ['Male', 'Any'];
     if (selectedGender === 'Female') return ['Female', 'Any'];
     return TrainerPreferenceOptions.slice();
