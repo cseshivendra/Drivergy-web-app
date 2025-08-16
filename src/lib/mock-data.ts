@@ -1,4 +1,5 @@
 
+
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest } from '@/types';
@@ -161,7 +162,9 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 export async function fetchApprovedInstructors(filters: { location?: string, gender?: string }): Promise<UserProfile[]> {
     if (!db) return [];
     
-    let q = query(collection(db, 'users'), where('uniqueId', '>', 'TR'), where('uniqueId', '<', 'TS'), where('approvalStatus', '==', 'Approved'));
+    // **FIX:** Changed the query to filter by `subscriptionPlan` which is allowed with other `where` clauses.
+    // Firestore does not allow range filters (like on uniqueId) with other equality filters.
+    let q = query(collection(db, 'users'), where('subscriptionPlan', '==', 'Trainer'), where('approvalStatus', '==', 'Approved'));
 
     if (filters.location) {
         q = query(q, where('location', '==', filters.location));
