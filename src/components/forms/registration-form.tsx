@@ -26,14 +26,17 @@ import {
   GenderOptions,
   TrainerPreferenceOptions,
 } from '@/types';
-import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon, CheckCircle, XCircle } from 'lucide-react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { registerUserAction } from '@/lib/server-actions';
+import { registerUserAction, checkUsernameAvailability } from '@/lib/server-actions';
 import { useAuth } from '@/context/auth-context';
+import { cn } from '@/lib/utils';
+import { useDebounce } from 'use-debounce';
+
 
 function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     const { pending } = useFormStatus();
@@ -57,10 +60,15 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { logInUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [username, setUsername] = useState('');
+  const [debouncedUsername] = useDebounce(username, 500);
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
+
 
   const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
-  // This is the corrected, stable way to define default values.
   const defaultValuesForRole: RegistrationFormValues = {
       userRole: userRole,
       name: '', 
@@ -70,8 +78,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       confirmPassword: '', 
       phone: '',
       gender: undefined,
-      // Trainer fields are always present, but will be undefined for customers.
-      // Zod will not validate them if userRole is 'customer'.
       location: undefined, 
       yearsOfExperience: undefined, 
       specialization: undefined, 
@@ -93,30 +99,49 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     mode: 'onBlur',
   });
 
-  const { handleSubmit } = form;
+  const { handleSubmit, watch, setValue, trigger } = form;
+  const currentFullName = watch('name');
+
+  const handleUsernameCheck = useCallback(async () => {
+    if (debouncedUsername.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+    setUsernameStatus('checking');
+    try {
+      const result = await checkUsernameAvailability(debouncedUsername, currentFullName || '');
+      if (result.available) {
+        setUsernameStatus('available');
+        setUsernameSuggestions([]);
+      } else {
+        setUsernameStatus('taken');
+        setUsernameSuggestions(result.suggestions || []);
+      }
+    } catch (error) {
+      setUsernameStatus('idle');
+      toast({ title: "Error", description: "Could not check username.", variant: "destructive" });
+    }
+  }, [debouncedUsername, currentFullName, toast]);
+
+  useEffect(() => {
+    if (debouncedUsername) {
+        handleUsernameCheck();
+    }
+  }, [debouncedUsername, handleUsernameCheck]);
+
 
   useEffect(() => {
     if (state.success && state.user) {
-        logInUser(state.user, false); // Log the user in but don't redirect yet
-
         const isCustomer = state.user.uniqueId.startsWith('CU');
-
-        toast({
-            title: "Registration Successful!",
-            description: isCustomer 
-                ? "Welcome! You will be redirected to your dashboard."
-                : "Your application has been submitted for review."
-        });
-
-        const redirectUrl = searchParams.get('redirect');
-        if (redirectUrl) {
-            router.push(redirectUrl);
-        } else if (isCustomer) {
-            router.push('/dashboard'); // Redirect customer to dashboard
+        if (isCustomer) {
+            router.push('/dashboard/complete-profile');
         } else {
-            router.push('/#testimonials'); // Redirect trainer to a neutral page
+            toast({
+                title: "Registration Submitted!",
+                description: "Thank you! Your application is under review. We will notify you upon approval."
+            });
+            router.push('/login');
         }
-
     } else if (state.error) {
        toast({
         title: "Registration Error",
@@ -124,11 +149,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         variant: "destructive",
       });
     }
-  }, [state, toast, router, logInUser, searchParams]);
+  }, [state, toast, router]);
   
   const onClientSubmit = (data: RegistrationFormValues) => {
     const formData = new FormData();
-    // A more robust way to handle form data, especially files.
     Object.entries(data).forEach(([key, value]) => {
         if (value instanceof File) {
             formData.append(key, value);
@@ -155,12 +179,59 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </AlertDescription>
             </Alert>
         )}
-        {/* Hidden input for userRole */}
         <input type="hidden" {...form.register('userRole')} value={userRole} />
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-            <FormField control={form.control} name="username" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Create a username" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Username<span className="text-destructive ml-1">*</span></FormLabel>
+                    <FormControl>
+                        <Input
+                        placeholder="Create a username"
+                        {...field}
+                        onChange={(e) => {
+                            field.onChange(e);
+                            setUsername(e.target.value);
+                            setUsernameStatus('idle');
+                        }}
+                        />
+                    </FormControl>
+                    <FormMessage />
+                    <div className="h-4 mt-1 text-xs">
+                        {usernameStatus === 'checking' && <span className="flex items-center text-muted-foreground"><Loader2 className="mr-2 h-3 w-3 animate-spin"/>Checking...</span>}
+                        {usernameStatus === 'available' && <span className="flex items-center text-green-500"><CheckCircle className="mr-2 h-3 w-3"/>Username is available!</span>}
+                        {usernameStatus === 'taken' && <span className="flex items-center text-destructive"><XCircle className="mr-2 h-3 w-3"/>Username is taken.</span>}
+                    </div>
+                     {usernameStatus === 'taken' && usernameSuggestions.length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                            Suggestions:
+                            <div className="flex flex-wrap gap-2 mt-1">
+                                {usernameSuggestions.map(suggestion => (
+                                    <Button
+                                        key={suggestion}
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-auto px-2 py-1 text-xs"
+                                        onClick={() => {
+                                            setValue('username', suggestion, { shouldValidate: true });
+                                            setUsername(suggestion);
+                                            trigger('username');
+                                        }}
+                                    >
+                                        {suggestion}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </FormItem>
+                )}
+            />
             <FormField control={form.control} name="email" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><AtSign className="mr-2 h-4 w-4 text-primary" />Email Address<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem> )} />
         </div>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">

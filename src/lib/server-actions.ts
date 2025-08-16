@@ -20,6 +20,38 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // =================================================================
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
+export async function checkUsernameAvailability(
+  username: string,
+  name: string
+): Promise<{ available: boolean; suggestions?: string[] }> {
+  if (!adminDb) {
+    throw new Error('Database not configured.');
+  }
+  if (!username || username.length < 3) {
+    return { available: false, suggestions: [] };
+  }
+
+  const usernameQuery = await adminDb
+    .collection('users')
+    .where('username', '==', username)
+    .limit(1)
+    .get();
+
+  if (!usernameQuery.empty) {
+    // Username is taken, generate suggestions
+    const baseUsername = name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '');
+    const suggestions = [
+      `${baseUsername}${Math.floor(Math.random() * 10)}`,
+      `${baseUsername}${Math.floor(Math.random() * 100)}`,
+      `${baseUsername}_${new Date().getFullYear().toString().slice(-2)}`,
+    ];
+    
+    return { available: false, suggestions };
+  }
+
+  return { available: true };
+}
+
 
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     console.log("registerUserAction: Starting user registration process.");
@@ -41,7 +73,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 if (formData.has(field) && formData.get(field) instanceof File) {
                     data[field] = formData.get(field);
                 } else {
-                    // Ensure the field is at least present for validation if empty
                     data[field] = undefined;
                 }
             });
@@ -58,7 +89,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         console.log("registerUserAction: Form data validated successfully for user role:", userRole);
         const { email, password, name, phone, username, gender } = validationResult.data;
 
-        // Check if email is already in use in Firebase Auth
         try {
             console.log(`registerUserAction: Checking if email '${email}' already exists in Firebase Auth...`);
             await adminAuth.getUserByEmail(email);
@@ -73,7 +103,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             }
         }
 
-        // Check if username is already taken in Firestore
         console.log(`registerUserAction: Checking if username '${username}' is already taken...`);
         const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
         if (!usernameQuery.empty) {
@@ -82,7 +111,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
         console.log(`registerUserAction: Username '${username}' is available.`);
 
-        // Create user in Firebase Auth
         console.log(`registerUserAction: Creating user in Firebase Auth for email '${email}'...`);
         const userRecord = await adminAuth.createUser({
             email: email,
@@ -94,7 +122,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         console.log(`registerUserAction: Successfully created user in Firebase Auth with UID: ${userRecord.uid}`);
 
 
-        // Base user profile
         let newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> = {
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
             name: name,
@@ -106,7 +133,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             approvalStatus: 'Pending',
         };
 
-        // Add trainer-specific fields and upload documents
         if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
             console.log("registerUserAction: Processing trainer-specific fields...");
             const {
@@ -129,11 +155,9 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 trainerCertificateUrl: certUrl,
                 drivingLicenseUrl: dlUrl,
                 aadhaarCardUrl: aadhaarUrl,
-                // store numbers as well if needed
             });
         }
 
-        // Add registration timestamp using Firestore's server time
         const finalProfile = {
             ...newUserProfile,
             registrationTimestamp: new Date().toISOString(),
@@ -252,10 +276,6 @@ export async function changeUserPassword(userId: string, currentPass: string, ne
         console.error("Auth not configured.");
         return false;
     }
-    // This is complex to do securely from a server action without the user's active session.
-    // The recommended approach is to use the Firebase client SDK's `reauthenticateWithCredential`
-    // and `updatePassword` methods on the client side. This server action is a placeholder.
-    // A real implementation would require a custom auth flow.
     console.warn("Server-side password change is not recommended without re-authentication.");
     return false;
 }
@@ -459,7 +479,6 @@ export async function updateAssignmentStatusByTrainer(studentId: string, newStat
   const studentRef = adminDb.collection('users').doc(studentId);
   await studentRef.update({ approvalStatus: newStatus });
   if (newStatus === 'Approved') {
-    // Optionally trigger a notification or further action
   }
   revalidatePath('/dashboard');
   return true;
@@ -478,7 +497,6 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
   await studentRef.update({
     attendance: status,
     completedLessons: newCompleted,
-    // Reset for next lesson
     upcomingLesson: null,
   });
 
@@ -560,7 +578,6 @@ export async function addFeedback(customerId: string, customerName: string, trai
         submissionDate: new Date(),
     });
     
-    // Mark that the customer has submitted feedback to prevent multiple submissions
     await adminDb.collection('users').doc(customerId).update({ feedbackSubmitted: true });
 
     revalidatePath('/dashboard');
