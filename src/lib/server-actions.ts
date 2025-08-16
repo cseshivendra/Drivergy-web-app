@@ -63,21 +63,31 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
     console.log("registerUserAction: Firebase Admin SDK appears to be configured.");
 
     try {
-        const data = Object.fromEntries(formData.entries());
-        
-        // Manually handle file fields for validation
-        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
-        fileFields.forEach(field => {
-             const file = formData.get(field);
-             if (file instanceof File && file.size > 0) {
-                data[field] = file;
+        const rawData = Object.fromEntries(formData.entries());
+        const userRole = rawData.userRole;
+
+        // Separate file data from text data
+        const fileData: { [key: string]: File | undefined } = {};
+        const textData: { [key: string]: any } = {};
+
+        for (const [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                if (value.size > 0) {
+                   fileData[key] = value;
+                }
             } else {
-                // Keep it in data as undefined for Zod to catch if it's required
-                data[field] = undefined;
+                textData[key] = value;
             }
-        });
+        }
         
-        const validationResult = RegistrationFormSchema.safeParse(data);
+        // Add file placeholders to textData for Zod validation if needed
+        if (userRole === 'trainer') {
+            textData.trainerCertificateFile = fileData.trainerCertificateFile;
+            textData.drivingLicenseFile = fileData.drivingLicenseFile;
+            textData.aadhaarCardFile = fileData.aadhaarCardFile;
+        }
+
+        const validationResult = RegistrationFormSchema.safeParse(textData);
 
         if (!validationResult.success) {
             console.error("registerUserAction: Form validation failed.", validationResult.error.flatten());
@@ -86,7 +96,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
         
         const validatedData = validationResult.data;
-        const { userRole, email, password, name, phone, username, gender, location } = validatedData;
+        const { email, password, name, phone, username, gender, location } = validatedData;
         console.log("registerUserAction: Form data validated successfully for user role:", userRole);
 
         try {
@@ -644,4 +654,3 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     revalidatePath('/dashboard');
     return true;
 }
-
