@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToUser } from '@/lib/mock-data';
 import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
@@ -155,7 +155,7 @@ const CircularProgress = ({ progress = 0, completed, total }: { progress: number
     );
 };
 
-const getStatusBadgeClass = (status: UserProfile['approvalStatus']): string => {
+const getStatusBadgeClass = (status?: UserProfile['approvalStatus']): string => {
      switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
@@ -168,10 +168,9 @@ const getStatusBadgeClass = (status: UserProfile['approvalStatus']): string => {
 
 export default function CustomerDashboard() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user: profile, loading: authLoading, logInUser } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  
   const [upcomingLessonDate, setUpcomingLessonDate] = useState<Date | null>(null);
   const [isReschedulable, setIsReschedulable] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,39 +180,27 @@ export default function CustomerDashboard() {
   const [isStartDateEditable, setIsStartDateEditable] = useState(false);
   const [rescheduleRequested, setRescheduleRequested] = useState(false);
 
-
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
   
-  const refetchProfile = () => {
-    if (user?.id) {
-        listenToUser(user.id, (userProfile) => {
-            setProfile(userProfile);
-        });
+  const refetchProfile = useCallback(() => {
+    if (profile?.id) {
+        // The AuthContext will trigger re-renders, but for immediate feedback
+        // after an action, we might manually refetch if needed.
+        // For now, we assume the AuthContext update is sufficient.
     }
-  }
-
-  useEffect(() => {
-    if (!user?.id) {
-        setLoading(false);
-        return;
-    }
-    
-    setLoading(true);
-    const unsubscribe = listenToUser(user.id, (userProfile) => {
-        setProfile(userProfile);
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
+  }, [profile?.id]);
 
   useEffect(() => {
     if (profile) {
       if (profile.subscriptionStartDate) {
-        const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
-        setIsStartDateEditable(!isPast(startDate));
+        try {
+            const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
+            setIsStartDateEditable(!isPast(startDate));
+        } catch(e) {
+            setIsStartDateEditable(false);
+        }
       } else {
         setIsStartDateEditable(true);
       }
@@ -239,16 +226,16 @@ export default function CustomerDashboard() {
   }, [profile]);
 
   const handleStartDateChange = async () => {
-    if (!profile || !newStartDate || !user) return;
+    if (!profile || !newStartDate) return;
     setIsSubmitting(true);
     try {
-      const updatedProfile = await updateSubscriptionStartDate(user.id, newStartDate);
+      const updatedProfile = await updateSubscriptionStartDate(profile.id, newStartDate);
       if (updatedProfile) {
         toast({
           title: 'Start Date Updated',
           description: `Your subscription will now start on ${format(newStartDate, 'PPP')}. Your first lesson has been scheduled accordingly.`,
         });
-        setProfile(updatedProfile);
+        logInUser(updatedProfile, false); // Update context
         setIsStartDateDialogOpen(false);
       } else {
         toast({
@@ -282,7 +269,7 @@ export default function CustomerDashboard() {
   }
 
   const handleRescheduleRequest = async () => {
-    if (!profile || !upcomingLessonDate || !user || !newRescheduleDate || !newRescheduleTime) return;
+    if (!profile || !upcomingLessonDate || !newRescheduleDate || !newRescheduleTime) return;
 
     const [hours, period] = newRescheduleTime.split(/:| /);
     let hour24 = parseInt(hours, 10);
@@ -294,7 +281,7 @@ export default function CustomerDashboard() {
 
     setIsSubmitting(true);
     try {
-        await addRescheduleRequest(user.id, profile.name, upcomingLessonDate, finalNewDate);
+        await addRescheduleRequest(profile.id, profile.name, upcomingLessonDate, finalNewDate);
         toast({
             title: 'Reschedule Request Sent',
             description: 'Your request has been sent for approval. You will be notified of the outcome.',
@@ -313,7 +300,7 @@ export default function CustomerDashboard() {
   };
 
 
-  if (authLoading || loading) {
+  if (authLoading || !profile) {
     return (
       <div className="container mx-auto p-4 py-8 space-y-8">
         <Skeleton className="h-10 w-1/2 mb-8" />
@@ -327,7 +314,7 @@ export default function CustomerDashboard() {
     );
   }
 
-  if (profile && profile.approvalStatus !== 'Approved') {
+  if (profile.approvalStatus !== 'Approved') {
     const isPlanSelected = profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -373,7 +360,7 @@ export default function CustomerDashboard() {
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
       <header className="mb-8">
         <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-          Welcome, {user?.name || 'Customer'}!
+          Welcome, {profile.name || 'Customer'}!
         </h1>
         <p className="text-muted-foreground">Here's an overview of your learning journey with Drivergy.</p>
       </header>
