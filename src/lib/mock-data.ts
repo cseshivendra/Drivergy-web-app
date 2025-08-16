@@ -81,13 +81,8 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
             const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
             const instructors = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
             
-            // NOTE: The concept of a separate "Lesson Request" has been removed.
-            // A customer who has paid but is not assigned is now considered part of the
-            // "New Customer Verifications" queue directly.
             const lessonRequests: LessonRequest[] = [];
 
-            // Derive Feedback & Referrals from other collections if they existed
-            // For now, these are empty as we don't have these collections yet.
             const feedback: Feedback[] = [];
             const referrals: Referral[] = [];
 
@@ -222,6 +217,7 @@ export const listenToTrainerStudents = (
 ) => {
     if (!db) {
         console.error('Firestore not initialized.');
+        callback({ students: [], feedback: [], rescheduleRequests: [], profile: null });
         return () => {};
     }
 
@@ -275,17 +271,16 @@ export const listenToTrainerStudents = (
         }
     };
     
+    // Initial fetch
     processData();
 
-    const unsubTrainer = onSnapshot(trainerDocRef, processData);
-    const unsubStudents = onSnapshot(studentsQuery, processData);
-    const unsubFeedback = onSnapshot(feedbackQuery, processData);
-    const unsubReschedule = onSnapshot(rescheduleQuery, processData);
+    // Set up listeners for real-time updates
+    const unsubs = [
+        onSnapshot(trainerDocRef, processData),
+        onSnapshot(studentsQuery, processData),
+        onSnapshot(feedbackQuery, processData),
+        onSnapshot(rescheduleQuery, processData)
+    ];
 
-    return () => {
-        unsubTrainer();
-        unsubStudents();
-        unsubFeedback();
-        unsubReschedule();
-    };
+    return () => unsubs.forEach(unsub => unsub());
 };

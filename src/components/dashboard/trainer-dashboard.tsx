@@ -43,7 +43,7 @@ const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const getStatusBadgeClass = (status: ApprovalStatusType): string => {
+const getStatusBadgeClass = (status?: ApprovalStatusType): string => {
      switch (status) {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
@@ -145,7 +145,7 @@ export default function TrainerDashboard() {
 
   if (trainerProfile && trainerProfile.approvalStatus !== 'Approved') {
     return (
-        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
             <Card className="shadow-xl text-center p-8">
                 <CardHeader>
                     <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
