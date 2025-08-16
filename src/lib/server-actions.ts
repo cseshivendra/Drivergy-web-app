@@ -64,15 +64,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     try {
         const data = Object.fromEntries(formData.entries());
-        const userRole = formData.get('userRole');
+        const userRole = formData.get('userRole') as 'customer' | 'trainer';
         
-        // Handle file inputs specifically
         const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
         fileFields.forEach(field => {
-             if (formData.has(field) && formData.get(field) instanceof File) {
-                data[field] = formData.get(field);
+             const file = formData.get(field);
+             if (file instanceof File && file.size > 0) {
+                data[field] = file;
             } else {
-                data[field] = undefined;
+                data[field] = undefined; // Ensure field is undefined if no file
             }
         });
         
@@ -85,7 +85,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
         
         console.log("registerUserAction: Form data validated successfully for user role:", userRole);
-        const { email, password, name, phone, username, gender } = validationResult.data;
+        const { email, password, name, phone, username, gender, location } = validationResult.data;
 
         try {
             console.log(`registerUserAction: Checking if email '${email}' already exists in Firebase Auth...`);
@@ -127,22 +127,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             contact: email,
             phone: phone,
             gender: gender,
-            subscriptionPlan: userRole === 'trainer' ? 'Trainer' : (validationResult.data as any).subscriptionPlan,
+            location: location,
+            subscriptionPlan: userRole === 'trainer' ? 'Trainer' : 'None',
             approvalStatus: 'Pending',
         };
 
-        if (userRole === 'customer' && validationResult.data.userRole === 'customer') {
-            const { location, vehiclePreference, subscriptionPlan } = validationResult.data;
-            Object.assign(newUserProfile, {
-                location,
-                vehiclePreference,
-                subscriptionPlan,
-            });
-        }
-        else if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
+        if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
             console.log("registerUserAction: Processing trainer-specific fields...");
             const {
-                location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
+                yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
                 trainerCertificateNumber, drivingLicenseNumber, aadhaarCardNumber,
                 trainerCertificateFile, drivingLicenseFile, aadhaarCardFile
             } = validationResult.data;
@@ -156,7 +149,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             console.log("registerUserAction: All trainer documents uploaded successfully to Cloudinary.");
             
             Object.assign(newUserProfile, {
-                location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
+                specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
                 licenseNumber: drivingLicenseNumber,
                 trainerCertificateUrl: certUrl,
                 drivingLicenseUrl: dlUrl,

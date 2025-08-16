@@ -44,7 +44,7 @@ function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     return (
         <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
             {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-            userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Proceed to Payment</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+            userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
         </Button>
     );
 }
@@ -79,10 +79,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       confirmPassword: '', 
       phone: '',
       gender: undefined,
-      // Customer fields that are now part of the main form
       location: userRole === 'customer' ? undefined : undefined,
-      subscriptionPlan: userRole === 'customer' ? undefined : 'Trainer',
-      vehiclePreference: userRole === 'customer' ? undefined : undefined,
 
       // Trainer fields
       yearsOfExperience: userRole === 'trainer' ? undefined : undefined, 
@@ -141,22 +138,18 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         if (state.success && state.user && state.token) {
             const isCustomer = state.user.uniqueId.startsWith('CU');
             
-            // Log the user in with the custom token
             await signInWithCustomToken(state.token);
 
             if (isCustomer) {
                 toast({
-                    title: "Profile Created!",
-                    description: "Please complete the payment to activate your plan.",
+                    title: "Registration Successful!",
+                    description: "Welcome to Drivergy! Let's get you set up.",
                 });
-                const selectedPlan = state.user.subscriptionPlan || 'Basic';
-                const prices = { Basic: 3999, Gold: 7499, Premium: 9999 };
-                const price = prices[selectedPlan as keyof typeof prices] ?? 3999;
-                router.push(`/payment?plan=${selectedPlan}&price=${price}`);
+                router.push('/dashboard');
             } else { // Trainer
                 toast({
                     title: "Registration Submitted!",
-                    description: "Thank you! Your application is under review. You are now logged in and can see the dashboard.",
+                    description: "Thank you! Your application is under review. You can see your dashboard now.",
                 });
                 router.push('/dashboard');
             }
@@ -288,32 +281,22 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                   </FormItem>
               )}
             />
-
-        {userRole === 'customer' && (
-            <>
-                <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Plan & Preferences</h3>
-                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                    <FormField control={form.control} name="subscriptionPlan" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Subscription Plan<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select your plan" /></SelectTrigger></FormControl><SelectContent>{SubscriptionPlans.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="vehiclePreference" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Vehicle Preference<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{VehiclePreferenceOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                </div>
-            </>
-        )}
+        
+        <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
 
         {userRole === 'trainer' && (
           <>
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                 <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem> )} />
+                 <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                 <FormField control={form.control} name="trainerVehicleType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{TrainerVehicleTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="trainerVehicleType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{TrainerVehicleTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                 <FormField control={form.control} name="vehicleNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="e.g., MH01AB1234" {...field} /></FormControl><FormMessage /></FormItem> )} />
             </div>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField control={form.control} name="vehicleNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="e.g., MH01AB1234" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="fuelType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent>{FuelTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-            </div>
+             <FormField control={form.control} name="fuelType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent>{FuelTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+            
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
             <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
