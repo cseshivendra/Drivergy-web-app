@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { fetchUserById } from '@/lib/mock-data';
 import { updateUserProfile, changeUserPassword } from '@/lib/server-actions';
-import type { UserProfile, UserProfileUpdateValues, ChangePasswordValues } from '@/types';
+import type { UserProfile, UserProfileUpdateValues, ChangePasswordValues, ApprovalStatusType } from '@/types';
 import { UserProfileUpdateSchema, ChangePasswordSchema, IndianStates, DistrictsByState } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
-import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera, Home, ShieldCheck } from 'lucide-react';
+import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera, Home, ShieldCheck, Hourglass, XCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Locations } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -433,17 +433,54 @@ export default function ProfilePage() {
     return <div className="text-center p-8">User profile not found. Please try logging in again.</div>;
   }
 
+  const getStatusCardClasses = (status?: ApprovalStatusType) => {
+    switch (status) {
+      case 'Approved':
+        return {
+          card: 'bg-green-50 dark:bg-green-900/20 border-green-500',
+          title: 'text-green-700 dark:text-green-300',
+          description: 'text-green-600',
+          icon: ShieldCheck,
+        };
+      case 'Pending':
+      case 'In Progress':
+        return {
+          card: 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500',
+          title: 'text-yellow-700 dark:text-yellow-400',
+          description: 'text-yellow-600',
+          icon: Hourglass,
+        };
+       case 'Rejected':
+        return {
+          card: 'bg-red-50 dark:bg-red-900/20 border-red-500',
+          title: 'text-red-700 dark:text-red-400',
+          description: 'text-red-600',
+          icon: XCircle,
+        };
+      default:
+        return {
+          card: 'bg-gray-50 dark:bg-gray-900/20 border-gray-500',
+          title: 'text-gray-700 dark:text-gray-300',
+          description: 'text-gray-600',
+          icon: ShieldCheck,
+        };
+    }
+  };
+  
+  const statusClasses = getStatusCardClasses(profile.approvalStatus as ApprovalStatusType);
+  const StatusIcon = statusClasses.icon;
+
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
        {profile.subscriptionPlan && profile.subscriptionPlan !== 'Trainer' &&
-            <Card className="shadow-lg bg-green-50 dark:bg-green-900/20 border-green-500">
+            <Card className={cn("shadow-lg", statusClasses.card)}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
-                        <ShieldCheck />
+                    <CardTitle className={cn("flex items-center gap-2", statusClasses.title)}>
+                        <StatusIcon />
                         Current Plan: {profile.subscriptionPlan}
                     </CardTitle>
                     <CardDescription>
-                        Your account status is: <span className="font-semibold text-green-600">{profile.approvalStatus}</span>
+                        Your account status is: <span className={cn("font-semibold", statusClasses.description)}>{profile.approvalStatus}</span>
                     </CardDescription>
                 </CardHeader>
             </Card>
