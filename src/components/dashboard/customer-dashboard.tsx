@@ -314,6 +314,33 @@ export default function CustomerDashboard() {
     );
   }
 
+  // Handle case where user has registered but not selected a plan yet.
+  if (profile.subscriptionPlan === 'None') {
+    return (
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+            <Card className="shadow-xl text-center p-8">
+                <CardHeader>
+                    <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
+                        <Gift className="h-12 w-12 text-primary" />
+                    </div>
+                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
+                    <CardDescription className="text-lg mt-4">
+                        To begin your learning journey, please select a subscription plan.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                        Your account is ready. Choose a plan that suits you to get matched with an instructor and start your driving lessons.
+                    </p>
+                    <Button asChild className="mt-6" size="lg">
+                        <Link href="/#subscriptions">Explore Plans</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+  
   if (profile.approvalStatus !== 'Approved') {
     const isPlanSelected = profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
     return (
@@ -334,22 +361,11 @@ export default function CustomerDashboard() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                   {!isPlanSelected ? (
-                       <>
-                        <p className="text-muted-foreground max-w-md mx-auto">
-                            Your account is registered. To begin your learning journey, please select a subscription plan.
-                        </p>
-                        <Button asChild className="mt-6">
-                            <Link href="/#subscriptions">Choose a Plan</Link>
-                        </Button>
-                       </>
-                   ) : (
-                    <p className="text-muted-foreground max-w-md mx-auto">
+                   <p className="text-muted-foreground max-w-md mx-auto">
                         Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
                         <br /><br />
                         Thank you for your patience.
                     </p>
-                   )}
                 </CardContent>
             </Card>
         </div>
