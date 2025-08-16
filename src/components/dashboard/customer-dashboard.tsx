@@ -332,7 +332,7 @@ export default function CustomerDashboard() {
                 </CardHeader>
                 <CardContent>
                    <p className="text-muted-foreground max-w-md mx-auto">
-                        Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
+                        Your account is currently being reviewed by our team. You will be notified once your assigned trainer confirms your first lesson.
                         <br /><br />
                         Thank you for your patience.
                     </p>

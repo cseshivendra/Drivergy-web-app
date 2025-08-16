@@ -13,7 +13,7 @@ import ReferralTable from '@/components/dashboard/referral-table';
 import { listenToAdminDashboardData } from '@/lib/mock-data';
 import { updateRescheduleRequestStatus } from '@/lib/server-actions';
 import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, Hourglass } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -88,7 +88,8 @@ export default function AdminDashboard() {
 
     // Separate lists for different user states
     const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None'), [filteredUsers]);
-    const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && (u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
+    const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const inProgressVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'In Progress'), [filteredUsers]);
     const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
     const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
 
@@ -133,6 +134,12 @@ export default function AdminDashboard() {
                     <UserTable
                         title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>}
                         users={pendingVerificationCustomers}
+                        isLoading={loading}
+                        onUserActioned={handleActioned}
+                    />
+                     <UserTable
+                        title={<><Hourglass className="inline-block mr-3 h-6 w-6 align-middle" />In Progress Verifications</>}
+                        users={inProgressVerificationCustomers}
                         isLoading={loading}
                         onUserActioned={handleActioned}
                     />

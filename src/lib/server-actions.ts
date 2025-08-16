@@ -255,7 +255,7 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
             ...profileData, 
             subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
             photoIdUrl,
-            approvalStatus: 'In Progress' 
+            approvalStatus: 'Pending' 
         });
 
         const updatedDoc = await userRef.get();
@@ -636,11 +636,12 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     if (subscriptionPlan === 'Basic') totalLessons = 10;
     else if (subscriptionPlan === 'Gold') totalLessons = 15;
     else if (subscriptionPlan === 'Premium') totalLessons = 20;
+    else if (subscriptionPlan === 'City Ride') totalLessons = 5;
 
     const startDate = customerData.subscriptionStartDate ? parseISO(customerData.subscriptionStartDate) : new Date();
 
     await customerRef.update({
-        approvalStatus: 'Approved',
+        approvalStatus: 'In Progress',
         assignedTrainerId: trainerId,
         assignedTrainerName: trainerData.name,
         assignedTrainerPhone: trainerData.phone,
