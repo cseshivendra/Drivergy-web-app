@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signInWithCustomToken as firebaseSignInWithCustomToken } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/client';
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
@@ -14,6 +14,7 @@ interface AuthContextType {
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signInWithCredentials: (identifier: string, password: string) => Promise<void>;
+    signInWithCustomToken: (token: string) => Promise<void>;
     signOut: () => Promise<void>;
     logInUser: (user: UserProfile, redirect?: boolean) => void;
 }
@@ -146,6 +147,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+    
+    const signInWithCustomToken = async (token: string) => {
+        setLoading(true);
+        try {
+            await firebaseSignInWithCustomToken(auth, token);
+            // onAuthStateChanged will handle setting the user state and profile data
+        } catch (error: any) {
+            console.error("Custom token sign-in failed:", error);
+            toast({ title: 'Authentication Failed', description: 'Could not log you in. Please try again.', variant: 'destructive' });
+            setLoading(false);
+        }
+        // setLoading(false) is called by the onAuthStateChanged listener
+    };
+
 
     const signOut = async () => {
         setLoading(true);
@@ -169,6 +184,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loading,
         signInWithGoogle,
         signInWithCredentials,
+        signInWithCustomToken,
         signOut,
         logInUser
     };

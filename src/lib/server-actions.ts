@@ -53,7 +53,7 @@ export async function checkUsernameAvailability(
 }
 
 
-export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile, token?: string }> {
     console.log("registerUserAction: Starting user registration process.");
 
     if (!adminAuth || !adminDb) {
@@ -66,17 +66,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const data = Object.fromEntries(formData.entries());
         const userRole = formData.get('userRole');
         
-        // Handle file inputs specifically for the trainer role
-        if (userRole === 'trainer') {
-            const trainerFileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
-            trainerFileFields.forEach(field => {
-                if (formData.has(field) && formData.get(field) instanceof File) {
-                    data[field] = formData.get(field);
-                } else {
-                    data[field] = undefined;
-                }
-            });
-        }
+        // Handle file inputs specifically
+        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile', 'photoIdFile'];
+        fileFields.forEach(field => {
+             if (formData.has(field) && formData.get(field) instanceof File) {
+                data[field] = formData.get(field);
+            } else {
+                data[field] = undefined;
+            }
+        });
         
         const validationResult = RegistrationFormSchema.safeParse(data);
 
@@ -167,12 +165,16 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         await adminDb.collection('users').doc(userRecord.uid).set(finalProfile);
         console.log("registerUserAction: Successfully created Firestore user profile.");
         
+        console.log(`registerUserAction: Generating custom auth token for UID: ${userRecord.uid}`);
+        const customToken = await adminAuth.createCustomToken(userRecord.uid);
+        console.log("registerUserAction: Custom token generated.");
+
         const createdUser: UserProfile = { id: userRecord.uid, ...finalProfile };
         
         revalidatePath('/dashboard');
-        console.log("registerUserAction: Revalidated path and returning success.");
+        console.log("registerUserAction: Revalidated path and returning success with token.");
 
-        return { success: true, user: createdUser };
+        return { success: true, user: createdUser, token: customToken };
 
     } catch (error: any) {
         console.error("registerUserAction: An unexpected error occurred during the registration process.", error);

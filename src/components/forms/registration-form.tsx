@@ -57,7 +57,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { logInUser } = useAuth();
+  const { signInWithCustomToken } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
@@ -67,7 +67,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
 
 
-  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
+  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined, token: undefined });
 
   const defaultValuesForRole: RegistrationFormValues = {
       userRole: userRole,
@@ -131,25 +131,37 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
 
   useEffect(() => {
-    if (state.success && state.user) {
-        const isCustomer = state.user.uniqueId.startsWith('CU');
-        if (isCustomer) {
-            router.push('/dashboard/complete-profile');
-        } else {
-            toast({
-                title: "Registration Submitted!",
-                description: "Thank you! Your application is under review. We will notify you upon approval."
-            });
-            router.push('/login');
+    const handleRegistrationResult = async () => {
+        if (state.success && state.user && state.token) {
+            const isCustomer = state.user.uniqueId.startsWith('CU');
+            
+            // Log the user in with the custom token
+            await signInWithCustomToken(state.token);
+
+            if (isCustomer) {
+                toast({
+                    title: "Registration Successful!",
+                    description: "Welcome! Please complete your profile to get started.",
+                });
+                router.push('/dashboard/complete-profile');
+            } else { // Trainer
+                toast({
+                    title: "Registration Submitted!",
+                    description: "Thank you! Your application is under review. You are now logged in and can see the dashboard.",
+                });
+                router.push('/dashboard');
+            }
+        } else if (state.error) {
+           toast({
+            title: "Registration Error",
+            description: state.error,
+            variant: "destructive",
+          });
         }
-    } else if (state.error) {
-       toast({
-        title: "Registration Error",
-        description: state.error,
-        variant: "destructive",
-      });
-    }
-  }, [state, toast, router]);
+    };
+
+    handleRegistrationResult();
+  }, [state, toast, router, signInWithCustomToken]);
   
   const onClientSubmit = (data: RegistrationFormValues) => {
     const formData = new FormData();
