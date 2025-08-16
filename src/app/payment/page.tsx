@@ -8,19 +8,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Lock, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket } from 'lucide-react';
+import { ShieldCheck, UserPlus, LogIn, Ticket, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
 import { useState, useCallback } from 'react';
-import { completeCustomerProfileAction } from '@/lib/server-actions'; // Import server action
 
 function PaymentGateway() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { user, logInUser, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const plan = searchParams.get('plan') || 'Selected Plan';
   const price = searchParams.get('price') || '0';
@@ -30,27 +28,46 @@ function PaymentGateway() {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // This function now simulates payment and then redirects to the final profile completion step.
-  const handleSuccessfulPayment = useCallback(async () => {
+  // This function now simulates initiating a payment flow.
+  const handleInitiatePayment = useCallback(async () => {
     if (!user) return;
     setIsProcessing(true);
   
-    // In a real app, you would integrate with a payment provider here.
-    // For this app, we'll simulate a successful payment and proceed.
-  
+    // ================== PHONEPE INTEGRATION POINT ==================
+    // 1. In a real app, you would send a request to your own server here.
+    //    e.g., const response = await fetch('/api/phonepe-payment', { 
+    //            method: 'POST', 
+    //            body: JSON.stringify({ plan, price: finalPrice, userId: user.id }) 
+    //          });
+    //    const { redirectUrl } = await response.json();
+    //
+    // 2. Your server would talk to PhonePe and get the redirectUrl.
+    //
+    // 3. You would then redirect the user:
+    //    router.push(redirectUrl);
+    //
+    // 4. PhonePe would handle the payment and then send a webhook to your server.
+    //    Your server would verify it and then redirect the user to a success page
+    //    (like our complete-profile page).
+    // ==============================================================
+
+    // For this simulation, we'll mimic a successful payment and redirect.
     toast({
-      title: "Payment Successful!",
-      description: `Your subscription for the ${plan} plan is active. Please complete your profile.`,
+      title: "Proceeding to Payment",
+      description: `Redirecting you to complete your purchase for the ${plan} plan.`,
     });
   
-    // Redirect to the complete-profile page, passing the plan info
-    router.push(`/dashboard/complete-profile?plan=${plan}`);
+    // Simulate a short delay as if we are talking to a server
+    setTimeout(() => {
+        // Redirect to the final profile completion step
+        router.push(`/dashboard/complete-profile?plan=${plan}`);
+    }, 1500);
 
-  }, [user, plan, router, toast]);
+  }, [user, plan, finalPrice, router, toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSuccessfulPayment();
+    handleInitiatePayment();
   };
   
   const handleApplyCode = () => {
@@ -118,9 +135,9 @@ function PaymentGateway() {
             <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
                 <ShieldCheck className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="font-headline text-3xl font-bold">Secure Payment</CardTitle>
+            <CardTitle className="font-headline text-3xl font-bold">Secure Checkout</CardTitle>
             <CardDescription>
-                Complete your purchase for the <span className="font-semibold text-primary">{plan}</span> plan.
+                You're purchasing the <span className="font-semibold text-primary">{plan}</span> plan.
             </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,70 +177,22 @@ function PaymentGateway() {
                 )}
             </div>
 
-            <Tabs defaultValue="card" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="card" disabled={isProcessing}><CreditCard className="mr-2 h-4 w-4" />Card</TabsTrigger>
-                    <TabsTrigger value="upi" disabled={isProcessing}><QrCode className="mr-2 h-4 w-4" />UPI / QR Code</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="card" className="pt-6">
-                   <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <Label htmlFor="cardNumber" className="flex items-center mb-1"><CreditCard className="mr-2 h-4 w-4" />Card Number</Label>
-                            <Input id="cardNumber" placeholder="1234 5678 9012 3456" required disabled={isProcessing} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="expiryDate" className="flex items-center mb-1"><Calendar className="mr-2 h-4 w-4" />Expiry Date</Label>
-                                <Input id="expiryDate" placeholder="MM / YY" required disabled={isProcessing} />
-                            </div>
-                            <div>
-                                <Label htmlFor="cvv" className="flex items-center mb-1"><Lock className="mr-2 h-4 w-4" />CVV</Label>
-                                <Input id="cvv" placeholder="123" required disabled={isProcessing} />
-                            </div>
-                        </div>
-                        <div>
-                            <Label htmlFor="cardHolderName" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Cardholder Name</Label>
-                            <Input id="cardHolderName" placeholder="John Doe" required disabled={isProcessing} />
-                        </div>
-                        <Button type="submit" className="w-full h-11" disabled={isProcessing}>
-                            {isProcessing ? "Processing..." : `Pay ₹${finalPrice}`}
-                        </Button>
-                    </form>
-                </TabsContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                 <div className="flex flex-col items-center justify-center space-y-3 p-4 border-dashed border-2 border-muted-foreground/30 rounded-lg">
+                    <p className="text-sm font-medium text-muted-foreground">You will be redirected to our secure payment partner.</p>
+                    <Image 
+                        src="https://res.cloudinary.com/dssbgilba/image/upload/v1753198083/phonepe-logo-icon_d2ttc0.png"
+                        alt="PhonePe Logo"
+                        width={150}
+                        height={40}
+                        data-ai-hint="phonepe logo"
+                    />
+                </div>
 
-                <TabsContent value="upi" className="pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <Label htmlFor="upiId" className="flex items-center mb-1">Enter your UPI ID</Label>
-                            <Input id="upiId" placeholder="yourname@bank" required disabled={isProcessing}/>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <div className="flex-grow border-t border-muted"></div>
-                            <span className="text-muted-foreground text-sm">OR</span>
-                            <div className="flex-grow border-t border-muted"></div>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center space-y-3 p-4 border-dashed border-2 border-muted-foreground/30 rounded-lg">
-                            <p className="text-sm font-medium text-muted-foreground">Scan QR Code to Pay</p>
-                            <div className="p-2 bg-white rounded-md">
-                                <Image 
-                                    src="https://placehold.co/150x150/000000/ffffff.png"
-                                    alt="UPI QR Code"
-                                    width={150}
-                                    height={150}
-                                    data-ai-hint="qr code"
-                                />
-                            </div>
-                        </div>
-
-                        <Button type="submit" className="w-full h-11" disabled={isProcessing}>
-                             {isProcessing ? "Processing..." : `Verify & Pay ₹${finalPrice}`}
-                        </Button>
-                    </form>
-                </TabsContent>
-            </Tabs>
+                <Button type="submit" className="w-full h-12 text-base" disabled={isProcessing}>
+                    {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Proceed to Pay ₹${finalPrice}`}
+                </Button>
+            </form>
         </CardContent>
     </Card>
   )
