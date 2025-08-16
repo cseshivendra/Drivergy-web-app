@@ -21,6 +21,10 @@ export default function AuthenticatedRootPage() {
     if (!loading && !user) {
       router.replace('/');
     }
+    // If user has no plan and is a customer, send to subscriptions page
+    if (!loading && user && user.uniqueId?.startsWith('CU') && user.subscriptionPlan === 'None') {
+        router.push('/#subscriptions');
+    }
   }, [loading, user, router]);
 
   if (loading) {

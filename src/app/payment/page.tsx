@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
 import { useState, useCallback } from 'react';
+import { completeCustomerProfileAction } from '@/lib/server-actions'; // Import server action
 
 function PaymentGateway() {
   const router = useRouter();
@@ -33,23 +34,24 @@ function PaymentGateway() {
     if (!user) return;
     setIsProcessing(true);
   
-    // In a real app, this would be a server action to update the user's subscription.
-    // Here, we simulate it by updating the client-side state and session storage.
+    // We update the user profile to set their plan and mark them as pending approval
     const updatedProfile = {
       ...user,
       subscriptionPlan: plan, 
       approvalStatus: 'Pending',
     };
-    logInUser(updatedProfile, false);
+    
+    // In a real app, this would be a server action to update user in DB
+    // For now, we simulate this by updating the client context
+    logInUser(updatedProfile, false); 
   
     toast({
       title: "Payment Successful!",
-      description: `Your subscription for the ${plan} plan has been activated. Please complete your profile.`,
+      description: `Your subscription for the ${plan} plan is active. Please wait for admin approval.`,
     });
   
-    // Redirect to the new profile completion page
     setTimeout(() => {
-      router.push('/dashboard/complete-profile');
+      router.push('/dashboard');
     }, 1500);
   }, [user, plan, logInUser, router, toast]);
 

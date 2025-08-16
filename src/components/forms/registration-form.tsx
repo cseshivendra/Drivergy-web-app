@@ -24,7 +24,8 @@ import {
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
   GenderOptions,
-  TrainerPreferenceOptions,
+  SubscriptionPlans,
+  VehiclePreferenceOptions,
 } from '@/types';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon, CheckCircle, XCircle } from 'lucide-react';
 import { useMemo, useState, useEffect, useCallback } from 'react';
@@ -43,7 +44,7 @@ function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     return (
         <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
             {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-            userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+            userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Proceed to Payment</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
         </Button>
     );
 }
@@ -78,15 +79,20 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       confirmPassword: '', 
       phone: '',
       gender: undefined,
-      location: undefined, 
-      yearsOfExperience: undefined, 
-      specialization: undefined, 
-      trainerVehicleType: undefined,
-      fuelType: undefined, 
-      vehicleNumber: '', 
-      trainerCertificateNumber: '', 
-      aadhaarCardNumber: '',
-      drivingLicenseNumber: '', 
+      // Customer fields that are now part of the main form
+      location: userRole === 'customer' ? undefined : undefined,
+      subscriptionPlan: userRole === 'customer' ? undefined : 'Trainer',
+      vehiclePreference: userRole === 'customer' ? undefined : undefined,
+
+      // Trainer fields
+      yearsOfExperience: userRole === 'trainer' ? undefined : undefined, 
+      specialization: userRole === 'trainer' ? undefined : undefined, 
+      trainerVehicleType: userRole === 'trainer' ? undefined : undefined,
+      fuelType: userRole === 'trainer' ? undefined : undefined, 
+      vehicleNumber: userRole === 'trainer' ? '' : undefined, 
+      trainerCertificateNumber: userRole === 'trainer' ? '' : undefined, 
+      aadhaarCardNumber: userRole === 'trainer' ? '' : undefined,
+      drivingLicenseNumber: userRole === 'trainer' ? '' : undefined, 
       trainerCertificateFile: undefined, 
       drivingLicenseFile: undefined,
       aadhaarCardFile: undefined,
@@ -140,10 +146,13 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
             if (isCustomer) {
                 toast({
-                    title: "Registration Successful!",
-                    description: "Welcome! Please complete your profile to get started.",
+                    title: "Profile Created!",
+                    description: "Please complete the payment to activate your plan.",
                 });
-                router.push('/dashboard/complete-profile');
+                const selectedPlan = state.user.subscriptionPlan || 'Basic';
+                const prices = { Basic: 3999, Gold: 7499, Premium: 9999 };
+                const price = prices[selectedPlan as keyof typeof prices] ?? 3999;
+                router.push(`/payment?plan=${selectedPlan}&price=${price}`);
             } else { // Trainer
                 toast({
                     title: "Registration Submitted!",
@@ -279,6 +288,16 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                   </FormItem>
               )}
             />
+
+        {userRole === 'customer' && (
+            <>
+                <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Plan & Preferences</h3>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                    <FormField control={form.control} name="subscriptionPlan" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Subscription Plan<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select your plan" /></SelectTrigger></FormControl><SelectContent>{SubscriptionPlans.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                    <FormField control={form.control} name="vehiclePreference" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Vehicle Preference<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{VehiclePreferenceOptions.map(option => ( <SelectItem key={option} value={option}>{option}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                </div>
+            </>
+        )}
 
         {userRole === 'trainer' && (
           <>

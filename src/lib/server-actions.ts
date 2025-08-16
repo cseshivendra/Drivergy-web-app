@@ -67,7 +67,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         const userRole = formData.get('userRole');
         
         // Handle file inputs specifically
-        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile', 'photoIdFile'];
+        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
         fileFields.forEach(field => {
              if (formData.has(field) && formData.get(field) instanceof File) {
                 data[field] = formData.get(field);
@@ -127,11 +127,19 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             contact: email,
             phone: phone,
             gender: gender,
-            subscriptionPlan: userRole === 'trainer' ? 'Trainer' : 'None',
+            subscriptionPlan: userRole === 'trainer' ? 'Trainer' : (validationResult.data as any).subscriptionPlan,
             approvalStatus: 'Pending',
         };
 
-        if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
+        if (userRole === 'customer' && validationResult.data.userRole === 'customer') {
+            const { location, vehiclePreference, subscriptionPlan } = validationResult.data;
+            Object.assign(newUserProfile, {
+                location,
+                vehiclePreference,
+                subscriptionPlan,
+            });
+        }
+        else if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
             console.log("registerUserAction: Processing trainer-specific fields...");
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
@@ -192,6 +200,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         return { success: true };
     } catch (error: any) {
         console.error("Password reset error:", error);
+        // Don't reveal if email exists or not for security reasons
         return { success: true };
     }
 }
@@ -278,6 +287,8 @@ export async function changeUserPassword(userId: string, currentPass: string, ne
         console.error("Auth not configured.");
         return false;
     }
+    // This server-side password change is insecure without re-authentication.
+    // Re-authentication should be enforced on the client before calling a more secure endpoint.
     console.warn("Server-side password change is not recommended without re-authentication.");
     return false;
 }
@@ -481,6 +492,7 @@ export async function updateAssignmentStatusByTrainer(studentId: string, newStat
   const studentRef = adminDb.collection('users').doc(studentId);
   await studentRef.update({ approvalStatus: newStatus });
   if (newStatus === 'Approved') {
+    // Potentially add logic here for the first lesson if needed.
   }
   revalidatePath('/dashboard');
   return true;
@@ -631,7 +643,3 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     revalidatePath('/dashboard');
     return true;
 }
-
-
-
-    
