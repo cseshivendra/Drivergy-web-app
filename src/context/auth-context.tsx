@@ -67,34 +67,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userDoc = await getDoc(userDocRef);
 
             if (!userDoc.exists()) {
-                // New user, create a profile in Firestore
-                const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
-                    uniqueId: `CU-${Date.now().toString().slice(-6)}`,
-                    name: firebaseUser.displayName || 'Google User',
-                    username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now().toString().slice(-4)}`,
-                    contact: firebaseUser.email!,
-                    phone: firebaseUser.phoneNumber || '',
-                    photoURL: firebaseUser.photoURL || '',
-                    subscriptionPlan: 'None',
-                    approvalStatus: 'Pending',
-                    gender: 'Prefer not to say', // Default value
-                    // Use serverTimestamp() for Firestore to handle date creation server-side
-                    registrationTimestamp: serverTimestamp(),
-                };
-                await setDoc(userDocRef, newUserProfile);
+                // New user: Redirect to the main registration page to choose a role.
+                // Pre-fill name and email to streamline the process.
+                toast({ 
+                    title: 'Welcome to Drivergy!', 
+                    description: "Please choose your role and complete your registration." 
+                });
                 
-                // For client-side state, create a serializable user object immediately
-                const clientProfile: UserProfile = {
-                  ...newUserProfile,
-                  id: firebaseUser.uid,
-                  registrationTimestamp: new Date().toISOString(), // Use client date for immediate state update
-                };
-
-                setUser(clientProfile);
-                toast({ title: 'Welcome!', description: 'Your account has been created.' });
-                router.push('/#subscriptions');
+                const queryParams = new URLSearchParams({
+                    name: firebaseUser.displayName || '',
+                    email: firebaseUser.email || '',
+                }).toString();
+                
+                router.push(`/register?${queryParams}`);
             } else {
-                 // Existing user
+                 // Existing user: Log them in and redirect to the dashboard.
                 const userProfileData = userDoc.data();
                  if (userProfileData.registrationTimestamp && typeof userProfileData.registrationTimestamp.toDate === 'function') {
                     userProfileData.registrationTimestamp = userProfileData.registrationTimestamp.toDate().toISOString();

@@ -72,8 +72,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   const defaultValuesForRole: RegistrationFormValues = {
       userRole: userRole,
-      name: '', 
-      email: '', 
+      name: searchParams.get('name') || '', 
+      email: searchParams.get('email') || '', 
       username: '', 
       password: '', 
       confirmPassword: '', 
@@ -81,8 +81,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       gender: undefined,
       location: undefined,
 
-      // Trainer fields - IMPORTANT: Initialize with empty strings or valid defaults, not undefined
-      yearsOfExperience: undefined, // numbers can be undefined
+      // Trainer fields
+      yearsOfExperience: undefined,
       specialization: undefined, 
       trainerVehicleType: undefined,
       fuelType: undefined, 
