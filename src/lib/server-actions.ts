@@ -40,10 +40,13 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             trainerFileFields.forEach(field => {
                 if (formData.has(field) && formData.get(field) instanceof File) {
                     data[field] = formData.get(field);
+                } else {
+                    // Ensure the field is at least present for validation if empty
+                    data[field] = undefined;
                 }
             });
         }
-
+        
         const validationResult = RegistrationFormSchema.safeParse(data);
 
         if (!validationResult.success) {
@@ -52,7 +55,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             return { success: false, error: firstError };
         }
         
-        console.log("registerUserAction: Form data validated successfully.");
+        console.log("registerUserAction: Form data validated successfully for user role:", userRole);
         const { email, password, name, phone, username, gender } = validationResult.data;
 
         // Check if email is already in use in Firebase Auth
@@ -64,7 +67,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         } catch (error: any) {
             if (error.code === 'auth/user-not-found') {
                 console.log(`registerUserAction: Email '${email}' is available.`);
-                // If user is not found, we can proceed with registration.
             } else {
                 console.error("registerUserAction: Unexpected error while checking email existence.", error);
                 throw error;
@@ -104,26 +106,26 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             approvalStatus: 'Pending',
         };
 
-        // Add trainer-specific fields
-        if (userRole === 'trainer' && 'location' in validationResult.data) {
-            console.log("registerUserAction: Processing trainer-specific fields and uploading documents...");
+        // Add trainer-specific fields and upload documents
+        if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
+            console.log("registerUserAction: Processing trainer-specific fields...");
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
                 trainerCertificateNumber, drivingLicenseNumber, aadhaarCardNumber,
                 trainerCertificateFile, drivingLicenseFile, aadhaarCardFile
             } = validationResult.data;
 
-            // Upload files to Cloudinary
+            console.log("registerUserAction: Starting document uploads to Cloudinary...");
             const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-                uploadFileToCloudinary(await fileToBuffer(trainerCertificateFile), 'trainer_documents'),
-                uploadFileToCloudinary(await fileToBuffer(drivingLicenseFile), 'trainer_documents'),
-                uploadFileToCloudinary(await fileToBuffer(aadhaarCardFile), 'trainer_documents')
+                uploadFileToCloudinary(await fileToBuffer(trainerCertificateFile), 'trainer_documents').then(url => { console.log("Uploaded certificate."); return url; }),
+                uploadFileToCloudinary(await fileToBuffer(drivingLicenseFile), 'trainer_documents').then(url => { console.log("Uploaded DL."); return url; }),
+                uploadFileToCloudinary(await fileToBuffer(aadhaarCardFile), 'trainer_documents').then(url => { console.log("Uploaded Aadhaar."); return url; })
             ]);
             console.log("registerUserAction: All trainer documents uploaded successfully to Cloudinary.");
             
             Object.assign(newUserProfile, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                licenseNumber: drivingLicenseNumber, // Re-check if this is the correct mapping
+                licenseNumber: drivingLicenseNumber,
                 trainerCertificateUrl: certUrl,
                 drivingLicenseUrl: dlUrl,
                 aadhaarCardUrl: aadhaarUrl,
@@ -134,7 +136,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         // Add registration timestamp using Firestore's server time
         const finalProfile = {
             ...newUserProfile,
-            registrationTimestamp: new Date().toISOString(), // Use ISO string for consistency
+            registrationTimestamp: new Date().toISOString(),
         };
 
         console.log(`registerUserAction: Creating user profile in Firestore for UID: ${userRecord.uid}...`);

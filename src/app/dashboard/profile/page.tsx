@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
-import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera, Home } from 'lucide-react';
+import { User, KeyRound, Mail, Phone, MapPin, Loader2, Camera, Home, ShieldCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Locations } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -176,28 +176,30 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4" />Location</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Locations.map(loc => (
-                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+             {isCustomer && (
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4" />Preferred Location</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Locations.map(loc => (
+                          <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             {isCustomer && (
               <>
@@ -433,6 +435,19 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
+       {profile.subscriptionPlan && profile.subscriptionPlan !== 'Trainer' &&
+            <Card className="shadow-lg bg-green-50 dark:bg-green-900/20 border-green-500">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                        <ShieldCheck />
+                        Current Plan: {profile.subscriptionPlan}
+                    </CardTitle>
+                    <CardDescription>
+                        Your account status is: <span className="font-semibold text-green-600">{profile.approvalStatus}</span>
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        }
       <ProfileUpdateForm profile={profile} />
       <PasswordChangeForm userId={profile.id} />
     </div>

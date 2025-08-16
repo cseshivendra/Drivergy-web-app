@@ -97,19 +97,25 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
 
   useEffect(() => {
     if (state.success && state.user) {
-      toast({
-        title: "Registration Successful!",
-        description: "Your account has been created. Please choose a plan to continue.",
-      });
-      // Automatically log the user in
-      logInUser(state.user, false);
-      
-      const redirectUrl = searchParams.get('redirect');
-      if (redirectUrl) {
-          router.push(redirectUrl);
-      } else {
-          router.push('/#subscriptions'); // Default redirect to choose a plan
-      }
+        logInUser(state.user, false); // Log the user in but don't redirect yet
+
+        const isCustomer = state.user.uniqueId.startsWith('CU');
+
+        toast({
+            title: "Registration Successful!",
+            description: isCustomer 
+                ? "Welcome! You will be redirected to your dashboard."
+                : "Your application has been submitted for review."
+        });
+
+        const redirectUrl = searchParams.get('redirect');
+        if (redirectUrl) {
+            router.push(redirectUrl);
+        } else if (isCustomer) {
+            router.push('/dashboard'); // Redirect customer to dashboard
+        } else {
+            router.push('/#testimonials'); // Redirect trainer to a neutral page
+        }
 
     } else if (state.error) {
        toast({
