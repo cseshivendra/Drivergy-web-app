@@ -131,7 +131,7 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
-  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative."),
+  yearsOfExperience: z.coerce.number({invalid_type_error: "Experience must be a number."}).min(0, "Experience cannot be negative."),
   specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
   trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
   fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
@@ -491,3 +491,4 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
+

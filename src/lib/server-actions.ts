@@ -64,15 +64,16 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     try {
         const data = Object.fromEntries(formData.entries());
-        const userRole = formData.get('userRole') as 'customer' | 'trainer';
         
+        // Manually handle file fields for validation
         const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile'];
         fileFields.forEach(field => {
              const file = formData.get(field);
              if (file instanceof File && file.size > 0) {
                 data[field] = file;
             } else {
-                data[field] = undefined; // Ensure field is undefined if no file
+                // Keep it in data as undefined for Zod to catch if it's required
+                data[field] = undefined;
             }
         });
         
@@ -84,8 +85,9 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             return { success: false, error: firstError };
         }
         
+        const validatedData = validationResult.data;
+        const { userRole, email, password, name, phone, username, gender, location } = validatedData;
         console.log("registerUserAction: Form data validated successfully for user role:", userRole);
-        const { email, password, name, phone, username, gender, location } = validationResult.data;
 
         try {
             console.log(`registerUserAction: Checking if email '${email}' already exists in Firebase Auth...`);
@@ -132,13 +134,17 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             approvalStatus: 'Pending',
         };
 
-        if (userRole === 'trainer' && validationResult.data.userRole === 'trainer') {
+        if (userRole === 'trainer' && validatedData.userRole === 'trainer') {
             console.log("registerUserAction: Processing trainer-specific fields...");
             const {
                 yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
                 trainerCertificateNumber, drivingLicenseNumber, aadhaarCardNumber,
                 trainerCertificateFile, drivingLicenseFile, aadhaarCardFile
-            } = validationResult.data;
+            } = validatedData;
+
+            if (!trainerCertificateFile || !drivingLicenseFile || !aadhaarCardFile) {
+                 throw new Error("One or more required trainer documents were not provided.");
+            }
 
             console.log("registerUserAction: Starting document uploads to Cloudinary...");
             const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
@@ -151,6 +157,8 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             Object.assign(newUserProfile, {
                 specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
                 licenseNumber: drivingLicenseNumber,
+                trainerCertificateNumber: trainerCertificateNumber,
+                aadhaarCardNumber: aadhaarCardNumber,
                 trainerCertificateUrl: certUrl,
                 drivingLicenseUrl: dlUrl,
                 aadhaarCardUrl: aadhaarUrl,
@@ -636,3 +644,4 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     revalidatePath('/dashboard');
     return true;
 }
+
