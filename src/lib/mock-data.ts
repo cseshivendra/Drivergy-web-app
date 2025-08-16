@@ -81,17 +81,10 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
             const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
             const instructors = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
             
-            // Derive Lesson Requests
-            const lessonRequests: LessonRequest[] = customers
-                .filter(c => c.subscriptionPlan !== 'None' && !c.assignedTrainerId)
-                .map(c => ({
-                    id: c.id,
-                    customerId: c.id,
-                    customerName: c.name,
-                    vehicleType: c.vehiclePreference as any,
-                    status: 'Pending',
-                    requestTimestamp: c.registrationTimestamp ? format(parseISO(c.registrationTimestamp), 'PPp') : 'N/A',
-                }));
+            // NOTE: The concept of a separate "Lesson Request" has been removed.
+            // A customer who has paid but is not assigned is now considered part of the
+            // "New Customer Verifications" queue directly.
+            const lessonRequests: LessonRequest[] = [];
 
             // Derive Feedback & Referrals from other collections if they existed
             // For now, these are empty as we don't have these collections yet.
@@ -124,7 +117,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 totalCustomers: customers.length,
                 totalInstructors: instructors.length,
                 activeSubscriptions: customers.filter(c => c.subscriptionPlan !== 'None' && c.approvalStatus === 'Approved').length,
-                pendingRequests: lessonRequests.length,
+                pendingRequests: customers.filter(c => c.subscriptionPlan !== 'None' && !c.assignedTrainerId).length,
                 pendingRescheduleRequests: rescheduleRequests.filter(r => r.status === 'Pending').length,
                 totalCertifiedTrainers: instructors.filter(i => i.approvalStatus === 'Approved').length,
                 totalEarnings: customers.reduce((acc, curr) => {
