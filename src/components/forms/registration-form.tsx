@@ -79,17 +79,17 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       confirmPassword: '', 
       phone: '',
       gender: undefined,
-      location: userRole === 'customer' ? undefined : undefined,
+      location: undefined,
 
-      // Trainer fields
-      yearsOfExperience: userRole === 'trainer' ? undefined : undefined, 
-      specialization: userRole === 'trainer' ? undefined : undefined, 
-      trainerVehicleType: userRole === 'trainer' ? undefined : undefined,
-      fuelType: userRole === 'trainer' ? undefined : undefined, 
-      vehicleNumber: userRole === 'trainer' ? '' : undefined, 
-      trainerCertificateNumber: userRole === 'trainer' ? '' : undefined, 
-      aadhaarCardNumber: userRole === 'trainer' ? '' : undefined,
-      drivingLicenseNumber: userRole === 'trainer' ? '' : undefined, 
+      // Trainer fields - IMPORTANT: Initialize with empty strings or valid defaults, not undefined
+      yearsOfExperience: undefined, // numbers can be undefined
+      specialization: undefined, 
+      trainerVehicleType: undefined,
+      fuelType: undefined, 
+      vehicleNumber: '', 
+      trainerCertificateNumber: '', 
+      aadhaarCardNumber: '',
+      drivingLicenseNumber: '', 
       trainerCertificateFile: undefined, 
       drivingLicenseFile: undefined,
       aadhaarCardFile: undefined,
