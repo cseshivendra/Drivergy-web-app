@@ -52,7 +52,7 @@ export default function LoginPage() {
     </svg>
   );
 
-  if (loading || (!isMounted && !user)) { 
+  if (loading || user) { 
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -129,7 +129,7 @@ export default function LoginPage() {
             
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
-              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">For Demo & Testing</span></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">FOR DEMO & TESTING</span></div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

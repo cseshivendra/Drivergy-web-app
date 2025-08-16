@@ -7,61 +7,94 @@ import { adminAuth, adminDb } from './firebase/admin';
 // This file is for server-side data fetching and data seeding logic only.
 
 /**
- * Creates a default admin user in Firebase Auth and Firestore if it doesn't exist.
+ * Creates default users for admin, customer, and trainer roles if they don't exist.
  * This is useful for seeding the database for development and testing.
  */
-const createDefaultAdmin = async () => {
+const createDefaultUsers = async () => {
     if (!adminAuth || !adminDb) {
-        console.error("Admin SDK not initialized. Cannot create default admin.");
+        console.error("Admin SDK not initialized. Cannot create default users.");
         return;
     }
 
-    const adminEmail = 'admin@drivergy.com';
-    const adminPassword = 'password';
-
-    try {
-        // Check if the admin user already exists in Firebase Auth
-        await adminAuth.getUserByEmail(adminEmail);
-        // console.log("Default admin user already exists.");
-    } catch (error: any) {
-        if (error.code === 'auth/user-not-found') {
-            // User does not exist, so create them
-            try {
-                const userRecord = await adminAuth.createUser({
-                    email: adminEmail,
-                    emailVerified: true,
-                    password: adminPassword,
-                    displayName: 'Admin User',
-                    disabled: false,
-                });
-
-                console.log('Successfully created new admin user:', userRecord.uid);
-
-                const adminProfile: Omit<UserProfile, 'id'> = {
-                    uniqueId: `AD-${userRecord.uid.slice(0, 6).toUpperCase()}`,
-                    name: 'Admin User',
-                    username: 'admin',
-                    contact: adminEmail,
-                    phone: '0000000000',
-                    gender: 'Prefer not to say',
-                    subscriptionPlan: 'Admin',
-                    registrationTimestamp: new Date().toISOString(),
-                    approvalStatus: 'Approved',
-                    isAdmin: true,
-                };
-
-                await adminDb.collection('users').doc(userRecord.uid).set(adminProfile);
-                console.log('Successfully created admin profile in Firestore.');
-
-            } catch (creationError) {
-                console.error('Error creating default admin user:', creationError);
+    const usersToCreate = [
+        {
+            email: 'admin@drivergy.com',
+            password: 'password',
+            displayName: 'Admin User',
+            role: 'Admin',
+            profileData: {
+                uniqueId: 'AD-ADMIN', name: 'Admin User', username: 'admin',
+                contact: 'admin@drivergy.com', phone: '0000000000',
+                gender: 'Prefer not to say', subscriptionPlan: 'Admin',
+                approvalStatus: 'Approved', isAdmin: true,
             }
-        } else {
-            // Some other error occurred
-            console.error('Error checking for admin user:', error);
+        },
+        {
+            email: 'customer@drivergy.com',
+            password: 'password',
+            displayName: 'Demo Customer',
+            role: 'Customer',
+            profileData: {
+                uniqueId: 'CU-CUSTOMER', name: 'Demo Customer', username: 'democustomer',
+                contact: 'customer@drivergy.com', phone: '1111111111',
+                gender: 'Female', location: 'Gurugram', subscriptionPlan: 'Premium',
+                approvalStatus: 'Approved', totalLessons: 20, completedLessons: 5,
+                upcomingLesson: "Jul 30, 2024, 9:00 AM",
+                assignedTrainerId: "TR-TRAINER", assignedTrainerName: "Demo Trainer", assignedTrainerPhone: "2222222222",
+                assignedTrainerExperience: 5, assignedTrainerVehicleDetails: 'Car (Manual) - DL01XY1234'
+            }
+        },
+        {
+            email: 'trainer@drivergy.com',
+            password: 'password',
+            displayName: 'Demo Trainer',
+            role: 'Trainer',
+            profileData: {
+                uniqueId: 'TR-TRAINER', name: 'Demo Trainer', username: 'demotrainer',
+                contact: 'trainer@drivergy.com', phone: '2222222222',
+                gender: 'Male', location: 'Gurugram', subscriptionPlan: 'Trainer',
+                approvalStatus: 'Approved', yearsOfExperience: 5, specialization: 'Car',
+                vehicleInfo: 'Car (Manual) - DL01XY1234'
+            }
+        }
+    ];
+
+    for (const user of usersToCreate) {
+        try {
+            await adminAuth.getUserByEmail(user.email);
+            // console.log(`Default ${user.role} user already exists.`);
+        } catch (error: any) {
+            if (error.code === 'auth/user-not-found') {
+                try {
+                    const userRecord = await adminAuth.createUser({
+                        email: user.email,
+                        emailVerified: true,
+                        password: user.password,
+                        displayName: user.displayName,
+                        disabled: false,
+                    });
+                    console.log(`Successfully created new ${user.role} user:`, userRecord.uid);
+                    
+                    const profile = {
+                        ...user.profileData,
+                        registrationTimestamp: new Date().toISOString(),
+                    };
+                    
+                    await adminDb.collection('users').doc(userRecord.uid).set(profile);
+                    if (user.role === 'Trainer') {
+                        await adminDb.collection('users').doc('TR-TRAINER').set({ id: userRecord.uid, ...profile });
+                    }
+                    console.log(`Successfully created ${user.role} profile in Firestore.`);
+                } catch (creationError) {
+                    console.error(`Error creating default ${user.role} user:`, creationError);
+                }
+            } else {
+                console.error(`Error checking for ${user.role} user:`, error);
+            }
         }
     }
 };
+
 
 export const seedPromotionalPosters = async () => {
     if (!adminDb) {
@@ -113,7 +146,7 @@ export const seedPromotionalPosters = async () => {
 
 // Call the seeding functions when the server starts up.
 const initializeServerData = async () => {
-    await createDefaultAdmin();
+    await createDefaultUsers();
 };
 initializeServerData();
 
