@@ -30,30 +30,23 @@ function PaymentGateway() {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // This function now simulates payment and then redirects to the final profile completion step.
   const handleSuccessfulPayment = useCallback(async () => {
     if (!user) return;
     setIsProcessing(true);
   
-    // We update the user profile to set their plan and mark them as pending approval
-    const updatedProfile = {
-      ...user,
-      subscriptionPlan: plan, 
-      approvalStatus: 'Pending',
-    };
-    
-    // In a real app, this would be a server action to update user in DB
-    // For now, we simulate this by updating the client context
-    logInUser(updatedProfile, false); 
+    // In a real app, you would integrate with a payment provider here.
+    // For this app, we'll simulate a successful payment and proceed.
   
     toast({
       title: "Payment Successful!",
-      description: `Your subscription for the ${plan} plan is active. Please wait for admin approval.`,
+      description: `Your subscription for the ${plan} plan is active. Please complete your profile.`,
     });
   
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1500);
-  }, [user, plan, logInUser, router, toast]);
+    // Redirect to the complete-profile page, passing the plan info
+    router.push(`/dashboard/complete-profile?plan=${plan}`);
+
+  }, [user, plan, router, toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
