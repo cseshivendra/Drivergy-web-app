@@ -1,10 +1,8 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToUser } from '@/lib/mock-data';
 import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
 import type { UserProfile, FeedbackFormValues } from '@/types';
 import { FeedbackFormSchema } from '@/types';
@@ -12,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift, Hourglass } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { differenceInHours, format, isFuture, parse, addDays, isPast } from 'date-fns';
@@ -313,35 +310,8 @@ export default function CustomerDashboard() {
       </div>
     );
   }
-
-  // Handle case where user has registered but not selected a plan yet.
-  if (profile.subscriptionPlan === 'None') {
-    return (
-        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-            <Card className="shadow-xl text-center p-8">
-                <CardHeader>
-                    <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
-                        <Gift className="h-12 w-12 text-primary" />
-                    </div>
-                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
-                    <CardDescription className="text-lg mt-4">
-                        To begin your learning journey, please select a subscription plan.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground max-w-md mx-auto">
-                        Your account is ready. Choose a plan that suits you to get matched with an instructor and start your driving lessons.
-                    </p>
-                    <Button asChild className="mt-6" size="lg">
-                        <Link href="/#subscriptions">Explore Plans</Link>
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
-    );
-  }
   
-  if (profile.approvalStatus !== 'Approved') {
+  if (profile.approvalStatus !== 'Approved' && profile.subscriptionPlan !== 'None') {
     const isPlanSelected = profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -438,26 +408,28 @@ export default function CustomerDashboard() {
           <CardContent className="flex-grow space-y-4">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Current Plan:</span>
-                <span className="font-bold text-primary">{profile?.subscriptionPlan}</span>
+                <span className="font-bold text-primary">{profile?.subscriptionPlan === 'None' ? 'N/A' : profile.subscriptionPlan}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Status:</span>
                 <span className={`font-semibold ${profile?.approvalStatus === 'Approved' ? 'text-green-500' : 'text-yellow-500'}`}>
-                  {profile?.approvalStatus}
+                  {profile?.approvalStatus || 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Start Date:</span>
                 <span className="font-semibold">{profile?.subscriptionStartDate ? format(parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date()), 'dd-MMM-yyyy') : 'N/A'}</span>
               </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setIsStartDateDialogOpen(true)}
-                disabled={!isStartDateEditable}
-              >
-                <CalendarClock className="mr-2 h-4 w-4" /> Change Start Date
-              </Button>
+              {profile.subscriptionPlan !== 'None' && (
+                <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsStartDateDialogOpen(true)}
+                    disabled={!isStartDateEditable}
+                >
+                    <CalendarClock className="mr-2 h-4 w-4" /> Change Start Date
+                </Button>
+               )}
               {!isStartDateEditable && profile?.subscriptionStartDate && <p className="text-xs text-muted-foreground text-center">Start date can only be changed if it's in the future.</p>}
           </CardContent>
           <CardFooter className="grid grid-cols-2 gap-4">
@@ -472,6 +444,7 @@ export default function CustomerDashboard() {
                 variant="destructive"
                 onClick={handleCancelPlan}
                 className="w-full"
+                disabled={profile.subscriptionPlan === 'None'}
             >
               <XCircle className="mr-2 h-4 w-4" /> Cancel
             </Button>
@@ -530,7 +503,7 @@ export default function CustomerDashboard() {
                 <CircularProgress 
                     progress={((profile?.completedLessons ?? 0) / (profile?.totalLessons || 1)) * 100}
                     completed={profile?.completedLessons ?? 0}
-                    total={profile?.totalLessons ?? 0}
+                    total={profile?.totalLessons || 0}
                 />
             </CardContent>
             <CardFooter className="flex-grow flex items-end">
@@ -656,3 +629,5 @@ export default function CustomerDashboard() {
     </div>
   );
 }
+
+    
