@@ -162,14 +162,12 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 export async function fetchApprovedInstructors(filters: { location?: string, gender?: string }): Promise<UserProfile[]> {
     if (!db) return [];
     
-    // **FIX:** Changed the query to filter by `subscriptionPlan` which is allowed with other `where` clauses.
-    // Firestore does not allow range filters (like on uniqueId) with other equality filters.
     let q = query(collection(db, 'users'), where('subscriptionPlan', '==', 'Trainer'), where('approvalStatus', '==', 'Approved'));
 
-    if (filters.location) {
+    if (filters.location && filters.location !== 'all') {
         q = query(q, where('location', '==', filters.location));
     }
-    if (filters.gender && filters.gender !== 'Any') {
+    if (filters.gender && filters.gender !== 'Any' && filters.gender !== 'all') {
         q = query(q, where('gender', '==', filters.gender));
     }
 
