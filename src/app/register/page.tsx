@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,14 +23,24 @@ const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: 
 );
 
 export default function UnifiedRegisterPage() {
-  const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
+  const searchParams = useSearchParams();
+  const roleFromUrl = searchParams.get('role') as 'customer' | 'trainer' | null;
+  const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(roleFromUrl);
+
+  useEffect(() => {
+    // If the URL parameter changes, update the state
+    setSelectedRole(roleFromUrl);
+  }, [roleFromUrl]);
 
   const handleRoleSelection = (role: 'customer' | 'trainer') => {
     setSelectedRole(role);
   };
 
   const resetRoleSelection = () => {
-    setSelectedRole(null);
+    // Only allow resetting if no role is forced by the URL
+    if (!roleFromUrl) {
+      setSelectedRole(null);
+    }
   };
 
   return (
@@ -58,10 +69,12 @@ export default function UnifiedRegisterPage() {
       ) : (
         <Card className="shadow-xl">
           <CardHeader className="relative text-center">
-            <Button variant="ghost" size="sm" className="absolute left-4 top-4 text-muted-foreground" onClick={resetRoleSelection}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-            </Button>
+             {!roleFromUrl && (
+                <Button variant="ghost" size="sm" className="absolute left-4 top-4 text-muted-foreground" onClick={resetRoleSelection}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                </Button>
+            )}
             <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
               {selectedRole === 'customer' ? <User className="h-8 w-8 text-primary" /> : <UserCog className="h-8 w-8 text-primary" />}
             </div>

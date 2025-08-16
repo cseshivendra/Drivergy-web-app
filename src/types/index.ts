@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react';
 // =================================================================
 
 export const Locations = ['New Delhi', 'Gurugram', 'Noida', 'Faridabad', 'Ghaziabad', 'Bangalore', 'Mumbai'] as const;
-export const SubscriptionPlans = ['Basic', 'Gold', 'Premium'] as const;
+export const SubscriptionPlans = ['Basic', 'Gold', 'Premium', 'City Ride'] as const;
 export const VehiclePreferenceOptions = ['Two-Wheeler', 'Four-Wheeler', 'Both'] as const;
 export const SpecializationOptions = ['Car', 'Motorcycle', 'Commercial'] as const;
 export const TrainerVehicleTypeOptions = ['Car (Manual)', 'Car (Automatic)', 'Motorcycle', 'Scooter'] as const;
@@ -309,8 +309,8 @@ export interface SummaryData {
   activeSubscriptions: number;
   pendingRequests: number;
   pendingRescheduleRequests: number;
-  totalEarnings: number;
   totalCertifiedTrainers: number;
+  totalEarnings: number;
 }
 
 export interface CourseModule {
@@ -491,4 +491,3 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
-
