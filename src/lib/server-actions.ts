@@ -26,21 +26,10 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         return { success: false, error: "Server is not configured for authentication." };
     }
 
-    // --- FIX: Trigger seeding on first registration attempt ---
     await seedPromotionalPosters();
-    // ---------------------------------------------------------
 
     try {
         const data = Object.fromEntries(formData.entries());
-        
-        // Handle file inputs for Zod validation
-        const fileFields = ['trainerCertificateFile', 'drivingLicenseFile', 'aadhaarCardFile', 'photoIdFile'];
-        fileFields.forEach(field => {
-            if (formData.has(field) && formData.get(field) instanceof File) {
-                data[field] = formData.get(field);
-            }
-        });
-
         const validationResult = RegistrationFormSchema.safeParse(data);
 
         if (!validationResult.success) {
@@ -51,13 +40,11 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         
         const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
-        // Check if username is already taken
         const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
         if (!usernameQuery.empty) {
             return { success: false, error: 'This username is already taken. Please choose another one.' };
         }
 
-        // Create user in Firebase Auth
         const userRecord = await adminAuth.createUser({
             email: email,
             emailVerified: false,
@@ -66,7 +53,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             disabled: false,
         });
 
-        // Base user profile
         let newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> = {
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
             name: name,
@@ -78,35 +64,23 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             approvalStatus: 'Pending',
         };
 
-        // Add trainer-specific fields
         if (userRole === 'trainer' && 'location' in validationResult.data) {
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
-                trainerCertificateNumber, drivingLicenseNumber, aadhaarCardNumber,
-                trainerCertificateFile, drivingLicenseFile, aadhaarCardFile
+                trainerCertificateUrl, drivingLicenseUrl, aadhaarCardUrl,
             } = validationResult.data;
-
-            // Upload files to Cloudinary
-            const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-                uploadFileToCloudinary(await fileToBuffer(trainerCertificateFile), 'trainer_documents'),
-                uploadFileToCloudinary(await fileToBuffer(drivingLicenseFile), 'trainer_documents'),
-                uploadFileToCloudinary(await fileToBuffer(aadhaarCardFile), 'trainer_documents')
-            ]);
             
             Object.assign(newUserProfile, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                licenseNumber: drivingLicenseNumber, // Re-check if this is the correct mapping
-                trainerCertificateUrl: certUrl,
-                drivingLicenseUrl: dlUrl,
-                aadhaarCardUrl: aadhaarUrl,
-                // store numbers as well if needed
+                trainerCertificateUrl,
+                drivingLicenseUrl,
+                aadhaarCardUrl,
             });
         }
 
-        // Add registration timestamp using Firestore's server time
         const finalProfile = {
             ...newUserProfile,
-            registrationTimestamp: new Date().toISOString(), // Use ISO string for consistency
+            registrationTimestamp: new Date().toISOString(),
         };
 
         await adminDb.collection('users').doc(userRecord.uid).set(finalProfile);
@@ -222,10 +196,6 @@ export async function changeUserPassword(userId: string, currentPass: string, ne
         console.error("Auth not configured.");
         return false;
     }
-    // This is complex to do securely from a server action without the user's active session.
-    // The recommended approach is to use the Firebase client SDK's `reauthenticateWithCredential`
-    // and `updatePassword` methods on the client side. This server action is a placeholder.
-    // A real implementation would require a custom auth flow.
     console.warn("Server-side password change is not recommended without re-authentication.");
     return false;
 }
@@ -429,7 +399,6 @@ export async function updateAssignmentStatusByTrainer(studentId: string, newStat
   const studentRef = adminDb.collection('users').doc(studentId);
   await studentRef.update({ approvalStatus: newStatus });
   if (newStatus === 'Approved') {
-    // Optionally trigger a notification or further action
   }
   revalidatePath('/dashboard');
   return true;
@@ -448,7 +417,6 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
   await studentRef.update({
     attendance: status,
     completedLessons: newCompleted,
-    // Reset for next lesson
     upcomingLesson: null,
   });
 
@@ -530,7 +498,6 @@ export async function addFeedback(customerId: string, customerName: string, trai
         submissionDate: new Date(),
     });
     
-    // Mark that the customer has submitted feedback to prevent multiple submissions
     await adminDb.collection('users').doc(customerId).update({ feedbackSubmitted: true });
 
     revalidatePath('/dashboard');
@@ -581,4 +548,32 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 
     revalidatePath('/dashboard');
     return true;
+}
+
+
+export async function getLoginUser(identifier: string): Promise<UserProfile | null> {
+    if (!adminDb) return null;
+    
+    try {
+        let userQuery = await adminDb.collection('users').where('username', '==', identifier).limit(1).get();
+        if (userQuery.empty) {
+            userQuery = await adminDb.collection('users').where('contact', '==', identifier).limit(1).get();
+        }
+
+        if (userQuery.empty) {
+            return null;
+        }
+        
+        const userDoc = userQuery.docs[0];
+        const userData = { id: userDoc.id, ...userDoc.data() } as UserProfile;
+        
+        if (userData.registrationTimestamp && typeof (userData.registrationTimestamp as any).toDate === 'function') {
+            userData.registrationTimestamp = (userData.registrationTimestamp as any).toDate().toISOString();
+        }
+        return userData;
+
+    } catch (error) {
+        console.error("Error in getLoginUser:", error);
+        return null;
+    }
 }

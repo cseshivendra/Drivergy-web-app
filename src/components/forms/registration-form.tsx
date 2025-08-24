@@ -35,14 +35,48 @@ import { AlertCircle } from 'lucide-react';
 import { registerUserAction } from '@/lib/server-actions';
 import { useAuth } from '@/context/auth-context';
 
-function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
+function SubmitButton({ userRole, isSubmitting }: { userRole: 'customer' | 'trainer', isSubmitting: boolean }) {
     const { pending } = useFormStatus();
+    const isDisabled = pending || isSubmitting;
     return (
-        <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
-            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
+        <Button type="submit" className="w-full sm:w-auto" disabled={isDisabled}>
+            {isDisabled ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
             userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
         </Button>
     );
+}
+
+// Helper function to upload a single file to Cloudinary
+async function uploadFile(file: File, toast: any): Promise<string | null> {
+    const formData = new FormData();
+    formData.append('file', file);
+    // Use the unsigned upload preset for client-side uploads
+    formData.append('upload_preset', 'drivergy_unsigned'); 
+
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+    try {
+        const response = await fetch(cloudinaryUrl, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error.message || 'Cloudinary upload failed');
+        }
+
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during file upload.";
+        toast({
+            title: "File Upload Failed",
+            description: errorMessage,
+            variant: "destructive",
+        });
+        return null;
+    }
 }
 
 
@@ -57,10 +91,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { logInUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
-  // This is the corrected, stable way to define default values.
   const defaultValuesForRole: RegistrationFormValues = {
       userRole: userRole,
       name: '', 
@@ -70,8 +104,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       confirmPassword: '', 
       phone: '',
       gender: undefined,
-      // Trainer fields are always present, but will be undefined for customers.
-      // Zod will not validate them if userRole is 'customer'.
       location: undefined, 
       yearsOfExperience: undefined, 
       specialization: undefined, 
@@ -84,6 +116,9 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       trainerCertificateFile: undefined, 
       drivingLicenseFile: undefined,
       aadhaarCardFile: undefined,
+      trainerCertificateUrl: '',
+      drivingLicenseUrl: '',
+      aadhaarCardUrl: '',
   };
 
 
@@ -93,22 +128,19 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     mode: 'onBlur',
   });
 
-  const { handleSubmit } = form;
-
   useEffect(() => {
     if (state.success && state.user) {
       toast({
         title: "Registration Successful!",
         description: "Your account has been created. Please choose a plan to continue.",
       });
-      // Automatically log the user in
       logInUser(state.user, false);
       
       const redirectUrl = searchParams.get('redirect');
       if (redirectUrl) {
           router.push(redirectUrl);
       } else {
-          router.push('/#subscriptions'); // Default redirect to choose a plan
+          router.push('/#subscriptions');
       }
 
     } else if (state.error) {
@@ -120,23 +152,55 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     }
   }, [state, toast, router, logInUser, searchParams]);
   
-  const onClientSubmit = (data: RegistrationFormValues) => {
-    const formData = new FormData();
-    // A more robust way to handle form data, especially files.
-    Object.entries(data).forEach(([key, value]) => {
-        if (value instanceof File) {
-            formData.append(key, value);
-        } else if (value !== null && value !== undefined && value !== '') {
-            formData.append(key, String(value));
+  const onClientSubmit = async (data: RegistrationFormValues) => {
+    if (userRole === 'trainer') {
+        setIsUploading(true);
+        toast({ title: "Uploading Documents...", description: "Please wait while we securely upload your files." });
+
+        const { trainerCertificateFile, drivingLicenseFile, aadhaarCardFile } = data;
+
+        if (!trainerCertificateFile || !drivingLicenseFile || !aadhaarCardFile) {
+            toast({ title: "File Error", description: "Please ensure all three documents are selected.", variant: "destructive" });
+            setIsUploading(false);
+            return;
         }
-    });
+
+        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
+            uploadFile(trainerCertificateFile, toast),
+            uploadFile(drivingLicenseFile, toast),
+            uploadFile(aadhaarCardFile, toast)
+        ]);
+
+        if (!certUrl || !dlUrl || !aadhaarUrl) {
+            toast({ title: "Upload Failed", description: "One or more document uploads failed. Please try again.", variant: "destructive" });
+            setIsUploading(false);
+            return;
+        }
+
+        data.trainerCertificateUrl = certUrl;
+        data.drivingLicenseUrl = dlUrl;
+        data.aadhaarCardUrl = aadhaarUrl;
+        
+        toast({ title: "Upload Complete!", description: "Your documents have been uploaded successfully." });
+        setIsUploading(false);
+    }
+    
+    // Create a new FormData object to pass to the server action
+    const formData = new FormData();
+    for (const key in data) {
+        const value = (data as any)[key];
+        if (value !== undefined && value !== null && !(value instanceof File)) {
+            formData.append(key, value);
+        }
+    }
+
     formAction(formData);
   };
 
 
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onClientSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onClientSubmit)} className="space-y-8">
         {state.error && !state.success && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -149,7 +213,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
                 </AlertDescription>
             </Alert>
         )}
-        {/* Hidden input for userRole */}
         <input type="hidden" {...form.register('userRole')} value={userRole} />
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
@@ -224,7 +287,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         )}
 
         <div className="flex justify-end pt-4">
-            <SubmitButton userRole={userRole} />
+            <SubmitButton userRole={userRole} isSubmitting={isUploading} />
         </div>
       </form>
     </Form>
