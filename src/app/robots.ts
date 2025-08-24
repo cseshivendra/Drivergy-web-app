@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       // Disallow crawlers from accessing the private application area and login pages,
       // as these are not intended for public search results.
-      disallow: ['/dashboard/', '/login/', '/create/'],
+      disallow: ['/dashboard/', '/login/', '/create/', '/site/'],
     },
     // Specify the location of the sitemap file.
     sitemap: 'https://drivergy.in/sitemap.xml',
