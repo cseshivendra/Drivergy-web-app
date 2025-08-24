@@ -137,8 +137,6 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
   fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
-  trainerCertificateNumber: z.string().min(1, 'Certificate number is required.'),
-  aadhaarCardNumber: z.string().min(1, 'Aadhaar number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
   // These fields will be handled on the client for upload
   trainerCertificateFile: requiredFileSchema,

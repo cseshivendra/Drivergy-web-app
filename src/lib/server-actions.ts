@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -67,7 +66,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         if (userRole === 'trainer' && 'location' in validationResult.data) {
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
-                trainerCertificateUrl, drivingLicenseUrl, aadhaarCardUrl,
+                trainerCertificateUrl, drivingLicenseUrl, aadhaarCardUrl, drivingLicenseNumber
             } = validationResult.data;
             
             Object.assign(newUserProfile, {
@@ -75,6 +74,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 trainerCertificateUrl,
                 drivingLicenseUrl,
                 aadhaarCardUrl,
+                drivingLicenseNumber
             });
         }
 
@@ -552,28 +552,37 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 
 
 export async function getLoginUser(identifier: string): Promise<UserProfile | null> {
-    if (!adminDb) return null;
+    if (!adminDb) {
+        console.error("Admin DB not initialized.");
+        return null;
+    }
     
     try {
+        // Try finding by username first
         let userQuery = await adminDb.collection('users').where('username', '==', identifier).limit(1).get();
+
+        // If not found by username, try by email (contact field)
         if (userQuery.empty) {
             userQuery = await adminDb.collection('users').where('contact', '==', identifier).limit(1).get();
         }
 
         if (userQuery.empty) {
+            console.log(`No user found for identifier: ${identifier}`);
             return null;
         }
         
         const userDoc = userQuery.docs[0];
-        const userData = { id: userDoc.id, ...userDoc.data() } as UserProfile;
+        const userData = userDoc.data();
         
-        if (userData.registrationTimestamp && typeof (userData.registrationTimestamp as any).toDate === 'function') {
-            userData.registrationTimestamp = (userData.registrationTimestamp as any).toDate().toISOString();
+        // Convert Firestore Timestamp to ISO string if it exists
+        if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
+            userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
         }
-        return userData;
+        
+        return { id: userDoc.id, ...userData } as UserProfile;
 
     } catch (error) {
-        console.error("Error in getLoginUser:", error);
+        console.error("Error in getLoginUser server action:", error);
         return null;
     }
 }

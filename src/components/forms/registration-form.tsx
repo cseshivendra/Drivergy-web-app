@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -110,8 +109,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       trainerVehicleType: undefined,
       fuelType: undefined, 
       vehicleNumber: '', 
-      trainerCertificateNumber: '', 
-      aadhaarCardNumber: '',
       drivingLicenseNumber: '', 
       trainerCertificateFile: undefined, 
       drivingLicenseFile: undefined,
@@ -272,15 +269,11 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
             <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField control={form.control} name="trainerCertificateNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Trainer Certificate No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter certificate number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="trainerCertificateFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Certificate<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
-            </div>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField control={form.control} name="aadhaarCardNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Aadhaar Card No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter 12-digit Aadhaar number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                <FormField control={form.control} name="trainerCertificateFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Certificate<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="aadhaarCardFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </>
