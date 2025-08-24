@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -146,34 +147,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   }, [state, toast, router, logInUser, searchParams]);
   
   const onClientSubmit = async (data: RegistrationFormValues) => {
-    if (userRole === 'trainer') {
-        setIsUploading(true);
-        toast({ title: "Uploading Documents...", description: "Please wait while we securely upload your files." });
-
-        const { drivingLicenseFile } = data;
-
-        if (!drivingLicenseFile) {
-            toast({ title: "File Error", description: "Please ensure all three documents are selected.", variant: "destructive" });
-            setIsUploading(false);
-            return;
-        }
-
-        const dlUrl = await uploadFile(drivingLicenseFile, toast);
-
-        if (!dlUrl) {
-            toast({ title: "Upload Failed", description: "One or more document uploads failed. Please try again.", variant: "destructive" });
-            setIsUploading(false);
-            return;
-        }
-
-        data.drivingLicenseUrl = dlUrl;
-        
-        toast({ title: "Upload Complete!", description: "Your documents have been uploaded successfully." });
-        setIsUploading(false);
-    }
-    
-    // Create a new FormData object to pass to the server action
     const formData = new FormData();
+    // Append all non-file data first
     for (const key in data) {
         const value = (data as any)[key];
         if (value !== undefined && value !== null && !(value instanceof File)) {
@@ -181,6 +156,32 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         }
     }
 
+    if (userRole === 'trainer') {
+        setIsUploading(true);
+        toast({ title: "Uploading Documents...", description: "Please wait while we securely upload your files." });
+
+        const { drivingLicenseFile } = data;
+
+        if (!drivingLicenseFile) {
+            toast({ title: "File Error", description: "Please ensure the driving license is selected.", variant: "destructive" });
+            setIsUploading(false);
+            return;
+        }
+
+        const dlUrl = await uploadFile(drivingLicenseFile, toast);
+
+        if (!dlUrl) {
+            toast({ title: "Upload Failed", description: "Driving license upload failed. Please try again.", variant: "destructive" });
+            setIsUploading(false);
+            return;
+        }
+
+        formData.set('drivingLicenseUrl', dlUrl);
+        
+        toast({ title: "Upload Complete!", description: "Your document has been uploaded successfully." });
+        setIsUploading(false);
+    }
+    
     formAction(formData);
   };
 

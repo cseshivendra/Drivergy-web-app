@@ -136,10 +136,8 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-  // These fields will be handled on the client for upload
-  drivingLicenseFile: requiredFileSchema,
-  // These URL fields will be populated and sent to the server action
-  drivingLicenseUrl: z.string().url(),
+  drivingLicenseFile: requiredFileSchema.optional(), // Make the file optional on the main schema
+  drivingLicenseUrl: z.string().url("A valid driving license URL is required after upload."), // Make the URL required
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
@@ -207,7 +205,7 @@ export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required.'),
   newPassword: passwordSchema,
   confirmNewPassword: z.string(),
-}).refine(data => data.newPassword === data.confirmNewPassword, {
+}).refine(data => data.newPassword === data.confirmPassword, {
   message: "New passwords do not match.",
   path: ['confirmNewPassword'],
 });
@@ -489,5 +487,3 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
-
-    
