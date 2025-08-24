@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { fetchUserById } from '@/lib/server-data';
+import { adminDb } from '@/lib/firebase/admin';
 import type { UserProfile } from '@/types';
 
 const ChatInputSchema = z.object({
@@ -129,7 +129,7 @@ const drivergyChatFlow = ai.defineFlow(
     let userProfile: UserProfile | null = null;
     // We only fetch the user profile if a userId is actually passed.
     // The prompt is designed to handle cases where there is no user.
-    if (input.userId) {
+    if (input.userId && adminDb) {
       // NOTE: This now fetches from the live Firestore database via a server action.
       const userDoc = await adminDb.collection('users').where('uniqueId', '==', input.userId).limit(1).get();
       if (!userDoc.empty) {
