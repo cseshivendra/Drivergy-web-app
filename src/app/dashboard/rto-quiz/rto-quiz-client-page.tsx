@@ -39,6 +39,12 @@ export default function RtoQuizClientPage({ quizSets }: { quizSets: QuizSet[] })
         }
     };
     
+    const sortedQuizSets = [...quizSets].sort((a, b) => {
+        const numA = parseInt(a.title.replace('Set ', ''), 10);
+        const numB = parseInt(b.title.replace('Set ', ''), 10);
+        return numA - numB;
+    });
+
     return (
         <>
             <div className="mx-auto mb-6 w-full max-w-xs">
@@ -58,15 +64,15 @@ export default function RtoQuizClientPage({ quizSets }: { quizSets: QuizSet[] })
                 </Select>
             </div>
             {user ? (
-                <Tabs defaultValue={quizSets.length > 0 ? quizSets[0].id : ''} className="w-full">
+                <Tabs defaultValue={sortedQuizSets.length > 0 ? sortedQuizSets[0].id : ''} className="w-full">
                     <TabsList className="flex h-auto flex-wrap justify-center gap-2">
-                    {quizSets.map((set) => (
+                    {sortedQuizSets.map((set) => (
                         <TabsTrigger key={set.id} value={set.id}>
                         {set.title}
                         </TabsTrigger>
                     ))}
                     </TabsList>
-                    {quizSets.map((set) => (
+                    {sortedQuizSets.map((set) => (
                     <TabsContent key={set.id} value={set.id} className="pt-6">
                         <QuizSetComponent quizSet={set} onStart={handleStartAttempt} selectedLanguage={selectedLanguage} />
                     </TabsContent>
