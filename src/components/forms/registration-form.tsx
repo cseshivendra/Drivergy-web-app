@@ -147,42 +147,42 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   }, [state, toast, router, logInUser, searchParams]);
   
   const onClientSubmit = async (data: RegistrationFormValues) => {
-    const formData = new FormData();
-    // Append all non-file data first
-    for (const key in data) {
-        const value = (data as any)[key];
-        if (value !== undefined && value !== null && !(value instanceof File)) {
-            formData.append(key, value);
-        }
-    }
+      const formData = new FormData();
+      let finalData = { ...data };
 
-    if (userRole === 'trainer') {
-        setIsUploading(true);
-        toast({ title: "Uploading Documents...", description: "Please wait while we securely upload your files." });
+      if (userRole === 'trainer') {
+          setIsUploading(true);
+          toast({ title: "Uploading Document...", description: "Please wait while we securely upload your license." });
 
-        const { drivingLicenseFile } = data;
+          const { drivingLicenseFile } = data;
+          if (!drivingLicenseFile) {
+              toast({ title: "File Error", description: "Please select your driving license file.", variant: "destructive" });
+              setIsUploading(false);
+              return;
+          }
 
-        if (!drivingLicenseFile) {
-            toast({ title: "File Error", description: "Please ensure the driving license is selected.", variant: "destructive" });
-            setIsUploading(false);
-            return;
-        }
+          const dlUrl = await uploadFile(drivingLicenseFile, toast);
 
-        const dlUrl = await uploadFile(drivingLicenseFile, toast);
+          if (!dlUrl) {
+              toast({ title: "Upload Failed", description: "Driving license upload failed. Please try again.", variant: "destructive" });
+              setIsUploading(false);
+              return;
+          }
 
-        if (!dlUrl) {
-            toast({ title: "Upload Failed", description: "Driving license upload failed. Please try again.", variant: "destructive" });
-            setIsUploading(false);
-            return;
-        }
+          finalData.drivingLicenseUrl = dlUrl;
+          toast({ title: "Upload Complete!", description: "Your license has been uploaded." });
+          setIsUploading(false);
+      }
+      
+      // Append all data to formData, sending URL instead of file
+      for (const key in finalData) {
+          const value = (finalData as any)[key];
+          if (key !== 'drivingLicenseFile' && value !== undefined && value !== null) {
+              formData.append(key, value);
+          }
+      }
 
-        formData.set('drivingLicenseUrl', dlUrl);
-        
-        toast({ title: "Upload Complete!", description: "Your document has been uploaded successfully." });
-        setIsUploading(false);
-    }
-    
-    formAction(formData);
+      formAction(formData);
   };
 
 

@@ -136,8 +136,8 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-  drivingLicenseFile: requiredFileSchema.optional(), // Make the file optional on the main schema
-  drivingLicenseUrl: z.string().url("A valid driving license URL is required after upload."), // Make the URL required
+  drivingLicenseFile: requiredFileSchema,
+  drivingLicenseUrl: z.string().url("A valid driving license URL is required after upload.").optional(),
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [

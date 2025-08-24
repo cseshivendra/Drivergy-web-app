@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -29,7 +30,12 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     try {
         const data = Object.fromEntries(formData.entries());
-        const validationResult = RegistrationFormSchema.safeParse(data);
+        // For server action, we don't receive File objects, so we skip file validation here
+        // The URL will be validated as a string.
+        const validationResult = RegistrationFormSchema.extend({
+            drivingLicenseFile: z.any().optional(),
+            drivingLicenseUrl: z.string().url().optional(),
+        }).safeParse(data);
 
         if (!validationResult.success) {
             console.error("Registration validation failed:", validationResult.error.format());
@@ -71,7 +77,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             
             Object.assign(newUserProfile, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                drivingLicenseUrl,
+                drivingLicenseUrl: drivingLicenseUrl || '',
                 drivingLicenseNumber
             });
         }
