@@ -139,13 +139,9 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
   // These fields will be handled on the client for upload
-  trainerCertificateFile: requiredFileSchema,
   drivingLicenseFile: requiredFileSchema,
-  aadhaarCardFile: requiredFileSchema,
   // These URL fields will be populated and sent to the server action
-  trainerCertificateUrl: z.string().url(),
   drivingLicenseUrl: z.string().url(),
-  aadhaarCardUrl: z.string().url(),
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [

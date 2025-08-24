@@ -66,14 +66,12 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         if (userRole === 'trainer' && 'location' in validationResult.data) {
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
-                trainerCertificateUrl, drivingLicenseUrl, aadhaarCardUrl, drivingLicenseNumber
+                drivingLicenseUrl, drivingLicenseNumber
             } = validationResult.data;
             
             Object.assign(newUserProfile, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                trainerCertificateUrl,
                 drivingLicenseUrl,
-                aadhaarCardUrl,
                 drivingLicenseNumber
             });
         }

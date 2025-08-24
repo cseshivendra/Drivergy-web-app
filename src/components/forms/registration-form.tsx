@@ -110,12 +110,8 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       fuelType: undefined, 
       vehicleNumber: '', 
       drivingLicenseNumber: '', 
-      trainerCertificateFile: undefined, 
       drivingLicenseFile: undefined,
-      aadhaarCardFile: undefined,
-      trainerCertificateUrl: '',
       drivingLicenseUrl: '',
-      aadhaarCardUrl: '',
   };
 
 
@@ -154,29 +150,23 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         setIsUploading(true);
         toast({ title: "Uploading Documents...", description: "Please wait while we securely upload your files." });
 
-        const { trainerCertificateFile, drivingLicenseFile, aadhaarCardFile } = data;
+        const { drivingLicenseFile } = data;
 
-        if (!trainerCertificateFile || !drivingLicenseFile || !aadhaarCardFile) {
+        if (!drivingLicenseFile) {
             toast({ title: "File Error", description: "Please ensure all three documents are selected.", variant: "destructive" });
             setIsUploading(false);
             return;
         }
 
-        const [certUrl, dlUrl, aadhaarUrl] = await Promise.all([
-            uploadFile(trainerCertificateFile, toast),
-            uploadFile(drivingLicenseFile, toast),
-            uploadFile(aadhaarCardFile, toast)
-        ]);
+        const dlUrl = await uploadFile(drivingLicenseFile, toast);
 
-        if (!certUrl || !dlUrl || !aadhaarUrl) {
+        if (!dlUrl) {
             toast({ title: "Upload Failed", description: "One or more document uploads failed. Please try again.", variant: "destructive" });
             setIsUploading(false);
             return;
         }
 
-        data.trainerCertificateUrl = certUrl;
         data.drivingLicenseUrl = dlUrl;
-        data.aadhaarCardUrl = aadhaarUrl;
         
         toast({ title: "Upload Complete!", description: "Your documents have been uploaded successfully." });
         setIsUploading(false);
@@ -271,10 +261,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
-            </div>
-             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField control={form.control} name="trainerCertificateFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Certificate<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="aadhaarCardFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Aadhaar Card<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </>
         )}
