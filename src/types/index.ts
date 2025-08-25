@@ -137,7 +137,6 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
   drivingLicenseNumber: z.string().min(1, 'License number is required.'),
   drivingLicenseFile: requiredFileSchema,
-  drivingLicenseUrl: z.string().url("A valid driving license URL is required after upload.").optional(),
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
@@ -205,7 +204,7 @@ export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required.'),
   newPassword: passwordSchema,
   confirmNewPassword: z.string(),
-}).refine(data => data.newPassword === data.confirmPassword, {
+}).refine(data => data.newPassword === data.confirmNewPassword, {
   message: "New passwords do not match.",
   path: ['confirmNewPassword'],
 });

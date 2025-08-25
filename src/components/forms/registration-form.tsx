@@ -35,50 +35,15 @@ import { AlertCircle } from 'lucide-react';
 import { registerUserAction } from '@/lib/server-actions';
 import { useAuth } from '@/context/auth-context';
 
-function SubmitButton({ userRole, isSubmitting }: { userRole: 'customer' | 'trainer', isSubmitting: boolean }) {
+function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     const { pending } = useFormStatus();
-    const isDisabled = pending || isSubmitting;
     return (
-        <Button type="submit" className="w-full sm:w-auto" disabled={isDisabled}>
-            {isDisabled ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
+        <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
+            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
             userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
         </Button>
     );
 }
-
-// Helper function to upload a single file to Cloudinary
-async function uploadFile(file: File, toast: any): Promise<string | null> {
-    const formData = new FormData();
-    formData.append('file', file);
-    // Use the unsigned upload preset for client-side uploads
-    formData.append('upload_preset', 'drivergy_unsigned'); 
-
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`;
-
-    try {
-        const response = await fetch(cloudinaryUrl, {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error.message || 'Cloudinary upload failed');
-        }
-
-        const data = await response.json();
-        return data.secure_url;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during file upload.";
-        toast({
-            title: "File Upload Failed",
-            description: errorMessage,
-            variant: "destructive",
-        });
-        return null;
-    }
-}
-
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -91,7 +56,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { logInUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
@@ -112,7 +76,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       vehicleNumber: '', 
       drivingLicenseNumber: '', 
       drivingLicenseFile: undefined,
-      drivingLicenseUrl: '',
   };
 
 
@@ -133,8 +96,10 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       const redirectUrl = searchParams.get('redirect');
       if (redirectUrl) {
           router.push(redirectUrl);
-      } else {
+      } else if (userRole === 'customer') {
           router.push('/#subscriptions');
+      } else {
+          router.push('/dashboard');
       }
 
     } else if (state.error) {
@@ -144,40 +109,17 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         variant: "destructive",
       });
     }
-  }, [state, toast, router, logInUser, searchParams]);
+  }, [state, toast, router, logInUser, searchParams, userRole]);
   
-  const onClientSubmit = async (data: RegistrationFormValues) => {
+  const onClientSubmit = (data: RegistrationFormValues) => {
       const formData = new FormData();
-      let finalData = { ...data };
-
-      if (userRole === 'trainer') {
-          setIsUploading(true);
-          toast({ title: "Uploading Document...", description: "Please wait while we securely upload your license." });
-
-          const { drivingLicenseFile } = data;
-          if (!drivingLicenseFile) {
-              toast({ title: "File Error", description: "Please select your driving license file.", variant: "destructive" });
-              setIsUploading(false);
-              return;
-          }
-
-          const dlUrl = await uploadFile(drivingLicenseFile, toast);
-
-          if (!dlUrl) {
-              toast({ title: "Upload Failed", description: "Driving license upload failed. Please try again.", variant: "destructive" });
-              setIsUploading(false);
-              return;
-          }
-
-          finalData.drivingLicenseUrl = dlUrl;
-          toast({ title: "Upload Complete!", description: "Your license has been uploaded." });
-          setIsUploading(false);
-      }
       
       // Append all data to formData, sending URL instead of file
-      for (const key in finalData) {
-          const value = (finalData as any)[key];
-          if (key !== 'drivingLicenseFile' && value !== undefined && value !== null) {
+      for (const key in data) {
+          const value = (data as any)[key];
+          if (value instanceof File) {
+             formData.append(key, value);
+          } else if (value !== undefined && value !== null) {
               formData.append(key, value);
           }
       }
@@ -267,7 +209,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         )}
 
         <div className="flex justify-end pt-4">
-            <SubmitButton userRole={userRole} isSubmitting={isUploading} />
+            <SubmitButton userRole={userRole} />
         </div>
       </form>
     </Form>

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/client';
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getLoginUser } from '@/lib/server-actions';
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -112,31 +113,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
-        let emailToSignIn = identifier;
-
         try {
-            // Step 1: Check if the identifier is a username.
-            if (!identifier.includes('@')) {
-                const usersRef = collection(db, 'users');
-                const q = query(usersRef, where('username', '==', identifier), limit(1));
-                const querySnapshot = await getDocs(q);
+            // Step 1: Use the server action to find the user by username or email.
+            const userProfile = await getLoginUser(identifier);
 
-                if (!querySnapshot.empty) {
-                    // Username found, get the corresponding email
-                    emailToSignIn = querySnapshot.docs[0].data().contact;
-                } else {
-                    // If not a username, we'll proceed assuming it's an email.
-                    // Firebase will throw an error if it's not a valid email format or user.
-                }
+            if (!userProfile) {
+                throw new Error("Invalid credentials or user not found.");
             }
 
-            // Step 2: Attempt to sign in with the resolved email.
-            await signInWithEmailAndPassword(auth, emailToSignIn, password);
+            // Step 2: Attempt to sign in with the found email and provided password.
+            await signInWithEmailAndPassword(auth, userProfile.contact, password);
+            
+            // The onAuthStateChanged listener will handle setting the user state.
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
 
         } catch (error: any) {
-            console.error("Login error:", error.code); // Log error code for debugging
+            console.error("Login error:", error);
             toast({ 
                 title: 'Login Failed', 
                 description: 'Invalid credentials or user not found.', 

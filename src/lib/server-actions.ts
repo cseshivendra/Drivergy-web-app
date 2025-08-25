@@ -28,14 +28,18 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     await seedPromotionalPosters();
 
+    const data = Object.fromEntries(formData.entries());
+    const file = formData.get('drivingLicenseFile');
+    
+    if (file instanceof File && file.size > 0) {
+        data.drivingLicenseFile = file;
+    } else {
+        // For customers or trainers who might not upload a file initially
+        data.drivingLicenseFile = undefined; 
+    }
+
     try {
-        const data = Object.fromEntries(formData.entries());
-        // For server action, we don't receive File objects, so we skip file validation here
-        // The URL will be validated as a string.
-        const validationResult = RegistrationFormSchema.extend({
-            drivingLicenseFile: z.any().optional(),
-            drivingLicenseUrl: z.string().url().optional(),
-        }).safeParse(data);
+        const validationResult = RegistrationFormSchema.safeParse(data);
 
         if (!validationResult.success) {
             console.error("Registration validation failed:", validationResult.error.format());
@@ -58,6 +62,12 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             disabled: false,
         });
 
+        let drivingLicenseUrl = '';
+        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
+            const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
+            drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
+        }
+
         let newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> = {
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
             name: name,
@@ -69,15 +79,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             approvalStatus: 'Pending',
         };
 
-        if (userRole === 'trainer' && 'location' in validationResult.data) {
+        if (userRole === 'trainer') {
             const {
                 location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
-                drivingLicenseUrl, drivingLicenseNumber
+                drivingLicenseNumber
             } = validationResult.data;
             
             Object.assign(newUserProfile, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                drivingLicenseUrl: drivingLicenseUrl || '',
+                drivingLicenseUrl: drivingLicenseUrl,
                 drivingLicenseNumber
             });
         }
@@ -562,20 +572,24 @@ export async function getLoginUser(identifier: string): Promise<UserProfile | nu
     }
     
     try {
+        let userQuerySnapshot;
+        
         // Try finding by username first
-        let userQuery = await adminDb.collection('users').where('username', '==', identifier).limit(1).get();
+        const usernameQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
+        userQuerySnapshot = await usernameQuery.get();
 
         // If not found by username, try by email (contact field)
-        if (userQuery.empty) {
-            userQuery = await adminDb.collection('users').where('contact', '==', identifier).limit(1).get();
+        if (userQuerySnapshot.empty) {
+            const emailQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
+            userQuerySnapshot = await emailQuery.get();
         }
 
-        if (userQuery.empty) {
+        if (userQuerySnapshot.empty) {
             console.log(`No user found for identifier: ${identifier}`);
             return null;
         }
         
-        const userDoc = userQuery.docs[0];
+        const userDoc = userQuerySnapshot.docs[0];
         const userData = userDoc.data();
         
         // Convert Firestore Timestamp to ISO string if it exists
