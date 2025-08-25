@@ -46,6 +46,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         
         const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
+        // Check for existing user first to provide clear error messages
         const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
         if (!usernameQuery.empty) {
             return { success: false, error: 'This username is already taken. Please choose another one.' };
@@ -56,6 +57,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
              return { success: false, error: 'A user is already registered with this email address.' };
         }
 
+        let drivingLicenseUrl = '';
+        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
+            const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
+            drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
+        } else if (userRole === 'trainer') {
+            return { success: false, error: 'Driving license file is required for trainers.' };
+        }
+        
+        // 1. Create user in Firebase Auth
         const userRecord = await adminAuth.createUser({
             email: email,
             emailVerified: true, // Set to true for development
@@ -64,12 +74,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             disabled: false,
         });
 
-        let drivingLicenseUrl = '';
-        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
-            const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
-            drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
-        }
-        
+        // 2. Prepare user profile for Firestore
         const userProfileData: Omit<UserProfile, 'id'> = {
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
             name,
@@ -89,12 +94,16 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             } = validationResult.data;
             
             Object.assign(userProfileData, {
-                location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
+                location, 
+                specialization, 
+                yearsOfExperience, 
+                vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
                 drivingLicenseUrl: drivingLicenseUrl,
                 drivingLicenseNumber
             });
         }
         
+        // 3. Save profile to Firestore using the UID from Auth as the document ID
         await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
         
         const createdUser: UserProfile = { id: userRecord.uid, ...userProfileData };
@@ -602,5 +611,3 @@ export async function getLoginUser(identifier: string): Promise<UserProfile | nu
         return null;
     }
 }
-
-    

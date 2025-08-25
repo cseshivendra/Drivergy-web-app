@@ -116,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 throw new Error("Invalid credentials or user not found.");
             }
 
+            // Use the email from the fetched profile to sign in
             await signInWithEmailAndPassword(auth, userProfile.contact, password);
             
             // onAuthStateChanged will handle setting the user state.
@@ -173,5 +174,3 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
-
-    

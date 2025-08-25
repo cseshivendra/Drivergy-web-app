@@ -45,13 +45,12 @@ export const UserProfileSchema = z.object({
   phone: z.string().optional(),
   location: z.string().optional(),
   subscriptionPlan: z.string(),
-  registrationTimestamp: z.string(),
+  registrationTimestamp: z.string(), // Stored as ISO string
   approvalStatus: z.string(),
   vehicleInfo: z.string().optional(),
   myReferralCode: z.string().optional(),
   photoURL: z.string().url().optional(),
   gender: z.string(),
-  password: z.string().optional(),
   
   // Customer specific
   flatHouseNumber: z.string().optional(),
@@ -485,7 +484,3 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
-
-    
-
-    
