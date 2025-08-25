@@ -24,10 +24,9 @@ import {
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
   GenderOptions,
-  TrainerPreferenceOptions,
 } from '@/types';
-import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -49,11 +48,10 @@ interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
 }
 
-export default function RegistrationForm({ userRole }: RegistrationFormProps) {
+function RegistrationFormLogic({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { logInUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -78,7 +76,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       drivingLicenseFile: undefined,
   };
 
-
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues: defaultValuesForRole,
@@ -89,7 +86,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     if (state.success && state.user) {
       toast({
         title: "Registration Successful!",
-        description: "Your account has been created. Please choose a plan to continue.",
+        description: "Your account has been created. Please log in to continue.",
       });
       
       const redirectUrl = searchParams.get('redirect');
@@ -113,7 +110,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const onClientSubmit = (data: RegistrationFormValues) => {
       const formData = new FormData();
       
-      // Append all data to formData, sending URL instead of file
       for (const key in data) {
           const value = (data as any)[key];
           if (value instanceof File) {
@@ -157,7 +153,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter full name" {...field} /></FormControl><FormMessage /></FormItem> )} />
-           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
+           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
         </div>
         
         <FormField
@@ -214,3 +210,13 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
+
+export default function RegistrationForm(props: RegistrationFormProps) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegistrationFormLogic {...props} />
+    </Suspense>
+  )
+}
+
+    
