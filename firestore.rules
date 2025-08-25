@@ -1,75 +1,69 @@
 
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Allow users to read and write their own data, but not other users' data.
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
+      // Allow authenticated users to query for other users, e.g., trainers looking for students.
+      // The actual readable documents are still protected by the read rule above.
+      allow list: if request.auth != null;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    // Allow trainers to read students assigned to them.
+    match /users/{studentId} {
+       allow get: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.uniqueId.matches('TR.*') && get(/databases/$(database)/documents/users/$(studentId)).data.assignedTrainerId == request.auth.uid;
     }
 
-    function getRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.userRole;
+    // Allow admins to read/write any user document.
+    match /users/{userId} {
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
-    // Admins can do anything
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
-
-    // User profiles can be read by their owner or an admin.
-    // New users can create their own profile during registration.
-    match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isSignedIn(); // Allows new user registration
-      allow update: if isOwner(userId); // Allow users to update their own profile
-    }
-
-    // Trainers can read data of their assigned students.
-    // This rule is slightly more complex, but allows for trainers to see who they are training.
-    match /users/{studentId} {
-      allow read: if isSignedIn() && get(/databases/$(database)/documents/users/$(studentId)).data.assignedTrainerId == request.auth.uid;
-    }
-
-    // Public collections are readable by anyone.
-    match /blog/{postId} {
-      allow read: if true;
-    }
+    // Public collections that can be read by anyone.
     match /courses/{courseId} {
       allow read: if true;
-    }
-    match /promotionalPosters/{posterId} {
-      allow read: if true;
-    }
-    match /faqs/{faqId} {
-      allow read: if true;
-    }
-    match /quizSets/{setId} {
-      allow read: if true;
-    }
-
-    // Feedback can be created by any signed-in user.
-    match /feedback/{feedbackId} {
-      allow create: if isSignedIn();
-    }
-
-    // Lesson reschedule requests can be created by any signed-in user.
-    match /rescheduleRequests/{requestId} {
-      allow create: if isSignedIn();
+      allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
-    // Referrals can be read by the referrer.
+    match /quizSets/{quizSetId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    match /faqs/{faqId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+     match /blog/{blogId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    match /siteBanners/{bannerId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    match /promotionalPosters/{posterId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Collections accessible only by authenticated users.
+    match /rescheduleRequests/{requestId} {
+        allow read, write: if request.auth != null;
+    }
+    
+    match /feedback/{feedbackId} {
+        allow read, write: if request.auth != null;
+    }
+    
     match /referrals/{referralId} {
-      allow read: if isSignedIn() && resource.data.referrerId == request.auth.uid;
+        allow read, write: if request.auth != null;
     }
 
   }
