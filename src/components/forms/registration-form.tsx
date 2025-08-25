@@ -91,7 +91,6 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         title: "Registration Successful!",
         description: "Your account has been created. Please choose a plan to continue.",
       });
-      logInUser(state.user, false);
       
       const redirectUrl = searchParams.get('redirect');
       if (redirectUrl) {
@@ -109,7 +108,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         variant: "destructive",
       });
     }
-  }, [state, toast, router, logInUser, searchParams, userRole]);
+  }, [state, toast, router, searchParams, userRole]);
   
   const onClientSubmit = (data: RegistrationFormValues) => {
       const formData = new FormData();
