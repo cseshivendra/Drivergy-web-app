@@ -26,13 +26,12 @@ import {
   GenderOptions,
 } from '@/types';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { registerUserAction } from '@/lib/server-actions';
-import { useAuth } from '@/context/auth-context';
 
 function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
     const { pending } = useFormStatus();
@@ -48,7 +47,7 @@ interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
 }
 
-function RegistrationFormLogic({ userRole }: RegistrationFormProps) {
+export default function RegistrationForm({ userRole }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,7 +114,7 @@ function RegistrationFormLogic({ userRole }: RegistrationFormProps) {
           if (value instanceof File) {
              formData.append(key, value);
           } else if (value !== undefined && value !== null) {
-              formData.append(key, value);
+              formData.append(key, String(value));
           }
       }
 
@@ -198,7 +197,12 @@ function RegistrationFormLogic({ userRole }: RegistrationFormProps) {
             <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) {
+                        onChange(file);
+                    }
+                }} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </>
         )}
@@ -210,13 +214,3 @@ function RegistrationFormLogic({ userRole }: RegistrationFormProps) {
     </Form>
   );
 }
-
-export default function RegistrationForm(props: RegistrationFormProps) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <RegistrationFormLogic {...props} />
-    </Suspense>
-  )
-}
-
-    
