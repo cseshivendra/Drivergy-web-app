@@ -26,16 +26,13 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         return { success: false, error: "Server is not configured for authentication." };
     }
 
-    await seedPromotionalPosters();
-
     const data = Object.fromEntries(formData.entries());
     const file = formData.get('drivingLicenseFile');
     
     if (file instanceof File && file.size > 0) {
         data.drivingLicenseFile = file;
     } else {
-        // For customers or trainers who might not upload a file initially
-        data.drivingLicenseFile = undefined; 
+        data.drivingLicenseFile = undefined;
     }
 
     try {
@@ -53,10 +50,15 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         if (!usernameQuery.empty) {
             return { success: false, error: 'This username is already taken. Please choose another one.' };
         }
+        
+        const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+        if (!emailQuery.empty) {
+             return { success: false, error: 'A user is already registered with this email address.' };
+        }
 
         const userRecord = await adminAuth.createUser({
             email: email,
-            emailVerified: false,
+            emailVerified: true, // Set to true for development
             password: password,
             displayName: name,
             disabled: false,
@@ -67,16 +69,17 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
             drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
         }
-
-        let newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> = {
+        
+        const userProfileData: Omit<UserProfile, 'id'> = {
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
-            name: name,
-            username: username,
+            name,
+            username,
             contact: email,
-            phone: phone,
-            gender: gender,
+            phone,
+            gender,
             subscriptionPlan: userRole === 'trainer' ? 'Trainer' : 'None',
             approvalStatus: 'Pending',
+            registrationTimestamp: new Date().toISOString(),
         };
 
         if (userRole === 'trainer') {
@@ -85,23 +88,19 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 drivingLicenseNumber
             } = validationResult.data;
             
-            Object.assign(newUserProfile, {
+            Object.assign(userProfileData, {
                 location, specialization, yearsOfExperience, vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
                 drivingLicenseUrl: drivingLicenseUrl,
                 drivingLicenseNumber
             });
         }
-
-        const finalProfile = {
-            ...newUserProfile,
-            registrationTimestamp: new Date().toISOString(),
-        };
-
-        await adminDb.collection('users').doc(userRecord.uid).set(finalProfile);
         
-        const createdUser: UserProfile = { id: userRecord.uid, ...finalProfile };
+        await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
+        
+        const createdUser: UserProfile = { id: userRecord.uid, ...userProfileData };
         
         revalidatePath('/dashboard');
+        revalidatePath('/login');
 
         return { success: true, user: createdUser };
 
@@ -572,17 +571,17 @@ export async function getLoginUser(identifier: string): Promise<UserProfile | nu
     }
     
     try {
-        let userQuerySnapshot;
-        
-        // Try finding by username first
-        const usernameQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
-        userQuerySnapshot = await usernameQuery.get();
+        let userQuery;
 
-        // If not found by username, try by email (contact field)
-        if (userQuerySnapshot.empty) {
-            const emailQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
-            userQuerySnapshot = await emailQuery.get();
+        // Check if identifier is an email
+        if (identifier.includes('@')) {
+            userQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
+        } else {
+            // Assume it's a username
+            userQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
         }
+
+        const userQuerySnapshot = await userQuery.get();
 
         if (userQuerySnapshot.empty) {
             console.log(`No user found for identifier: ${identifier}`);
@@ -592,7 +591,6 @@ export async function getLoginUser(identifier: string): Promise<UserProfile | nu
         const userDoc = userQuerySnapshot.docs[0];
         const userData = userDoc.data();
         
-        // Convert Firestore Timestamp to ISO string if it exists
         if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
             userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
         }
@@ -604,3 +602,5 @@ export async function getLoginUser(identifier: string): Promise<UserProfile | nu
         return null;
     }
 }
+
+    

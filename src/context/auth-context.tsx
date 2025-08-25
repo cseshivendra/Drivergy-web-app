@@ -41,8 +41,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     }
                     setUser({ id: userDoc.id, ...userData } as UserProfile);
                 } else {
-                    // This case can happen with phone auth where user doesn't have a profile yet
-                    // Or you might want to create a profile here for new sign-ups
                     setUser(null);
                 }
             } else {
@@ -78,16 +76,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     subscriptionPlan: 'None',
                     approvalStatus: 'Pending',
                     gender: 'Prefer not to say', // Default value
-                    // Use serverTimestamp() for Firestore to handle date creation server-side
                     registrationTimestamp: serverTimestamp(),
                 };
                 await setDoc(userDocRef, newUserProfile);
                 
-                // For client-side state, create a serializable user object immediately
                 const clientProfile: UserProfile = {
                   ...newUserProfile,
                   id: firebaseUser.uid,
-                  registrationTimestamp: new Date().toISOString(), // Use client date for immediate state update
+                  registrationTimestamp: new Date().toISOString(),
                 };
 
                 setUser(clientProfile);
@@ -114,17 +110,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         try {
-            // Step 1: Use the server action to find the user by username or email.
             const userProfile = await getLoginUser(identifier);
 
             if (!userProfile) {
                 throw new Error("Invalid credentials or user not found.");
             }
 
-            // Step 2: Attempt to sign in with the found email and provided password.
             await signInWithEmailAndPassword(auth, userProfile.contact, password);
             
-            // The onAuthStateChanged listener will handle setting the user state.
+            // onAuthStateChanged will handle setting the user state.
             toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
             router.push('/dashboard');
 
@@ -149,7 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/');
     };
     
-    // This function is useful for manual state updates after server actions
     const logInUser = async (userToLog: UserProfile, redirect = true) => {
         setUser(userToLog);
         if (redirect) {
@@ -180,3 +173,5 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
+
+    
