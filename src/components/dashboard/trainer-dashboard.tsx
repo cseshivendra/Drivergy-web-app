@@ -106,7 +106,7 @@ export default function TrainerDashboard() {
             if (userProfile.approvalStatus === 'Approved') {
                 setLoading(true); // Start loading dashboard data
                 const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
-                return () => unsubDashboard();
+                // return () => unsubDashboard();
             } else {
                 setLoading(false); // Not approved, no need to load other data
             }
