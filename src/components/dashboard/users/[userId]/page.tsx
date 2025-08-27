@@ -85,7 +85,7 @@ export default function UserDetailsPage() {
         `Internal ID,"${user.id}"`,
         `Name,"${user.name}"`,
         `Contact,"${user.contact}"`,
-        `Location,"${user.location}"`,
+        `Location,"${user.location || 'N/A'}"`,
         `Flat/House No.,"${user.flatHouseNumber || 'N/A'}"`,
         `Street,"${user.street || 'N/A'}"`,
         `District,"${user.district || 'N/A'}"`,
@@ -168,7 +168,7 @@ export default function UserDetailsPage() {
     );
   }
   
-  const isCustomer = user.uniqueId.startsWith('CU');
+  const isCustomer = user.userRole !== 'trainer';
 
   return (
     <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
@@ -249,6 +249,9 @@ export default function UserDetailsPage() {
                 </>
               )}
 
+              {!isCustomer && user.yearsOfExperience !== undefined && (
+                 <InfoItem icon={CalendarDays} label="Years of Experience" value={user.yearsOfExperience} />
+              )}
               {!isCustomer && user.specialization && (
                  <InfoItem icon={Car} label="Specialization" value={user.specialization} />
               )}

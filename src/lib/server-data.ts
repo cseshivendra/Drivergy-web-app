@@ -48,6 +48,7 @@ const createDefaultAdmin = async () => {
                     registrationTimestamp: new Date().toISOString(),
                     approvalStatus: 'Approved',
                     isAdmin: true,
+                    userRole: 'admin',
                 };
 
                 await adminDb.collection('users').doc(userRecord.uid).set(adminProfile);
@@ -199,7 +200,12 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 
     try {
         const userDocRef = adminDb.collection('users').doc(userId);
-        const userDoc = await userDocRef.get();
+        const trainerDocRef = adminDb.collection('trainers').doc(userId);
+        
+        let userDoc = await userDocRef.get();
+        if (!userDoc.exists) {
+            userDoc = await trainerDocRef.get();
+        }
 
         if (userDoc.exists) {
             const userData = userDoc.data();

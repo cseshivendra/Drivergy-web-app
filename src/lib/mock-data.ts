@@ -1,5 +1,4 @@
 
-
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest } from '@/types';
@@ -22,12 +21,12 @@ export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster
   return unsubscribe;
 };
 
-export const listenToUser = (userId: string, callback: (user: UserProfile | null) => void) => {
+export const listenToUser = (userId: string, callback: (user: UserProfile | null) => void, collectionName: 'users' | 'trainers' = 'users') => {
   if (!db) {
     console.error("Firestore not initialized");
     return () => {};
   }
-  const userDocRef = doc(db, 'users', userId);
+  const userDocRef = doc(db, collectionName, userId);
   const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
     if (docSnapshot.exists()) {
       const userData = docSnapshot.data();
@@ -50,6 +49,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
     }
 
     const usersRef = collection(db, 'users');
+    const trainersRef = collection(db, 'trainers');
     const coursesRef = collection(db, 'courses');
     const quizSetsRef = collection(db, 'quizSets');
     const faqsRef = collection(db, 'faqs');
@@ -62,8 +62,9 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     const fetchData = async () => {
         try {
-            const [usersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap] = await Promise.all([
+            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap] = await Promise.all([
                 getDocs(usersRef),
+                getDocs(trainersRef),
                 getDocs(coursesRef),
                 getDocs(quizSetsRef),
                 getDocs(faqsRef),
@@ -72,15 +73,20 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 getDocs(postersRef),
                 getDocs(query(rescheduleRef, orderBy('requestTimestamp', 'desc'))),
             ]);
-
-            const allUsers: UserProfile[] = usersSnap.docs.map(d => ({
+            
+            const customers: UserProfile[] = usersSnap.docs.map(d => ({
                 id: d.id,
                 ...d.data(),
                 registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
             } as UserProfile));
-            
-            const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
-            const instructors = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
+
+            const instructors: UserProfile[] = trainersSnap.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
+            } as UserProfile));
+
+            const allUsers = [...customers, ...instructors];
             
             // Derive Lesson Requests
             const lessonRequests: LessonRequest[] = customers
@@ -161,7 +167,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     fetchData(); // Initial fetch
 
-    const collections = [usersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef];
+    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef];
     collections.forEach(ref => {
         const unsubscribe = onSnapshot(ref, fetchData, (error) => console.error("Snapshot error:", error));
         unsubs.push(unsubscribe);
@@ -174,7 +180,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 export async function fetchApprovedInstructors(filters: { location?: string, gender?: string }): Promise<UserProfile[]> {
     if (!db) return [];
     
-    let q = query(collection(db, 'users'), where('uniqueId', '>', 'TR'), where('uniqueId', '<', 'TS'), where('approvalStatus', '==', 'Approved'));
+    let q = query(collection(db, 'trainers'), where('approvalStatus', '==', 'Approved'));
 
     if (filters.location) {
         q = query(q, where('location', '==', filters.location));

@@ -30,17 +30,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-                // User is signed in, fetch their profile from Firestore
+                // User is signed in. Check both 'users' and 'trainers' collections.
                 const userDocRef = doc(db, 'users', firebaseUser.uid);
+                const trainerDocRef = doc(db, 'trainers', firebaseUser.uid);
+                
                 const userDoc = await getDoc(userDocRef);
+                let profileDoc;
+
                 if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    // Firestore timestamps need to be converted to serializable format (ISO string)
+                    profileDoc = userDoc;
+                } else {
+                    profileDoc = await getDoc(trainerDocRef);
+                }
+
+                if (profileDoc && profileDoc.exists()) {
+                    const userData = profileDoc.data();
                     if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
                         userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
                     }
-                    setUser({ id: userDoc.id, ...userData } as UserProfile);
+                    setUser({ id: profileDoc.id, ...userData } as UserProfile);
                 } else {
+                    // This case might happen if a user exists in Auth but not in Firestore.
+                    console.warn(`No Firestore profile found for auth user ${firebaseUser.uid}`);
                     setUser(null);
                 }
             } else {
@@ -65,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userDoc = await getDoc(userDocRef);
 
             if (!userDoc.exists()) {
-                // New user, create a profile in Firestore
+                // New user, create a profile in Firestore 'users' collection
                 const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
                     uniqueId: `CU-${Date.now().toString().slice(-6)}`,
                     name: firebaseUser.displayName || 'Google User',

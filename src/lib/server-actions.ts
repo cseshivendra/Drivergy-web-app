@@ -37,13 +37,16 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
         const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber } = validationResult.data;
 
         try {
-            const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-            if (!emailQuery.empty) {
+            // Check both collections for existing user
+            const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+            const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
+            if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
                 return { success: false, error: 'A user is already registered with this email address.' };
             }
 
-            const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-            if (!usernameQuery.empty) {
+            const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+            const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
+            if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
                 return { success: false, error: 'This username is already taken. Please choose another one.' };
             }
             
@@ -55,7 +58,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 disabled: false,
             });
             
-            const userProfileForLogin: Omit<UserProfile, 'id'> = {
+            const trainerProfile: Omit<UserProfile, 'id'> = {
                 uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
                 name,
                 username,
@@ -63,7 +66,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 phone,
                 gender,
                 userRole: 'trainer',
-                subscriptionPlan: 'Trainer', // Or another appropriate default
+                subscriptionPlan: 'Trainer',
                 approvalStatus: 'Pending',
                 location,
                 specialization,
@@ -73,11 +76,12 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 registrationTimestamp: new Date().toISOString(),
             };
             
-            await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);
+            // Save to 'trainers' collection
+            await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
 
             revalidatePath('/dashboard');
 
-            return { success: true, user: { ...userProfileForLogin, id: userRecord.uid } };
+            return { success: true, user: { ...trainerProfile, id: userRecord.uid } };
 
         } catch (error: any) {
             console.error("Error in trainer registerUserAction:", error);
@@ -97,12 +101,14 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
         const { email, password, name, phone, username, gender } = validationResult.data;
 
         try {
-            const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-            if (!emailQuery.empty) {
+            const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+            const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
+            if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
                  return { success: false, error: 'A user is already registered with this email address.' };
             }
-             const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-            if (!usernameQuery.empty) {
+             const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+             const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
+            if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
                 return { success: false, error: 'This username is already taken. Please choose another one.' };
             }
 
@@ -162,8 +168,17 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
     if (!adminDb) return { success: false, error: "Database not configured." };
     
     try {
+        // Since we don't know the user's role here, we have to try updating in both collections.
+        // A more robust solution might involve passing the role, but this is a safe fallback.
         const userRef = adminDb.collection('users').doc(userId);
-        await userRef.update({ approvalStatus: newStatus });
+        const trainerRef = adminDb.collection('trainers').doc(userId);
+
+        const userDoc = await userRef.get();
+        if (userDoc.exists) {
+             await userRef.update({ approvalStatus: newStatus });
+        } else {
+             await trainerRef.update({ approvalStatus: newStatus });
+        }
 
         revalidatePath('/dashboard');
         return { success: true };
@@ -224,10 +239,19 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     updatePayload.photoURL = photoURL;
   }
 
+  // Attempt to update in both collections, as we don't know the role here.
   const userRef = adminDb.collection('users').doc(userId);
-  await userRef.update(updatePayload);
-  
-  const updatedDoc = await userRef.get();
+  const trainerRef = adminDb.collection('trainers').doc(userId);
+  const userDoc = await userRef.get();
+
+  let updatedDoc;
+  if(userDoc.exists) {
+      await userRef.update(updatePayload);
+      updatedDoc = await userRef.get();
+  } else {
+      await trainerRef.update(updatePayload);
+      updatedDoc = await trainerRef.get();
+  }
   
   revalidatePath('/dashboard/profile');
   const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
@@ -561,7 +585,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     if (!adminDb) return false;
     
     const customerRef = adminDb.collection('users').doc(customerId);
-    const trainerRef = adminDb.collection('users').doc(trainerId);
+    const trainerRef = adminDb.collection('trainers').doc(trainerId);
 
     const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
 
@@ -604,20 +628,30 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
     
     try {
         let userQuery;
+        let trainerQuery;
 
         if (identifier.includes('@')) {
             userQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
+            trainerQuery = adminDb.collection('trainers').where('contact', '==', identifier).limit(1);
         } else {
             userQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
+            trainerQuery = adminDb.collection('trainers').where('username', '==', identifier).limit(1);
         }
 
-        const userQuerySnapshot = await userQuery.get();
-
-        if (userQuerySnapshot.empty) {
+        const [userQuerySnapshot, trainerQuerySnapshot] = await Promise.all([
+            userQuery.get(),
+            trainerQuery.get()
+        ]);
+        
+        let userDoc;
+        if (!userQuerySnapshot.empty) {
+            userDoc = userQuerySnapshot.docs[0];
+        } else if (!trainerQuerySnapshot.empty) {
+            userDoc = trainerQuerySnapshot.docs[0];
+        } else {
             return { success: false, error: "User not found.", code: 'auth/user-not-found' };
         }
         
-        const userDoc = userQuerySnapshot.docs[0];
         const userData = userDoc.data();
         
         if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {

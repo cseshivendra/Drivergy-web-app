@@ -114,7 +114,7 @@ export default function TrainerDashboard() {
              setProfile(null);
              setLoading(false);
         }
-    });
+    }, 'trainers'); // <-- Ensure we listen to the 'trainers' collection
 
     return () => unsubProfile();
   }, [user?.id]);

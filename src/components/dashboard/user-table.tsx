@@ -206,7 +206,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
                   paginatedUsers.map((user) => {
-                    const isTrainer = user.uniqueId.startsWith('TR');
+                    const isTrainer = user.userRole === 'trainer';
                     return (
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
@@ -231,7 +231,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                         <TableCell>{user.registrationTimestamp ? format(parseISO(user.registrationTimestamp), 'PP') : 'N/A'}</TableCell>
                         {!isInterestedList && (
                             <TableCell>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus)}`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus as ApprovalStatusType)}`}>
                                 {user.approvalStatus}
                             </span>
                             </TableCell>
