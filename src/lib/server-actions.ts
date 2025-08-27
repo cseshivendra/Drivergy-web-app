@@ -27,13 +27,18 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     const rawData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
-        // Don't add empty files
-        if (value instanceof File && value.size === 0) {
-            return;
-        }
+        // Don't add empty files or empty strings for optional fields that need to be numbers
+        if (value instanceof File && value.size === 0) return;
+        if (key === 'yearsOfExperience' && value === '') return;
+        
         rawData[key] = value;
     });
 
+    // Explicitly convert yearsOfExperience to number if it exists
+    if (rawData.yearsOfExperience) {
+        rawData.yearsOfExperience = Number(rawData.yearsOfExperience);
+    }
+    
     const userRole = rawData.userRole;
 
     if (userRole === 'trainer') {
@@ -44,7 +49,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             return { success: false, error: firstError };
         }
 
-        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, drivingLicenseFile } = validationResult.data;
+        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, drivingLicenseFile, yearsOfExperience } = validationResult.data;
 
         try {
             const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
@@ -73,41 +78,32 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
             }
 
-            // 3. Save profile to 'trainers' collection
-            const trainerProfile = {
-                uid: userRecord.uid,
+            // 3. Save a user record in 'users' collection
+            const userProfileForLogin: Omit<UserProfile, 'id'> = {
                 uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
                 name,
                 username,
                 contact: email,
                 phone,
                 gender,
+                userRole: 'trainer',
+                subscriptionPlan: 'Trainer', // Or another default plan for trainers
+                approvalStatus: 'Pending',
                 location,
                 specialization,
-                vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
+                vehicleInfo: `${trainerVehicleType} (${fuelType})`,
+                vehicleNumber,
                 drivingLicenseNumber,
                 drivingLicenseUrl,
-                approvalStatus: 'Pending',
+                yearsOfExperience,
                 registrationTimestamp: new Date().toISOString(),
-            };
-            await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
-
-            // 4. Save a minimal user record in 'users' for login purposes
-            const userProfileForLogin: Partial<UserProfile> = {
-                uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
-                name,
-                username,
-                contact: email,
-                userRole: 'trainer',
-                approvalStatus: 'Pending',
-                subscriptionPlan: 'Trainer',
             };
             await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);
 
             revalidatePath('/dashboard');
-            revalidatePath('/login');
 
-            return { success: true };
+            // Return the full user profile so the client can log them in
+            return { success: true, user: { ...userProfileForLogin, id: userRecord.uid } };
 
         } catch (error: any) {
             console.error("Error in trainer registerUserAction:", error);
@@ -161,7 +157,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
             revalidatePath('/dashboard');
             revalidatePath('/login');
-            return { success: true };
+            return { success: true, user: { ...userProfileData, id: userRecord.uid } };
 
         } catch (error: any) {
             console.error("Error in customer registerUserAction:", error);
@@ -193,14 +189,7 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
     if (!adminDb) return { success: false, error: "Database not configured." };
     
     try {
-        // Update both collections if the user is a trainer
         const userRef = adminDb.collection('users').doc(userId);
-        const trainerRef = adminDb.collection('trainers').doc(userId);
-        
-        const userDoc = await userRef.get();
-        if (userDoc.exists && userDoc.data()?.userRole === 'trainer') {
-            await trainerRef.update({ approvalStatus: newStatus });
-        }
         await userRef.update({ approvalStatus: newStatus });
 
         revalidatePath('/dashboard');
@@ -265,12 +254,6 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
   const userRef = adminDb.collection('users').doc(userId);
   await userRef.update(updatePayload);
   
-  const userDoc = await userRef.get();
-  if (userDoc.exists && userDoc.data()?.userRole === 'trainer') {
-      const trainerRef = adminDb.collection('trainers').doc(userId);
-      await trainerRef.update(updatePayload);
-  }
-
   const updatedDoc = await userRef.get();
   
   revalidatePath('/dashboard/profile');

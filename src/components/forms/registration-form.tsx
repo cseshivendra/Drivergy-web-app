@@ -31,6 +31,8 @@ import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { registerUserAction } from '@/lib/server-actions';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
+
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
@@ -40,6 +42,7 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole, onSuccess }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { logInUser } = useAuth();
   const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
   const form = useForm<RegistrationFormValues>({
@@ -60,6 +63,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       vehicleNumber: '', 
       drivingLicenseNumber: '', 
       drivingLicenseFile: undefined,
+      yearsOfExperience: undefined,
     },
     mode: 'onBlur',
   });
@@ -68,17 +72,19 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   useEffect(() => {
-    if (state.success) {
-      toast({
-        title: "Registration Successful!",
-        description: "Your account has been created. Redirecting...",
-      });
-      // For trainers, redirect to dashboard. Customers have a different flow.
-      if (userRole === 'trainer') {
-        router.push('/login');
-      } else {
-        onSuccess();
-      }
+    if (state.success && state.user) {
+        toast({
+            title: "Registration Successful!",
+            description: "Your account has been created. Redirecting...",
+        });
+
+        // For trainers, log them in and redirect to dashboard.
+        // For customers, call the onSuccess prop which handles redirection to the plans page.
+        if (userRole === 'trainer') {
+            logInUser(state.user, true); // This will set the user and redirect
+        } else {
+            onSuccess();
+        }
     } else if (state.error) {
        toast({
           title: "Registration Error",
@@ -86,7 +92,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
           variant: "destructive",
        });
     }
-  }, [state, onSuccess, toast, userRole, router]);
+  }, [state, onSuccess, toast, userRole, router, logInUser]);
 
   return (
     <Form {...form}>
@@ -118,7 +124,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter full name" {...field} /></FormControl><FormMessage /></FormItem> )} />
-           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
+           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
         </div>
         
         <FormField
