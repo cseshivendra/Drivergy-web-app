@@ -1,9 +1,7 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useFormState } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -43,7 +41,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
   const { toast } = useToast();
   const router = useRouter();
   const { logInUser } = useAuth();
-  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
@@ -61,51 +59,63 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       trainerVehicleType: undefined,
       fuelType: undefined, 
       vehicleNumber: '', 
-      drivingLicenseNumber: '', 
-      drivingLicenseFile: undefined,
+      drivingLicenseNumber: '',
     },
     mode: 'onBlur',
   });
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  useEffect(() => {
-    if (state.success && state.user) {
-        toast({
-            title: "Registration Successful!",
-            description: "Your account has been created. Redirecting...",
-        });
+  const { isSubmitting } = form.formState;
 
-        if (userRole === 'trainer') {
-            logInUser(state.user, true);
-        } else {
-            onSuccess();
-        }
-    } else if (state.error) {
-       toast({
-          title: "Registration Error",
-          description: state.error,
-          variant: "destructive",
-       });
-    }
-  }, [state, onSuccess, toast, userRole, router, logInUser]);
+  const handleSubmit = async (data: RegistrationFormValues) => {
+      setError(undefined); // Clear previous errors
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+          if (value) {
+              formData.append(key, value as string | Blob);
+          }
+      });
+
+      const result = await registerUserAction(formData);
+
+      if (result.success && result.user) {
+          toast({
+              title: "Registration Successful!",
+              description: "Your account has been created. Redirecting...",
+          });
+
+          if (userRole === 'trainer') {
+              logInUser(result.user, true);
+          } else {
+              onSuccess();
+          }
+      } else {
+          setError(result.error);
+          toast({
+              title: "Registration Error",
+              description: result.error,
+              variant: "destructive",
+          });
+      }
+  };
 
   return (
     <Form {...form}>
-      <form action={formAction} className="space-y-8">
-        {state.error && (
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        {error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
                 <AlertDescription>
-                    {state.error}
-                    {state.error.includes("already registered") && (
+                    {error}
+                    {error.includes("already registered") && (
                        <> You can <Link href="/login" className="font-bold underline">log in here</Link>.</>
                     )}
                 </AlertDescription>
             </Alert>
         )}
+        
         <input type="hidden" {...form.register('userRole')} value={userRole} />
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
@@ -160,18 +170,14 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="vehicleNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="e.g., MH01AB1234" {...field} /></FormControl><FormMessage /></FormItem> )} />
-            </div>
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
-            <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </>
         )}
 
         <div className="flex justify-end pt-4">
-           <Button type="submit" className="w-full sm:w-auto">
+           <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
           </Button>
         </div>

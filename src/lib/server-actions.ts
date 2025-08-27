@@ -20,15 +20,13 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // =================================================================
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
-export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
 
     const rawData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
-        // Exclude empty files from being added to rawData
-        if (value instanceof File && value.size === 0) return;
         rawData[key] = value;
     });
     
@@ -80,11 +78,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 registrationTimestamp: new Date().toISOString(),
             };
             
-            // Save to the main 'users' collection for login and role management
             await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);
-            
-            // Also save to the dedicated 'trainers' collection for easy tracking
-            await adminDb.collection('trainers').doc(userRecord.uid).set(userProfileForLogin);
 
             revalidatePath('/dashboard');
 
