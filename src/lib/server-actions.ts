@@ -33,7 +33,7 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     if (file instanceof File && file.size > 0) {
         data.drivingLicenseFile = file;
     } else {
-        data.drivingLicenseFile = undefined;
+        delete data.drivingLicenseFile; // Use delete instead of setting to undefined
     }
     
     // Explicitly parse the number field from form data
@@ -43,13 +43,11 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         if (!isNaN(parsedNumber)) {
             data.yearsOfExperience = parsedNumber;
         } else {
-            // Handle case where it's not a valid number, maybe return error
             return { success: false, error: "Invalid value for Years of Experience." };
         }
     } else {
-        data.yearsOfExperience = undefined;
+        delete data.yearsOfExperience; // If it's empty, remove it before validation
     }
-
 
     const validationResult = RegistrationFormSchema.safeParse(data);
 
