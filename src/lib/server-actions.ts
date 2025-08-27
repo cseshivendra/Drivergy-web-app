@@ -40,7 +40,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             return { success: false, error: firstError };
         }
 
-        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, drivingLicenseFile } = validationResult.data;
+        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber } = validationResult.data;
 
         try {
             const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
@@ -61,12 +61,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 disabled: false,
             });
 
-            let drivingLicenseUrl = '';
-            if (drivingLicenseFile) {
-                const buffer = await fileToBuffer(drivingLicenseFile);
-                drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
-            }
-
             const trainerProfile = {
                 name,
                 email,
@@ -76,7 +70,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 vehicleInfo: `${trainerVehicleType} (${fuelType})`,
                 vehicleNumber,
                 drivingLicenseNumber,
-                drivingLicenseUrl,
                 registrationTimestamp: new Date(),
                 approvalStatus: 'Pending',
             };
@@ -97,7 +90,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 vehicleInfo: `${trainerVehicleType} (${fuelType})`,
                 vehicleNumber,
                 drivingLicenseNumber,
-                drivingLicenseUrl,
                 registrationTimestamp: new Date().toISOString(),
             };
             await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);

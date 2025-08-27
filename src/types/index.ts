@@ -130,7 +130,6 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
     vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
     drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-    drivingLicenseFile: requiredFileSchema,
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
@@ -141,7 +140,6 @@ export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
   path: ["confirmPassword"],
 });
 
-export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 
 
