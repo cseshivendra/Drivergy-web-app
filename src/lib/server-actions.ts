@@ -26,15 +26,19 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         return { success: false, error: "Server is not configured for authentication." };
     }
     
+    // Manually construct the data object from FormData
     const rawData: { [key: string]: any } = Object.fromEntries(formData.entries());
 
-    // Sanitize and prepare data BEFORE validation
-    // This is the key fix for the persistent "400 Bad Request" error
+    // --- Data Sanitization and Type Conversion ---
+    // This is the critical step to prevent validation errors.
     const yearsExp = rawData.yearsOfExperience;
     if (typeof yearsExp === 'string' && yearsExp.trim() === '') {
-        // If the field is an empty string, delete it from the object
-        // so Zod's .optional() validation works correctly.
-        delete rawData.yearsOfExperience;
+        // If the field is an empty string, set it to undefined so zod's optional() works
+        rawData.yearsOfExperience = undefined;
+    } else if (typeof yearsExp === 'string') {
+        // If it's a non-empty string, convert it to a number
+        const num = parseInt(yearsExp, 10);
+        rawData.yearsOfExperience = isNaN(num) ? undefined : num;
     }
 
     const file = formData.get('drivingLicenseFile');
@@ -44,6 +48,7 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         delete rawData.drivingLicenseFile;
     }
     
+    // Now, validate the sanitized data
     const validationResult = RegistrationFormSchema.safeParse(rawData);
 
     if (!validationResult.success) {
