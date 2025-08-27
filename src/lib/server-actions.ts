@@ -28,7 +28,7 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
 
     const data = Object.fromEntries(formData.entries());
     
-    // Manually handle file for validation
+    // Manually handle file and number conversion before validation
     const file = formData.get('drivingLicenseFile');
     if (file instanceof File && file.size > 0) {
         data.drivingLicenseFile = file;
@@ -36,9 +36,18 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         data.drivingLicenseFile = undefined;
     }
     
-    // Manually handle number conversion
-    if (typeof data.yearsOfExperience === 'string' && data.yearsOfExperience) {
-        data.yearsOfExperience = Number(data.yearsOfExperience);
+    // Explicitly parse the number field from form data
+    const yearsExperienceStr = formData.get('yearsOfExperience');
+    if (typeof yearsExperienceStr === 'string' && yearsExperienceStr.trim() !== '') {
+        const parsedNumber = parseInt(yearsExperienceStr, 10);
+        if (!isNaN(parsedNumber)) {
+            data.yearsOfExperience = parsedNumber;
+        } else {
+            // Handle case where it's not a valid number, maybe return error
+            return { success: false, error: "Invalid value for Years of Experience." };
+        }
+    } else {
+        data.yearsOfExperience = undefined;
     }
 
 
