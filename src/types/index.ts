@@ -121,13 +121,6 @@ const baseRegistrationSchema = z.object({
 
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
-  location: z.string().optional(),
-  specialization: z.string().optional(),
-  trainerVehicleType: z.string().optional(),
-  fuelType: z.string().optional(),
-  vehicleNumber: z.string().optional(),
-  drivingLicenseNumber: z.string().optional(),
-  drivingLicenseFile: optionalFileSchema,
 });
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({

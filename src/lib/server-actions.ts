@@ -27,29 +27,20 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     const rawData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
-        // Don't add empty files or empty strings for optional fields that need to be numbers
         if (value instanceof File && value.size === 0) return;
-        if (key === 'yearsOfExperience' && value === '') return;
-        
         rawData[key] = value;
     });
-
-    // Explicitly convert yearsOfExperience to number if it exists
-    if (rawData.yearsOfExperience) {
-        rawData.yearsOfExperience = Number(rawData.yearsOfExperience);
-    }
     
     const userRole = rawData.userRole;
 
     if (userRole === 'trainer') {
         const validationResult = TrainerRegistrationFormSchema.safeParse(rawData);
         if (!validationResult.success) {
-            console.error("Trainer validation failed:", validationResult.error.format());
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
         }
 
-        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, drivingLicenseFile, yearsOfExperience } = validationResult.data;
+        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, drivingLicenseFile } = validationResult.data;
 
         try {
             const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
@@ -62,7 +53,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 return { success: false, error: 'This username is already taken. Please choose another one.' };
             }
             
-            // 1. Create user in Firebase Auth
             const userRecord = await adminAuth.createUser({
                 email: email,
                 emailVerified: true,
@@ -71,14 +61,27 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 disabled: false,
             });
 
-            // 2. Upload license file
             let drivingLicenseUrl = '';
             if (drivingLicenseFile) {
                 const buffer = await fileToBuffer(drivingLicenseFile);
                 drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
             }
 
-            // 3. Save a user record in 'users' collection
+            const trainerProfile = {
+                name,
+                email,
+                phone,
+                location,
+                specialization,
+                vehicleInfo: `${trainerVehicleType} (${fuelType})`,
+                vehicleNumber,
+                drivingLicenseNumber,
+                drivingLicenseUrl,
+                registrationTimestamp: new Date(),
+                approvalStatus: 'Pending',
+            };
+            await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
+
             const userProfileForLogin: Omit<UserProfile, 'id'> = {
                 uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
                 name,
@@ -87,7 +90,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 phone,
                 gender,
                 userRole: 'trainer',
-                subscriptionPlan: 'Trainer', // Or another default plan for trainers
+                subscriptionPlan: 'Trainer',
                 approvalStatus: 'Pending',
                 location,
                 specialization,
@@ -95,14 +98,12 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 vehicleNumber,
                 drivingLicenseNumber,
                 drivingLicenseUrl,
-                yearsOfExperience,
                 registrationTimestamp: new Date().toISOString(),
             };
             await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);
 
             revalidatePath('/dashboard');
 
-            // Return the full user profile so the client can log them in
             return { success: true, user: { ...userProfileForLogin, id: userRecord.uid } };
 
         } catch (error: any) {
@@ -114,10 +115,9 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
 
     } else {
-        // Handle Customer Registration (current logic)
+        // Handle Customer Registration
         const validationResult = RegistrationFormSchema.safeParse(rawData);
         if (!validationResult.success) {
-             console.error("Customer validation failed:", validationResult.error.format());
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
         }
@@ -588,7 +588,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     if (!adminDb) return false;
     
     const customerRef = adminDb.collection('users').doc(customerId);
-    const trainerRef = adminDb.collection('trainers').doc(trainerId);
+    const trainerRef = adminDb.collection('users').doc(trainerId);
 
     const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
 
