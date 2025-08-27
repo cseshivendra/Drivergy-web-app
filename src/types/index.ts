@@ -123,12 +123,20 @@ const baseRegistrationSchema = z.object({
 
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
+  yearsOfExperience: z.number().optional(), 
+  location: z.string().optional(),
+  specialization: z.string().optional(),
+  trainerVehicleType: z.string().optional(),
+  fuelType: z.string().optional(),
+  vehicleNumber: z.string().optional(),
+  drivingLicenseNumber: z.string().optional(),
+  drivingLicenseFile: optionalFileSchema,
 });
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
   location: z.enum(Locations, { required_error: "Location is required." }),
-  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative."),
+  yearsOfExperience: z.number({required_error: "Years of experience is required."}).min(0, "Experience cannot be negative."),
   specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
   trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
   fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
@@ -302,8 +310,8 @@ export interface SummaryData {
   activeSubscriptions: number;
   pendingRequests: number;
   pendingRescheduleRequests: number;
-  totalEarnings: number;
   totalCertifiedTrainers: number;
+  totalEarnings: number;
 }
 
 export interface CourseModule {

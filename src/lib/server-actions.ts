@@ -21,32 +21,38 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
 
-export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
 
     const data = Object.fromEntries(formData.entries());
-    const file = formData.get('drivingLicenseFile');
     
+    // Manually handle file for validation
+    const file = formData.get('drivingLicenseFile');
     if (file instanceof File && file.size > 0) {
         data.drivingLicenseFile = file;
     } else {
         data.drivingLicenseFile = undefined;
     }
+    
+    // Manually handle number conversion
+    if (typeof data.yearsOfExperience === 'string' && data.yearsOfExperience) {
+        data.yearsOfExperience = Number(data.yearsOfExperience);
+    }
+
+
+    const validationResult = RegistrationFormSchema.safeParse(data);
+
+    if (!validationResult.success) {
+        console.error("Registration validation failed:", validationResult.error.format());
+        const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
+        return { success: false, error: firstError };
+    }
+    
+    const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
     try {
-        const validationResult = RegistrationFormSchema.safeParse(data);
-
-        if (!validationResult.success) {
-            console.error("Registration validation failed:", validationResult.error.format());
-            const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
-            return { success: false, error: firstError };
-        }
-        
-        const { email, password, name, phone, userRole, username, gender } = validationResult.data;
-
-        // Check for existing user first to provide clear error messages
         const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
         if (!usernameQuery.empty) {
             return { success: false, error: 'This username is already taken. Please choose another one.' };
@@ -61,20 +67,18 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
             const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
             drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
-        } else if (userRole === 'trainer') {
+        } else if (userRole === 'trainer' && !validationResult.data.drivingLicenseFile) {
             return { success: false, error: 'Driving license file is required for trainers.' };
         }
         
-        // 1. Create user in Firebase Auth
         const userRecord = await adminAuth.createUser({
             email: email,
-            emailVerified: true, // Set to true for development
+            emailVerified: true,
             password: password,
             displayName: name,
             disabled: false,
         });
 
-        // 2. Prepare user profile for Firestore
         const userProfileData: Omit<UserProfile, 'id'> = {
             uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
             name,
@@ -103,7 +107,6 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
             });
         }
         
-        // 3. Save profile to Firestore using the UID from Auth as the document ID
         await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
         
         const createdUser: UserProfile = { id: userRecord.uid, ...userProfileData };
