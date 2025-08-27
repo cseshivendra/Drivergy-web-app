@@ -27,6 +27,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     const rawData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
+        // Exclude empty files from being added to rawData
         if (value instanceof File && value.size === 0) return;
         rawData[key] = value;
     });
@@ -60,21 +61,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 displayName: name,
                 disabled: false,
             });
-
-            const trainerProfile = {
-                name,
-                email,
-                phone,
-                location,
-                specialization,
-                vehicleInfo: `${trainerVehicleType} (${fuelType})`,
-                vehicleNumber,
-                drivingLicenseNumber,
-                registrationTimestamp: new Date(),
-                approvalStatus: 'Pending',
-            };
-            await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
-
+            
             const userProfileForLogin: Omit<UserProfile, 'id'> = {
                 uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
                 name,
@@ -83,7 +70,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 phone,
                 gender,
                 userRole: 'trainer',
-                subscriptionPlan: 'Trainer',
+                subscriptionPlan: 'Trainer', // Or another appropriate default
                 approvalStatus: 'Pending',
                 location,
                 specialization,
@@ -92,7 +79,12 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
                 drivingLicenseNumber,
                 registrationTimestamp: new Date().toISOString(),
             };
+            
+            // Save to the main 'users' collection for login and role management
             await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);
+            
+            // Also save to the dedicated 'trainers' collection for easy tracking
+            await adminDb.collection('trainers').doc(userRecord.uid).set(userProfileForLogin);
 
             revalidatePath('/dashboard');
 

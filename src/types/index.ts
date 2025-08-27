@@ -51,6 +51,7 @@ export const UserProfileSchema = z.object({
   myReferralCode: z.string().optional(),
   photoURL: z.string().url().optional(),
   gender: z.string(),
+  userRole: z.enum(['customer', 'trainer', 'admin']).optional(),
   
   // Customer specific
   flatHouseNumber: z.string().optional(),
