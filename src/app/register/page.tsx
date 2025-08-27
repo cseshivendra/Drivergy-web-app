@@ -1,7 +1,7 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import RegistrationForm from '@/components/forms/registration-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,20 @@ const RoleSelectionCard = ({ icon: Icon, title, description, onClick }: { icon: 
 
 export default function UnifiedRegisterPage() {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'trainer' | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // This function will be passed to the form to handle the redirect after a successful registration.
+  const handleSuccess = (userRole: 'customer' | 'trainer') => {
+      const redirectUrl = searchParams.get('redirect');
+      if (redirectUrl) {
+          router.push(redirectUrl);
+      } else if (userRole === 'customer') {
+          router.push('/#subscriptions');
+      } else {
+          router.push('/dashboard');
+      }
+  };
 
   const handleRoleSelection = (role: 'customer' | 'trainer') => {
     setSelectedRole(role);
@@ -74,7 +88,7 @@ export default function UnifiedRegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RegistrationForm userRole={selectedRole} />
+            <RegistrationForm userRole={selectedRole} onSuccess={() => handleSuccess(selectedRole)} />
           </CardContent>
         </Card>
       )}

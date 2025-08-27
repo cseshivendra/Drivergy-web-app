@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,7 +27,6 @@ import {
 } from '@/types';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -47,13 +45,11 @@ function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
+  onSuccess: () => void;
 }
 
-export default function RegistrationForm({ userRole }: RegistrationFormProps) {
+export default function RegistrationForm({ userRole, onSuccess }: RegistrationFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { logInUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -91,16 +87,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         title: "Registration Successful!",
         description: "Your account has been created. Please choose a plan to continue.",
       });
-      
-      const redirectUrl = searchParams.get('redirect');
-      if (redirectUrl) {
-          router.push(redirectUrl);
-      } else if (userRole === 'customer') {
-          router.push('/#subscriptions');
-      } else {
-          router.push('/dashboard');
-      }
-
+      onSuccess();
     } else if (state.error) {
        toast({
         title: "Registration Error",
@@ -108,7 +95,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         variant: "destructive",
       });
     }
-  }, [state, toast, router, searchParams, userRole]);
+  }, [state, toast, onSuccess]);
   
   const onClientSubmit = (data: RegistrationFormValues) => {
       const formData = new FormData();
@@ -119,7 +106,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
           if (value instanceof File) {
              formData.append(key, value);
           } else if (value !== undefined && value !== null) {
-              formData.append(key, value);
+              formData.append(key, String(value));
           }
       }
 
