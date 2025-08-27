@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToTrainerStudents } from '@/lib/mock-data';
+import { listenToTrainerStudents, listenToUser } from '@/lib/mock-data';
 import { updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/server-actions';
 import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
@@ -59,6 +59,7 @@ export default function TrainerDashboard() {
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(user);
 
   const handleDataUpdate = (data: {
     students: UserProfile[];
@@ -92,22 +93,29 @@ export default function TrainerDashboard() {
   }
 
   useEffect(() => {
-    // If the user is not approved, we don't need to fetch all the dashboard data.
-    if (user && user.approvalStatus !== 'Approved') {
-        setLoading(false);
-        return;
-    }
-    
     if (!user?.id) {
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    const unsubscribe = listenToTrainerStudents(user.id, handleDataUpdate);
-    
-    return () => unsubscribe();
-  }, [user]);
+    // Listen to the user's own profile for real-time status updates
+    const unsubProfile = listenToUser(user.id, (userProfile) => {
+      setProfile(userProfile);
+      // If the user becomes approved, then we start listening to other data.
+      if (userProfile?.approvalStatus === 'Approved') {
+          const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
+          // Return the specific unsub function for the dashboard data
+          return () => unsubDashboard();
+      } else {
+          // If not approved, we are not loading any more data.
+          setLoading(false);
+      }
+    });
+
+    return () => unsubProfile();
+  }, [user?.id]);
+
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
     updateAssignmentStatusByTrainer(studentId, status);
@@ -145,7 +153,7 @@ export default function TrainerDashboard() {
     );
   }
 
-  if (user && user.approvalStatus !== 'Approved') {
+  if (profile && profile.approvalStatus !== 'Approved') {
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
             <Card className="shadow-xl text-center p-8">
@@ -153,12 +161,12 @@ export default function TrainerDashboard() {
                     <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
                         <Hourglass className="h-12 w-12 text-yellow-500" />
                     </div>
-                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {user.name}!</CardTitle>
+                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
                     <CardDescription className="text-lg mt-4">
                         <div className="flex items-center justify-center gap-2">
                             <span>Verification Status:</span>
-                            <Badge className={`text-base ${getStatusBadgeClass(user.approvalStatus)}`}>
-                                {user.approvalStatus}
+                            <Badge className={`text-base ${getStatusBadgeClass(profile.approvalStatus)}`}>
+                                {profile.approvalStatus}
                             </Badge>
                         </div>
                     </CardDescription>
