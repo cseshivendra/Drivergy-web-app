@@ -230,6 +230,8 @@ export const listenToTrainerStudents = (
 ) => {
     if (!db) {
         console.error('Firestore not initialized.');
+        // Immediately call back with empty data to prevent infinite loading
+        callback({ students: [], feedback: [], rescheduleRequests: [] });
         return () => {};
     }
 
@@ -266,10 +268,12 @@ export const listenToTrainerStudents = (
                 requestTimestamp: d.data().requestTimestamp?.toDate ? format(d.data().requestTimestamp.toDate(), 'PPp') : 'N/A',
             } as RescheduleRequest));
 
-
+            // This is the crucial part: call the callback even if results are empty.
             callback({ students, feedback, rescheduleRequests });
         } catch (error) {
             console.error("Error fetching trainer student data:", error);
+            // Also call back on error to stop loading
+            callback({ students: [], feedback: [], rescheduleRequests: [] });
         }
     };
     

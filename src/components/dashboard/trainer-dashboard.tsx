@@ -48,7 +48,7 @@ const getStatusBadgeClass = (status: ApprovalStatusType): string => {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
       case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
-      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
+      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300 border-red-200 dark:border-red-700';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
 }
@@ -60,7 +60,7 @@ export default function TrainerDashboard() {
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(user);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const handleDataUpdate = (data: {
     students: UserProfile[];
@@ -98,23 +98,27 @@ export default function TrainerDashboard() {
       setLoading(false);
       return;
     }
-    setProfile(user); // Set initial profile from auth context
-
+    
+    // Use a real-time listener for the user's own profile
     const unsubProfile = listenToUser(user.id, (userProfile) => {
         if(userProfile) {
-            setProfile(userProfile); // Update with real-time data
+            setProfile(userProfile);
+            // Decide what to do based on the approval status from the live data
             if (userProfile.approvalStatus === 'Approved') {
                 setLoading(true); // Start loading dashboard data
                 const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
-                // return () => unsubDashboard();
+                return () => unsubDashboard(); // This cleanup is for the dashboard listener
             } else {
                 setLoading(false); // Not approved, no need to load other data
             }
+        } else {
+             setProfile(null);
+             setLoading(false);
         }
     });
 
-    return () => unsubProfile();
-  }, [user]);
+    return () => unsubProfile(); // This is the primary cleanup for the profile listener
+  }, [user?.id]);
 
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
@@ -138,7 +142,7 @@ export default function TrainerDashboard() {
   const approvedStudents = allStudents.filter(s => s.approvalStatus === 'Approved');
   const pendingAssignments = allStudents.filter(s => s.approvalStatus === 'In Progress');
 
-  if (loading && profile?.approvalStatus === 'Approved') {
+  if (loading) {
     return (
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
@@ -192,7 +196,7 @@ export default function TrainerDashboard() {
             <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
               Welcome, {user?.name}!
             </h1>
-            <Badge className={`text-base ${getStatusBadgeClass(user?.approvalStatus || 'Pending')}`}>
+            <Badge className={`text-base ${getStatusBadgeClass(profile?.approvalStatus || 'Pending')}`}>
                 <ShieldCheck className="mr-2 h-5 w-5"/>
                 Verified
             </Badge>
