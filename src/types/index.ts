@@ -123,8 +123,8 @@ const baseRegistrationSchema = z.object({
 
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
-  yearsOfExperience: z.number().optional(), 
   location: z.string().optional(),
+  yearsOfExperience: z.number().optional(), 
   specialization: z.string().optional(),
   trainerVehicleType: z.string().optional(),
   fuelType: z.string().optional(),
@@ -136,7 +136,7 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('trainer'),
   location: z.enum(Locations, { required_error: "Location is required." }),
-  yearsOfExperience: z.number().min(0, "Experience cannot be negative.").optional(),
+  yearsOfExperience: z.number().min(0, "Experience must be a positive number.").optional(),
   specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
   trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
   fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),

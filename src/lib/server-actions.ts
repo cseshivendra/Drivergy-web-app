@@ -28,28 +28,29 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
 
     const data = Object.fromEntries(formData.entries());
     
-    // Manually handle file and number conversion before validation
+    // Manually prepare data for validation
+    const preparedData: { [key: string]: any } = { ...data };
+    
     const file = formData.get('drivingLicenseFile');
     if (file instanceof File && file.size > 0) {
-        data.drivingLicenseFile = file;
+        preparedData.drivingLicenseFile = file;
     } else {
-        delete data.drivingLicenseFile; // Use delete instead of setting to undefined
+        delete preparedData.drivingLicenseFile;
     }
     
-    // Explicitly parse the number field from form data
     const yearsExperienceStr = formData.get('yearsOfExperience');
     if (typeof yearsExperienceStr === 'string' && yearsExperienceStr.trim() !== '') {
         const parsedNumber = parseInt(yearsExperienceStr, 10);
         if (!isNaN(parsedNumber)) {
-            data.yearsOfExperience = parsedNumber;
+            preparedData.yearsOfExperience = parsedNumber;
         } else {
-            return { success: false, error: "Invalid value for Years of Experience." };
+             return { success: false, error: "Invalid input for 'Years of Experience'." };
         }
     } else {
-        delete data.yearsOfExperience; // If it's empty, remove it before validation
+        delete preparedData.yearsOfExperience;
     }
-
-    const validationResult = RegistrationFormSchema.safeParse(data);
+    
+    const validationResult = RegistrationFormSchema.safeParse(preparedData);
 
     if (!validationResult.success) {
         console.error("Registration validation failed:", validationResult.error.format());
@@ -142,6 +143,8 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         return { success: true };
     } catch (error: any) {
         console.error("Password reset error:", error);
+        // Do not reveal if an email exists or not for security reasons.
+        // Always return success to the client.
         return { success: true };
     }
 }
@@ -583,28 +586,25 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 }
 
 
-export async function getLoginUser(identifier: string): Promise<UserProfile | null> {
+export async function getLoginUser(identifier: string): Promise<{ success: boolean, user?: UserProfile, error?: string, code?: string }> {
     if (!adminDb) {
         console.error("Admin DB not initialized.");
-        return null;
+        return { success: false, error: "Server not configured." };
     }
     
     try {
         let userQuery;
 
-        // Check if identifier is an email
         if (identifier.includes('@')) {
             userQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
         } else {
-            // Assume it's a username
             userQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
         }
 
         const userQuerySnapshot = await userQuery.get();
 
         if (userQuerySnapshot.empty) {
-            console.log(`No user found for identifier: ${identifier}`);
-            return null;
+            return { success: false, error: "User not found.", code: 'auth/user-not-found' };
         }
         
         const userDoc = userQuerySnapshot.docs[0];
@@ -614,10 +614,10 @@ export async function getLoginUser(identifier: string): Promise<UserProfile | nu
             userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
         }
         
-        return { id: userDoc.id, ...userData } as UserProfile;
+        return { success: true, user: { id: userDoc.id, ...userData } as UserProfile };
 
     } catch (error) {
         console.error("Error in getLoginUser server action:", error);
-        return null;
+        return { success: false, error: "An unexpected error occurred." };
     }
 }

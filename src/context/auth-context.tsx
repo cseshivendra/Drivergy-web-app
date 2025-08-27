@@ -110,13 +110,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const signInWithCredentials = async (identifier: string, password: string): Promise<void> => {
         setLoading(true);
         try {
-            const userProfile = await getLoginUser(identifier);
+            const result = await getLoginUser(identifier);
 
-            if (!userProfile) {
-                throw new Error("Invalid credentials or user not found.");
+            if (!result.success || !result.user) {
+                throw new Error(result.error || "Invalid credentials or user not found.");
             }
 
-            // Use the email from the fetched profile to sign in
+            const userProfile = result.user;
             await signInWithEmailAndPassword(auth, userProfile.contact, password);
             
             // onAuthStateChanged will handle setting the user state.
@@ -125,9 +125,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         } catch (error: any) {
             console.error("Login error:", error);
+            let description = 'An unexpected error occurred. Please try again.';
+            if (error.code === 'auth/user-not-found' || error.message.includes("User not found")) {
+                description = 'No account found with that email or username.';
+            } else if (error.code === 'auth/wrong-password' || error.message.includes("Invalid password")) {
+                description = 'The password you entered is incorrect.';
+            } else if (error.message.includes("Invalid credentials")) {
+                description = 'Invalid credentials or user not found.';
+            }
+            
             toast({ 
                 title: 'Login Failed', 
-                description: 'Invalid credentials or user not found.', 
+                description, 
                 variant: 'destructive' 
             });
         } finally {

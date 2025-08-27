@@ -24,11 +24,10 @@ import {
   FuelTypeOptions,
   GenderOptions,
 } from '@/types';
-import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { registerUserAction } from '@/lib/server-actions';
 import { useRouter } from 'next/navigation';
 
@@ -64,7 +63,6 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       drivingLicenseFile: undefined,
   };
 
-
   const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(RegistrationFormSchema),
     defaultValues: defaultValuesForRole,
@@ -77,14 +75,14 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       
       const formData = new FormData();
       
-      for (const key in data) {
-          const value = (data as any)[key];
+      // Append all form data to FormData object
+      Object.entries(data).forEach(([key, value]) => {
           if (value instanceof File) {
              formData.append(key, value);
-          } else if (value !== undefined && value !== null) {
+          } else if (value !== undefined && value !== null && value !== '') {
               formData.append(key, String(value));
           }
-      }
+      });
 
       try {
         const result = await registerUserAction(formData);
@@ -94,7 +92,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
                 title: "Registration Successful!",
                 description: "Your account has been created. Redirecting...",
              });
-             onSuccess();
+             onSuccess(); // This will trigger the redirect passed from the parent page
         } else {
             setError(result.error || "An unknown error occurred.");
             toast({
@@ -178,7 +176,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                  <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience</FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem> )} />
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
