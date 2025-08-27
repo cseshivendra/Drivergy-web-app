@@ -28,15 +28,9 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     
     // Manually construct the data object from FormData
     const rawData: { [key: string]: any } = Object.fromEntries(formData.entries());
-
-    // --- Definitive Fix for Data Type Mismatch ---
+    
     // Sanitize and correctly type the data BEFORE validation.
-    const yearsExp = rawData.yearsOfExperience;
-    if (typeof yearsExp === 'string' && yearsExp.trim() !== '') {
-        const num = parseInt(yearsExp, 10);
-        rawData.yearsOfExperience = isNaN(num) ? undefined : num;
-    } else {
-        // If it's an empty string or not a string, ensure it's undefined for the optional check.
+    if (rawData.userRole === 'trainer') {
         delete rawData.yearsOfExperience;
     }
 
@@ -99,14 +93,13 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
 
         if (userRole === 'trainer') {
             const {
-                location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
+                location, specialization, trainerVehicleType, fuelType, vehicleNumber,
                 drivingLicenseNumber
             } = validationResult.data;
             
             Object.assign(userProfileData, {
                 location, 
                 specialization, 
-                yearsOfExperience, 
                 vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
                 drivingLicenseUrl: drivingLicenseUrl,
                 drivingLicenseNumber
@@ -572,7 +565,6 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         assignedTrainerId: trainerId,
         assignedTrainerName: trainerData.name,
         assignedTrainerPhone: trainerData.phone,
-        assignedTrainerExperience: trainerData.yearsOfExperience,
         assignedTrainerVehicleDetails: trainerData.vehicleInfo,
         totalLessons: totalLessons,
         completedLessons: 0,

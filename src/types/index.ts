@@ -69,8 +69,6 @@ export const UserProfileSchema = z.object({
   assignedTrainerId: z.string().optional(),
   assignedTrainerName: z.string().optional(),
   assignedTrainerPhone: z.string().optional(),
-  assignedTrainerExperience: z.number().optional(),
-  assignedTrainerVehicleDetails: z.string().optional(),
   upcomingLesson: z.string().optional(),
   subscriptionStartDate: z.string().optional(),
   totalLessons: z.number().optional(),
@@ -82,7 +80,6 @@ export const UserProfileSchema = z.object({
 
   // Trainer specific
   specialization: z.string().optional(),
-  yearsOfExperience: z.number().optional(),
   drivingLicenseUrl: z.string().optional(),
   drivingLicenseNumber: z.string().optional(),
   expertise: z.string().optional()
@@ -124,7 +121,6 @@ const baseRegistrationSchema = z.object({
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
   location: z.string().optional(),
-  yearsOfExperience: z.number().optional(), 
   specialization: z.string().optional(),
   trainerVehicleType: z.string().optional(),
   fuelType: z.string().optional(),
@@ -136,7 +132,6 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     userRole: z.literal('trainer'),
     location: z.enum(Locations, { required_error: "Location is required." }),
-    yearsOfExperience: z.number().optional(),
     specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
     trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
     fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),

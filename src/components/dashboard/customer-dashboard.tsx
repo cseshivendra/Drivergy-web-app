@@ -499,10 +499,6 @@ export default function CustomerDashboard() {
                 <span className="font-bold text-foreground">{profile.assignedTrainerPhone || 'N/A'}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4"/> Experience:</span>
-                <span className="font-bold text-foreground">{profile.assignedTrainerExperience ? `${profile.assignedTrainerExperience} years` : 'N/A'}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground flex items-center"><Car className="mr-2 h-4 w-4"/> Vehicle:</span>
                 <span className="font-bold text-foreground">{profile.assignedTrainerVehicleDetails || 'N/A'}</span>
               </div>
