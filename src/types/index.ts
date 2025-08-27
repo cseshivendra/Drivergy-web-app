@@ -122,6 +122,7 @@ const baseRegistrationSchema = z.object({
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
 });
+export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     userRole: z.literal('trainer'),
@@ -132,6 +133,8 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
     drivingLicenseNumber: z.string().min(1, 'License number is required.'),
 });
+export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
+
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
   CustomerRegistrationFormSchema,
