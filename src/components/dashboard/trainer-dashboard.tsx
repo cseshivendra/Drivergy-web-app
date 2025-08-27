@@ -60,7 +60,7 @@ export default function TrainerDashboard() {
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(user);
 
   const handleDataUpdate = (data: {
     students: UserProfile[];
@@ -98,24 +98,23 @@ export default function TrainerDashboard() {
       setLoading(false);
       return;
     }
+    setProfile(user); // Set initial profile from auth context
 
-    setLoading(true);
-    // Listen to the user's own profile for real-time status updates
     const unsubProfile = listenToUser(user.id, (userProfile) => {
-      setProfile(userProfile);
-      // If the user becomes approved, then we start listening to other data.
-      if (userProfile?.approvalStatus === 'Approved') {
-          const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
-          // Return the specific unsub function for the dashboard data
-          return () => unsubDashboard();
-      } else {
-          // If not approved, we are not loading any more data.
-          setLoading(false);
-      }
+        if(userProfile) {
+            setProfile(userProfile); // Update with real-time data
+            if (userProfile.approvalStatus === 'Approved') {
+                setLoading(true); // Start loading dashboard data
+                const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
+                return () => unsubDashboard();
+            } else {
+                setLoading(false); // Not approved, no need to load other data
+            }
+        }
     });
 
     return () => unsubProfile();
-  }, [user?.id]);
+  }, [user]);
 
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
@@ -139,10 +138,12 @@ export default function TrainerDashboard() {
   const approvedStudents = allStudents.filter(s => s.approvalStatus === 'Approved');
   const pendingAssignments = allStudents.filter(s => s.approvalStatus === 'In Progress');
 
-  if (loading) {
+  if (loading && profile?.approvalStatus === 'Approved') {
     return (
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-        <Skeleton className="h-10 w-1/3 mb-4" />
+        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+          Welcome, {user?.name}!
+        </h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Skeleton className="h-[126px] w-full rounded-lg" />
             <Skeleton className="h-[126px] w-full rounded-lg" />
