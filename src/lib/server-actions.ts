@@ -29,16 +29,15 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     // Manually construct the data object from FormData
     const rawData: { [key: string]: any } = Object.fromEntries(formData.entries());
 
-    // --- Data Sanitization and Type Conversion ---
-    // This is the critical step to prevent validation errors.
+    // --- Definitive Fix for Data Type Mismatch ---
+    // Sanitize and correctly type the data BEFORE validation.
     const yearsExp = rawData.yearsOfExperience;
-    if (typeof yearsExp === 'string' && yearsExp.trim() === '') {
-        // If the field is an empty string, set it to undefined so zod's optional() works
-        rawData.yearsOfExperience = undefined;
-    } else if (typeof yearsExp === 'string') {
-        // If it's a non-empty string, convert it to a number
+    if (typeof yearsExp === 'string' && yearsExp.trim() !== '') {
         const num = parseInt(yearsExp, 10);
         rawData.yearsOfExperience = isNaN(num) ? undefined : num;
+    } else {
+        // If it's an empty string or not a string, ensure it's undefined for the optional check.
+        delete rawData.yearsOfExperience;
     }
 
     const file = formData.get('drivingLicenseFile');
