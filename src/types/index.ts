@@ -83,7 +83,6 @@ export const UserProfileSchema = z.object({
   drivingLicenseUrl: z.string().optional(),
   drivingLicenseNumber: z.string().optional(),
   expertise: z.string().optional(),
-  yearsOfExperience: z.number().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
@@ -143,7 +142,6 @@ export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
 });
 
 export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
-export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 
 

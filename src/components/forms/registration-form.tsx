@@ -63,7 +63,6 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       vehicleNumber: '', 
       drivingLicenseNumber: '', 
       drivingLicenseFile: undefined,
-      yearsOfExperience: undefined,
     },
     mode: 'onBlur',
   });
@@ -78,10 +77,8 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
             description: "Your account has been created. Redirecting...",
         });
 
-        // For trainers, log them in and redirect to dashboard.
-        // For customers, call the onSuccess prop which handles redirection to the plans page.
         if (userRole === 'trainer') {
-            logInUser(state.user, true); // This will set the user and redirect
+            logInUser(state.user, true);
         } else {
             onSuccess();
         }
