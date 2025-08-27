@@ -145,7 +145,7 @@ export default function TrainerDashboard() {
 
   if (trainerProfile && trainerProfile.approvalStatus !== 'Approved') {
     return (
-        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
             <Card className="shadow-xl text-center p-8">
                 <CardHeader>
                     <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
