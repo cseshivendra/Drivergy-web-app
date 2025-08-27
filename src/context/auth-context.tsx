@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         router.push('/');
     };
     
-    const logInUser = async (userToLog: UserProfile, redirect = true) => {
+    const logInUser = (userToLog: UserProfile, redirect = true) => {
         setUser(userToLog);
         if (redirect) {
             router.push('/dashboard');

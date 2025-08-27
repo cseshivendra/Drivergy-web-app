@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormValues, TrainerRegistrationFormSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues } from '@/types';
 import { format, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
@@ -20,20 +20,15 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // =================================================================
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
-export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function registerUserAction(data: RegistrationFormValues): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
-
-    const rawData: { [key: string]: any } = {};
-    formData.forEach((value, key) => {
-        rawData[key] = value;
-    });
     
-    const userRole = rawData.userRole;
+    const userRole = data.userRole;
 
     if (userRole === 'trainer') {
-        const validationResult = TrainerRegistrationFormSchema.safeParse(rawData);
+        const validationResult = TrainerRegistrationFormSchema.safeParse(data);
         if (!validationResult.success) {
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
@@ -94,7 +89,7 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
 
     } else {
         // Handle Customer Registration
-        const validationResult = RegistrationFormSchema.safeParse(rawData);
+        const validationResult = RegistrationFormSchema.safeParse(data);
         if (!validationResult.success) {
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };

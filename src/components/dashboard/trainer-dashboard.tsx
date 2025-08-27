@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -48,7 +47,7 @@ const getStatusBadgeClass = (status: ApprovalStatusType): string => {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
       case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
-      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300 border-red-200 dark:border-red-700';
+      case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
 }
@@ -95,21 +94,21 @@ export default function TrainerDashboard() {
 
   useEffect(() => {
     if (!user?.id) {
-      setLoading(false);
-      return;
+        setLoading(false);
+        return;
     }
     
-    // Use a real-time listener for the user's own profile
+    setProfile(null);
+    setLoading(true);
+
     const unsubProfile = listenToUser(user.id, (userProfile) => {
         if(userProfile) {
             setProfile(userProfile);
-            // Decide what to do based on the approval status from the live data
             if (userProfile.approvalStatus === 'Approved') {
-                setLoading(true); // Start loading dashboard data
                 const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
-                return () => unsubDashboard(); // This cleanup is for the dashboard listener
+                return () => unsubDashboard();
             } else {
-                setLoading(false); // Not approved, no need to load other data
+                setLoading(false);
             }
         } else {
              setProfile(null);
@@ -117,7 +116,7 @@ export default function TrainerDashboard() {
         }
     });
 
-    return () => unsubProfile(); // This is the primary cleanup for the profile listener
+    return () => unsubProfile();
   }, [user?.id]);
 
 
