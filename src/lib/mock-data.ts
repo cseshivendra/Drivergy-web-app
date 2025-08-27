@@ -226,34 +226,24 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
 
 export const listenToTrainerStudents = (
     trainerId: string,
-    callback: (data: { students: UserProfile[], feedback: Feedback[], rescheduleRequests: RescheduleRequest[], profile: UserProfile | null }) => void
+    callback: (data: { students: UserProfile[], feedback: Feedback[], rescheduleRequests: RescheduleRequest[] }) => void
 ) => {
     if (!db) {
         console.error('Firestore not initialized.');
         return () => {};
     }
 
-    const trainerDocRef = doc(db, 'users', trainerId);
     const studentsQuery = query(collection(db, 'users'), where('assignedTrainerId', '==', trainerId));
     const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
     const rescheduleQuery = query(collection(db, 'rescheduleRequests'), where('trainerId', '==', trainerId));
 
     const processData = async () => {
         try {
-            const [trainerSnap, studentsSnap, feedbackSnap, rescheduleSnap] = await Promise.all([
-                getDoc(trainerDocRef),
+            const [studentsSnap, feedbackSnap, rescheduleSnap] = await Promise.all([
                 getDocs(studentsQuery),
                 getDocs(feedbackQuery),
                 getDocs(rescheduleQuery)
             ]);
-            
-            const profileData = trainerSnap.exists() ? trainerSnap.data() : null;
-            const profile = profileData ? { 
-                id: trainerSnap.id, 
-                ...profileData,
-                registrationTimestamp: profileData.registrationTimestamp?.toDate ? profileData.registrationTimestamp.toDate().toISOString() : profileData.registrationTimestamp
-            } as UserProfile : null;
-
             
             const students = studentsSnap.docs.map(d => ({
                 id: d.id,
@@ -277,21 +267,19 @@ export const listenToTrainerStudents = (
             } as RescheduleRequest));
 
 
-            callback({ students, feedback, rescheduleRequests, profile });
+            callback({ students, feedback, rescheduleRequests });
         } catch (error) {
             console.error("Error fetching trainer student data:", error);
         }
     };
     
     // Set up listeners for all collections
-    const unsubTrainer = onSnapshot(trainerDocRef, processData);
     const unsubStudents = onSnapshot(studentsQuery, processData);
     const unsubFeedback = onSnapshot(feedbackQuery, processData);
     const unsubReschedule = onSnapshot(rescheduleQuery, processData);
 
     // Return a function that unsubscribes from all listeners
     return () => {
-        unsubTrainer();
         unsubStudents();
         unsubFeedback();
         unsubReschedule();

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -59,18 +58,15 @@ export default function TrainerDashboard() {
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
-  const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const handleDataUpdate = (data: {
     students: UserProfile[];
     feedback: Feedback[];
     rescheduleRequests: RescheduleRequest[];
-    profile: UserProfile | null;
   }) => {
     setAllStudents(data.students);
     setRescheduleRequests(data.rescheduleRequests);
-    setTrainerProfile(data.profile);
 
     const approvedStudents = data.students.filter(s => s.approvalStatus === 'Approved');
     let avgRating = 0;
@@ -96,6 +92,12 @@ export default function TrainerDashboard() {
   }
 
   useEffect(() => {
+    // If the user is not approved, we don't need to fetch all the dashboard data.
+    if (user && user.approvalStatus !== 'Approved') {
+        setLoading(false);
+        return;
+    }
+    
     if (!user?.id) {
       setLoading(false);
       return;
@@ -143,7 +145,7 @@ export default function TrainerDashboard() {
     );
   }
 
-  if (trainerProfile && trainerProfile.approvalStatus !== 'Approved') {
+  if (user && user.approvalStatus !== 'Approved') {
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
             <Card className="shadow-xl text-center p-8">
@@ -151,12 +153,12 @@ export default function TrainerDashboard() {
                     <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
                         <Hourglass className="h-12 w-12 text-yellow-500" />
                     </div>
-                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {trainerProfile.name}!</CardTitle>
+                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {user.name}!</CardTitle>
                     <CardDescription className="text-lg mt-4">
                         <div className="flex items-center justify-center gap-2">
                             <span>Verification Status:</span>
-                            <Badge className={`text-base ${getStatusBadgeClass(trainerProfile.approvalStatus)}`}>
-                                {trainerProfile.approvalStatus}
+                            <Badge className={`text-base ${getStatusBadgeClass(user.approvalStatus)}`}>
+                                {user.approvalStatus}
                             </Badge>
                         </div>
                     </CardDescription>
@@ -178,9 +180,9 @@ export default function TrainerDashboard() {
       <header className="mb-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-              Welcome, {trainerProfile?.name}!
+              Welcome, {user?.name}!
             </h1>
-            <Badge className={`text-base ${getStatusBadgeClass(trainerProfile?.approvalStatus || 'Pending')}`}>
+            <Badge className={`text-base ${getStatusBadgeClass(user?.approvalStatus || 'Pending')}`}>
                 <ShieldCheck className="mr-2 h-5 w-5"/>
                 Verified
             </Badge>
