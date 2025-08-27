@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -59,7 +60,7 @@ export default function TrainerDashboard() {
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(user);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const handleDataUpdate = (data: {
     students: UserProfile[];
