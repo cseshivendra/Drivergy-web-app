@@ -21,7 +21,7 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
 
-export async function registerUserAction(formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
@@ -30,10 +30,7 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     const rawData: { [key: string]: any } = Object.fromEntries(formData.entries());
     
     // Sanitize and correctly type the data BEFORE validation.
-    if (rawData.userRole === 'trainer') {
-        delete rawData.yearsOfExperience;
-    }
-
+    // This is the key fix for the persistent validation issues.
     const file = formData.get('drivingLicenseFile');
     if (file instanceof File && file.size > 0) {
         rawData.drivingLicenseFile = file;
@@ -64,11 +61,10 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         }
 
         let drivingLicenseUrl = '';
-        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
-            const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
+        if (userRole === 'trainer') {
+            const { drivingLicenseFile } = validationResult.data;
+            const buffer = await fileToBuffer(drivingLicenseFile);
             drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
-        } else if (userRole === 'trainer' && !validationResult.data.drivingLicenseFile) {
-            return { success: false, error: 'Driving license file is required for trainers.' };
         }
         
         const userRecord = await adminAuth.createUser({
@@ -102,7 +98,7 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
                 specialization, 
                 vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
                 drivingLicenseUrl: drivingLicenseUrl,
-                drivingLicenseNumber
+                drivingLicenseNumber,
             });
         }
         

@@ -82,7 +82,8 @@ export const UserProfileSchema = z.object({
   specialization: z.string().optional(),
   drivingLicenseUrl: z.string().optional(),
   drivingLicenseNumber: z.string().optional(),
-  expertise: z.string().optional()
+  expertise: z.string().optional(),
+  yearsOfExperience: z.number().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];

@@ -3,6 +3,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { useFormState } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -25,7 +26,7 @@ import {
   GenderOptions,
 } from '@/types';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { registerUserAction } from '@/lib/server-actions';
@@ -39,12 +40,11 @@ interface RegistrationFormProps {
 export default function RegistrationForm({ userRole, onSuccess }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
 
-  const defaultValuesForRole: RegistrationFormValues = {
+  const form = useForm<RegistrationFormValues>({
+    resolver: zodResolver(RegistrationFormSchema),
+    defaultValues: {
       userRole: userRole,
       name: '', 
       email: '', 
@@ -60,70 +60,39 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       vehicleNumber: '', 
       drivingLicenseNumber: '', 
       drivingLicenseFile: undefined,
-  };
-
-  const form = useForm<RegistrationFormValues>({
-    resolver: zodResolver(RegistrationFormSchema),
-    defaultValues: defaultValuesForRole,
+    },
     mode: 'onBlur',
   });
   
-  const handleClientSubmit = async (data: RegistrationFormValues) => {
-      setIsSubmitting(true);
-      setError(null);
-      
-      const formData = new FormData();
-      
-      // Append all form data to FormData object
-      Object.entries(data).forEach(([key, value]) => {
-          if (value instanceof File) {
-             formData.append(key, value);
-          } else if (value !== undefined && value !== null && value !== '') {
-              formData.append(key, String(value));
-          }
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  useEffect(() => {
+    if (state.success) {
+      toast({
+        title: "Registration Successful!",
+        description: "Your account has been created. Redirecting...",
       });
-
-      try {
-        const result = await registerUserAction(formData);
-
-        if (result.success) {
-             toast({
-                title: "Registration Successful!",
-                description: "Your account has been created. Redirecting...",
-             });
-             onSuccess(); // This will trigger the redirect passed from the parent page
-        } else {
-            setError(result.error || "An unknown error occurred.");
-            toast({
-                title: "Registration Error",
-                description: result.error || "An unknown error occurred.",
-                variant: "destructive",
-            });
-        }
-      } catch (e) {
-          const errorMessage = e instanceof Error ? e.message : "An unexpected server error occurred.";
-          setError(errorMessage);
-          toast({
-                title: "Registration Failed",
-                description: errorMessage,
-                variant: "destructive",
-            });
-      } finally {
-          setIsSubmitting(false);
-      }
-  };
-
+      onSuccess();
+    } else if (state.error) {
+       toast({
+          title: "Registration Error",
+          description: state.error,
+          variant: "destructive",
+       });
+    }
+  }, [state, onSuccess, toast]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleClientSubmit)} className="space-y-8">
-        {error && (
+      <form action={formAction} className="space-y-8">
+        {state.error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
                 <AlertDescription>
-                    {error}
-                    {error.includes("already registered") && (
+                    {state.error}
+                    {state.error.includes("already registered") && (
                        <> You can <Link href="/login" className="font-bold underline">log in here</Link>.</>
                     )}
                 </AlertDescription>
@@ -194,9 +163,8 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
         )}
 
         <div className="flex justify-end pt-4">
-           <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-              userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+           <Button type="submit" className="w-full sm:w-auto">
+              {userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
           </Button>
         </div>
       </form>
