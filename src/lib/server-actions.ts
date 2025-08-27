@@ -25,32 +25,32 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
+    
+    // Manually construct the data object from FormData
+    const rawData = Object.fromEntries(formData.entries());
 
-    const data = Object.fromEntries(formData.entries());
-    
-    // Manually prepare data for validation
-    const preparedData: { [key: string]: any } = { ...data };
-    
+    // Prepare data for validation, especially for numeric and file types
+    const dataToValidate: { [key: string]: any } = { ...rawData };
+
+    // Explicitly handle yearsOfExperience: convert empty string to undefined, otherwise coerce to number
+    const yearsExperience = formData.get('yearsOfExperience');
+    if (typeof yearsExperience === 'string' && yearsExperience.trim() === '') {
+        dataToValidate.yearsOfExperience = undefined;
+    } else if (yearsExperience) {
+        const num = Number(yearsExperience);
+        dataToValidate.yearsOfExperience = isNaN(num) ? undefined : num;
+    }
+
+    // Handle the file upload
     const file = formData.get('drivingLicenseFile');
     if (file instanceof File && file.size > 0) {
-        preparedData.drivingLicenseFile = file;
+        dataToValidate.drivingLicenseFile = file;
     } else {
-        delete preparedData.drivingLicenseFile;
+        // If no file, remove it so Zod doesn't try to validate a non-existent file
+        delete dataToValidate.drivingLicenseFile;
     }
     
-    const yearsExperienceStr = formData.get('yearsOfExperience');
-    if (typeof yearsExperienceStr === 'string' && yearsExperienceStr.trim() !== '') {
-        const parsedNumber = parseInt(yearsExperienceStr, 10);
-        if (!isNaN(parsedNumber)) {
-            preparedData.yearsOfExperience = parsedNumber;
-        } else {
-             return { success: false, error: "Invalid input for 'Years of Experience'." };
-        }
-    } else {
-        delete preparedData.yearsOfExperience;
-    }
-    
-    const validationResult = RegistrationFormSchema.safeParse(preparedData);
+    const validationResult = RegistrationFormSchema.safeParse(dataToValidate);
 
     if (!validationResult.success) {
         console.error("Registration validation failed:", validationResult.error.format());

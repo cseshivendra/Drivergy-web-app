@@ -134,15 +134,15 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
 });
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
-  userRole: z.literal('trainer'),
-  location: z.enum(Locations, { required_error: "Location is required." }),
-  yearsOfExperience: z.number().min(0, "Experience must be a positive number.").optional(),
-  specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
-  trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
-  fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
-  vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
-  drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-  drivingLicenseFile: requiredFileSchema,
+    userRole: z.literal('trainer'),
+    location: z.enum(Locations, { required_error: "Location is required." }),
+    yearsOfExperience: z.number().optional(),
+    specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
+    trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
+    fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
+    vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
+    drivingLicenseNumber: z.string().min(1, 'License number is required.'),
+    drivingLicenseFile: requiredFileSchema,
 });
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
