@@ -26,31 +26,25 @@ export async function registerUserAction(formData: FormData): Promise<{ success:
         return { success: false, error: "Server is not configured for authentication." };
     }
     
-    // Manually construct the data object from FormData
-    const rawData = Object.fromEntries(formData.entries());
+    const rawData: { [key: string]: any } = Object.fromEntries(formData.entries());
 
-    // Prepare data for validation, especially for numeric and file types
-    const dataToValidate: { [key: string]: any } = { ...rawData };
-
-    // Explicitly handle yearsOfExperience: convert empty string to undefined, otherwise coerce to number
-    const yearsExperience = formData.get('yearsOfExperience');
-    if (typeof yearsExperience === 'string' && yearsExperience.trim() === '') {
-        dataToValidate.yearsOfExperience = undefined;
-    } else if (yearsExperience) {
-        const num = Number(yearsExperience);
-        dataToValidate.yearsOfExperience = isNaN(num) ? undefined : num;
+    // Sanitize and prepare data BEFORE validation
+    // This is the key fix for the persistent "400 Bad Request" error
+    const yearsExp = rawData.yearsOfExperience;
+    if (typeof yearsExp === 'string' && yearsExp.trim() === '') {
+        // If the field is an empty string, delete it from the object
+        // so Zod's .optional() validation works correctly.
+        delete rawData.yearsOfExperience;
     }
 
-    // Handle the file upload
     const file = formData.get('drivingLicenseFile');
     if (file instanceof File && file.size > 0) {
-        dataToValidate.drivingLicenseFile = file;
+        rawData.drivingLicenseFile = file;
     } else {
-        // If no file, remove it so Zod doesn't try to validate a non-existent file
-        delete dataToValidate.drivingLicenseFile;
+        delete rawData.drivingLicenseFile;
     }
     
-    const validationResult = RegistrationFormSchema.safeParse(dataToValidate);
+    const validationResult = RegistrationFormSchema.safeParse(rawData);
 
     if (!validationResult.success) {
         console.error("Registration validation failed:", validationResult.error.format());

@@ -136,7 +136,7 @@ export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     userRole: z.literal('trainer'),
     location: z.enum(Locations, { required_error: "Location is required." }),
-    yearsOfExperience: z.number().optional(),
+    yearsOfExperience: z.coerce.number().optional(),
     specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
     trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
     fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
