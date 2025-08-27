@@ -25,20 +25,16 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
+
+    const rawData: { [key: string]: any } = {};
+    formData.forEach((value, key) => {
+        rawData[key] = value;
+    });
     
-    // Manually construct the data object from FormData
-    const rawData: { [key: string]: any } = Object.fromEntries(formData.entries());
-    
-    // Sanitize and correctly type the data BEFORE validation.
-    // This is the key fix for the persistent validation issues.
-    const file = formData.get('drivingLicenseFile');
-    if (file instanceof File && file.size > 0) {
-        rawData.drivingLicenseFile = file;
-    } else {
+    if (rawData.drivingLicenseFile instanceof File && rawData.drivingLicenseFile.size === 0) {
         delete rawData.drivingLicenseFile;
     }
-    
-    // Now, validate the sanitized data
+
     const validationResult = RegistrationFormSchema.safeParse(rawData);
 
     if (!validationResult.success) {
@@ -61,7 +57,7 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
         }
 
         let drivingLicenseUrl = '';
-        if (userRole === 'trainer') {
+        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
             const { drivingLicenseFile } = validationResult.data;
             const buffer = await fileToBuffer(drivingLicenseFile);
             drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
