@@ -73,7 +73,12 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
         title: "Registration Successful!",
         description: "Your account has been created. Redirecting...",
       });
-      onSuccess();
+      // For trainers, redirect to dashboard. Customers have a different flow.
+      if (userRole === 'trainer') {
+        router.push('/login');
+      } else {
+        onSuccess();
+      }
     } else if (state.error) {
        toast({
           title: "Registration Error",
@@ -81,7 +86,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
           variant: "destructive",
        });
     }
-  }, [state, onSuccess, toast]);
+  }, [state, onSuccess, toast, userRole, router]);
 
   return (
     <Form {...form}>

@@ -2,8 +2,8 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, TrainerRegistrationFormValues } from '@/types';
 import { format, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
@@ -20,7 +20,6 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // =================================================================
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
-
 export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
@@ -28,91 +27,149 @@ export async function registerUserAction(prevState: any, formData: FormData): Pr
 
     const rawData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
+        // Don't add empty files
+        if (value instanceof File && value.size === 0) {
+            return;
+        }
         rawData[key] = value;
     });
-    
-    if (rawData.drivingLicenseFile instanceof File && rawData.drivingLicenseFile.size === 0) {
-        delete rawData.drivingLicenseFile;
-    }
 
-    const validationResult = RegistrationFormSchema.safeParse(rawData);
+    const userRole = rawData.userRole;
 
-    if (!validationResult.success) {
-        console.error("Registration validation failed:", validationResult.error.format());
-        const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
-        return { success: false, error: firstError };
-    }
-    
-    const { email, password, name, phone, userRole, username, gender } = validationResult.data;
-
-    try {
-        const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-        if (!usernameQuery.empty) {
-            return { success: false, error: 'This username is already taken. Please choose another one.' };
-        }
-        
-        const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-        if (!emailQuery.empty) {
-             return { success: false, error: 'A user is already registered with this email address.' };
+    if (userRole === 'trainer') {
+        const validationResult = TrainerRegistrationFormSchema.safeParse(rawData);
+        if (!validationResult.success) {
+            console.error("Trainer validation failed:", validationResult.error.format());
+            const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
+            return { success: false, error: firstError };
         }
 
-        let drivingLicenseUrl = '';
-        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
-            const { drivingLicenseFile } = validationResult.data;
-            const buffer = await fileToBuffer(drivingLicenseFile);
-            drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
-        }
-        
-        const userRecord = await adminAuth.createUser({
-            email: email,
-            emailVerified: true,
-            password: password,
-            displayName: name,
-            disabled: false,
-        });
+        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, drivingLicenseFile } = validationResult.data;
 
-        const userProfileData: Omit<UserProfile, 'id'> = {
-            uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
-            name,
-            username,
-            contact: email,
-            phone,
-            gender,
-            subscriptionPlan: userRole === 'trainer' ? 'Trainer' : 'None',
-            approvalStatus: 'Pending',
-            registrationTimestamp: new Date().toISOString(),
-        };
+        try {
+            const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+            if (!emailQuery.empty) {
+                return { success: false, error: 'A user is already registered with this email address.' };
+            }
 
-        if (userRole === 'trainer') {
-            const {
-                location, specialization, trainerVehicleType, fuelType, vehicleNumber,
-                drivingLicenseNumber
-            } = validationResult.data;
+            const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+            if (!usernameQuery.empty) {
+                return { success: false, error: 'This username is already taken. Please choose another one.' };
+            }
             
-            Object.assign(userProfileData, {
-                location, 
-                specialization, 
-                vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                drivingLicenseUrl: drivingLicenseUrl,
-                drivingLicenseNumber,
+            // 1. Create user in Firebase Auth
+            const userRecord = await adminAuth.createUser({
+                email: email,
+                emailVerified: true,
+                password: password,
+                displayName: name,
+                disabled: false,
             });
-        }
-        
-        await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
-        
-        const createdUser: UserProfile = { id: userRecord.uid, ...userProfileData };
-        
-        revalidatePath('/dashboard');
-        revalidatePath('/login');
 
-        return { success: true, user: createdUser };
+            // 2. Upload license file
+            let drivingLicenseUrl = '';
+            if (drivingLicenseFile) {
+                const buffer = await fileToBuffer(drivingLicenseFile);
+                drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
+            }
 
-    } catch (error: any) {
-        console.error("Error in registerUserAction:", error);
-        if (error.code === 'auth/email-already-exists') {
-            return { success: false, error: 'A user is already registered with this email address.' };
+            // 3. Save profile to 'trainers' collection
+            const trainerProfile = {
+                uid: userRecord.uid,
+                uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                name,
+                username,
+                contact: email,
+                phone,
+                gender,
+                location,
+                specialization,
+                vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
+                drivingLicenseNumber,
+                drivingLicenseUrl,
+                approvalStatus: 'Pending',
+                registrationTimestamp: new Date().toISOString(),
+            };
+            await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
+
+            // 4. Save a minimal user record in 'users' for login purposes
+            const userProfileForLogin: Partial<UserProfile> = {
+                uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                name,
+                username,
+                contact: email,
+                userRole: 'trainer',
+                approvalStatus: 'Pending',
+                subscriptionPlan: 'Trainer',
+            };
+            await adminDb.collection('users').doc(userRecord.uid).set(userProfileForLogin);
+
+            revalidatePath('/dashboard');
+            revalidatePath('/login');
+
+            return { success: true };
+
+        } catch (error: any) {
+            console.error("Error in trainer registerUserAction:", error);
+            if (error.code === 'auth/email-already-exists') {
+                return { success: false, error: 'A user is already registered with this email address.' };
+            }
+            return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
         }
-        return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
+
+    } else {
+        // Handle Customer Registration (current logic)
+        const validationResult = RegistrationFormSchema.safeParse(rawData);
+        if (!validationResult.success) {
+             console.error("Customer validation failed:", validationResult.error.format());
+            const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
+            return { success: false, error: firstError };
+        }
+        const { email, password, name, phone, username, gender } = validationResult.data;
+
+        try {
+            const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+            if (!emailQuery.empty) {
+                 return { success: false, error: 'A user is already registered with this email address.' };
+            }
+             const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+            if (!usernameQuery.empty) {
+                return { success: false, error: 'This username is already taken. Please choose another one.' };
+            }
+
+            const userRecord = await adminAuth.createUser({
+                email: email,
+                emailVerified: true,
+                password: password,
+                displayName: name,
+                disabled: false,
+            });
+
+            const userProfileData: Omit<UserProfile, 'id'> = {
+                uniqueId: `CU-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                name,
+                username,
+                contact: email,
+                phone,
+                gender,
+                userRole: 'customer',
+                subscriptionPlan: 'None',
+                approvalStatus: 'Pending',
+                registrationTimestamp: new Date().toISOString(),
+            };
+             await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
+
+            revalidatePath('/dashboard');
+            revalidatePath('/login');
+            return { success: true };
+
+        } catch (error: any) {
+            console.error("Error in customer registerUserAction:", error);
+             if (error.code === 'auth/email-already-exists') {
+                return { success: false, error: 'A user is already registered with this email address.' };
+            }
+            return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
+        }
     }
 }
 
@@ -136,8 +193,16 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
     if (!adminDb) return { success: false, error: "Database not configured." };
     
     try {
+        // Update both collections if the user is a trainer
         const userRef = adminDb.collection('users').doc(userId);
+        const trainerRef = adminDb.collection('trainers').doc(userId);
+        
+        const userDoc = await userRef.get();
+        if (userDoc.exists && userDoc.data()?.userRole === 'trainer') {
+            await trainerRef.update({ approvalStatus: newStatus });
+        }
         await userRef.update({ approvalStatus: newStatus });
+
         revalidatePath('/dashboard');
         return { success: true };
     } catch (error: any) {
@@ -199,6 +264,13 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
 
   const userRef = adminDb.collection('users').doc(userId);
   await userRef.update(updatePayload);
+  
+  const userDoc = await userRef.get();
+  if (userDoc.exists && userDoc.data()?.userRole === 'trainer') {
+      const trainerRef = adminDb.collection('trainers').doc(userId);
+      await trainerRef.update(updatePayload);
+  }
+
   const updatedDoc = await userRef.get();
   
   revalidatePath('/dashboard/profile');
@@ -533,7 +605,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     if (!adminDb) return false;
     
     const customerRef = adminDb.collection('users').doc(customerId);
-    const trainerRef = adminDb.collection('users').doc(trainerId);
+    const trainerRef = adminDb.collection('trainers').doc(trainerId);
 
     const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
 
