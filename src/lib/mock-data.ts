@@ -283,13 +283,13 @@ export const listenToTrainerStudents = (
         }
     };
     
-    processData();
-
+    // Set up listeners for all collections
     const unsubTrainer = onSnapshot(trainerDocRef, processData);
     const unsubStudents = onSnapshot(studentsQuery, processData);
     const unsubFeedback = onSnapshot(feedbackQuery, processData);
     const unsubReschedule = onSnapshot(rescheduleQuery, processData);
 
+    // Return a function that unsubscribes from all listeners
     return () => {
         unsubTrainer();
         unsubStudents();
