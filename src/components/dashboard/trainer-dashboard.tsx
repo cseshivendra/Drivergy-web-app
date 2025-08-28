@@ -53,7 +53,7 @@ const getStatusBadgeClass = (status: ApprovalStatusType): string => {
 }
 
 export default function TrainerDashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
@@ -93,24 +93,23 @@ export default function TrainerDashboard() {
 
   useEffect(() => {
     if (!user?.id) {
-        if(!authLoading) setLoading(false);
-        return;
+      setLoading(false);
+      return;
     }
 
     const unsubProfile = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
-        setLoading(false); // Stop loading once we have the profile, regardless of status.
+        setLoading(false); 
     }, 'trainers');
 
     return () => unsubProfile();
-  }, [user?.id, authLoading]);
+  }, [user?.id]);
   
   useEffect(() => {
     let unsubDashboard: (() => void) | undefined;
     if (profile?.id && profile.approvalStatus === 'Approved') {
         unsubDashboard = listenToTrainerStudents(profile.id, handleDataUpdate);
     }
-    // Cleanup dashboard listener if profile changes or component unmounts
     return () => {
         if (unsubDashboard) {
             unsubDashboard();
@@ -140,7 +139,7 @@ export default function TrainerDashboard() {
   const approvedStudents = allStudents.filter(s => s.approvalStatus === 'Approved');
   const pendingAssignments = allStudents.filter(s => s.approvalStatus === 'In Progress');
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
@@ -356,5 +355,7 @@ export default function TrainerDashboard() {
     </div>
   );
 }
+
+    
 
     
