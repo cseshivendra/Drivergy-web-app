@@ -164,21 +164,13 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
     }
 }
 
-export async function updateUserApprovalStatus({ userId, newStatus }: { userId: string; newStatus: ApprovalStatusType; }): Promise<{ success: boolean; error?: string }> {
+export async function updateUserApprovalStatus({ userId, newStatus, role }: { userId: string; newStatus: ApprovalStatusType; role: 'customer' | 'trainer' | 'admin' }): Promise<{ success: boolean; error?: string }> {
     if (!adminDb) return { success: false, error: "Database not configured." };
     
     try {
-        // Since we don't know the user's role here, we have to try updating in both collections.
-        // A more robust solution might involve passing the role, but this is a safe fallback.
-        const userRef = adminDb.collection('users').doc(userId);
-        const trainerRef = adminDb.collection('trainers').doc(userId);
-
-        const userDoc = await userRef.get();
-        if (userDoc.exists) {
-             await userRef.update({ approvalStatus: newStatus });
-        } else {
-             await trainerRef.update({ approvalStatus: newStatus });
-        }
+        const collectionName = role === 'trainer' ? 'trainers' : 'users';
+        const userRef = adminDb.collection(collectionName).doc(userId);
+        await userRef.update({ approvalStatus: newStatus });
 
         revalidatePath('/dashboard');
         return { success: true };
@@ -187,6 +179,30 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
         return { success: false, error: "Failed to update user status." };
     }
 }
+
+export async function deleteUserAction({ userId, userRole }: { userId: string; userRole: 'customer' | 'trainer' | 'admin' }): Promise<{ success: boolean; error?: string }> {
+    if (!adminAuth || !adminDb) {
+        return { success: false, error: "Server is not configured correctly." };
+    }
+
+    try {
+        // Delete from Firebase Authentication
+        await adminAuth.deleteUser(userId);
+
+        // Delete from Firestore
+        const collectionName = userRole === 'trainer' ? 'trainers' : 'users';
+        await adminDb.collection(collectionName).doc(userId).delete();
+
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error: any) {
+        console.error(`Failed to delete user ${userId}:`, error);
+        // If Firestore delete fails but Auth delete succeeded, we might have an orphaned auth user.
+        // For now, return a generic error. More complex handling could be added later.
+        return { success: false, error: "An error occurred while deleting the user." };
+    }
+}
+
 
 export async function completeCustomerProfileAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminDb) {

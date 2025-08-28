@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -8,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
 import { Locations, GenderOptions } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus, assignTrainerToCustomer } from '@/lib/server-actions';
+import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -37,6 +37,9 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
   const { toast } = useToast();
   
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+
   const [selectedUserForAssignment, setSelectedUserForAssignment] = useState<UserProfile | null>(null);
   const [availableTrainers, setAvailableTrainers] = useState<UserProfile[]>([]);
   const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
@@ -120,7 +123,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
     }
 
     try {
-      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus, role: user.userRole || 'customer' });
       if (result.success) {
         toast({
           title: `User ${newStatus}`,
@@ -146,6 +149,37 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
       title: "Opening Details",
       description: `Opening details for ${user.name} in a new tab.`,
     });
+  };
+
+  const openDeleteDialog = (user: UserProfile) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+        const result = await deleteUserAction({ userId: userToDelete.id, userRole: userToDelete.userRole || 'customer' });
+        if (result.success) {
+            toast({
+                title: "User Deleted",
+                description: `${userToDelete.name} has been permanently deleted.`,
+            });
+            onUserActioned();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        toast({
+            title: "Deletion Failed",
+            description: error instanceof Error ? error.message : "An unexpected error occurred.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsDeleteDialogOpen(false);
+        setUserToDelete(null);
+    }
   };
   
   const getStatusColor = (status: ApprovalStatusType) => {
@@ -200,6 +234,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
                   <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}><Check className="mr-2 h-4 w-4 text-green-500" /><span>Approved</span></DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'In Progress')}><Hourglass className="mr-2 h-4 w-4 text-blue-500" /><span>In Progress</span></DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')}><X className="mr-2 h-4 w-4 text-red-500" /><span>Rejected</span></DropdownMenuItem>
+                   <Separator className="my-1" />
+                   <DropdownMenuItem onClick={() => openDeleteDialog(user)} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" /><span>Delete</span></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -413,6 +449,20 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
           </DialogFooter>
         </DialogContent>
       </Dialog>
+       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user <span className="font-semibold">{userToDelete?.name}</span> and all associated data from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
