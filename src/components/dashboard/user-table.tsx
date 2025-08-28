@@ -271,18 +271,6 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
-                          ) : isInterestedList ? (
-                              <div className="flex items-center justify-center">
-                                <Button 
-                                  variant="outline" size="sm" 
-                                  onClick={() => handleViewDetails(user)}
-                                  className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                                  aria-label={`View details for ${user.name}`}
-                                >
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </Button>
-                              </div>
                           ) : (
                             <div className="flex items-center justify-center space-x-1.5">
                               <Button 
@@ -295,26 +283,31 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                                 <Eye className="h-3.5 w-3.5" />
                                 <span className="ml-1.5 hidden sm:inline">View</span>
                               </Button>
-                              <Button 
-                                variant="default" 
-                                size="sm" 
-                                onClick={() => openAssignDialog(user)}
-                                className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
-                                aria-label={`Assign trainer for ${user.name}`}
-                              >
-                                <UserCheck className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">Approve & Assign</span>
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => handleUpdateStatus(user, 'Rejected')}
-                                className="px-2 py-1"
-                                aria-label={`Reject ${user.name}`}
-                              >
-                                <X className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">Reject</span>
-                              </Button>
+                              
+                              {!isInterestedList && (
+                                <>
+                                  <Button 
+                                    variant="default" 
+                                    size="sm" 
+                                    onClick={() => openAssignDialog(user)}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
+                                    aria-label={`Assign trainer for ${user.name}`}
+                                  >
+                                    <UserCheck className="h-3.5 w-3.5" />
+                                    <span className="ml-1.5 hidden sm:inline">Approve & Assign</span>
+                                  </Button>
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm" 
+                                    onClick={() => handleUpdateStatus(user, 'Rejected')}
+                                    className="px-2 py-1"
+                                    aria-label={`Reject ${user.name}`}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                    <span className="ml-1.5 hidden sm:inline">Reject</span>
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           )}
                         </TableCell>
