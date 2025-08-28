@@ -53,7 +53,7 @@ const getStatusBadgeClass = (status: ApprovalStatusType): string => {
 }
 
 export default function TrainerDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
@@ -83,41 +83,40 @@ export default function TrainerDashboard() {
       pendingRescheduleRequests: data.rescheduleRequests.filter(r => r.status === 'Pending').length,
     };
     setSummary(summaryData);
-    setLoading(false);
   };
   
   const refetchData = () => {
-      if (user?.id) {
-          listenToTrainerStudents(user.id, handleDataUpdate);
+      if (profile?.id && profile.approvalStatus === 'Approved') {
+          listenToTrainerStudents(profile.id, handleDataUpdate);
       }
   }
 
   useEffect(() => {
     if (!user?.id) {
-        setLoading(false);
+        if(!authLoading) setLoading(false);
         return;
     }
-    
-    setProfile(null);
-    setLoading(true);
 
     const unsubProfile = listenToUser(user.id, (userProfile) => {
-        if(userProfile) {
-            setProfile(userProfile);
-            if (userProfile.approvalStatus === 'Approved') {
-                const unsubDashboard = listenToTrainerStudents(user.id, handleDataUpdate);
-                return () => unsubDashboard();
-            } else {
-                setLoading(false);
-            }
-        } else {
-             setProfile(null);
-             setLoading(false);
-        }
-    }, 'trainers'); // <-- Ensure we listen to the 'trainers' collection
+        setProfile(userProfile);
+        setLoading(false); // Stop loading once we have the profile, regardless of status.
+    }, 'trainers');
 
     return () => unsubProfile();
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
+  
+  useEffect(() => {
+    let unsubDashboard: (() => void) | undefined;
+    if (profile?.id && profile.approvalStatus === 'Approved') {
+        unsubDashboard = listenToTrainerStudents(profile.id, handleDataUpdate);
+    }
+    // Cleanup dashboard listener if profile changes or component unmounts
+    return () => {
+        if (unsubDashboard) {
+            unsubDashboard();
+        }
+    };
+  }, [profile]);
 
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
@@ -141,7 +140,7 @@ export default function TrainerDashboard() {
   const approvedStudents = allStudents.filter(s => s.approvalStatus === 'Approved');
   const pendingAssignments = allStudents.filter(s => s.approvalStatus === 'In Progress');
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
         <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
@@ -357,3 +356,5 @@ export default function TrainerDashboard() {
     </div>
   );
 }
+
+    
