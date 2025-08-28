@@ -20,17 +20,19 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 
+type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer';
+
 interface UserTableProps {
   title: ReactNode;
   users: UserProfile[];
   isLoading: boolean;
   onUserActioned: () => void;
-  isInterestedList?: boolean; // This prop determines if it's for 'Interested Customers'
+  actionType: ActionType;
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function UserTable({ title, users, isLoading, onUserActioned, isInterestedList = false }: UserTableProps) {
+export default function UserTable({ title, users, isLoading, onUserActioned, actionType }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   
@@ -164,7 +166,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
         <TableCell><Skeleton className="h-5 w-28" /></TableCell>
         <TableCell><Skeleton className="h-5 w-36" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-        {!isInterestedList && (
+        {actionType !== 'interested-customer' && (
            <>
             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell> 
@@ -176,6 +178,42 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
       </TableRow>
     ))
   );
+
+  const renderActions = (user: UserProfile) => {
+    switch (actionType) {
+      case 'new-customer':
+        return (
+          <div className="flex items-center justify-center space-x-1.5">
+            <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent" aria-label={`View details for ${user.name}`}><Eye className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">View</span></Button>
+            <Button variant="default" size="sm" onClick={() => openAssignDialog(user)} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1" aria-label={`Assign trainer for ${user.name}`}><UserCheck className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Approve & Assign</span></Button>
+            <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(user, 'Rejected')} className="px-2 py-1" aria-label={`Reject ${user.name}`}><X className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Reject</span></Button>
+          </div>
+        );
+      case 'new-trainer':
+      case 'existing-trainer':
+         return (
+            <div className="flex items-center justify-center space-x-1.5">
+              <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent" aria-label={`View details for ${user.name}`}><Eye className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">View</span></Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="w-[130px] justify-between"><span>Update Status</span><ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}><Check className="mr-2 h-4 w-4 text-green-500" /><span>Approved</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'In Progress')}><Hourglass className="mr-2 h-4 w-4 text-blue-500" /><span>In Progress</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')}><X className="mr-2 h-4 w-4 text-red-500" /><span>Rejected</span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+         );
+      case 'interested-customer':
+        return (
+          <div className="flex items-center justify-center">
+            <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)}><Eye className="mr-1 h-3 w-3"/>View Details</Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -191,7 +229,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                   <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
                   <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
                   <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
-                  {!isInterestedList && (
+                  {actionType !== 'interested-customer' && (
                     <>
                     <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
                     <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
@@ -199,20 +237,18 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                     </>
                   )}
                   <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
-                  {!isInterestedList && <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>}
+                  {actionType !== 'interested-customer' && <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>}
                   <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
-                  paginatedUsers.map((user) => {
-                    const isTrainer = user.userRole === 'trainer';
-                    return (
+                  paginatedUsers.map((user) => (
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
                         <TableCell>{user.name}</TableCell>
                         <TableCell>{user.phone || user.contact}</TableCell>
-                        {!isInterestedList && (
+                        {actionType !== 'interested-customer' && (
                             <>
                                 <TableCell>{user.location}</TableCell>
                                 <TableCell>
@@ -229,7 +265,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                             </>
                         )}
                         <TableCell>{user.registrationTimestamp ? format(parseISO(user.registrationTimestamp), 'PP') : 'N/A'}</TableCell>
-                        {!isInterestedList && (
+                        {actionType !== 'interested-customer' && (
                             <TableCell>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus as ApprovalStatusType)}`}>
                                 {user.approvalStatus}
@@ -237,90 +273,18 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                             </TableCell>
                         )}
                         <TableCell>
-                           {isTrainer ? (
-                            <div className="flex items-center justify-center space-x-1.5">
-                              <Button 
-                                variant="outline" size="sm" 
-                                onClick={() => handleViewDetails(user)}
-                                className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                                aria-label={`View details for ${user.name}`}
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">View</span>
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm" className="w-[130px] justify-between">
-                                    <span>Update Status</span>
-                                    <ChevronDown className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}>
-                                    <Check className="mr-2 h-4 w-4 text-green-500" />
-                                    <span>Approved</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'In Progress')}>
-                                    <Hourglass className="mr-2 h-4 w-4 text-blue-500" />
-                                    <span>In Progress</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')}>
-                                    <X className="mr-2 h-4 w-4 text-red-500" />
-                                    <span>Rejected</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-center space-x-1.5">
-                              <Button 
-                                variant="outline"
-                                size="sm" 
-                                onClick={() => handleViewDetails(user)}
-                                className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                                aria-label={`View details for ${user.name}`}
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">View</span>
-                              </Button>
-                              
-                              {!isInterestedList && (
-                                <>
-                                  <Button 
-                                    variant="default" 
-                                    size="sm" 
-                                    onClick={() => openAssignDialog(user)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
-                                    aria-label={`Assign trainer for ${user.name}`}
-                                  >
-                                    <UserCheck className="h-3.5 w-3.5" />
-                                    <span className="ml-1.5 hidden sm:inline">Approve & Assign</span>
-                                  </Button>
-                                  <Button 
-                                    variant="destructive" 
-                                    size="sm" 
-                                    onClick={() => handleUpdateStatus(user, 'Rejected')}
-                                    className="px-2 py-1"
-                                    aria-label={`Reject ${user.name}`}
-                                  >
-                                    <X className="h-3.5 w-3.5" />
-                                    <span className="ml-1.5 hidden sm:inline">Reject</span>
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          )}
+                           {renderActions(user)}
                         </TableCell>
                       </TableRow>
                     )
-                  })
+                  )
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={isInterestedList ? 5 : 9} className="h-24 text-center"> 
+                    <TableCell colSpan={actionType === 'interested-customer' ? 5 : 9} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                        <p className="text-lg">No {isInterestedList ? 'interested customers' : 'pending enrollments'} found.</p>
-                        <p className="text-sm">{isInterestedList ? 'New sign-ups will appear here.' : 'Check back later or adjust filters.'}</p>
+                        <p className="text-lg">No {actionType === 'interested-customer' ? 'interested customers' : 'pending enrollments'} found.</p>
+                        <p className="text-sm">{actionType === 'interested-customer' ? 'New sign-ups will appear here.' : 'Check back later or adjust filters.'}</p>
                       </div>
                     </TableCell>
                   </TableRow>
