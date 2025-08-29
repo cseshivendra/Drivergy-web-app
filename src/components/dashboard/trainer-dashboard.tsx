@@ -93,13 +93,14 @@ export default function TrainerDashboard() {
 
   useEffect(() => {
     if (!user?.id) {
-      setLoading(false);
-      return;
+        setLoading(false);
+        return;
     }
 
+    // Set up a listener for the trainer's own profile.
     const unsubProfile = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
-        setLoading(false); 
+        setLoading(false); // Stop loading as soon as the profile is fetched.
     }, 'trainers');
 
     return () => unsubProfile();
@@ -107,15 +108,18 @@ export default function TrainerDashboard() {
   
   useEffect(() => {
     let unsubDashboard: (() => void) | undefined;
+    // ONLY if the profile is loaded and the status is 'Approved', then fetch student data.
     if (profile?.id && profile.approvalStatus === 'Approved') {
         unsubDashboard = listenToTrainerStudents(profile.id, handleDataUpdate);
     }
+    
+    // Cleanup function for the dashboard listener.
     return () => {
         if (unsubDashboard) {
             unsubDashboard();
         }
     };
-  }, [profile]);
+  }, [profile]); // This effect depends only on the profile state.
 
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
@@ -355,7 +359,3 @@ export default function TrainerDashboard() {
     </div>
   );
 }
-
-    
-
-    

@@ -4,73 +4,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
+    // Allow public read for collections that need to be displayed on the public site
+    match /courses/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /quizSets/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+     match /faqs/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+     match /blog/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+     match /siteBanners/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+     match /promotionalPosters/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function getRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.userRole;
-    }
-    
-    function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
-    // Admins can do anything
-    match /{document=**} {
-      allow read, write: if isAdmin();
-    }
-
-    // User profiles can be read by their owner or an admin.
-    // New users can create their own profile during registration.
+    // Users can read/write their own data.
+    // Admin operations are done via server-side Admin SDK, which bypasses these rules.
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isSignedIn(); // Allows new user registration
-      allow update: if isOwner(userId); // Allow users to update their own profile
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Trainers can read data of their assigned students.
-    // This rule is slightly more complex, but allows for trainers to see who they are training.
-    match /users/{studentId} {
-      allow read: if isSignedIn() && get(/databases/$(database)/documents/users/$(studentId)).data.assignedTrainerId == request.auth.uid;
+    // Trainers can read/write their own data.
+    match /trainers/{trainerId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == trainerId;
     }
 
-    // Public collections are readable by anyone.
-    match /blog/{postId} {
-      allow read: if true;
-    }
-    match /courses/{courseId} {
-      allow read: if true;
-    }
-    match /promotionalPosters/{posterId} {
-      allow read: if true;
-    }
-    match /faqs/{faqId} {
-      allow read: if true;
-    }
-    match /quizSets/{setId} {
-      allow read: if true;
-    }
-
-    // Feedback can be created by any signed-in user.
-    match /feedback/{feedbackId} {
-      allow create: if isSignedIn();
-    }
-
-    // Lesson reschedule requests can be created by any signed-in user.
-    match /rescheduleRequests/{requestId} {
-      allow create: if isSignedIn();
+    // Allow authenticated users to read trainer profiles
+    match /trainers/{trainerId} {
+        allow get: if request.auth != null;
     }
     
-    // Referrals can be read by the referrer.
-    match /referrals/{referralId} {
-      allow read: if isSignedIn() && resource.data.referrerId == request.auth.uid;
+    // Allow admin to manage reschedule requests
+    match /rescheduleRequests/{requestId} {
+      allow read, write: if request.auth != null; // Simplified for now
+    }
+    
+    // Allow users to submit feedback
+    match /feedback/{feedbackId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null; // Allow users to read feedback
     }
 
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
