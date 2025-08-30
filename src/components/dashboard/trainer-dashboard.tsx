@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { doc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/client';
 
 interface TrainerProfile {
     id: string;
