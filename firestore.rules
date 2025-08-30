@@ -4,68 +4,74 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all reads and writes
-    match /{document=**} {
-      allow read, write: if false;
+    // Helper function to check if a user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Allow public read for content collections
-    match /blog/{postId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
-    }
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
-    }
-    match /quizSets/{quizSetId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
-    }
-    match /faqs/{faqId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
-    }
-    match /siteBanners/{bannerId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
-    }
-    match /promotionalPosters/{posterId} {
-      allow read: if true;
-      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
-    }
-
-    // Allow anyone to create a user profile (for registration)
-    // Allow authenticated users to read any profile (for fetching details)
-    // Allow users to update/delete only their own profile
-    match /users/{userId} {
-      allow create: if true;
-      allow read: if request.auth != null;
-      allow update, delete: if request.auth.uid == userId;
-    }
-
-    // Allow anyone to create a trainer profile (for registration)
-    // Allow authenticated users to read any profile (for fetching details)
-    // Allow trainers to update/delete only their own profile
-    match /trainers/{trainerId} {
-      allow create: if true;
-      allow read: if request.auth != null;
-      allow update, delete: if request.auth.uid == trainerId;
+    // Helper function to check if the requesting user is the owner of the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Allow authenticated users to manage their related data
+    // Allow any authenticated user to read from users and trainers collections
+    // This is required to fetch profile data upon login.
+    // Writes are restricted to the owner of the document.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isOwner(userId);
+    }
+    
+    match /trainers/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isOwner(userId);
+    }
+
+    // Public collections that anyone can read for the site content
+    match /blog/{postId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin server actions
+    }
+
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin server actions
+    }
+
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin server actions
+    }
+    
+    match /quizSets/{quizSetId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin server actions
+    }
+
+    match /promotionalPosters/{posterId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin server actions
+    }
+
+    match /siteBanners/{bannerId} {
+      allow read: if true;
+      allow write: if false; // Managed by admin server actions
+    }
+
+    // Allow authenticated users to manage their own feedback and reschedule requests
     match /feedback/{feedbackId} {
-        allow create: if request.auth != null;
-        allow read: if request.auth != null;
+        allow create: if isAuthenticated();
+        allow read: if isAuthenticated(); // Or make public if needed
     }
+    
     match /rescheduleRequests/{requestId} {
-        allow create: if request.auth != null;
-        allow read: if request.auth != null;
-        allow update: if request.auth != null; // Admin or involved trainer can update
+        allow create: if isAuthenticated();
+        allow read, update: if isAuthenticated(); // Allow trainer/admin to update
     }
+    
     match /referrals/{referralId} {
-        allow read: if request.auth != null;
-        allow update: if request.auth != null; // Admin can update
+       allow read: if isAuthenticated();
+       allow create: if isAuthenticated();
     }
   }
 }
