@@ -6,35 +6,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Skeleton } from '@/components/ui/skeleton';
+import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle, Hourglass } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { doc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
-
-interface TrainerProfile {
-    id: string;
-    name: string;
-    email: string;
-    phone?: string;
-    specializations: string[];
-    experience: number;
-    rating: number;
-    totalStudents: number;
-    approvalStatus: 'Pending' | 'Under Review' | 'Approved' | 'Rejected';
-    profileImage?: string;
-    bio?: string;
-    certifications: string[];
-    availability: {
-        monday: boolean;
-        tuesday: boolean;
-        wednesday: boolean;
-        thursday: boolean;
-        friday: boolean;
-        saturday: boolean;
-        sunday: boolean;
-    };
-}
+import { listenToUser, listenToTrainerStudents } from '@/lib/mock-data';
+import type { UserProfile, Feedback, RescheduleRequest } from '@/types';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 interface Booking {
     id: string;
@@ -48,103 +34,45 @@ interface Booking {
 }
 
 const TrainerDashboard = () => {
-    const { user } = useAuth();
-    const [trainerProfile, setTrainerProfile] = useState<TrainerProfile | null>(null);
-    const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
-    const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+    const { user, loading: authLoading } = useAuth();
+    const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
+    const [students, setStudents] = useState<UserProfile[]>([]);
+    const [feedback, setFeedback] = useState<Feedback[]>([]);
+    const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!user?.uid) {
-            setLoading(false);
+        if (!user?.id) {
+            if (!authLoading) setLoading(false);
             return;
         }
 
-        // Set up real-time listener for trainer profile
-        const trainerDocRef = doc(db, 'trainers', user.uid);
-
-        const unsubscribeTrainer = onSnapshot(
-            trainerDocRef,
-            (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const profileData = {
-                        id: docSnapshot.id,
-                        ...docSnapshot.data()
-                    } as TrainerProfile;
-                    setTrainerProfile(profileData);
-                    setLoading(false);
-
-                    // Only load additional data if trainer is approved
-                    if (profileData.approvalStatus === 'Approved') {
-                        loadBookingsData();
-                    }
+        // Only listen to the trainer's own profile initially
+        const unsubscribeTrainer = listenToUser(user.id, (profile) => {
+            if (profile) {
+                setTrainerProfile(profile);
+                // If the trainer is approved, then we can fetch the rest of the data.
+                if (profile.approvalStatus === 'Approved') {
+                    // Pass the profile to prevent race conditions
+                    listenToTrainerStudents(profile.id, ({ students, feedback, rescheduleRequests }) => {
+                        setStudents(students);
+                        setFeedback(feedback);
+                        setRescheduleRequests(rescheduleRequests);
+                        setLoading(false); // Stop loading only after all data is fetched
+                    });
                 } else {
-                    // Trainer profile doesn't exist - redirect to profile creation
-                    setError("Trainer profile not found. Please complete your trainer registration.");
+                    // If not approved, we don't need other data, so stop loading.
                     setLoading(false);
                 }
-            },
-            (error) => {
-                console.error('Error loading trainer profile:', error);
-                setError("Failed to load trainer profile. Please try again.");
+            } else {
+                setError("Trainer profile not found. Please complete your trainer registration.");
                 setLoading(false);
             }
-        );
+        }, 'trainers'); // Specify the collection
 
         return () => unsubscribeTrainer();
-    }, [user]);
-
-    const loadBookingsData = () => {
-        if (!user?.uid) return;
-
-        // Load upcoming bookings
-        const upcomingQuery = query(
-            collection(db, 'bookings'),
-            where('trainerId', '==', user.uid),
-            where('status', '==', 'scheduled'),
-            where('scheduledDate', '>=', new Date()),
-            orderBy('scheduledDate', 'asc')
-        );
-
-        const unsubscribeUpcoming = onSnapshot(upcomingQuery, (snapshot) => {
-            const bookings: Booking[] = [];
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                bookings.push({
-                    id: doc.id,
-                    ...data,
-                    scheduledDate: data.scheduledDate.toDate(),
-                } as Booking);
-            });
-            setUpcomingBookings(bookings);
-        });
-
-        // Load recent bookings
-        const recentQuery = query(
-            collection(db, 'bookings'),
-            where('trainerId', '==', user.uid),
-            orderBy('scheduledDate', 'desc')
-        );
-
-        const unsubscribeRecent = onSnapshot(recentQuery, (snapshot) => {
-            const bookings: Booking[] = [];
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                bookings.push({
-                    id: doc.id,
-                    ...data,
-                    scheduledDate: data.scheduledDate.toDate(),
-                } as Booking);
-            });
-            setRecentBookings(bookings.slice(0, 5)); // Get last 5 bookings
-        });
-
-        return () => {
-            unsubscribeUpcoming();
-            unsubscribeRecent();
-        };
-    };
+    }, [user, authLoading]);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -152,74 +80,66 @@ const TrainerDashboard = () => {
                 return <CheckCircle className="h-4 w-4 text-green-500" />;
             case 'Rejected':
                 return <XCircle className="h-4 w-4 text-red-500" />;
-            case 'Under Review':
-                return <Clock className="h-4 w-4 text-blue-500" />;
+            case 'In Progress':
+                return <Hourglass className="h-4 w-4 text-blue-500" />;
             case 'Pending':
             default:
-                return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+                return <Clock className="h-4 w-4 text-yellow-500" />;
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Approved':
-                return 'bg-green-100 text-green-800 border-green-200';
-            case 'Rejected':
-                return 'bg-red-100 text-red-800 border-red-200';
-            case 'Under Review':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
+            case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
+            case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
             case 'Pending':
-            default:
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            default: return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
         }
     };
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading your dashboard...</p>
-                </div>
+            <div className="container mx-auto p-4 py-8 space-y-8">
+              <Skeleton className="h-10 w-1/2 mb-8" />
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+              <Skeleton className="h-96 w-full" />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Card className="w-full max-w-md">
-                    <CardContent className="pt-6">
-                        <div className="text-center">
-                            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-red-900 mb-2">Error</h3>
-                            <p className="text-gray-600 mb-4">{error}</p>
-                            <Button onClick={() => window.location.reload()}>
-                                Try Again
-                            </Button>
-                        </div>
-                    </CardContent>
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Card className="w-full max-w-md p-6 text-center">
+                    <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-destructive mb-2">Error</h3>
+                    <p className="text-muted-foreground mb-4">{error}</p>
+                    <Button onClick={() => window.location.reload()}>
+                        Try Again
+                    </Button>
                 </Card>
             </div>
         );
     }
-
+    
     if (!trainerProfile) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Card className="w-full max-w-md">
-                    <CardContent className="pt-6">
-                        <div className="text-center">
-                            <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Profile Not Found</h3>
-                            <p className="text-gray-600 mb-4">
-                                We couldn't find your trainer profile. Please complete your registration.
-                            </p>
-                            <Button onClick={() => window.location.href = '/app/profile'}>
-                                Complete Profile
-                            </Button>
-                        </div>
-                    </CardContent>
+            <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Card className="w-full max-w-md p-6 text-center">
+                    <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Profile Not Found</h3>
+                    <p className="text-muted-foreground mb-4">
+                        We couldn't find your trainer profile. Please complete your registration.
+                    </p>
+                    <Button asChild>
+                        <Link href="/register">Complete Registration</Link>
+                    </Button>
                 </Card>
             </div>
         );
@@ -228,45 +148,34 @@ const TrainerDashboard = () => {
     // If trainer is not approved, only show status card
     if (trainerProfile.approvalStatus !== 'Approved') {
         return (
-            <div className="container mx-auto px-4 py-8 max-w-4xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Trainer Dashboard</h1>
-                    <p className="text-gray-600">Welcome, {trainerProfile.name}</p>
-                </div>
-
-                <Card className="w-full">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
+            <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+                <Card className="w-full shadow-xl">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
                             {getStatusIcon(trainerProfile.approvalStatus)}
-                            Account Status: {trainerProfile.approvalStatus}
+                        </div>
+                        <CardTitle className="font-headline text-2xl font-bold">
+                            Welcome, {trainerProfile.name}!
                         </CardTitle>
+                        <CardDescription className="text-lg mt-4">
+                           <div className="flex items-center justify-center gap-2">
+                                <span>Verification Status:</span>
+                                <Badge variant="outline" className={cn("text-base", getStatusColor(trainerProfile.approvalStatus))}>
+                                    {trainerProfile.approvalStatus}
+                                </Badge>
+                            </div>
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            <Badge
-                                variant="secondary"
-                                className={getStatusColor(trainerProfile.approvalStatus)}
-                            >
-                                {trainerProfile.approvalStatus}
-                            </Badge>
-
-                            <div className="text-gray-600">
-                                {trainerProfile.approvalStatus === 'Pending' && (
-                                    <p>Your trainer application is pending review. We'll notify you once it's processed.</p>
-                                )}
-                                {trainerProfile.approvalStatus === 'Under Review' && (
-                                    <p>Your application is currently under review. This usually takes 2-3 business days.</p>
-                                )}
-                                {trainerProfile.approvalStatus === 'Rejected' && (
-                                    <p>Your application was not approved. Please contact support for more information.</p>
-                                )}
-                            </div>
-
-                            <div className="pt-4">
-                                <Button variant="outline" onClick={() => window.location.href = '/app/profile'}>
-                                    Edit Profile
-                                </Button>
-                            </div>
+                    <CardContent className="text-center">
+                       <p className="text-muted-foreground max-w-md mx-auto">
+                            {trainerProfile.approvalStatus === 'Pending' && "Your application is pending review. We'll notify you once it's processed."}
+                            {trainerProfile.approvalStatus === 'In Progress' && "Your application is currently under review. This usually takes 2-3 business days."}
+                            {trainerProfile.approvalStatus === 'Rejected' && "Unfortunately, your application was not approved. Please contact support for more information."}
+                       </p>
+                         <div className="pt-6">
+                            <Button variant="outline" asChild>
+                                <Link href="/dashboard/profile">View/Edit My Profile</Link>
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -284,11 +193,12 @@ const TrainerDashboard = () => {
                     <p className="text-gray-600">Welcome back, {trainerProfile.name}</p>
                 </div>
                 <div className="flex items-center gap-4 mt-4 md:mt-0">
-                    <Badge className="bg-green-100 text-green-800 border-green-200">
-                        ✓ Approved Trainer
+                    <Badge className={getStatusColor(trainerProfile.approvalStatus)}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Approved Trainer
                     </Badge>
                     <Avatar className="h-10 w-10">
-                        <AvatarImage src={trainerProfile.profileImage} />
+                        <AvatarImage src={trainerProfile.photoURL} />
                         <AvatarFallback>{trainerProfile.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </div>
@@ -302,19 +212,19 @@ const TrainerDashboard = () => {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{trainerProfile.totalStudents}</div>
-                        <p className="text-xs text-muted-foreground">All time</p>
+                        <div className="text-2xl font-bold">{students.length}</div>
+                        <p className="text-xs text-muted-foreground">All assigned students</p>
                     </CardContent>
                 </Card>
 
-                <Card>
+                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Upcoming Sessions</CardTitle>
+                        <CardTitle className="text-sm font-medium">Upcoming Lessons</CardTitle>
                         <CalendarDays className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{upcomingBookings.length}</div>
-                        <p className="text-xs text-muted-foreground">Next 7 days</p>
+                        <div className="text-2xl font-bold">{students.filter(s => s.upcomingLesson).length}</div>
+                        <p className="text-xs text-muted-foreground">Active scheduled lessons</p>
                     </CardContent>
                 </Card>
 
@@ -324,8 +234,10 @@ const TrainerDashboard = () => {
                         <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{trainerProfile.rating.toFixed(1)}</div>
-                        <p className="text-xs text-muted-foreground">Out of 5.0</p>
+                        <div className="text-2xl font-bold">
+                            {feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A'}
+                        </div>
+                        <p className="text-xs text-muted-foreground">From {feedback.length} reviews</p>
                     </CardContent>
                 </Card>
 
@@ -335,198 +247,49 @@ const TrainerDashboard = () => {
                         <BookOpen className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{trainerProfile.experience}</div>
+                        <div className="text-2xl font-bold">{trainerProfile.expertise || 'N/A'}</div>
                         <p className="text-xs text-muted-foreground">Years</p>
                     </CardContent>
                 </Card>
             </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>My Students</CardTitle>
+                <CardDescription>An overview of your assigned students and their progress.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Upcoming Lesson</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students.length > 0 ? students.map(student => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell>{student.phone}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{student.subscriptionPlan}</Badge>
+                        </TableCell>
+                        <TableCell>{student.upcomingLesson || 'Not Scheduled'}</TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
+                          No students assigned yet.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-            {/* Main Content Tabs */}
-            <Tabs defaultValue="overview" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="bookings">Bookings</TabsTrigger>
-                    <TabsTrigger value="students">Students</TabsTrigger>
-                    <TabsTrigger value="profile">Profile</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="overview" className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Upcoming Sessions */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Upcoming Sessions</CardTitle>
-                                <CardDescription>Your next scheduled lessons</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {upcomingBookings.length === 0 ? (
-                                    <p className="text-gray-500 text-center py-4">No upcoming sessions</p>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {upcomingBookings.slice(0, 3).map((booking) => (
-                                            <div key={booking.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                                <div>
-                                                    <h4 className="font-medium">{booking.studentName}</h4>
-                                                    <p className="text-sm text-gray-600">{booking.courseType}</p>
-                                                    <p className="text-sm text-gray-500">
-                                                        {booking.scheduledDate.toLocaleDateString()} at {booking.scheduledDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                    </p>
-                                                </div>
-                                                <Badge variant="outline">{booking.duration}h</Badge>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        {/* Recent Activity */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Recent Activity</CardTitle>
-                                <CardDescription>Latest completed sessions</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                {recentBookings.length === 0 ? (
-                                    <p className="text-gray-500 text-center py-4">No recent activity</p>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {recentBookings.slice(0, 3).map((booking) => (
-                                            <div key={booking.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                                <div>
-                                                    <h4 className="font-medium">{booking.studentName}</h4>
-                                                    <p className="text-sm text-gray-600">{booking.courseType}</p>
-                                                    <p className="text-sm text-gray-500">
-                                                        {booking.scheduledDate.toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <Badge
-                                                    variant={booking.status === 'completed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'}
-                                                >
-                                                    {booking.status}
-                                                </Badge>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
-
-                <TabsContent value="bookings">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>All Bookings</CardTitle>
-                            <CardDescription>Manage your scheduled and completed sessions</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[...upcomingBookings, ...recentBookings].map((booking) => (
-                                    <div key={booking.id} className="flex justify-between items-center p-4 border rounded-lg">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-4">
-                                                <div>
-                                                    <h4 className="font-medium">{booking.studentName}</h4>
-                                                    <p className="text-sm text-gray-600">{booking.studentEmail}</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium">{booking.courseType}</p>
-                                                    <p className="text-sm text-gray-500">
-                                                        {booking.scheduledDate.toLocaleDateString()} at {booking.scheduledDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            {booking.notes && (
-                                                <p className="text-sm text-gray-600 mt-2">{booking.notes}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline">{booking.duration}h</Badge>
-                                            <Badge
-                                                variant={booking.status === 'completed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'}
-                                            >
-                                                {booking.status}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="students">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>My Students</CardTitle>
-                            <CardDescription>Students you've taught</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-center text-gray-500 py-8">
-                                Student management features coming soon
-                            </p>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="profile">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Trainer Profile</CardTitle>
-                            <CardDescription>Your professional information</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-16 w-16">
-                                        <AvatarImage src={trainerProfile.profileImage} />
-                                        <AvatarFallback>{trainerProfile.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <h3 className="text-lg font-semibold">{trainerProfile.name}</h3>
-                                        <p className="text-gray-600">{trainerProfile.email}</p>
-                                        {trainerProfile.phone && (
-                                            <p className="text-gray-600">{trainerProfile.phone}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h4 className="font-medium mb-2">Specializations</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {trainerProfile.specializations.map((spec, index) => (
-                                            <Badge key={index} variant="secondary">{spec}</Badge>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h4 className="font-medium mb-2">Certifications</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {trainerProfile.certifications.map((cert, index) => (
-                                            <Badge key={index} variant="outline">{cert}</Badge>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {trainerProfile.bio && (
-                                    <div>
-                                        <h4 className="font-medium mb-2">Bio</h4>
-                                        <p className="text-gray-600">{trainerProfile.bio}</p>
-                                    </div>
-                                )}
-
-                                <div className="pt-4">
-                                    <Button onClick={() => window.location.href = '/app/profile'}>
-                                        Edit Profile
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
         </div>
     );
 };
