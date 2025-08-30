@@ -1,77 +1,108 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
+    // Allow public read access to blog posts
+    match /blog/{document} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        (resource == null || resource.data.authorId == request.auth.uid);
     }
 
-    // Helper function to check if the requesting user is the owner of the document
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    // Allow public read access to courses
+    match /courses/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
-    
-    // Allow any authenticated user to read from users and trainers collections
-    // This is required to fetch profile data upon login.
-    // Writes are restricted to the owner of the document.
+
+    // Allow public read access to FAQs
+    match /faqs/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // User profiles - users can read all profiles but only write their own
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isOwner(userId);
-    }
-    
-    match /trainers/{userId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isOwner(userId);
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Public collections that anyone can read for the site content
-    match /blog/{postId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin server actions
+    // Trainer profiles - authenticated users can read all trainer profiles
+    // but trainers can only write their own profile
+    match /trainers/{trainerId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == trainerId;
+      allow create: if request.auth != null && request.auth.uid == trainerId;
     }
 
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin server actions
+    // Admin profiles - only admins can read/write admin data
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+      allow create: if request.auth != null && request.auth.uid == adminId;
     }
 
-    match /faqs/{faqId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin server actions
-    }
-    
-    match /quizSets/{quizSetId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin server actions
-    }
-
-    match /promotionalPosters/{posterId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin server actions
+    // Bookings - users can only access their own bookings
+    match /bookings/{bookingId} {
+      allow read, write: if request.auth != null &&
+        (resource == null ||
+         resource.data.userId == request.auth.uid ||
+         resource.data.trainerId == request.auth.uid);
+      allow create: if request.auth != null;
     }
 
-    match /siteBanners/{bannerId} {
+    // Reviews - public read, authenticated write
+    match /reviews/{reviewId} {
       allow read: if true;
-      allow write: if false; // Managed by admin server actions
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
     }
 
-    // Allow authenticated users to manage their own feedback and reschedule requests
-    match /feedback/{feedbackId} {
-        allow create: if isAuthenticated();
-        allow read: if isAuthenticated(); // Or make public if needed
+    // Messages/Notifications - users can only access their own
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null &&
+        (resource == null ||
+         resource.data.recipientId == request.auth.uid ||
+         resource.data.senderId == request.auth.uid);
+      allow create: if request.auth != null;
     }
-    
-    match /rescheduleRequests/{requestId} {
-        allow create: if isAuthenticated();
-        allow read, update: if isAuthenticated(); // Allow trainer/admin to update
+
+    // Progress tracking - users can only access their own progress
+    match /progress/{progressId} {
+      allow read, write: if request.auth != null &&
+        (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null;
     }
-    
-    match /referrals/{referralId} {
-       allow read: if isAuthenticated();
-       allow create: if isAuthenticated();
+
+    // Lessons - public read for course content, authenticated write
+    match /lessons/{lessonId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Test Results - users can only access their own test results
+    match /testResults/{resultId} {
+      allow read, write: if request.auth != null &&
+        (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null;
+    }
+
+    // Payments - users can only access their own payment records
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null &&
+        (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if request.auth != null;
+    }
+
+    // Analytics - read-only for authenticated users (for dashboards)
+    match /analytics/{document} {
+      allow read: if request.auth != null;
+      allow write: if false; // Analytics should be written server-side only
+    }
+
+    // Default deny rule for any unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
