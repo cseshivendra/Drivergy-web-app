@@ -21,12 +21,12 @@ export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster
   return unsubscribe;
 };
 
-export const listenToUser = (userId: string, callback: (user: UserProfile | null) => void) => {
+export const listenToUser = (userId: string, callback: (user: UserProfile | null) => void, collectionName: 'users' | 'trainers' = 'users') => {
   if (!db) {
     console.error("Firestore not initialized");
     return () => {};
   }
-  const userDocRef = doc(db, 'users', userId);
+  const userDocRef = doc(db, collectionName, userId);
   const unsubscribe = onSnapshot(userDocRef, (docSnapshot) => {
     if (docSnapshot.exists()) {
       const userData = docSnapshot.data();
@@ -49,6 +49,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
     }
 
     const usersRef = collection(db, 'users');
+    const trainersRef = collection(db, 'trainers');
     const coursesRef = collection(db, 'courses');
     const quizSetsRef = collection(db, 'quizSets');
     const faqsRef = collection(db, 'faqs');
@@ -61,8 +62,9 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     const fetchData = async () => {
         try {
-            const [usersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap] = await Promise.all([
+            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap] = await Promise.all([
                 getDocs(usersRef),
+                getDocs(trainersRef),
                 getDocs(coursesRef),
                 getDocs(quizSetsRef),
                 getDocs(faqsRef),
@@ -71,15 +73,20 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 getDocs(postersRef),
                 getDocs(query(rescheduleRef, orderBy('requestTimestamp', 'desc'))),
             ]);
-
-            const allUsers: UserProfile[] = usersSnap.docs.map(d => ({
+            
+            const customers: UserProfile[] = usersSnap.docs.map(d => ({
                 id: d.id,
                 ...d.data(),
                 registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
             } as UserProfile));
-            
-            const customers = allUsers.filter(u => u.uniqueId?.startsWith('CU'));
-            const instructors = allUsers.filter(u => u.uniqueId?.startsWith('TR'));
+
+            const instructors: UserProfile[] = trainersSnap.docs.map(d => ({
+                id: d.id,
+                ...d.data(),
+                registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
+            } as UserProfile));
+
+            const allUsers = [...customers, ...instructors];
             
             // Derive Lesson Requests
             const lessonRequests: LessonRequest[] = customers
@@ -160,7 +167,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     fetchData(); // Initial fetch
 
-    const collections = [usersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef];
+    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef];
     collections.forEach(ref => {
         const unsubscribe = onSnapshot(ref, fetchData, (error) => console.error("Snapshot error:", error));
         unsubs.push(unsubscribe);
@@ -173,7 +180,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 export async function fetchApprovedInstructors(filters: { location?: string, gender?: string }): Promise<UserProfile[]> {
     if (!db) return [];
     
-    let q = query(collection(db, 'users'), where('uniqueId', '>', 'TR'), where('uniqueId', '<', 'TS'), where('approvalStatus', '==', 'Approved'));
+    let q = query(collection(db, 'trainers'), where('approvalStatus', '==', 'Approved'));
 
     if (filters.location) {
         q = query(q, where('location', '==', filters.location));
@@ -225,34 +232,26 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
 
 export const listenToTrainerStudents = (
     trainerId: string,
-    callback: (data: { students: UserProfile[], feedback: Feedback[], rescheduleRequests: RescheduleRequest[], profile: UserProfile | null }) => void
+    callback: (data: { students: UserProfile[], feedback: Feedback[], rescheduleRequests: RescheduleRequest[] }) => void
 ) => {
     if (!db) {
         console.error('Firestore not initialized.');
+        // Immediately call back with empty data to prevent infinite loading
+        callback({ students: [], feedback: [], rescheduleRequests: [] });
         return () => {};
     }
 
-    const trainerDocRef = doc(db, 'users', trainerId);
     const studentsQuery = query(collection(db, 'users'), where('assignedTrainerId', '==', trainerId));
     const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
     const rescheduleQuery = query(collection(db, 'rescheduleRequests'), where('trainerId', '==', trainerId));
 
     const processData = async () => {
         try {
-            const [trainerSnap, studentsSnap, feedbackSnap, rescheduleSnap] = await Promise.all([
-                getDoc(trainerDocRef),
+            const [studentsSnap, feedbackSnap, rescheduleSnap] = await Promise.all([
                 getDocs(studentsQuery),
                 getDocs(feedbackQuery),
                 getDocs(rescheduleQuery)
             ]);
-            
-            const profileData = trainerSnap.exists() ? trainerSnap.data() : null;
-            const profile = profileData ? { 
-                id: trainerSnap.id, 
-                ...profileData,
-                registrationTimestamp: profileData.registrationTimestamp?.toDate ? profileData.registrationTimestamp.toDate().toISOString() : profileData.registrationTimestamp
-            } as UserProfile : null;
-
             
             const students = studentsSnap.docs.map(d => ({
                 id: d.id,
@@ -275,22 +274,22 @@ export const listenToTrainerStudents = (
                 requestTimestamp: d.data().requestTimestamp?.toDate ? format(d.data().requestTimestamp.toDate(), 'PPp') : 'N/A',
             } as RescheduleRequest));
 
-
-            callback({ students, feedback, rescheduleRequests, profile });
+            // This is the crucial part: call the callback even if results are empty.
+            callback({ students, feedback, rescheduleRequests });
         } catch (error) {
             console.error("Error fetching trainer student data:", error);
+            // Also call back on error to stop loading
+            callback({ students: [], feedback: [], rescheduleRequests: [] });
         }
     };
     
-    processData();
-
-    const unsubTrainer = onSnapshot(trainerDocRef, processData);
+    // Set up listeners for all collections
     const unsubStudents = onSnapshot(studentsQuery, processData);
     const unsubFeedback = onSnapshot(feedbackQuery, processData);
     const unsubReschedule = onSnapshot(rescheduleQuery, processData);
 
+    // Return a function that unsubscribes from all listeners
     return () => {
-        unsubTrainer();
         unsubStudents();
         unsubFeedback();
         unsubReschedule();

@@ -3,7 +3,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -24,42 +23,30 @@ import {
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
   GenderOptions,
-  TrainerPreferenceOptions,
 } from '@/types';
-import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, UserCheck as UserCheckIcon } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import { registerUserAction } from '@/lib/server-actions';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 
-function SubmitButton({ userRole }: { userRole: 'customer' | 'trainer' }) {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
-            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> :
-            userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
-        </Button>
-    );
-}
 
 interface RegistrationFormProps {
   userRole: 'customer' | 'trainer';
+  onSuccess: () => void;
 }
 
-export default function RegistrationForm({ userRole }: RegistrationFormProps) {
+export default function RegistrationForm({ userRole, onSuccess }: RegistrationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { logInUser } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
 
-  const [state, formAction] = useFormState(registerUserAction, { success: false, error: undefined, user: undefined });
-
-  const defaultValuesForRole: RegistrationFormValues = {
+  const form = useForm<RegistrationFormValues>({
+    resolver: zodResolver(RegistrationFormSchema),
+    defaultValues: {
       userRole: userRole,
       name: '', 
       email: '', 
@@ -69,79 +56,60 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
       phone: '',
       gender: undefined,
       location: undefined, 
-      yearsOfExperience: undefined, 
       specialization: undefined, 
       trainerVehicleType: undefined,
       fuelType: undefined, 
       vehicleNumber: '', 
-      drivingLicenseNumber: '', 
-      drivingLicenseFile: undefined,
-  };
-
-
-  const form = useForm<RegistrationFormValues>({
-    resolver: zodResolver(RegistrationFormSchema),
-    defaultValues: defaultValuesForRole,
+      drivingLicenseNumber: '',
+    },
     mode: 'onBlur',
   });
-
-  useEffect(() => {
-    if (state.success && state.user) {
-      toast({
-        title: "Registration Successful!",
-        description: "Your account has been created. Please choose a plan to continue.",
-      });
-      
-      const redirectUrl = searchParams.get('redirect');
-      if (redirectUrl) {
-          router.push(redirectUrl);
-      } else if (userRole === 'customer') {
-          router.push('/#subscriptions');
-      } else {
-          router.push('/dashboard');
-      }
-
-    } else if (state.error) {
-       toast({
-        title: "Registration Error",
-        description: state.error,
-        variant: "destructive",
-      });
-    }
-  }, [state, toast, router, searchParams, userRole]);
   
-  const onClientSubmit = (data: RegistrationFormValues) => {
-      const formData = new FormData();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { isSubmitting } = form.formState;
+
+  const handleSubmit = async (data: RegistrationFormValues) => {
+      setError(undefined); // Clear previous errors
       
-      // Append all data to formData, sending URL instead of file
-      for (const key in data) {
-          const value = (data as any)[key];
-          if (value instanceof File) {
-             formData.append(key, value);
-          } else if (value !== undefined && value !== null) {
-              formData.append(key, value);
+      // We don't need to create FormData here as we're not uploading files in this form anymore
+      const result = await registerUserAction(data);
+
+      if (result.success && result.user) {
+          toast({
+              title: "Registration Successful!",
+              description: "Your account has been created. Redirecting...",
+          });
+          
+          if (userRole === 'trainer') {
+              // For trainers, log them in and let the dashboard handle the redirect
+              // This is a special case to ensure the trainer sees their pending status
+              logInUser(result.user, true);
+          } else {
+              // For customers, call the onSuccess which redirects to subscriptions
+              onSuccess();
           }
+      } else {
+          setError(result.error);
       }
-
-      formAction(formData);
   };
-
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onClientSubmit)} className="space-y-8">
-        {state.error && !state.success && (
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+        {error && (
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
                 <AlertDescription>
-                    {state.error}
-                    {state.error.includes("already registered") && (
+                    {error}
+                    {error.includes("already registered") && (
                        <> You can <Link href="/login" className="font-bold underline">log in here</Link>.</>
                     )}
                 </AlertDescription>
             </Alert>
         )}
+        
         <input type="hidden" {...form.register('userRole')} value={userRole} />
 
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Login Credentials</h3>
@@ -157,7 +125,7 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
         <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Personal & Contact Information</h3>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
             <FormField control={form.control} name="name" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Full Name<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter full name" {...field} /></FormControl><FormMessage /></FormItem> )} />
-           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
+           <FormField control={form.control} name="phone" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Contact className="mr-2 h-4 w-4 text-primary" />Phone Number<span className="text-destructive ml-1">*</span></FormLabel><div className="flex items-center"><span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="Enter 10-digit number" {...field} /></FormControl></div><FormMessage /></FormItem> )} />
         </div>
         
         <FormField
@@ -188,27 +156,24 @@ export default function RegistrationForm({ userRole }: RegistrationFormProps) {
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                  <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-                 <FormField control={form.control} name="trainerVehicleType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{TrainerVehicleTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="trainerVehicleType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{TrainerVehicleTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="fuelType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent>{FuelTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="vehicleNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="e.g., MH01AB1234" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="fuelType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent>{FuelTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
-            </div>
-            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Documents & Verification</h3>
-            <p className="text-sm text-muted-foreground">Please provide the following document numbers and upload their respective files for verification.</p>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                <FormField control={form.control} name="drivingLicenseFile" render={({ field: { value, onChange, ...fieldProps } }) => ( <FormItem><FormLabel className="flex items-center"><FileUp className="mr-2 h-4 w-4 text-primary" />Upload Driving License<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="file" {...fieldProps} onChange={(event) => onChange(event.target.files?.[0])} accept=".pdf,.jpg,.jpeg,.png" /></FormControl><FormMessage /></FormItem> )} />
             </div>
           </>
         )}
 
         <div className="flex justify-end pt-4">
-            <SubmitButton userRole={userRole} />
+           <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {userRole === 'customer' ? <><User className="mr-2 h-4 w-4" /> Register Customer</> : <><UserCog className="mr-2 h-4 w-4" /> Register Trainer</>}
+          </Button>
         </div>
       </form>
     </Form>

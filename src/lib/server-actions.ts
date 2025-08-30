@@ -2,8 +2,8 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormValues, TrainerRegistrationFormSchema } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues } from '@/types';
 import { format, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
@@ -20,105 +20,131 @@ async function fileToBuffer(file: File): Promise<Buffer> {
 // =================================================================
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
 // =================================================================
-
-export async function registerUserAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function registerUserAction(data: RegistrationFormValues): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
-
-    const data = Object.fromEntries(formData.entries());
-    const file = formData.get('drivingLicenseFile');
     
-    if (file instanceof File && file.size > 0) {
-        data.drivingLicenseFile = file;
-    } else {
-        data.drivingLicenseFile = undefined;
-    }
+    const userRole = data.userRole;
 
-    try {
-        const validationResult = RegistrationFormSchema.safeParse(data);
-
+    if (userRole === 'trainer') {
+        const validationResult = TrainerRegistrationFormSchema.safeParse(data);
         if (!validationResult.success) {
-            console.error("Registration validation failed:", validationResult.error.format());
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
         }
-        
-        const { email, password, name, phone, userRole, username, gender } = validationResult.data;
 
-        // Check for existing user first to provide clear error messages
-        const usernameQuery = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-        if (!usernameQuery.empty) {
-            return { success: false, error: 'This username is already taken. Please choose another one.' };
-        }
-        
-        const emailQuery = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-        if (!emailQuery.empty) {
-             return { success: false, error: 'A user is already registered with this email address.' };
-        }
+        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber } = validationResult.data;
 
-        let drivingLicenseUrl = '';
-        if (userRole === 'trainer' && validationResult.data.drivingLicenseFile) {
-            const buffer = await fileToBuffer(validationResult.data.drivingLicenseFile);
-            drivingLicenseUrl = await uploadFileToCloudinary(buffer, 'trainer_licenses');
-        } else if (userRole === 'trainer') {
-            return { success: false, error: 'Driving license file is required for trainers.' };
-        }
-        
-        // 1. Create user in Firebase Auth
-        const userRecord = await adminAuth.createUser({
-            email: email,
-            emailVerified: true, // Set to true for development
-            password: password,
-            displayName: name,
-            disabled: false,
-        });
+        try {
+            // Check both collections for existing user
+            const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+            const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
+            if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
+                return { success: false, error: 'A user is already registered with this email address.' };
+            }
 
-        // 2. Prepare user profile for Firestore
-        const userProfileData: Omit<UserProfile, 'id'> = {
-            uniqueId: `${userRole === 'customer' ? 'CU' : 'TR'}-${userRecord.uid.slice(0, 6).toUpperCase()}`,
-            name,
-            username,
-            contact: email,
-            phone,
-            gender,
-            subscriptionPlan: userRole === 'trainer' ? 'Trainer' : 'None',
-            approvalStatus: 'Pending',
-            registrationTimestamp: new Date().toISOString(),
-        };
-
-        if (userRole === 'trainer') {
-            const {
-                location, yearsOfExperience, specialization, trainerVehicleType, fuelType, vehicleNumber,
-                drivingLicenseNumber
-            } = validationResult.data;
+            const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+            const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
+            if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
+                return { success: false, error: 'This username is already taken. Please choose another one.' };
+            }
             
-            Object.assign(userProfileData, {
-                location, 
-                specialization, 
-                yearsOfExperience, 
-                vehicleInfo: `${trainerVehicleType} (${fuelType}) - ${vehicleNumber}`,
-                drivingLicenseUrl: drivingLicenseUrl,
-                drivingLicenseNumber
+            const userRecord = await adminAuth.createUser({
+                email: email,
+                emailVerified: true,
+                password: password,
+                displayName: name,
+                disabled: false,
             });
-        }
-        
-        // 3. Save profile to Firestore using the UID from Auth as the document ID
-        await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
-        
-        const createdUser: UserProfile = { id: userRecord.uid, ...userProfileData };
-        
-        revalidatePath('/dashboard');
-        revalidatePath('/login');
+            
+            const trainerProfile: Omit<UserProfile, 'id'> = {
+                uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                name,
+                username,
+                contact: email,
+                phone,
+                gender,
+                userRole: 'trainer',
+                subscriptionPlan: 'Trainer',
+                approvalStatus: 'Pending',
+                location,
+                specialization,
+                vehicleInfo: `${trainerVehicleType} (${fuelType})`,
+                vehicleNumber,
+                drivingLicenseNumber,
+                registrationTimestamp: new Date().toISOString(),
+            };
+            
+            // Save to 'trainers' collection
+            await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
 
-        return { success: true, user: createdUser };
+            revalidatePath('/dashboard');
 
-    } catch (error: any) {
-        console.error("Error in registerUserAction:", error);
-        if (error.code === 'auth/email-already-exists') {
-            return { success: false, error: 'A user is already registered with this email address.' };
+            return { success: true, user: { ...trainerProfile, id: userRecord.uid } };
+
+        } catch (error: any) {
+            console.error("Error in trainer registerUserAction:", error);
+            if (error.code === 'auth/email-already-exists') {
+                return { success: false, error: 'A user is already registered with this email address.' };
+            }
+            return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
         }
-        return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
+
+    } else {
+        // Handle Customer Registration
+        const validationResult = RegistrationFormSchema.safeParse(data);
+        if (!validationResult.success) {
+            const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
+            return { success: false, error: firstError };
+        }
+        const { email, password, name, phone, username, gender } = validationResult.data;
+
+        try {
+            const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+            const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
+            if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
+                 return { success: false, error: 'A user is already registered with this email address.' };
+            }
+             const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+             const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
+            if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
+                return { success: false, error: 'This username is already taken. Please choose another one.' };
+            }
+
+            const userRecord = await adminAuth.createUser({
+                email: email,
+                emailVerified: true,
+                password: password,
+                displayName: name,
+                disabled: false,
+            });
+
+            const userProfileData: Omit<UserProfile, 'id'> = {
+                uniqueId: `CU-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                name,
+                username,
+                contact: email,
+                phone,
+                gender,
+                userRole: 'customer',
+                subscriptionPlan: 'None',
+                approvalStatus: 'Pending',
+                registrationTimestamp: new Date().toISOString(),
+            };
+             await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
+
+            revalidatePath('/dashboard');
+            revalidatePath('/login');
+            return { success: true, user: { ...userProfileData, id: userRecord.uid } };
+
+        } catch (error: any) {
+            console.error("Error in customer registerUserAction:", error);
+             if (error.code === 'auth/email-already-exists') {
+                return { success: false, error: 'A user is already registered with this email address.' };
+            }
+            return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
+        }
     }
 }
 
@@ -132,16 +158,20 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         return { success: true };
     } catch (error: any) {
         console.error("Password reset error:", error);
+        // Do not reveal if an email exists or not for security reasons.
+        // Always return success to the client.
         return { success: true };
     }
 }
 
-export async function updateUserApprovalStatus({ userId, newStatus }: { userId: string; newStatus: ApprovalStatusType; }): Promise<{ success: boolean; error?: string }> {
+export async function updateUserApprovalStatus({ userId, newStatus, role }: { userId: string; newStatus: ApprovalStatusType; role: 'customer' | 'trainer' | 'admin' }): Promise<{ success: boolean; error?: string }> {
     if (!adminDb) return { success: false, error: "Database not configured." };
     
     try {
-        const userRef = adminDb.collection('users').doc(userId);
+        const collectionName = role === 'trainer' ? 'trainers' : 'users';
+        const userRef = adminDb.collection(collectionName).doc(userId);
         await userRef.update({ approvalStatus: newStatus });
+
         revalidatePath('/dashboard');
         return { success: true };
     } catch (error: any) {
@@ -149,6 +179,30 @@ export async function updateUserApprovalStatus({ userId, newStatus }: { userId: 
         return { success: false, error: "Failed to update user status." };
     }
 }
+
+export async function deleteUserAction({ userId, userRole }: { userId: string; userRole: 'customer' | 'trainer' | 'admin' }): Promise<{ success: boolean; error?: string }> {
+    if (!adminAuth || !adminDb) {
+        return { success: false, error: "Server is not configured correctly." };
+    }
+
+    try {
+        // Delete from Firebase Authentication
+        await adminAuth.deleteUser(userId);
+
+        // Delete from Firestore
+        const collectionName = userRole === 'trainer' ? 'trainers' : 'users';
+        await adminDb.collection(collectionName).doc(userId).delete();
+
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error: any) {
+        console.error(`Failed to delete user ${userId}:`, error);
+        // If Firestore delete fails but Auth delete succeeded, we might have an orphaned auth user.
+        // For now, return a generic error. More complex handling could be added later.
+        return { success: false, error: "An error occurred while deleting the user." };
+    }
+}
+
 
 export async function completeCustomerProfileAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminDb) {
@@ -201,9 +255,19 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     updatePayload.photoURL = photoURL;
   }
 
+  // Attempt to update in both collections, as we don't know the role here.
   const userRef = adminDb.collection('users').doc(userId);
-  await userRef.update(updatePayload);
-  const updatedDoc = await userRef.get();
+  const trainerRef = adminDb.collection('trainers').doc(userId);
+  const userDoc = await userRef.get();
+
+  let updatedDoc;
+  if(userDoc.exists) {
+      await userRef.update(updatePayload);
+      updatedDoc = await userRef.get();
+  } else {
+      await trainerRef.update(updatePayload);
+      updatedDoc = await trainerRef.get();
+  }
   
   revalidatePath('/dashboard/profile');
   const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
@@ -537,7 +601,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     if (!adminDb) return false;
     
     const customerRef = adminDb.collection('users').doc(customerId);
-    const trainerRef = adminDb.collection('users').doc(trainerId);
+    const trainerRef = adminDb.collection('trainers').doc(trainerId);
 
     const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
 
@@ -561,7 +625,6 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         assignedTrainerId: trainerId,
         assignedTrainerName: trainerData.name,
         assignedTrainerPhone: trainerData.phone,
-        assignedTrainerExperience: trainerData.yearsOfExperience,
         assignedTrainerVehicleDetails: trainerData.vehicleInfo,
         totalLessons: totalLessons,
         completedLessons: 0,
@@ -573,41 +636,48 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 }
 
 
-export async function getLoginUser(identifier: string): Promise<UserProfile | null> {
+export async function getLoginUser(identifier: string): Promise<{ success: boolean, user?: UserProfile, error?: string, code?: string }> {
     if (!adminDb) {
         console.error("Admin DB not initialized.");
-        return null;
+        return { success: false, error: "Server not configured." };
     }
     
     try {
         let userQuery;
+        let trainerQuery;
 
-        // Check if identifier is an email
         if (identifier.includes('@')) {
             userQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
+            trainerQuery = adminDb.collection('trainers').where('contact', '==', identifier).limit(1);
         } else {
-            // Assume it's a username
             userQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
+            trainerQuery = adminDb.collection('trainers').where('username', '==', identifier).limit(1);
         }
 
-        const userQuerySnapshot = await userQuery.get();
-
-        if (userQuerySnapshot.empty) {
-            console.log(`No user found for identifier: ${identifier}`);
-            return null;
+        const [userQuerySnapshot, trainerQuerySnapshot] = await Promise.all([
+            userQuery.get(),
+            trainerQuery.get()
+        ]);
+        
+        let userDoc;
+        if (!userQuerySnapshot.empty) {
+            userDoc = userQuerySnapshot.docs[0];
+        } else if (!trainerQuerySnapshot.empty) {
+            userDoc = trainerQuerySnapshot.docs[0];
+        } else {
+            return { success: false, error: "User not found.", code: 'auth/user-not-found' };
         }
         
-        const userDoc = userQuerySnapshot.docs[0];
         const userData = userDoc.data();
         
         if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
             userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
         }
         
-        return { id: userDoc.id, ...userData } as UserProfile;
+        return { success: true, user: { id: userDoc.id, ...userData } as UserProfile };
 
     } catch (error) {
         console.error("Error in getLoginUser server action:", error);
-        return null;
+        return { success: false, error: "An unexpected error occurred." };
     }
 }

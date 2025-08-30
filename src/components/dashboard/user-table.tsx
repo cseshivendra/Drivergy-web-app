@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -8,33 +7,39 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
 import { Locations, GenderOptions } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus, assignTrainerToCustomer } from '@/lib/server-actions';
+import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 
+type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer';
+
 interface UserTableProps {
   title: ReactNode;
   users: UserProfile[];
   isLoading: boolean;
   onUserActioned: () => void;
-  isInterestedList?: boolean; // This prop determines if it's for 'Interested Customers'
+  actionType: ActionType;
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function UserTable({ title, users, isLoading, onUserActioned, isInterestedList = false }: UserTableProps) {
+export default function UserTable({ title, users, isLoading, onUserActioned, actionType }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+
   const [selectedUserForAssignment, setSelectedUserForAssignment] = useState<UserProfile | null>(null);
   const [availableTrainers, setAvailableTrainers] = useState<UserProfile[]>([]);
   const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
@@ -118,7 +123,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
     }
 
     try {
-      const result = await updateUserApprovalStatus({ userId: user.id, newStatus });
+      const result = await updateUserApprovalStatus({ userId: user.id, newStatus, role: user.userRole || 'customer' });
       if (result.success) {
         toast({
           title: `User ${newStatus}`,
@@ -145,6 +150,37 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
       description: `Opening details for ${user.name} in a new tab.`,
     });
   };
+
+  const openDeleteDialog = (user: UserProfile) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+        const result = await deleteUserAction({ userId: userToDelete.id, userRole: userToDelete.userRole || 'customer' });
+        if (result.success) {
+            toast({
+                title: "User Deleted",
+                description: `${userToDelete.name} has been permanently deleted.`,
+            });
+            onUserActioned();
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        toast({
+            title: "Deletion Failed",
+            description: error instanceof Error ? error.message : "An unexpected error occurred.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsDeleteDialogOpen(false);
+        setUserToDelete(null);
+    }
+  };
   
   const getStatusColor = (status: ApprovalStatusType) => {
     switch (status) {
@@ -164,7 +200,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
         <TableCell><Skeleton className="h-5 w-28" /></TableCell>
         <TableCell><Skeleton className="h-5 w-36" /></TableCell>
         <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-        {!isInterestedList && (
+        {actionType !== 'interested-customer' && (
            <>
             <TableCell><Skeleton className="h-5 w-20" /></TableCell>
             <TableCell><Skeleton className="h-5 w-24" /></TableCell> 
@@ -176,6 +212,44 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
       </TableRow>
     ))
   );
+
+  const renderActions = (user: UserProfile) => {
+    switch (actionType) {
+      case 'new-customer':
+        return (
+          <div className="flex items-center justify-center space-x-1.5">
+            <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent" aria-label={`View details for ${user.name}`}><Eye className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">View</span></Button>
+            <Button variant="default" size="sm" onClick={() => openAssignDialog(user)} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1" aria-label={`Assign trainer for ${user.name}`}><UserCheck className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Approve & Assign</span></Button>
+            <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(user, 'Rejected')} className="px-2 py-1" aria-label={`Reject ${user.name}`}><X className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Reject</span></Button>
+          </div>
+        );
+      case 'new-trainer':
+      case 'existing-trainer':
+         return (
+            <div className="flex items-center justify-center space-x-1.5">
+              <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent" aria-label={`View details for ${user.name}`}><Eye className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">View</span></Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="w-[130px] justify-between"><span>Update Status</span><ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}><Check className="mr-2 h-4 w-4 text-green-500" /><span>Approved</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'In Progress')}><Hourglass className="mr-2 h-4 w-4 text-blue-500" /><span>In Progress</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')}><X className="mr-2 h-4 w-4 text-red-500" /><span>Rejected</span></DropdownMenuItem>
+                   <Separator className="my-1" />
+                   <DropdownMenuItem onClick={() => openDeleteDialog(user)} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" /><span>Delete</span></DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+         );
+      case 'interested-customer':
+        return (
+          <div className="flex items-center justify-center">
+            <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)}><Eye className="mr-1 h-3 w-3"/>View Details</Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -191,7 +265,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                   <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
                   <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
                   <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
-                  {!isInterestedList && (
+                  {actionType !== 'interested-customer' && (
                     <>
                     <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
                     <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Subscription</TableHead>
@@ -199,20 +273,18 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                     </>
                   )}
                   <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Registered</TableHead>
-                  {!isInterestedList && <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>}
+                  {actionType !== 'interested-customer' && <TableHead><Hourglass className="inline-block mr-2 h-4 w-4" />Status</TableHead>}
                   <TableHead className="text-center"><Settings2 className="inline-block mr-2 h-4 w-4" />Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? renderSkeletons() : paginatedUsers.length > 0 ? (
-                  paginatedUsers.map((user) => {
-                    const isTrainer = user.uniqueId.startsWith('TR');
-                    return (
+                  paginatedUsers.map((user) => (
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
                         <TableCell>{user.name}</TableCell>
                         <TableCell>{user.phone || user.contact}</TableCell>
-                        {!isInterestedList && (
+                        {actionType !== 'interested-customer' && (
                             <>
                                 <TableCell>{user.location}</TableCell>
                                 <TableCell>
@@ -229,105 +301,26 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
                             </>
                         )}
                         <TableCell>{user.registrationTimestamp ? format(parseISO(user.registrationTimestamp), 'PP') : 'N/A'}</TableCell>
-                        {!isInterestedList && (
+                        {actionType !== 'interested-customer' && (
                             <TableCell>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus)}`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus as ApprovalStatusType)}`}>
                                 {user.approvalStatus}
                             </span>
                             </TableCell>
                         )}
                         <TableCell>
-                           {isTrainer ? (
-                            <div className="flex items-center justify-center space-x-1.5">
-                              <Button 
-                                variant="outline" size="sm" 
-                                onClick={() => handleViewDetails(user)}
-                                className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                                aria-label={`View details for ${user.name}`}
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">View</span>
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm" className="w-[130px] justify-between">
-                                    <span>Update Status</span>
-                                    <ChevronDown className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}>
-                                    <Check className="mr-2 h-4 w-4 text-green-500" />
-                                    <span>Approved</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'In Progress')}>
-                                    <Hourglass className="mr-2 h-4 w-4 text-blue-500" />
-                                    <span>In Progress</span>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')}>
-                                    <X className="mr-2 h-4 w-4 text-red-500" />
-                                    <span>Rejected</span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          ) : isInterestedList ? (
-                              <div className="flex items-center justify-center">
-                                <Button 
-                                  variant="outline" size="sm" 
-                                  onClick={() => handleViewDetails(user)}
-                                  className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                                  aria-label={`View details for ${user.name}`}
-                                >
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </Button>
-                              </div>
-                          ) : (
-                            <div className="flex items-center justify-center space-x-1.5">
-                              <Button 
-                                variant="outline"
-                                size="sm" 
-                                onClick={() => handleViewDetails(user)}
-                                className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent"
-                                aria-label={`View details for ${user.name}`}
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">View</span>
-                              </Button>
-                              <Button 
-                                variant="default" 
-                                size="sm" 
-                                onClick={() => openAssignDialog(user)}
-                                className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"
-                                aria-label={`Assign trainer for ${user.name}`}
-                              >
-                                <UserCheck className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">Approve & Assign</span>
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => handleUpdateStatus(user, 'Rejected')}
-                                className="px-2 py-1"
-                                aria-label={`Reject ${user.name}`}
-                              >
-                                <X className="h-3.5 w-3.5" />
-                                <span className="ml-1.5 hidden sm:inline">Reject</span>
-                              </Button>
-                            </div>
-                          )}
+                           {renderActions(user)}
                         </TableCell>
                       </TableRow>
                     )
-                  })
+                  )
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={isInterestedList ? 5 : 9} className="h-24 text-center"> 
+                    <TableCell colSpan={actionType === 'interested-customer' ? 5 : 9} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                        <p className="text-lg">No {isInterestedList ? 'interested customers' : 'pending enrollments'} found.</p>
-                        <p className="text-sm">{isInterestedList ? 'New sign-ups will appear here.' : 'Check back later or adjust filters.'}</p>
+                        <p className="text-lg">No {actionType === 'interested-customer' ? 'interested customers' : 'pending enrollments'} found.</p>
+                        <p className="text-sm">{actionType === 'interested-customer' ? 'New sign-ups will appear here.' : 'Check back later or adjust filters.'}</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -456,6 +449,20 @@ export default function UserTable({ title, users, isLoading, onUserActioned, isI
           </DialogFooter>
         </DialogContent>
       </Dialog>
+       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user <span className="font-semibold">{userToDelete?.name}</span> and all associated data from the system.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

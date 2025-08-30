@@ -135,18 +135,21 @@ export default function AdminDashboard() {
                         users={pendingVerificationCustomers}
                         isLoading={loading}
                         onUserActioned={handleActioned}
+                        actionType="new-customer"
                     />
                     <UserTable
                         title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>}
                         users={pendingInstructors}
                         isLoading={loading}
                         onUserActioned={handleActioned}
+                        actionType="new-trainer"
                     />
                     <UserTable
                         title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>}
                         users={existingInstructors}
                         isLoading={loading}
                         onUserActioned={handleActioned}
+                        actionType="existing-trainer"
                     />
                 </TabsContent>
                 <TabsContent value="requests" className="space-y-8">
@@ -155,7 +158,7 @@ export default function AdminDashboard() {
                         users={interestedCustomers}
                         isLoading={loading}
                         onUserActioned={handleActioned}
-                        isInterestedList={true}
+                        actionType="interested-customer"
                     />
                      <RequestTable
                         title={<><ListChecks className="inline-block mr-3 h-6 w-6 align-middle" />New Lesson Requests</>}

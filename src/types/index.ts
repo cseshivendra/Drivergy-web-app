@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 import type { LucideIcon } from 'lucide-react';
 
@@ -51,6 +52,7 @@ export const UserProfileSchema = z.object({
   myReferralCode: z.string().optional(),
   photoURL: z.string().url().optional(),
   gender: z.string(),
+  userRole: z.enum(['customer', 'trainer', 'admin']).optional(),
   
   // Customer specific
   flatHouseNumber: z.string().optional(),
@@ -69,8 +71,6 @@ export const UserProfileSchema = z.object({
   assignedTrainerId: z.string().optional(),
   assignedTrainerName: z.string().optional(),
   assignedTrainerPhone: z.string().optional(),
-  assignedTrainerExperience: z.number().optional(),
-  assignedTrainerVehicleDetails: z.string().optional(),
   upcomingLesson: z.string().optional(),
   subscriptionStartDate: z.string().optional(),
   totalLessons: z.number().optional(),
@@ -82,10 +82,9 @@ export const UserProfileSchema = z.object({
 
   // Trainer specific
   specialization: z.string().optional(),
-  yearsOfExperience: z.number().optional(),
   drivingLicenseUrl: z.string().optional(),
   drivingLicenseNumber: z.string().optional(),
-  expertise: z.string().optional()
+  expertise: z.string().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
@@ -124,18 +123,19 @@ const baseRegistrationSchema = z.object({
 export const CustomerRegistrationFormSchema = baseRegistrationSchema.extend({
   userRole: z.literal('customer'),
 });
+export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
-  userRole: z.literal('trainer'),
-  location: z.enum(Locations, { required_error: "Location is required." }),
-  yearsOfExperience: z.coerce.number().min(0, "Experience cannot be negative."),
-  specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
-  trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
-  fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
-  vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
-  drivingLicenseNumber: z.string().min(1, 'License number is required.'),
-  drivingLicenseFile: requiredFileSchema,
+    userRole: z.literal('trainer'),
+    location: z.enum(Locations, { required_error: "Location is required." }),
+    specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
+    trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
+    fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
+    vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
+    drivingLicenseNumber: z.string().min(1, 'License number is required.'),
 });
+export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
+
 
 export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
   CustomerRegistrationFormSchema,
@@ -145,8 +145,6 @@ export const RegistrationFormSchema = z.discriminatedUnion('userRole', [
   path: ["confirmPassword"],
 });
 
-export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistrationFormSchema>;
-export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 export type RegistrationFormValues = z.infer<typeof RegistrationFormSchema>;
 
 
@@ -302,8 +300,8 @@ export interface SummaryData {
   activeSubscriptions: number;
   pendingRequests: number;
   pendingRescheduleRequests: number;
-  totalEarnings: number;
   totalCertifiedTrainers: number;
+  totalEarnings: number;
 }
 
 export interface CourseModule {

@@ -58,9 +58,15 @@ export default function Footer() {
                 <span className="font-semibold text-foreground">Made in India</span>
             </div>
         </div>
-        <p className="text-xs text-muted-foreground pt-2">
-            &copy; {new Date().getFullYear()} Drivergy. All rights reserved. <Link href="#" className="underline hover:text-primary">Privacy Policy</Link>.
-        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2">
+            <p>&copy; {new Date().getFullYear()} Drivergy. All rights reserved.</p>
+            <span className="hidden md:inline text-muted-foreground/50">|</span>
+            <Link href="/privacy-policy" className="underline hover:text-primary">Privacy Policy</Link>
+            <span className="hidden md:inline text-muted-foreground/50">|</span>
+            <Link href="/terms-and-conditions" className="underline hover:text-primary">Terms & Conditions</Link>
+            <span className="hidden md:inline text-muted-foreground/50">|</span>
+            <Link href="/refund-policy" className="underline hover:text-primary">Refund Policy</Link>
+        </div>
       </div>
     </footer>
   );

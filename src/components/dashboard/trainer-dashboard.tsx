@@ -1,12 +1,11 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { listenToTrainerStudents } from '@/lib/mock-data';
-import { updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/server-actions';
-import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest } from '@/types';
+import { listenToTrainerStudents, listenToUser } from '@/lib/mock-data';
+import { updateUserAttendance, updateAssignmentStatusByTrainer, updateRescheduleRequestStatus } from '@/lib/server-actions';
+import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -59,18 +58,16 @@ export default function TrainerDashboard() {
   const [summary, setSummary] = useState<TrainerSummaryData | null>(null);
   const [allStudents, setAllStudents] = useState<UserProfile[]>([]);
   const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
-  const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const handleDataUpdate = (data: {
     students: UserProfile[];
     feedback: Feedback[];
     rescheduleRequests: RescheduleRequest[];
-    profile: UserProfile | null;
   }) => {
     setAllStudents(data.students);
     setRescheduleRequests(data.rescheduleRequests);
-    setTrainerProfile(data.profile);
 
     const approvedStudents = data.students.filter(s => s.approvalStatus === 'Approved');
     let avgRating = 0;
@@ -86,26 +83,61 @@ export default function TrainerDashboard() {
       pendingRescheduleRequests: data.rescheduleRequests.filter(r => r.status === 'Pending').length,
     };
     setSummary(summaryData);
-    setLoading(false);
   };
   
   const refetchData = () => {
-      if (user?.id) {
-          listenToTrainerStudents(user.id, handleDataUpdate);
+      if (profile?.id && profile.approvalStatus === 'Approved') {
+          listenToTrainerStudents(profile.id, handleDataUpdate);
       }
   }
 
+  const handleRescheduleAction = async (requestId: string, status: RescheduleRequestStatusType) => {
+        const success = await updateRescheduleRequestStatus(requestId, status);
+        if (success) {
+            toast({
+                title: "Request Updated",
+                description: `The reschedule request has been ${status.toLowerCase()}.`
+            });
+            refetchData();
+        } else {
+            toast({
+                title: "Update Failed",
+                description: "Could not update the request status.",
+                variant: "destructive",
+            });
+        }
+    };
+
   useEffect(() => {
     if (!user?.id) {
-      setLoading(false);
-      return;
+        setLoading(false);
+        return;
     }
-
-    setLoading(true);
-    const unsubscribe = listenToTrainerStudents(user.id, handleDataUpdate);
     
-    return () => unsubscribe();
-  }, [user]);
+    setLoading(true);
+    let unsubDashboard: (() => void) | undefined;
+
+    // First, listen to the trainer's own profile.
+    const unsubProfile = listenToUser(user.id, (userProfile) => {
+        setProfile(userProfile);
+        setLoading(false); // Stop loading as soon as the profile is fetched.
+
+        // ONLY if the profile is loaded and the status is 'Approved', then fetch student data.
+        if (userProfile?.approvalStatus === 'Approved') {
+            if (unsubDashboard) unsubDashboard(); // Unsubscribe from previous listener if profile changes
+            unsubDashboard = listenToTrainerStudents(userProfile.id, handleDataUpdate);
+        }
+    }, 'trainers');
+
+    // Cleanup function for all listeners.
+    return () => {
+      unsubProfile();
+      if (unsubDashboard) {
+        unsubDashboard();
+      }
+    };
+  }, [user?.id]);
+
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
     updateAssignmentStatusByTrainer(studentId, status);
@@ -131,7 +163,9 @@ export default function TrainerDashboard() {
   if (loading) {
     return (
       <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-        <Skeleton className="h-10 w-1/3 mb-4" />
+        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+          Welcome, {user?.name}!
+        </h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Skeleton className="h-[126px] w-full rounded-lg" />
             <Skeleton className="h-[126px] w-full rounded-lg" />
@@ -143,20 +177,20 @@ export default function TrainerDashboard() {
     );
   }
 
-  if (trainerProfile && trainerProfile.approvalStatus !== 'Approved') {
+  if (profile && profile.approvalStatus !== 'Approved') {
     return (
-        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center">
+        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
             <Card className="shadow-xl text-center p-8">
                 <CardHeader>
                     <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
                         <Hourglass className="h-12 w-12 text-yellow-500" />
                     </div>
-                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {trainerProfile.name}!</CardTitle>
+                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
                     <CardDescription className="text-lg mt-4">
                         <div className="flex items-center justify-center gap-2">
                             <span>Verification Status:</span>
-                            <Badge className={`text-base ${getStatusBadgeClass(trainerProfile.approvalStatus)}`}>
-                                {trainerProfile.approvalStatus}
+                            <Badge className={`text-base ${getStatusBadgeClass(profile.approvalStatus)}`}>
+                                {profile.approvalStatus}
                             </Badge>
                         </div>
                     </CardDescription>
@@ -178,9 +212,9 @@ export default function TrainerDashboard() {
       <header className="mb-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-              Welcome, {trainerProfile?.name}!
+              Welcome, {user?.name}!
             </h1>
-            <Badge className={`text-base ${getStatusBadgeClass(trainerProfile?.approvalStatus || 'Pending')}`}>
+            <Badge className={`text-base ${getStatusBadgeClass(profile?.approvalStatus || 'Pending')}`}>
                 <ShieldCheck className="mr-2 h-5 w-5"/>
                 Verified
             </Badge>
@@ -260,7 +294,7 @@ export default function TrainerDashboard() {
         title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
         requests={rescheduleRequests}
         isLoading={loading}
-        onActioned={refetchData}
+        onActioned={handleRescheduleAction}
       />
 
 
