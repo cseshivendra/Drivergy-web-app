@@ -2,79 +2,71 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Helper function to check if a user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    // Helper function to check if the user is the owner of the document
+
+    // Helper function to check if the requesting user is the owner of the document
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
-    // --- Public Collections (read-only for everyone) ---
-    match /blog/{postId} {
-      allow read: if true;
-      allow write: if false; // Should be managed by admins/server actions
+    // Default deny all reads and writes to ensure security
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if false; 
-    }
-    
-    match /faqs/{faqId} {
-        allow read: if true;
-        allow write: if false;
-    }
-
-    match /quizSets/{quizSetId} {
-        allow read: if true;
-        allow write: if false;
-    }
-
-    match /siteBanners/{bannerId} {
-        allow read: if true;
-        allow write: if false;
-    }
-
-    match /promotionalPosters/{posterId} {
-        allow read: if true;
-        allow write: if false;
-    }
-    
-    // --- User Collections ---
-
-    // Allow authenticated users to read any user/trainer profile
-    // Allow users to create their own profile upon registration
-    // Allow users to only update or delete their own profile
+    // USERS AND TRAINERS
+    // Allow authenticated users to read any profile (needed for login/dashboard)
+    // Allow users to create their own profile, and only update/delete their own
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
       allow update, delete: if isOwner(userId);
     }
-
     match /trainers/{trainerId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(trainerId);
       allow update, delete: if isOwner(trainerId);
     }
-    
-    // --- Other Collections (for authenticated users) ---
-    
-    match /feedback/{feedbackId} {
-      allow create: if isAuthenticated(); // Allow any authenticated user to give feedback
-      allow read, write: if false; // Should be managed by admins
+
+    // PUBLIC CONTENT
+    // Allow public read access for general content collections
+    match /blog/{postId} {
+      allow get, list: if true;
+    }
+    match /courses/{courseId} {
+      allow get, list: if true;
+    }
+    match /faqs/{faqId} {
+      allow get, list: if true;
+    }
+    match /quizSets/{quizSetId} {
+      allow get, list: if true;
+    }
+    match /siteBanners/{bannerId} {
+        allow get, list: if true;
+    }
+     match /promotionalPosters/{posterId} {
+        allow get, list: if true;
     }
 
+
+    // USER-SPECIFIC SUBCOLLECTIONS & ACTIONS
+    // Allow authenticated users to manage their own specific data
+    match /feedback/{feedbackId} {
+      allow create: if isAuthenticated();
+    }
     match /rescheduleRequests/{requestId} {
-        allow create: if isAuthenticated(); // Allow users to create requests
-        allow read, write: if false; // To be handled by admins/server-actions
+      allow create: if isAuthenticated();
+      // Allow update only by the owner or an admin (future-proofing)
+      allow update: if isOwner(request.resource.data.userId);
     }
-    
-    match /referrals/{referralId} {
-      allow read, write: if false; // All referral logic should be handled by secure server actions
-    }
+     match /referrals/{referralId} {
+       allow read: if isAuthenticated();
+       allow create: if isAuthenticated();
+     }
   }
 }
