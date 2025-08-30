@@ -4,66 +4,68 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow public read for collections that need to be displayed on the public site
-    match /courses/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /quizSets/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-     match /faqs/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-     match /blog/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-     match /siteBanners/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-     match /promotionalPosters/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    // Users can read/write their own data.
-    // Admin operations are done via server-side Admin SDK, which bypasses these rules.
-    match /users/{userId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Trainers can read/write their own data.
-    match /trainers/{trainerId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == trainerId;
-    }
-
-    // Allow authenticated users to read trainer profiles
-    match /trainers/{trainerId} {
-        allow get: if request.auth != null;
-    }
-    
-    // Allow admin to manage reschedule requests
-    match /rescheduleRequests/{requestId} {
-      allow read, write: if request.auth != null; // Simplified for now
-    }
-    
-    // Allow users to submit feedback
-    match /feedback/{feedbackId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null; // Allow users to read feedback
-    }
-
-    // Default deny all other access
+    // Default deny all reads and writes
     match /{document=**} {
       allow read, write: if false;
+    }
+
+    // Allow public read for content collections
+    match /blog/{postId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
+    }
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
+    }
+    match /quizSets/{quizSetId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
+    }
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
+    }
+    match /siteBanners/{bannerId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
+    }
+    match /promotionalPosters/{posterId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Allow authenticated users to write (for admin)
+    }
+
+    // Allow anyone to create a user profile (for registration)
+    // Allow authenticated users to read any profile (for fetching details)
+    // Allow users to update/delete only their own profile
+    match /users/{userId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth.uid == userId;
+    }
+
+    // Allow anyone to create a trainer profile (for registration)
+    // Allow authenticated users to read any profile (for fetching details)
+    // Allow trainers to update/delete only their own profile
+    match /trainers/{trainerId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth.uid == trainerId;
+    }
+    
+    // Allow authenticated users to manage their related data
+    match /feedback/{feedbackId} {
+        allow create: if request.auth != null;
+        allow read: if request.auth != null;
+    }
+    match /rescheduleRequests/{requestId} {
+        allow create: if request.auth != null;
+        allow read: if request.auth != null;
+        allow update: if request.auth != null; // Admin or involved trainer can update
+    }
+    match /referrals/{referralId} {
+        allow read: if request.auth != null;
+        allow update: if request.auth != null; // Admin can update
     }
   }
 }

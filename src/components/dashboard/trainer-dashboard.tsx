@@ -4,8 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToTrainerStudents, listenToUser } from '@/lib/mock-data';
-import { updateUserAttendance, updateAssignmentStatusByTrainer } from '@/lib/server-actions';
-import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest } from '@/types';
+import { updateUserAttendance, updateAssignmentStatusByTrainer, updateRescheduleRequestStatus } from '@/lib/server-actions';
+import type { UserProfile, TrainerSummaryData, ApprovalStatusType, Feedback, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
 import SummaryCard from '@/components/dashboard/summary-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -91,35 +91,52 @@ export default function TrainerDashboard() {
       }
   }
 
+  const handleRescheduleAction = async (requestId: string, status: RescheduleRequestStatusType) => {
+        const success = await updateRescheduleRequestStatus(requestId, status);
+        if (success) {
+            toast({
+                title: "Request Updated",
+                description: `The reschedule request has been ${status.toLowerCase()}.`
+            });
+            refetchData();
+        } else {
+            toast({
+                title: "Update Failed",
+                description: "Could not update the request status.",
+                variant: "destructive",
+            });
+        }
+    };
+
   useEffect(() => {
     if (!user?.id) {
         setLoading(false);
         return;
     }
+    
+    setLoading(true);
+    let unsubDashboard: (() => void) | undefined;
 
-    // Set up a listener for the trainer's own profile.
+    // First, listen to the trainer's own profile.
     const unsubProfile = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
         setLoading(false); // Stop loading as soon as the profile is fetched.
+
+        // ONLY if the profile is loaded and the status is 'Approved', then fetch student data.
+        if (userProfile?.approvalStatus === 'Approved') {
+            if (unsubDashboard) unsubDashboard(); // Unsubscribe from previous listener if profile changes
+            unsubDashboard = listenToTrainerStudents(userProfile.id, handleDataUpdate);
+        }
     }, 'trainers');
 
-    return () => unsubProfile();
-  }, [user?.id]);
-  
-  useEffect(() => {
-    let unsubDashboard: (() => void) | undefined;
-    // ONLY if the profile is loaded and the status is 'Approved', then fetch student data.
-    if (profile?.id && profile.approvalStatus === 'Approved') {
-        unsubDashboard = listenToTrainerStudents(profile.id, handleDataUpdate);
-    }
-    
-    // Cleanup function for the dashboard listener.
+    // Cleanup function for all listeners.
     return () => {
-        if (unsubDashboard) {
-            unsubDashboard();
-        }
+      unsubProfile();
+      if (unsubDashboard) {
+        unsubDashboard();
+      }
     };
-  }, [profile]); // This effect depends only on the profile state.
+  }, [user?.id]);
 
 
   const handleAssignmentResponse = async (studentId: string, studentName: string, status: 'Approved' | 'Rejected') => {
@@ -277,7 +294,7 @@ export default function TrainerDashboard() {
         title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
         requests={rescheduleRequests}
         isLoading={loading}
-        onActioned={refetchData}
+        onActioned={handleRescheduleAction}
       />
 
 
