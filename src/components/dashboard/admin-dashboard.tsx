@@ -42,28 +42,36 @@ export default function AdminDashboard() {
     const [tempSearchTerm, setTempSearchTerm] = useState('');
 
     const handleActioned = useCallback(() => {
-      // This function re-triggers the listener in mock-data, simulating a refetch
-      if(user) {
-        listenToAdminDashboardData(setDashboardData);
-      }
+        // This function re-triggers the listener in mock-data, simulating a refetch
+        if(user?.isAdmin) { // Check if user is admin before listening
+            setLoading(true);
+            const unsubscribe = listenToAdminDashboardData((data) => {
+                setDashboardData(data);
+                setLoading(false);
+            });
+            // We can't return the unsubscribe function from here in a way that React will use it for cleanup.
+            // This is a simplified refetch for the purpose of this component.
+            // In a real-world scenario, you might use a more advanced state management library.
+        }
     }, [user]);
 
     useEffect(() => {
-        if (!user) {
+        // Only fetch admin data if the logged-in user is an admin.
+        if (user?.isAdmin) {
+            setLoading(true);
+            const unsubscribe = listenToAdminDashboardData((data) => {
+                setDashboardData(data);
+                setLoading(false);
+            });
+            
+            // Cleanup function to unsubscribe from the listener when the component unmounts
+            return () => {
+                if (unsubscribe) unsubscribe();
+            };
+        } else {
+            // If the user is not an admin, don't attempt to load admin data.
             setLoading(false);
-            return;
         }
-
-        setLoading(true);
-        const unsubscribe = listenToAdminDashboardData((data) => {
-            setDashboardData(data);
-            setLoading(false);
-        });
-
-        // Cleanup function
-        return () => {
-            if (unsubscribe) unsubscribe();
-        };
     }, [user]);
 
 
