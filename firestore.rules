@@ -1,81 +1,67 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
+    
+    // Allow public read access
+    match /blog/{document} {
+      allow read: if true;
+    }
+    match /courses/{document} {
+      allow read: if true;
+    }
+    match /faqs/{document} {
+      allow read: if true;
+    }
+    match /quizSets/{document} {
+      allow read: if true;
+    }
+     match /siteBanners/{document} {
+      allow read: if true;
+    }
+     match /promotionalPosters/{document} {
+      allow read: if true;
+    }
 
-    function isAdmin() {
-      // Check if the user is an admin by looking up their profile in the 'users' collection.
-      // Assumes admins have an `isAdmin: true` field.
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-    
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-    
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Publicly readable collections
-    match /blog/{postId} {
-      allow read: if true;
-      allow write: if isAuthenticated(); // Simplification: any logged-in user can write for now
-    }
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /faqs/{faqId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /quizSets/{quizSetId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /siteBanners/{bannerId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    match /promotionalPosters/{posterId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-    
-    // User Collections
+    // Authenticated users can read all user/trainer profiles but only write their own
     match /users/{userId} {
-      // Admins can read any user profile. Users can read their own.
-      allow read: if isAdmin() || isOwner(userId);
-      // Users can only create and write to their own documents.
-      allow create, update, delete: if isOwner(userId);
-    }
-    
-    match /trainers/{trainerId} {
-      // Admins and any authenticated user can read trainer profiles.
-      allow read: if isAuthenticated();
-      // Trainers can only create and write to their own documents.
-      allow create, update, delete: if isOwner(trainerId);
-    }
-    
-    // Data collections that Admins need read access to for the dashboard
-    match /rescheduleRequests/{requestId} {
-      allow read: if isAdmin();
-      // Users can create requests, admins/trainers can update
-      allow create: if isAuthenticated();
-      allow update: if isAdmin();
-    }
-    
-    match /feedback/{feedbackId} {
-        allow read: if isAdmin();
-        allow create: if isAuthenticated();
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /referrals/{referralId} {
-        allow read: if isAdmin();
-        allow create, update: if isAuthenticated();
+    match /trainers/{trainerId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == trainerId;
+    }
+    
+    // Admins can read/write their own profile
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+    }
+
+    // Feedback can be read by any authenticated user, but only created/updated by the customer who owns it
+    match /feedback/{feedbackId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && request.resource.data.customerId == request.auth.uid;
+        allow update: if request.auth != null && resource.data.customerId == request.auth.uid;
+        allow delete: if false; // Disallow deleting feedback for now
+    }
+    
+    // Referrals can be read by any authenticated user
+     match /referrals/{referralId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null; // Allow admin to update status
+    }
+    
+    // Reschedule requests can be read by any authenticated user
+    match /rescheduleRequests/{requestId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        allow update: if request.auth != null; // Allow admin/trainer to update status
+    }
+
+    // Default deny for any other collection
+     match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
