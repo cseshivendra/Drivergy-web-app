@@ -1,69 +1,81 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAdmin() {
+      // Check if the user is an admin by looking up their profile in the 'users' collection.
+      // Assumes admins have an `isAdmin: true` field.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
     
-    // Default allow read for public content, secure writes
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Function to check if the user is an admin
-    // This assumes the admin's profile in the 'users' collection has an 'isAdmin' flag
-    function isAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-    }
-
-    // Allow public read on these collections
-    match /blog/{docId} {
+    // Publicly readable collections
+    match /blog/{postId} {
       allow read: if true;
-      allow write: if isAuthenticated(); // Simplified for now
+      allow write: if isAuthenticated(); // Simplification: any logged-in user can write for now
     }
-    match /courses/{docId} {
+    match /courses/{courseId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
-    match /faqs/{docId} {
+    match /faqs/{faqId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
-    match /quizSets/{docId} {
+    match /quizSets/{quizSetId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
-     match /siteBanners/{docId} {
+    match /siteBanners/{bannerId} {
       allow read: if true;
       allow write: if isAuthenticated();
     }
-    match /promotionalPosters/{docId} {
+    match /promotionalPosters/{posterId} {
       allow read: if true;
       allow write: if isAuthenticated();
-    }
-
-    // Users and Trainers can be read by any authenticated user (for admin/app logic)
-    // But only the user themselves can write to their own document
-    match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
-    match /trainers/{trainerId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && request.auth.uid == trainerId;
     }
     
-    // These collections should be readable by admins, and by the relevant users.
-    match /feedback/{docId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+    // User Collections
+    match /users/{userId} {
+      // Admins can read any user profile. Users can read their own.
+      allow read: if isAdmin() || isOwner(userId);
+      // Users can only create and write to their own documents.
+      allow create, update, delete: if isOwner(userId);
     }
-    match /referrals/{docId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+    
+    match /trainers/{trainerId} {
+      // Admins and any authenticated user can read trainer profiles.
+      allow read: if isAuthenticated();
+      // Trainers can only create and write to their own documents.
+      allow create, update, delete: if isOwner(trainerId);
     }
-    match /rescheduleRequests/{docId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+    
+    // Data collections that Admins need read access to for the dashboard
+    match /rescheduleRequests/{requestId} {
+      allow read: if isAdmin();
+      // Users can create requests, admins/trainers can update
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+    }
+    
+    match /feedback/{feedbackId} {
+        allow read: if isAdmin();
+        allow create: if isAuthenticated();
     }
 
+    match /referrals/{referralId} {
+        allow read: if isAdmin();
+        allow create, update: if isAuthenticated();
+    }
   }
 }

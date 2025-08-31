@@ -209,6 +209,12 @@ export default function AdminDashboard() {
 
     const renderContentView = () => (
         <div className="space-y-8">
+            <CourseManagement
+                title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Management</>}
+                courses={dashboardData?.courses || []}
+                isLoading={loading}
+                onAction={handleActioned}
+            />
             <BlogManagement
                 title={<><BookText className="inline-block mr-3 h-6 w-6 align-middle" />Blog Post Management</>}
                 posts={dashboardData?.blogPosts || []}
@@ -218,6 +224,19 @@ export default function AdminDashboard() {
             <FaqManagement
                 title={<><HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />FAQ Management</>}
                 faqs={dashboardData?.faqs || []}
+                isLoading={loading}
+                onAction={handleActioned}
+            />
+            <VisualContentManagement 
+                title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Visual Content</>}
+                banners={dashboardData?.siteBanners || []}
+                posters={dashboardData?.promotionalPosters || []}
+                isLoading={loading}
+                onAction={handleActioned}
+            />
+             <QuizManagement
+                title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
+                quizSets={dashboardData?.quizSets || []}
                 isLoading={loading}
                 onAction={handleActioned}
             />

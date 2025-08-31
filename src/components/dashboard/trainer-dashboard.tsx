@@ -32,24 +32,28 @@ const TrainerDashboard = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (authLoading) {
+            return; // Wait until auth state is confirmed
+        }
         if (!user?.id) {
-            if (!authLoading) setLoading(false);
+            setLoading(false);
             return;
         }
 
-        // Only listen to the trainer's own profile initially
+        // We know the user is a trainer here, so listen to the 'trainers' collection.
         const unsubscribeTrainer = listenToUser(user.id, (profile) => {
             if (profile) {
                 setTrainerProfile(profile);
-                // If the trainer is approved, then we can fetch the rest of the data.
+                // If the trainer is approved, fetch the rest of the data.
                 if (profile.approvalStatus === 'Approved') {
-                    // Pass the profile to prevent race conditions
-                    listenToTrainerStudents(profile.id, ({ students, feedback, rescheduleRequests }) => {
-                        setStudents(students);
-                        setFeedback(feedback);
-                        setRescheduleRequests(rescheduleRequests);
+                    const unsubscribeStudents = listenToTrainerStudents(profile.id, (data) => {
+                        setStudents(data.students);
+                        setFeedback(data.feedback);
+                        setRescheduleRequests(data.rescheduleRequests);
                         setLoading(false); // Stop loading only after all data is fetched
                     });
+                    // Return cleanup for the student listener
+                    return () => unsubscribeStudents();
                 } else {
                     // If not approved, we don't need other data, so stop loading.
                     setLoading(false);
@@ -58,10 +62,11 @@ const TrainerDashboard = () => {
                 setError("Trainer profile not found. Please complete your trainer registration.");
                 setLoading(false);
             }
-        }, 'trainers'); // Specify the collection
+        }, 'trainers'); // Explicitly listen to the 'trainers' collection
 
-        return () => unsubscribeTrainer();
+        return () => unsubscribeTrainer(); // Cleanup trainer listener
     }, [user, authLoading]);
+
 
     const getStatusIcon = (status: string) => {
         switch (status) {
