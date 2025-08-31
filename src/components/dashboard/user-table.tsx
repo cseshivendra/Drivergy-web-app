@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -242,8 +243,9 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
          );
       case 'interested-customer':
         return (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center gap-2">
             <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)}><Eye className="mr-1 h-3 w-3"/>View Details</Button>
+            <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(user)}><Trash2 className="mr-1 h-3 w-3"/>Delete</Button>
           </div>
         );
       default:
