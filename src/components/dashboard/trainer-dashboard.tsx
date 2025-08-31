@@ -1,10 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle, Hourglass } from "lucide-react";
@@ -21,17 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
-interface Booking {
-    id: string;
-    studentName: string;
-    studentEmail: string;
-    courseType: string;
-    scheduledDate: Date;
-    status: 'scheduled' | 'completed' | 'cancelled';
-    duration: number;
-    notes?: string;
-}
 
 const TrainerDashboard = () => {
     const { user, loading: authLoading } = useAuth();
@@ -183,14 +172,17 @@ const TrainerDashboard = () => {
         );
     }
 
+    const upcomingLessonsCount = students.filter(s => s.upcomingLesson).length;
+    const avgRating = feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A';
+    
     // Full dashboard for approved trainers
     return (
         <div className="container mx-auto px-4 py-8 max-w-6xl">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Trainer Dashboard</h1>
-                    <p className="text-gray-600">Welcome back, {trainerProfile.name}</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Trainer Dashboard</h1>
+                    <p className="text-gray-600 dark:text-gray-400">Welcome back, {trainerProfile.name}</p>
                 </div>
                 <div className="flex items-center gap-4 mt-4 md:mt-0">
                     <Badge className={getStatusColor(trainerProfile.approvalStatus)}>
@@ -223,7 +215,7 @@ const TrainerDashboard = () => {
                         <CalendarDays className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{students.filter(s => s.upcomingLesson).length}</div>
+                        <div className="text-2xl font-bold">{upcomingLessonsCount}</div>
                         <p className="text-xs text-muted-foreground">Active scheduled lessons</p>
                     </CardContent>
                 </Card>
@@ -234,16 +226,14 @@ const TrainerDashboard = () => {
                         <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A'}
-                        </div>
+                        <div className="text-2xl font-bold">{avgRating}</div>
                         <p className="text-xs text-muted-foreground">From {feedback.length} reviews</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Experience</CardTitle>
+                        <CardTitle className="text-sm font-medium">Years of Experience</CardTitle>
                         <BookOpen className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
