@@ -5650,3 +5650,9 @@ INFO: Detected non-HTTP/2 connection.
 [debug] [2025-08-31T17:44:47.145Z] Aug 31, 2025 5:44:47 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected HTTP/2 connection.
  {"metadata":{"emulator":{"name":"firestore"},"message":"Aug 31, 2025 5:44:47 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[debug] [2025-08-31T17:44:49.928Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules 200
+[debug] [2025-08-31T17:44:49.928Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules {"issues":[{"sourcePosition":{"fileName":"security.rules","line":13,"column":14,"currentOffset":380,"endOffset":386},"description":"Unused function: isAdmin.","severity":"WARNING"},{"sourcePosition":{"fileName":"security.rules","line":14,"column":35,"currentOffset":426,"endOffset":428},"description":"Invalid function name: get.","severity":"WARNING"},{"sourcePosition":{"fileName":"security.rules","line":14,"column":80,"currentOffset":471,"endOffset":477},"description":"Invalid variable name: request.","severity":"WARNING"}]}
+[warn] ⚠  firestore.rules:13:14 - WARNING Unused function: isAdmin. 
+[warn] ⚠  firestore.rules:14:35 - WARNING Invalid function name: get. 
+[warn] ⚠  firestore.rules:14:80 - WARNING Invalid variable name: request. 
+[info] ✔  firestore: Rules updated. 
