@@ -27,15 +27,10 @@ export default function UnifiedRegisterPage() {
   const router = useRouter();
 
   // This function will be passed to the form to handle the redirect after a successful registration.
-  const handleSuccess = (userRole: 'customer' | 'trainer') => {
+  const handleSuccess = () => {
       const redirectUrl = searchParams.get('redirect');
-      if (redirectUrl) {
-          router.push(redirectUrl);
-      } else if (userRole === 'customer') {
-          router.push('/#subscriptions');
-      } else {
-          router.push('/dashboard');
-      }
+      // After login, always redirect to the dashboard.
+      router.push(redirectUrl || '/dashboard');
   };
 
   const handleRoleSelection = (role: 'customer' | 'trainer') => {
@@ -88,7 +83,7 @@ export default function UnifiedRegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RegistrationForm userRole={selectedRole} onSuccess={() => handleSuccess(selectedRole)} />
+            <RegistrationForm userRole={selectedRole} onSuccess={handleSuccess} />
           </CardContent>
         </Card>
       )}

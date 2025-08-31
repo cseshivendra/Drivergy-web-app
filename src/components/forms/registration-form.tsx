@@ -72,7 +72,6 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
   const handleSubmit = async (data: RegistrationFormValues) => {
       setError(undefined); // Clear previous errors
       
-      // We don't need to create FormData here as we're not uploading files in this form anymore
       const result = await registerUserAction(data);
 
       if (result.success && result.user) {
@@ -81,14 +80,10 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
               description: "Your account has been created. Redirecting...",
           });
           
-          if (userRole === 'trainer') {
-              // For trainers, log them in and let the dashboard handle the redirect
-              // This is a special case to ensure the trainer sees their pending status
-              logInUser(result.user, true);
-          } else {
-              // For customers, call the onSuccess which redirects to subscriptions
-              onSuccess();
-          }
+          // Log the user in on the client-side after successful server-side creation
+          logInUser(result.user, false);
+          onSuccess();
+          
       } else {
           setError(result.error);
       }
