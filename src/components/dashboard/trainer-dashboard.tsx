@@ -40,45 +40,41 @@ const TrainerDashboard = () => {
             return;
         }
 
-        // We know the user is a trainer here, so listen to the 'trainers' collection.
         const unsubscribeTrainer = listenToUser(user.id, (profile) => {
             if (profile) {
                 setTrainerProfile(profile);
-                // If the trainer is approved, fetch the rest of the data.
                 if (profile.approvalStatus === 'Approved') {
                     const unsubscribeStudents = listenToTrainerStudents(profile.id, (data) => {
                         setStudents(data.students);
                         setFeedback(data.feedback);
                         setRescheduleRequests(data.rescheduleRequests);
-                        setLoading(false); // Stop loading only after all data is fetched
+                        setLoading(false);
                     });
-                    // Return cleanup for the student listener
                     return () => unsubscribeStudents();
                 } else {
-                    // If not approved, we don't need other data, so stop loading.
                     setLoading(false);
                 }
             } else {
                 setError("Trainer profile not found. Please complete your trainer registration.");
                 setLoading(false);
             }
-        }, 'trainers'); // Explicitly listen to the 'trainers' collection
+        }, 'trainers'); 
 
-        return () => unsubscribeTrainer(); // Cleanup trainer listener
+        return () => unsubscribeTrainer();
     }, [user, authLoading]);
 
 
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'Approved':
-                return <CheckCircle className="h-4 w-4 text-green-500" />;
+                return <CheckCircle className="h-10 w-10 text-green-500" />;
             case 'Rejected':
-                return <XCircle className="h-4 w-4 text-red-500" />;
+                return <XCircle className="h-10 w-10 text-red-500" />;
             case 'In Progress':
-                return <Hourglass className="h-4 w-4 text-blue-500" />;
+                return <Hourglass className="h-10 w-10 text-blue-500" />;
             case 'Pending':
             default:
-                return <Clock className="h-4 w-4 text-yellow-500" />;
+                return <Hourglass className="h-10 w-10 text-yellow-500" />;
         }
     };
 
@@ -141,37 +137,31 @@ const TrainerDashboard = () => {
 
     // If trainer is not approved, only show status card
     if (trainerProfile.approvalStatus !== 'Approved') {
-        return (
-            <div className="container mx-auto max-w-2xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-                <Card className="w-full shadow-xl">
-                    <CardHeader className="text-center">
-                        <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
-                            {getStatusIcon(trainerProfile.approvalStatus)}
+       return (
+            <div className="flex flex-col items-center justify-center flex-grow p-4">
+                <Card className="w-full max-w-lg text-center shadow-2xl p-8">
+                    <div className="mx-auto mb-6 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
+                        {getStatusIcon(trainerProfile.approvalStatus)}
+                    </div>
+                    <CardTitle className="font-headline text-3xl font-bold mb-2">
+                        Welcome, {trainerProfile.name}!
+                    </CardTitle>
+                    <CardDescription className="text-lg mt-4 mb-6">
+                        <div className="flex items-center justify-center gap-2">
+                            <span>Verification Status:</span>
+                            <Badge variant="outline" className={cn("text-base px-4 py-1", getStatusColor(trainerProfile.approvalStatus))}>
+                                {trainerProfile.approvalStatus}
+                            </Badge>
                         </div>
-                        <CardTitle className="font-headline text-2xl font-bold">
-                            Welcome, {trainerProfile.name}!
-                        </CardTitle>
-                        <CardDescription className="text-lg mt-4">
-                           <div className="flex items-center justify-center gap-2">
-                                <span>Verification Status:</span>
-                                <Badge variant="outline" className={cn("text-base", getStatusColor(trainerProfile.approvalStatus))}>
-                                    {trainerProfile.approvalStatus}
-                                </Badge>
-                            </div>
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                       <p className="text-muted-foreground max-w-md mx-auto">
-                            {trainerProfile.approvalStatus === 'Pending' && "Your application is pending review. We'll notify you once it's processed."}
-                            {trainerProfile.approvalStatus === 'In Progress' && "Your application is currently under review. This usually takes 2-3 business days."}
-                            {trainerProfile.approvalStatus === 'Rejected' && "Unfortunately, your application was not approved. Please contact support for more information."}
-                       </p>
-                         <div className="pt-6">
-                            <Button variant="outline" asChild>
-                                <Link href="/dashboard/profile">View/Edit My Profile</Link>
-                            </Button>
-                        </div>
-                    </CardContent>
+                    </CardDescription>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                        {trainerProfile.approvalStatus === 'Pending' && "Your profile is currently being verified by our team. You will be able to access your full dashboard and see assigned students once your account is approved."}
+                        {trainerProfile.approvalStatus === 'In Progress' && "Your application is under review. This usually takes 2-3 business days."}
+                        {trainerProfile.approvalStatus === 'Rejected' && "Unfortunately, your application was not approved. Please contact support for more information."}
+                    </p>
+                    <p className="text-muted-foreground max-w-md mx-auto mt-4">
+                        Thank you for your patience.
+                    </p>
                 </Card>
             </div>
         );
