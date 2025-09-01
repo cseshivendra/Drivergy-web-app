@@ -172,27 +172,27 @@ const TrainerDashboard = () => {
     
     // Full dashboard for approved trainers
     return (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Trainer Dashboard</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Trainer Dashboard</h1>
                     <p className="text-gray-600 dark:text-gray-400">Welcome back, {trainerProfile.name}</p>
                 </div>
                 <div className="flex items-center gap-4 mt-4 md:mt-0">
-                    <Badge className={getStatusColor(trainerProfile.approvalStatus)}>
+                    <Badge variant="outline" className={getStatusColor(trainerProfile.approvalStatus)}>
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Approved Trainer
                     </Badge>
                     <Avatar className="h-10 w-10">
-                        <AvatarImage src={trainerProfile.photoURL} />
-                        <AvatarFallback>{trainerProfile.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={trainerProfile.photoURL} alt={trainerProfile.name} />
+                        <AvatarFallback>{trainerProfile.name.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 </div>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Students</CardTitle>
@@ -265,7 +265,7 @@ const TrainerDashboard = () => {
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                           No students assigned yet.
                         </TableCell>
                       </TableRow>
@@ -280,3 +280,5 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
+
+    
