@@ -188,27 +188,40 @@ export default function CustomerDashboard() {
   
   const refetchProfile = useCallback(() => {
     if (user?.id) {
-      setLoading(true);
       const unsubscribe = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
+        // We set loading to false here, once we have a definitive answer (user or null)
         setLoading(false);
       });
       return unsubscribe;
+    } else {
+      // If there's no user ID, there's nothing to listen to.
+      setLoading(false);
+      setProfile(null);
     }
-    setLoading(false);
+    // This is intentional. The function returns nothing if there's no user.
     return () => {};
   }, [user?.id]);
   
   useEffect(() => {
+    // Only set loading to true when we start the fetch.
+    setLoading(true);
     const unsubscribe = refetchProfile();
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [refetchProfile]);
+
 
   useEffect(() => {
     if (profile) {
       if (profile.subscriptionStartDate) {
-        const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
-        setIsStartDateEditable(!isPast(startDate));
+        try {
+          const startDate = parse(profile.subscriptionStartDate, 'MMM dd, yyyy', new Date());
+          setIsStartDateEditable(!isPast(startDate));
+        } catch(e) {
+          setIsStartDateEditable(false);
+        }
       } else {
         setIsStartDateEditable(true);
       }
@@ -335,7 +348,7 @@ export default function CustomerDashboard() {
                     <CardDescription className="text-lg mt-4">
                         <div className="flex items-center justify-center gap-2">
                             <span>Verification Status:</span>
-                            <Badge className={`text-base ${getStatusBadgeClass(profile.approvalStatus)}`}>
+                            <Badge className={cn("text-base", getStatusBadgeClass(profile.approvalStatus))}>
                                 {profile.approvalStatus}
                             </Badge>
                         </div>
@@ -352,17 +365,21 @@ export default function CustomerDashboard() {
                         </Button>
                        </>
                    ) : (
-                    <p className="text-muted-foreground max-w-md mx-auto">
-                        Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
-                        <br /><br />
-                        Thank you for your patience.
-                    </p>
+                    <>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                          Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
+                      </p>
+                       <p className="text-muted-foreground max-w-md mx-auto mt-4">
+                          Thank you for your patience.
+                      </p>
+                    </>
                    )}
                 </CardContent>
             </Card>
         </div>
     );
   }
+
 
   return (
     <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
