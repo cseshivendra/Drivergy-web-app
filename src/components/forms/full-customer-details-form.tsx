@@ -56,7 +56,7 @@ export default function FullCustomerDetailsForm() {
   const searchParams = useSearchParams();
   const planFromUrl = searchParams.get('plan');
 
-  const [state, formAction] = useFormState(completeCustomerProfileAction, { success: false, error: undefined, user: undefined });
+  const [state, formAction] = useFormState(completeCustomerProfileAction, { success: false, error: undefined });
 
   const form = useForm<FullCustomerDetailsValues>({
     resolver: zodResolver(FullCustomerDetailsSchema),
@@ -106,12 +106,14 @@ export default function FullCustomerDetailsForm() {
 
 
   useEffect(() => {
-    if (state.success && state.user) {
+    if (state.success && user) {
         toast({
             title: "Profile Complete!",
             description: "Your details have been saved. Welcome to your dashboard!",
         });
-        logInUser(state.user, false); 
+        // We log in with the existing user from context and redirect.
+        // The AuthProvider will automatically fetch the fresh data on the dashboard.
+        logInUser(user, false); 
         router.push('/dashboard');
     } else if (state.error) {
         toast({
@@ -120,7 +122,7 @@ export default function FullCustomerDetailsForm() {
             variant: "destructive",
         });
     }
-  }, [state, toast, logInUser, router]);
+  }, [state, user, toast, logInUser, router]);
 
 
   const availableDistricts = useMemo(() => {

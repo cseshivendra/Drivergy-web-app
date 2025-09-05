@@ -204,7 +204,7 @@ export async function deleteUserAction({ userId, userRole }: { userId: string; u
 }
 
 
-export async function completeCustomerProfileAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+export async function completeCustomerProfileAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; }> {
     if (!adminDb) {
         return { success: false, error: "Server not configured." };
     }
@@ -231,12 +231,9 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
             photoIdUrl,
             approvalStatus: 'In Progress' 
         });
-
-        const updatedDoc = await userRef.get();
-        const updatedUser = { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
         
         revalidatePath('/dashboard');
-        return { success: true, user: updatedUser };
+        return { success: true };
 
     } catch(error: any) {
         console.error("Error completing customer profile:", error);
