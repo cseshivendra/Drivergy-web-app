@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -26,11 +27,29 @@ export default function UnifiedRegisterPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // On mount, check if a role is specified in the URL to bypass selection
+  useEffect(() => {
+    const roleFromQuery = searchParams.get('role');
+    if (roleFromQuery === 'customer' || roleFromQuery === 'trainer') {
+      setSelectedRole(roleFromQuery);
+    }
+  }, [searchParams]);
+
+
   // This function will be passed to the form to handle the redirect after a successful registration.
   const handleSuccess = () => {
       const redirectUrl = searchParams.get('redirect');
-      // After login, always redirect to the dashboard.
-      router.push(redirectUrl || '/dashboard');
+      const plan = searchParams.get('plan');
+
+      // If a plan was selected, go to payment. Otherwise, go to dashboard.
+      if (plan) {
+          const price = searchParams.get('price');
+          router.push(`/payment?plan=${plan}&price=${price}`);
+      } else if (redirectUrl) {
+          router.push(redirectUrl);
+      } else {
+          router.push('/dashboard');
+      }
   };
 
   const handleRoleSelection = (role: 'customer' | 'trainer') => {
@@ -39,6 +58,7 @@ export default function UnifiedRegisterPage() {
 
   const resetRoleSelection = () => {
     setSelectedRole(null);
+    router.push('/register', { scroll: false }); // Reset URL state
   };
 
   return (

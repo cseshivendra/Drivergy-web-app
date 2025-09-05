@@ -380,7 +380,7 @@ export default function HomePage() {
                             </CardContent>
                             <CardFooter className="mt-auto pt-4 border-t border-border/50">
                                 <Button className="w-full" asChild>
-                                    <Link href="/register">Ride Now</Link>
+                                    <Link href="/register?role=customer">Ride Now</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
