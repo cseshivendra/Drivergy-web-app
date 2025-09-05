@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -380,7 +381,7 @@ export default function HomePage() {
                             </CardContent>
                             <CardFooter className="mt-auto pt-4 border-t border-border/50">
                                 <Button className="w-full" asChild>
-                                    <Link href="/register?role=customer&plan=Basic&price=999">Ride Now</Link>
+                                    <Link href="/register?role=customer&plan=Custom Module&price=999">Ride Now</Link>
                                 </Button>
                             </CardFooter>
                         </Card>

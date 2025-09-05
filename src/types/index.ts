@@ -8,7 +8,7 @@ import type { LucideIcon } from 'lucide-react';
 // =================================================================
 
 export const Locations = ['New Delhi', 'Gurugram', 'Noida', 'Faridabad', 'Ghaziabad', 'Bangalore', 'Mumbai'] as const;
-export const SubscriptionPlans = ['Basic', 'Gold', 'Premium'] as const;
+export const SubscriptionPlans = ['Basic', 'Gold', 'Premium', 'Custom Module'] as const;
 export const VehiclePreferenceOptions = ['Two-Wheeler', 'Four-Wheeler', 'Both'] as const;
 export const SpecializationOptions = ['Car', 'Motorcycle', 'Commercial'] as const;
 export const TrainerVehicleTypeOptions = ['Car (Manual)', 'Car (Automatic)', 'Motorcycle', 'Scooter'] as const;
