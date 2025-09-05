@@ -502,10 +502,17 @@ export default function CustomerDashboard() {
                 <span className="font-bold text-foreground">{profile.assignedTrainerVehicleDetails || 'N/A'}</span>
               </div>
           </CardContent>
-          <CardFooter>
-            <p className="text-xs text-muted-foreground text-center w-full">
-              Contact your trainer for any lesson-specific questions.
-            </p>
+          <CardFooter className="grid grid-cols-2 gap-2">
+            <Button asChild variant="outline" className="w-full">
+              <a href={`tel:${profile.assignedTrainerPhone}`}>
+                <Phone className="mr-2 h-4 w-4"/> Call
+              </a>
+            </Button>
+            <Button asChild className="w-full bg-green-500 hover:bg-green-600 text-white">
+              <a href={`https://wa.me/91${profile.assignedTrainerPhone}`} target="_blank" rel="noopener noreferrer">
+                <MessageSquare className="mr-2 h-4 w-4"/> WhatsApp
+              </a>
+            </Button>
           </CardFooter>
         </Card>
         )}
