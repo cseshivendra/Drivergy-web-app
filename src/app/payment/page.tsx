@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -12,7 +13,9 @@ import { CreditCard, Calendar, Lock, User, QrCode, ShieldCheck, UserPlus, LogIn,
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { updateUserProfile } from '@/lib/server-actions';
+import { UserProfile } from '@/types';
 
 function PaymentGateway() {
   const router = useRouter();
@@ -32,24 +35,34 @@ function PaymentGateway() {
     if (!user) return;
     setIsProcessing(true);
   
-    // In a real app, this would be a server action to update the user's subscription.
-    // Here, we simulate it by updating the client-side state and session storage.
-    const updatedProfile = {
-      ...user,
-      subscriptionPlan: plan, 
-      approvalStatus: 'Pending',
-    };
-    logInUser(updatedProfile, false);
-  
-    toast({
-      title: "Payment Successful!",
-      description: `Your subscription for the ${plan} plan has been activated. Please complete your profile.`,
-    });
-  
-    // Redirect to the new profile completion page
-    setTimeout(() => {
-      router.push('/dashboard/complete-profile');
-    }, 1500);
+    // Update user profile with the selected plan on the server
+    const updatedProfile = await updateUserProfile(user.id, {
+        name: user.name,
+        email: user.contact,
+        phone: user.phone || '',
+        location: user.location || '',
+        subscriptionPlan: plan,
+        approvalStatus: 'Pending',
+    } as UserProfile);
+
+    if (updatedProfile) {
+        logInUser(updatedProfile, false);
+    
+        toast({
+          title: "Payment Successful!",
+          description: `Your subscription for the ${plan} plan has been activated. Please complete your profile.`,
+        });
+      
+        // Redirect to the profile completion page
+        router.push('/dashboard/complete-profile');
+    } else {
+         toast({
+          title: "Update Failed",
+          description: "Could not update your profile with the new plan.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+    }
   }, [user, plan, logInUser, router, toast]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -84,7 +97,7 @@ function PaymentGateway() {
 
   if (!user) {
     const redirectUrl = encodeURIComponent(`/payment?plan=${plan}&price=${price}`);
-    const registerUrl = `/register?redirect=${redirectUrl}`;
+    const registerUrl = `/register?role=customer&plan=${plan}&price=${price}&redirect=${redirectUrl}`;
     
     return (
        <Card className="w-full max-w-lg shadow-xl">

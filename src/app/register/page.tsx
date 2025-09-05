@@ -38,16 +38,13 @@ export default function UnifiedRegisterPage() {
 
   // This function will be passed to the form to handle the redirect after a successful registration.
   const handleSuccess = () => {
-      const redirectUrl = searchParams.get('redirect');
       const plan = searchParams.get('plan');
-
-      // If a plan was selected, go to payment. Otherwise, go to dashboard.
-      if (plan) {
-          const price = searchParams.get('price');
+      const price = searchParams.get('price');
+      
+      if (plan && price) {
           router.push(`/payment?plan=${plan}&price=${price}`);
-      } else if (redirectUrl) {
-          router.push(redirectUrl);
       } else {
+          // Fallback if no plan is selected, though the primary flow directs to payment.
           router.push('/dashboard');
       }
   };
