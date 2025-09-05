@@ -82,7 +82,7 @@ export default function FullCustomerDetailsForm() {
     mode: 'onChange',
   });
   
-  const { watch } = form;
+  const { watch, setValue } = form;
   const dlStatus = watch('dlStatus');
   const selectedState = watch('state');
   const selectedGender = user?.gender;
@@ -94,15 +94,18 @@ export default function FullCustomerDetailsForm() {
   }, [selectedGender]);
 
 
-  // This effect ensures the form has the correct userId, especially after a fresh registration.
+  // This effect ensures the form has the correct userId and plan from URL, especially after a fresh registration.
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
         router.push('/login');
         return;
     }
-    form.setValue('userId', user.id);
-  }, [user, authLoading, router, form]);
+    setValue('userId', user.id);
+    if (planFromUrl && SubscriptionPlans.includes(planFromUrl as any)) {
+      setValue('subscriptionPlan', planFromUrl as any, { shouldValidate: true });
+    }
+  }, [user, authLoading, router, setValue, planFromUrl]);
 
 
   useEffect(() => {
@@ -111,8 +114,6 @@ export default function FullCustomerDetailsForm() {
             title: "Profile Complete!",
             description: "Your details have been saved. Welcome to your dashboard!",
         });
-        // We log in with the existing user from context and redirect.
-        // The AuthProvider will automatically fetch the fresh data on the dashboard.
         logInUser(user, false); 
         router.push('/dashboard');
     } else if (state.error) {
@@ -135,9 +136,9 @@ export default function FullCustomerDetailsForm() {
   useEffect(() => {
     const currentDistrict = form.getValues('district');
     if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
-      form.setValue('district', '');
+      setValue('district', '');
     }
-  }, [selectedState, form, availableDistricts]);
+  }, [selectedState, form, setValue, availableDistricts]);
 
   const onClientSubmit = (data: FullCustomerDetailsValues) => {
     const formData = new FormData();

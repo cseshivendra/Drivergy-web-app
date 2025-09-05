@@ -53,8 +53,8 @@ function PaymentGateway() {
           description: `Your subscription for the ${plan} plan has been activated. Please complete your profile.`,
         });
       
-        // Redirect to the profile completion page
-        router.push('/dashboard/complete-profile');
+        // Redirect to the profile completion page, passing the plan
+        router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}`);
     } else {
          toast({
           title: "Update Failed",
