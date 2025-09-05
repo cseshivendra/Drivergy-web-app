@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToUser } from '@/lib/mock-data';
 import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
@@ -186,28 +186,23 @@ export default function CustomerDashboard() {
   const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
   
-  const refetchProfile = () => {
+  const refetchProfile = useCallback(() => {
     if (user?.id) {
-        listenToUser(user.id, (userProfile) => {
-            setProfile(userProfile);
-        });
-    }
-  }
-
-  useEffect(() => {
-    if (!user?.id) {
-        setLoading(false);
-        return;
-    }
-    
-    setLoading(true);
-    const unsubscribe = listenToUser(user.id, (userProfile) => {
+      setLoading(true);
+      const unsubscribe = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
         setLoading(false);
-    });
-
+      });
+      return unsubscribe;
+    }
+    setLoading(false);
+    return () => {};
+  }, [user?.id]);
+  
+  useEffect(() => {
+    const unsubscribe = refetchProfile();
     return () => unsubscribe();
-  }, [user]);
+  }, [refetchProfile]);
 
   useEffect(() => {
     if (profile) {
