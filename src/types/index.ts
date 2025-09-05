@@ -71,6 +71,7 @@ export const UserProfileSchema = z.object({
   assignedTrainerId: z.string().optional(),
   assignedTrainerName: z.string().optional(),
   assignedTrainerPhone: z.string().optional(),
+  assignedTrainerVehicleDetails: z.string().optional(),
   upcomingLesson: z.string().optional(),
   subscriptionStartDate: z.string().optional(),
   totalLessons: z.number().optional(),
