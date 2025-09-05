@@ -11,8 +11,6 @@ import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
 import { seedPromotionalPosters } from './server-data'; 
 import { v4 as uuidv4 } from 'uuid';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase/client';
 
 
 // Helper to convert file to buffer
@@ -38,25 +36,6 @@ async function createNotification(notification: Omit<Notification, 'id' | 'times
     }
 }
 
-export async function listenToNotifications(userId: string, callback: (notifications: Notification[]) => void): Promise<() => void> {
-    if (!db) {
-      console.error("Firestore not initialized");
-      return () => {};
-    }
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', userId),
-      orderBy('timestamp', 'desc')
-    );
-  
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
-      callback(notifications);
-    });
-  
-    return unsubscribe;
-}
-
 export async function markNotificationsAsRead(userId: string, notificationIds: string[]): Promise<void> {
     if (!adminDb || notificationIds.length === 0) return;
     const batch = adminDb.batch();
@@ -65,6 +44,7 @@ export async function markNotificationsAsRead(userId: string, notificationIds: s
         batch.update(docRef, { isRead: true });
     });
     await batch.commit();
+    revalidatePath('/dashboard'); // Revalidate to update server-rendered states if needed
 }
 
 

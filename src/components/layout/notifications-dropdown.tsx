@@ -8,7 +8,8 @@ import { Bell, CheckCheck, Circle, AlertCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import type { Notification } from '@/types';
-import { markNotificationsAsRead, listenToNotifications } from '@/lib/server-actions';
+import { markNotificationsAsRead } from '@/lib/server-actions';
+import { listenToNotifications } from '@/lib/mock-data';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
@@ -29,7 +30,8 @@ export default function NotificationsDropdown({ userId }: { userId: string }) {
 
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
-    await markNotificationsAsRead(userId, notifications.map(n => n.id));
+    const unreadIds = notifications.filter(n => !n.isRead).map(n => n.id);
+    await markNotificationsAsRead(userId, unreadIds);
   };
 
   return (

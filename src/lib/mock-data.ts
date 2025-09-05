@@ -1,7 +1,7 @@
 
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
-import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest } from '@/types';
+import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest, Notification } from '@/types';
 import { format, parseISO } from 'date-fns';
 import { fetchCourses as serverFetchCourses, fetchQuizSets as serverFetchQuizSets, fetchBlogPosts as serverFetchBlogPosts, fetchBlogPostBySlug as serverFetchBlogPostBySlug, fetchUserById as serverFetchUserById } from './server-data';
 
@@ -295,3 +295,24 @@ export const listenToTrainerStudents = (
         unsubReschedule();
     };
 };
+
+export function listenToNotifications(userId: string, callback: (notifications: Notification[]) => void): () => void {
+    if (!db) {
+      console.error("Firestore not initialized");
+      return () => {};
+    }
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      orderBy('timestamp', 'desc')
+    );
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+      callback(notifications);
+    }, (error) => {
+        console.error("Error listening to notifications:", error);
+    });
+  
+    return unsubscribe;
+}
