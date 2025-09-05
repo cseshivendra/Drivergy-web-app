@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
 import { Locations, GenderOptions, ApprovalStatusOptions } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2, UserCog } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2, UserCog, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
@@ -239,8 +239,14 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
             <DropdownMenu>
               <DropdownMenuTrigger asChild><Button variant="secondary" size="sm" className="w-[100px] justify-between px-2 py-1"><span>Status</span><ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'On Hold')}><Hourglass className="mr-2 h-4 w-4 text-yellow-500" /><span>On Hold</span></DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><X className="mr-2 h-4 w-4" /><span>Cancel</span></DropdownMenuItem>
+                  {user.approvalStatus === 'Approved' ? (
+                    <>
+                      <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'On Hold')}><Hourglass className="mr-2 h-4 w-4 text-yellow-500" /><span>On Hold</span></DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><X className="mr-2 h-4 w-4" /><span>Cancel</span></DropdownMenuItem>
+                    </>
+                  ) : user.approvalStatus === 'On Hold' ? (
+                     <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Approved')}><Play className="mr-2 h-4 w-4 text-green-500" /><span>Continue</span></DropdownMenuItem>
+                  ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
