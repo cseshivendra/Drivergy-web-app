@@ -37,6 +37,7 @@ import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import Loading from '@/app/loading';
 
 
 function SubmitButton() {
@@ -50,7 +51,7 @@ function SubmitButton() {
 
 export default function FullCustomerDetailsForm() {
   const { toast } = useToast();
-  const { user, logInUser } = useAuth();
+  const { user, loading: authLoading, logInUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const planFromUrl = searchParams.get('plan');
@@ -95,12 +96,13 @@ export default function FullCustomerDetailsForm() {
 
   // This effect ensures the form has the correct userId, especially after a fresh registration.
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
         router.push('/login');
         return;
     }
     form.setValue('userId', user.id);
-  }, [user, router, form]);
+  }, [user, authLoading, router, form]);
 
 
   useEffect(() => {
@@ -149,8 +151,8 @@ export default function FullCustomerDetailsForm() {
     formAction(formData);
   };
 
-  if (!user) {
-      return <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />;
+  if (authLoading || !user) {
+      return <Loading />;
   }
 
   return (
