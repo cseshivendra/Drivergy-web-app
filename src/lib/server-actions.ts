@@ -4,19 +4,69 @@
 
 import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification } from '@/types';
 import { format, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
 import { seedPromotionalPosters } from './server-data'; 
 import { v4 as uuidv4 } from 'uuid';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase/client';
+
 
 // Helper to convert file to buffer
 async function fileToBuffer(file: File): Promise<Buffer> {
     const arrayBuffer = await file.arrayBuffer();
     return Buffer.from(arrayBuffer);
 }
+
+// =================================================================
+// NOTIFICATION ACTIONS
+// =================================================================
+
+async function createNotification(notification: Omit<Notification, 'id' | 'timestamp' | 'isRead'>): Promise<void> {
+    if (!adminDb) return;
+    try {
+        await adminDb.collection('notifications').add({
+            ...notification,
+            isRead: false,
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error("Error creating notification:", error);
+    }
+}
+
+export async function listenToNotifications(userId: string, callback: (notifications: Notification[]) => void): Promise<() => void> {
+    if (!db) {
+      console.error("Firestore not initialized");
+      return () => {};
+    }
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      orderBy('timestamp', 'desc')
+    );
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+      callback(notifications);
+    });
+  
+    return unsubscribe;
+}
+
+export async function markNotificationsAsRead(userId: string, notificationIds: string[]): Promise<void> {
+    if (!adminDb || notificationIds.length === 0) return;
+    const batch = adminDb.batch();
+    notificationIds.forEach(id => {
+        const docRef = adminDb.collection('notifications').doc(id);
+        batch.update(docRef, { isRead: true });
+    });
+    await batch.commit();
+}
+
 
 // =================================================================
 // LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
@@ -77,9 +127,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 registrationTimestamp: new Date().toISOString(),
             };
             
-            // Save to 'trainers' collection
             await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
-
             revalidatePath('/dashboard');
 
             return { success: true, user: { ...trainerProfile, id: userRecord.uid } };
@@ -93,7 +141,6 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
         }
 
     } else {
-        // Handle Customer Registration
         const validationResult = RegistrationFormSchema.safeParse(data);
         if (!validationResult.success) {
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
@@ -134,6 +181,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 registrationTimestamp: new Date().toISOString(),
             };
              await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
+             await createNotification({ userId: userRecord.uid, message: `Welcome to Drivergy, ${name}! Complete your profile to get started.`, href: '/dashboard/complete-profile' });
 
             revalidatePath('/dashboard');
             revalidatePath('/login');
@@ -159,8 +207,6 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         return { success: true };
     } catch (error: any) {
         console.error("Password reset error:", error);
-        // Do not reveal if an email exists or not for security reasons.
-        // Always return success to the client.
         return { success: true };
     }
 }
@@ -173,6 +219,7 @@ export async function updateUserApprovalStatus({ userId, newStatus, role }: { us
         const userRef = adminDb.collection(collectionName).doc(userId);
         await userRef.update({ approvalStatus: newStatus });
 
+        await createNotification({ userId: userId, message: `An admin has updated your account status to: ${newStatus}.`, href: '/dashboard/profile' });
         revalidatePath('/dashboard');
         return { success: true };
     } catch (error: any) {
@@ -187,10 +234,7 @@ export async function deleteUserAction({ userId, userRole }: { userId: string; u
     }
 
     try {
-        // Delete from Firebase Authentication
         await adminAuth.deleteUser(userId);
-
-        // Delete from Firestore
         const collectionName = userRole === 'trainer' ? 'trainers' : 'users';
         await adminDb.collection(collectionName).doc(userId).delete();
 
@@ -198,8 +242,6 @@ export async function deleteUserAction({ userId, userRole }: { userId: string; u
         return { success: true };
     } catch (error: any) {
         console.error(`Failed to delete user ${userId}:`, error);
-        // If Firestore delete fails but Auth delete succeeded, we might have an orphaned auth user.
-        // For now, return a generic error. More complex handling could be added later.
         return { success: false, error: "An error occurred while deleting the user." };
     }
 }
@@ -212,7 +254,6 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
     
     const data = Object.fromEntries(formData.entries());
     data.photoIdFile = formData.get('photoIdFile') as File;
-    // Manually convert date string back to Date object for Zod parsing
     if (data.subscriptionStartDate && typeof data.subscriptionStartDate === 'string') {
         data.subscriptionStartDate = new Date(data.subscriptionStartDate);
     }
@@ -258,7 +299,6 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     updatePayload.photoURL = photoURL;
   }
 
-  // Attempt to update in both collections, as we don't know the role here.
   const userRef = adminDb.collection('users').doc(userId);
   const trainerRef = adminDb.collection('trainers').doc(userId);
   const userDoc = await userRef.get();
@@ -483,17 +523,6 @@ export async function updatePromotionalPoster(posterId: string, data: VisualCont
     return true;
 }
 
-export async function updateAssignmentStatusByTrainer(studentId: string, newStatus: 'Approved' | 'Rejected'): Promise<boolean> {
-  if (!adminDb) return false;
-  const studentRef = adminDb.collection('users').doc(studentId);
-  await studentRef.update({ approvalStatus: newStatus });
-  if (newStatus === 'Approved') {
-  }
-  revalidatePath('/dashboard');
-  return true;
-}
-
-
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
   if (!adminDb) return false;
   const studentRef = adminDb.collection('users').doc(studentId);
@@ -547,10 +576,12 @@ export async function addRescheduleRequest(userId: string, customerName: string,
         status: 'Pending'
     };
 
-    await adminDb.collection('rescheduleRequests').add({
+    const newRequestRef = await adminDb.collection('rescheduleRequests').add({
       ...request,
       requestTimestamp: new Date(),
     });
+    
+    await createNotification({ userId: trainerId, message: `${customerName} requested to reschedule a lesson.`, href: '/dashboard' });
 
     revalidatePath('/dashboard');
     return true;
@@ -560,16 +591,21 @@ export async function addRescheduleRequest(userId: string, customerName: string,
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
     if (!adminDb) return false;
     const requestRef = adminDb.collection('rescheduleRequests').doc(requestId);
+    const requestDoc = await requestRef.get();
+    if (!requestDoc.exists) return false;
+    
+    const requestData = requestDoc.data()!;
+    
     await requestRef.update({ status: newStatus });
     
     if (newStatus === 'Approved') {
-        const requestDoc = await requestRef.get();
-        const requestData = requestDoc.data();
-        if (requestData) {
-            const userRef = adminDb.collection('users').doc(requestData.userId);
-            await userRef.update({ upcomingLesson: requestData.requestedRescheduleDate });
-        }
+        const userRef = adminDb.collection('users').doc(requestData.userId);
+        await userRef.update({ upcomingLesson: requestData.requestedRescheduleDate });
+        await createNotification({ userId: requestData.userId, message: `Your reschedule request was ${newStatus}.`, href: '/dashboard' });
+    } else {
+        await createNotification({ userId: requestData.userId, message: `Your reschedule request was unfortunately ${newStatus}.`, href: '/dashboard' });
     }
+    
     revalidatePath('/dashboard');
     return true;
 }
@@ -623,7 +659,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 
     const startDate = customerData.subscriptionStartDate ? parseISO(customerData.subscriptionStartDate) : new Date();
 
-    await customerRef.update({
+    const updatePayload = {
         approvalStatus: 'Approved',
         assignedTrainerId: trainerId,
         assignedTrainerName: trainerData.name,
@@ -632,7 +668,12 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         totalLessons: totalLessons,
         completedLessons: 0,
         upcomingLesson: format(addDays(startDate, 1), "MMM dd, yyyy, '09:00 AM'"),
-    });
+    };
+    await customerRef.update(updatePayload);
+
+    // Create notifications
+    await createNotification({ userId: customerId, message: `You have been assigned to trainer ${trainerData.name}. Your first lesson is scheduled!`, href: '/dashboard' });
+    await createNotification({ userId: trainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
 
     revalidatePath('/dashboard');
     return true;
@@ -647,9 +688,10 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
     const [customerDoc, newTrainerDoc] = await Promise.all([customerRef.get(), newTrainerRef.get()]);
 
     if (!customerDoc.exists || !newTrainerDoc.exists) return false;
-
-    const newTrainerData = newTrainerDoc.data();
-    if (!newTrainerData) return false;
+    
+    const customerData = customerDoc.data()!;
+    const newTrainerData = newTrainerDoc.data()!;
+    const oldTrainerId = customerData.assignedTrainerId;
     
     await customerRef.update({
         assignedTrainerId: newTrainerId,
@@ -658,6 +700,12 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
         assignedTrainerVehicleDetails: newTrainerData.vehicleInfo,
     });
     
+    await createNotification({ userId: customerId, message: `Your trainer has been changed to ${newTrainerData.name}.`, href: '/dashboard' });
+    if(oldTrainerId) {
+        await createNotification({ userId: oldTrainerId, message: `Your student ${customerData.name} has been reassigned to another trainer.`, href: '/dashboard' });
+    }
+    await createNotification({ userId: newTrainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
+
     revalidatePath('/dashboard');
     return true;
 }

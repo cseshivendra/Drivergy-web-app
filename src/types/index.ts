@@ -466,6 +466,15 @@ export interface PromotionalPoster {
   description: string;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  message: string;
+  href: string;
+  isRead: boolean;
+  timestamp: string; // ISO string
+}
+
 
 // New type for the consolidated admin dashboard data
 export interface AdminDashboardData {

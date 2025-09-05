@@ -16,6 +16,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
+import NotificationsDropdown from './notifications-dropdown';
 
 export default function Header() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -35,7 +36,7 @@ export default function Header() {
             </Button>
           )}
         </div>
-        <nav className="flex items-center space-x-4">
+        <nav className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="icon"
@@ -50,18 +51,21 @@ export default function Header() {
                 <UserCircle className="h-6 w-6 animate-pulse" />
             </Button>
           ) : user ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out">
-                    <Power className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Log Out</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <>
+              <NotificationsDropdown userId={user.id} />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out">
+                      <Power className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Log Out</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </>
           ) : (
             <Button variant="outline" asChild>
               <Link href="/login">
