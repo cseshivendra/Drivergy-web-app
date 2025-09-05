@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -209,19 +210,24 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
         return { success: false, error: "Server not configured." };
     }
     
+    const data = Object.fromEntries(formData.entries());
+    data.photoIdFile = formData.get('photoIdFile') as File;
+    // Manually convert date string back to Date object for Zod parsing
+    if (data.subscriptionStartDate && typeof data.subscriptionStartDate === 'string') {
+        data.subscriptionStartDate = new Date(data.subscriptionStartDate);
+    }
+    
+    const validationResult = FullCustomerDetailsSchema.safeParse(data);
+
+    if (!validationResult.success) {
+        console.error("Profile completion validation failed:", validationResult.error.format());
+        const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
+        return { success: false, error: firstError };
+    }
+
+    const { userId, photoIdFile, ...profileData } = validationResult.data;
+    
     try {
-        const data = Object.fromEntries(formData.entries());
-        data.photoIdFile = formData.get('photoIdFile') as File;
-        data.subscriptionStartDate = new Date(data.subscriptionStartDate as string);
-        const validationResult = FullCustomerDetailsSchema.safeParse(data);
-
-        if (!validationResult.success) {
-            console.error("Profile completion validation failed:", validationResult.error.format());
-            return { success: false, error: "Invalid form data. Please check all fields." };
-        }
-
-        const { userId, photoIdFile, ...profileData } = validationResult.data;
-        
         const photoIdUrl = await uploadFileToCloudinary(await fileToBuffer(photoIdFile), 'customer_documents');
         
         const userRef = adminDb.collection('users').doc(userId);
@@ -628,6 +634,30 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         upcomingLesson: format(addDays(startDate, 1), "MMM dd, yyyy, '09:00 AM'"),
     });
 
+    revalidatePath('/dashboard');
+    return true;
+}
+
+export async function reassignTrainerToCustomer(customerId: string, newTrainerId: string): Promise<boolean> {
+    if (!adminDb) return false;
+
+    const customerRef = adminDb.collection('users').doc(customerId);
+    const newTrainerRef = adminDb.collection('trainers').doc(newTrainerId);
+
+    const [customerDoc, newTrainerDoc] = await Promise.all([customerRef.get(), newTrainerRef.get()]);
+
+    if (!customerDoc.exists || !newTrainerDoc.exists) return false;
+
+    const newTrainerData = newTrainerDoc.data();
+    if (!newTrainerData) return false;
+    
+    await customerRef.update({
+        assignedTrainerId: newTrainerId,
+        assignedTrainerName: newTrainerData.name,
+        assignedTrainerPhone: newTrainerData.phone,
+        assignedTrainerVehicleDetails: newTrainerData.vehicleInfo,
+    });
+    
     revalidatePath('/dashboard');
     return true;
 }

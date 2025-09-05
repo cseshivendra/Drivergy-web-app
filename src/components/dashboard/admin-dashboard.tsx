@@ -97,6 +97,7 @@ export default function AdminDashboard() {
     // Separate lists for different user states
     const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
     const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const existingCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && (u.approvalStatus === 'Approved' || u.approvalStatus === 'On Hold')), [filteredUsers]);
     const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
     const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
 
@@ -144,6 +145,13 @@ export default function AdminDashboard() {
                         isLoading={loading}
                         onUserActioned={handleActioned}
                         actionType="new-customer"
+                    />
+                     <UserTable
+                        title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Existing Students</>}
+                        users={existingCustomers}
+                        isLoading={loading}
+                        onUserActioned={handleActioned}
+                        actionType="existing-customer"
                     />
                     <UserTable
                         title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>}

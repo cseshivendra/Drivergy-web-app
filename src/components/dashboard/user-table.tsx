@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -7,12 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
-import { Locations, GenderOptions } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2 } from 'lucide-react';
+import { Locations, GenderOptions, ApprovalStatusOptions } from '@/types';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction } from '@/lib/server-actions';
+import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction, reassignTrainerToCustomer } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 
-type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer';
+type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer' | 'existing-customer';
 
 interface UserTableProps {
   title: ReactNode;
@@ -94,12 +95,17 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
     }
     
     setIsAssigning(true);
-    const success = await assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
+    
+    const action = actionType === 'existing-customer' 
+      ? reassignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId)
+      : assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
+
+    const success = await action;
     
     if (success) {
       toast({
         title: "Assignment Successful",
-        description: `${selectedUserForAssignment.name} has been assigned a trainer.`,
+        description: `${selectedUserForAssignment.name} has been assigned a new trainer.`,
       });
       onUserActioned();
       setIsAssignDialogOpen(false);
@@ -114,10 +120,10 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
   };
 
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
-    if (user.uniqueId.startsWith('CU') && newStatus === 'Approved') {
+    if (actionType === 'new-customer' && newStatus === 'Approved') {
         toast({
           title: "Action Required",
-          description: "Please use the 'Approve & Assign' button to approve customers. This assigns a trainer at the same time.",
+          description: "Please use the 'Approve & Assign' button to approve new customers.",
           variant: 'destructive',
         });
         return;
@@ -189,6 +195,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
       case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
       case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300';
+      case 'On Hold': return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
     }
   };
@@ -222,6 +229,20 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
             <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1 hover:bg-accent/10 hover:border-accent hover:text-accent" aria-label={`View details for ${user.name}`}><Eye className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">View</span></Button>
             <Button variant="default" size="sm" onClick={() => openAssignDialog(user)} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1" aria-label={`Assign trainer for ${user.name}`}><UserCheck className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Approve & Assign</span></Button>
             <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(user, 'Rejected')} className="px-2 py-1" aria-label={`Reject ${user.name}`}><X className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Reject</span></Button>
+          </div>
+        );
+      case 'existing-customer':
+        return (
+          <div className="flex items-center justify-center space-x-1.5">
+             <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1" aria-label={`View details for ${user.name}`}><Eye className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">View</span></Button>
+            <Button variant="outline" size="sm" onClick={() => openAssignDialog(user)} className="px-2 py-1" aria-label={`Re-assign trainer for ${user.name}`}><UserCog className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Re-assign</span></Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="secondary" size="sm" className="w-[100px] justify-between px-2 py-1"><span>Status</span><ChevronDown className="h-4 w-4" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'On Hold')}><Hourglass className="mr-2 h-4 w-4 text-yellow-500" /><span>On Hold</span></DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleUpdateStatus(user, 'Rejected')} className="text-destructive focus:bg-destructive/10 focus:text-destructive"><X className="mr-2 h-4 w-4" /><span>Cancel</span></DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       case 'new-trainer':
@@ -321,8 +342,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
                     <TableCell colSpan={actionType === 'interested-customer' ? 5 : 9} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                        <p className="text-lg">No {actionType === 'interested-customer' ? 'interested customers' : 'pending enrollments'} found.</p>
-                        <p className="text-sm">{actionType === 'interested-customer' ? 'New sign-ups will appear here.' : 'Check back later or adjust filters.'}</p>
+                        <p className="text-lg">No {actionType.includes('customer') ? 'customers' : 'trainers'} found.</p>
+                        <p className="text-sm">Check back later or adjust filters.</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -375,7 +396,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign Trainer to {selectedUserForAssignment?.name}</DialogTitle>
+            <DialogTitle>{actionType === 'existing-customer' ? 'Re-assign' : 'Assign'} Trainer to {selectedUserForAssignment?.name}</DialogTitle>
             <DialogDescription>
               Filter and select an approved trainer. This will also approve the customer's registration.
             </DialogDescription>
