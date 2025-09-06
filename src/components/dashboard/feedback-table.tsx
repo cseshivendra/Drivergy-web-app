@@ -62,31 +62,31 @@ export default function FeedbackTable({ title, feedback, isLoading }: FeedbackTa
   );
 
   return (
-    <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><User className="inline-block mr-2 h-4 w-4" />Customer</TableHead>
-                <TableHead><User className="inline-block mr-2 h-4 w-4" />Trainer</TableHead>
-                <TableHead><Star className="inline-block mr-2 h-4 w-4" />Rating</TableHead>
-                <TableHead><MessageSquare className="inline-block mr-2 h-4 w-4" />Comment</TableHead>
-                <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? renderSkeletons() : paginatedFeedback.length > 0 ? (
-                paginatedFeedback.map((fb) => (
-                  <TableRow key={fb.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell className="font-medium">{fb.customerName}</TableCell>
-                    <TableCell>{fb.trainerName}</TableCell>
-                    <TableCell><StarDisplay rating={fb.rating} /></TableCell>
-                    <TableCell>
-                      <TooltipProvider>
+    <TooltipProvider>
+      <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
+        <CardHeader>
+          <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><User className="inline-block mr-2 h-4 w-4" />Customer</TableHead>
+                  <TableHead><User className="inline-block mr-2 h-4 w-4" />Trainer</TableHead>
+                  <TableHead><Star className="inline-block mr-2 h-4 w-4" />Rating</TableHead>
+                  <TableHead><MessageSquare className="inline-block mr-2 h-4 w-4" />Comment</TableHead>
+                  <TableHead><CalendarDays className="inline-block mr-2 h-4 w-4" />Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? renderSkeletons() : paginatedFeedback.length > 0 ? (
+                  paginatedFeedback.map((fb) => (
+                    <TableRow key={fb.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell className="font-medium">{fb.customerName}</TableCell>
+                      <TableCell>{fb.trainerName}</TableCell>
+                      <TableCell><StarDisplay rating={fb.rating} /></TableCell>
+                      <TableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <p className="max-w-xs truncate">{fb.comment}</p>
@@ -95,49 +95,49 @@ export default function FeedbackTable({ title, feedback, isLoading }: FeedbackTa
                             <p>{fb.comment}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </TableCell>
+                      <TableCell>{fb.submissionDate}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
+                        <p className="text-lg">No feedback submitted yet.</p>
+                        <p className="text-sm">Check back later to see customer ratings.</p>
+                      </div>
                     </TableCell>
-                    <TableCell>{fb.submissionDate}</TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
-                      <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
-                      <p className="text-lg">No feedback submitted yet.</p>
-                      <p className="text-sm">Check back later to see customer ratings.</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-      {feedback.length > 0 && !isLoading && (
-        <CardFooter className="flex items-center justify-between pt-4 border-t">
-          <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages} ({feedback.length} item{feedback.length === 1 ? '' : 's'})</span>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>Previous</Button>
-            <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</Button>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </CardFooter>
-      )}
-       {(feedback.length === 0 && !isLoading) && (
-         <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
-          <span className="text-sm text-muted-foreground">No data to paginate</span>
-        </CardFooter>
-      )}
-       {isLoading && (
-         <CardFooter className="flex items-center justify-between pt-4 border-t min-h-[68px]">
-          <Skeleton className="h-5 w-20" />
-          <div className="flex space-x-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-20" />
-          </div>
-        </CardFooter>
-      )}
-    </Card>
+        </CardContent>
+        {feedback.length > 0 && !isLoading && (
+          <CardFooter className="flex items-center justify-between pt-4 border-t">
+            <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages} ({feedback.length} item{feedback.length === 1 ? '' : 's'})</span>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" onClick={handlePreviousPage} disabled={currentPage === 1}>Previous</Button>
+              <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === totalPages}>Next</Button>
+            </div>
+          </CardFooter>
+        )}
+        {(feedback.length === 0 && !isLoading) && (
+          <CardFooter className="flex items-center justify-center pt-4 border-t min-h-[68px]">
+            <span className="text-sm text-muted-foreground">No data to paginate</span>
+          </CardFooter>
+        )}
+        {isLoading && (
+          <CardFooter className="flex items-center justify-between pt-4 border-t min-h-[68px]">
+            <Skeleton className="h-5 w-20" />
+            <div className="flex space-x-2">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-20" />
+            </div>
+          </CardFooter>
+        )}
+      </Card>
+    </TooltipProvider>
   );
 }
