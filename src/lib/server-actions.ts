@@ -232,13 +232,20 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
         return { success: false, error: "Server not configured." };
     }
     
-    const data = Object.fromEntries(formData.entries());
+    let data = Object.fromEntries(formData.entries());
     
-    // FIX: Pre-process the date string from FormData into a Date object before validation.
+    // Pre-process the date string from FormData into a Date object before validation.
     if (data.subscriptionStartDate && typeof data.subscriptionStartDate === 'string') {
         data.subscriptionStartDate = new Date(data.subscriptionStartDate);
     }
     
+    // Convert empty strings for optional fields to undefined
+    Object.keys(data).forEach(key => {
+        if (data[key] === '') {
+            data[key] = undefined;
+        }
+    });
+
     const validationResult = FullCustomerDetailsSchema.safeParse(data);
 
     if (!validationResult.success) {

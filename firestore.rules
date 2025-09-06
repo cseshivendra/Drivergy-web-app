@@ -1,51 +1,83 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Users can only read their own profile, but anyone can create an account.
-    // Updates are restricted to the owner of the document.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null;
-    }
-    
-    // Trainers can only read/update their own profile. Admin can manage all.
-    match /trainers/{trainerId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == trainerId;
-      allow create: if request.auth != null;
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    // Notifications can only be read by the user they are intended for.
-    // Notifications should only be created by the server (admin actions).
-    match /notifications/{notificationId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create, update, delete: if false; // Deny client-side writes
+    // Allow admins to read/write anything
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Allow users to read/update their own profile data
+    match /users/{userId} {
+      allow read, update: if request.auth.uid == userId || isAdmin();
+      allow create: if request.auth.uid == userId;
+      allow delete: if isAdmin();
     }
     
-    // Public collections are readable by anyone.
+    // Allow trainers to read/update their own profile data
+    match /trainers/{trainerId} {
+      allow read, update: if request.auth.uid == trainerId || isAdmin();
+      allow create: if request.auth.uid == trainerId;
+      allow delete: if isAdmin();
+    }
+
+    // Allow logged-in users to read general content
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+    }
+    
+    match /quizSets/{quizId} {
+        allow read: if request.auth != null;
+    }
+
+    // Blog and FAQ are public
     match /blog/{postId} {
       allow read: if true;
-      allow write: if false; // Managed by admin
+      allow write: if isAdmin();
     }
     
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin
-    }
-
     match /faqs/{faqId} {
       allow read: if true;
-      allow write: if false; // Managed by admin
+      allow write: if isAdmin();
     }
 
-    match /quizSets/{quizId} {
-      allow read: if true;
-      allow write: if false; // Managed by admin
+    match /siteBanners/{bannerId} {
+        allow read: if true;
+        allow write: if isAdmin();
+    }
+    
+    match /promotionalPosters/{posterId} {
+        allow read: if true;
+        allow write: if isAdmin();
     }
 
-    // Other collections should be locked down by default
-    // Feedback, Reschedule Requests, etc. would have rules here
-    // based on whether a user or trainer owns the document.
+    // Notifications: A user can only read notifications where the userId field matches their own UID.
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Writes should only be done by the server, so deny client writes.
+      allow write: if false; 
+    }
+    
+    // Allow admins to manage these collections
+    match /rescheduleRequests/{reqId} {
+        allow read, write: if isAdmin();
+    }
+    
+    match /feedback/{feedbackId} {
+        allow read: if isAdmin();
+        allow create: if request.auth != null; // Users can create feedback
+    }
+    
+    match /referrals/{refId} {
+        allow read, write: if isAdmin();
+    }
   }
 }
