@@ -212,31 +212,32 @@ export default function HomePage() {
     }
   ];
 
-  // useEffect(() => {
-  //   const popupShown = sessionStorage.getItem('promotionalPopupShown');
-  //   if (!popupShown) {
-  //     const popupTimer = setTimeout(() => {
-  //       setIsPopupOpen(true);
-  //       sessionStorage.setItem('promotionalPopupShown', 'true');
-  //     }, 2000); 
+  useEffect(() => {
+    const popupShown = sessionStorage.getItem('promotionalPopupShown');
+    if (!popupShown) {
+      const popupTimer = setTimeout(() => {
+        setIsPopupOpen(true);
+        sessionStorage.setItem('promotionalPopupShown', 'true');
+      }, 2000); 
       
-  //     return () => clearTimeout(popupTimer);
-  //   }
-  // }, []);
+      return () => clearTimeout(popupTimer);
+    }
+  }, []);
 
   useEffect(() => {
-    if (heroSlides.length === 0) return;
-    const slideInterval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-    }, 3000); // Change slide every 3 seconds
+    if (heroSlides.length > 0) {
+        const slideInterval = setInterval(() => {
+          setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+        }, 3000); // Change slide every 3 seconds
 
-    return () => clearInterval(slideInterval);
+        return () => clearInterval(slideInterval);
+    }
   }, [heroSlides]);
 
 
   return (
     <>
-      {/* <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} /> */}
+      <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} />
       {/* Hero Section */}
       <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
         {/* Background container for images and overlay */}
@@ -288,7 +289,7 @@ export default function HomePage() {
               className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-3 text-base" 
               asChild
             >
-              <Link href="#courses">Explore Driving Courses &rarr;</Link>
+              <Link href="/#courses">Explore Driving Courses &rarr;</Link>
             </Button>
             <Button 
               size="lg" 
@@ -440,7 +441,7 @@ export default function HomePage() {
                         </CardContent>
                         <CardFooter className="flex justify-between items-center">
                             <Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button>
-                            <Button variant="secondary" asChild><Link href="/payment?plan=Comprehensive Car Program">Enroll Now</Link></Button>
+                            <Button variant="secondary" asChild><Link href="/payment?plan=Comprehensive Car Program&price=9999">Enroll Now</Link></Button>
                         </CardFooter>
                     </Card>
                 </div>
