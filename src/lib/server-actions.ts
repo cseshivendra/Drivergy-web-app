@@ -233,7 +233,8 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
     }
     
     const data = Object.fromEntries(formData.entries());
-    data.photoIdFile = formData.get('photoIdFile') as File;
+    
+    // FIX: Pre-process the date string from FormData into a Date object before validation.
     if (data.subscriptionStartDate && typeof data.subscriptionStartDate === 'string') {
         data.subscriptionStartDate = new Date(data.subscriptionStartDate);
     }

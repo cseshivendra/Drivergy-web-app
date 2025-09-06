@@ -134,3 +134,24 @@ io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missin
 [debug] [2025-09-06T14:27:04.579Z] Sep 06, 2025 2:27:04 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
  {"metadata":{"emulator":{"name":"firestore"},"message":"Sep 06, 2025 2:27:04 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-09-06T14:30:55.731Z] Sep 06, 2025 2:30:55 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed
+INFO: Websocket client disconnected
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Sep 06, 2025 2:30:55 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed\nINFO: Websocket client disconnected\n"}}
+[debug] [2025-09-06T14:42:33.382Z] Sep 06, 2025 2:42:33 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Sep 06, 2025 2:42:33 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel\nINFO: Connected to new websocket client\n"}}
+[debug] [2025-09-06T14:42:42.237Z] Sep 06, 2025 2:42:42 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed
+INFO: Websocket client disconnected
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Sep 06, 2025 2:42:42 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler channelClosed\nINFO: Websocket client disconnected\n"}}
+[info] i  firestore: Change detected, updating rules... 
+[debug] [2025-09-06T14:56:23.921Z] >>> [apiv2][query] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules [none]
+[debug] [2025-09-06T14:56:23.923Z] >>> [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules {"ignore_errors":true,"rules":{"files":[{"name":"security.rules","content":"rules_version = '2';\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    \n    // Users can only read their own profile, but anyone can create an account.\n    // Updates are restricted to the owner of the document.\n    match /users/{userId} {\n      allow read, update, delete: if request.auth != null && request.auth.uid == userId;\n      allow create: if request.auth != null;\n    }\n    \n    // Trainers can only read/update their own profile. Admin can manage all.\n    match /trainers/{trainerId} {\n      allow read, update, delete: if request.auth != null && request.auth.uid == trainerId;\n      allow create: if request.auth != null;\n    }\n\n    // Notifications can only be read by the user they are intended for.\n    // Notifications should only be created by the server (admin actions).\n    match /notifications/{notificationId} {\n      allow read: if request.auth != null && request.auth.uid == resource.data.userId;\n      allow create, update, delete: if false; // Deny client-side writes\n    }\n    \n    // Public collections are readable by anyone.\n    match /blog/{postId} {\n      allow read: if true;\n      allow write: if false; // Managed by admin\n    }\n    \n    match /courses/{courseId} {\n      allow read: if true;\n      allow write: if false; // Managed by admin\n    }\n\n    match /faqs/{faqId} {\n      allow read: if true;\n      allow write: if false; // Managed by admin\n    }\n\n    match /quizSets/{quizId} {\n      allow read: if true;\n      allow write: if false; // Managed by admin\n    }\n\n    // Other collections should be locked down by default\n    // Feedback, Reschedule Requests, etc. would have rules here\n    // based on whether a user or trainer owns the document.\n  }\n}\n"}]}}
+[debug] [2025-09-06T14:56:23.938Z] Sep 06, 2025 2:56:23 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Sep 06, 2025 2:56:23 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-09-06T14:56:24.489Z] Sep 06, 2025 2:56:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Sep 06, 2025 2:56:24 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[debug] [2025-09-06T14:56:26.714Z] <<< [apiv2][status] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules 200
+[debug] [2025-09-06T14:56:26.715Z] <<< [apiv2][body] PUT http://127.0.0.1:8080/emulator/v1/projects/demo-app:securityRules {}
+[info] ✔  firestore: Rules updated. 
