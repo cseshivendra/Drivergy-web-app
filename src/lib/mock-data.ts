@@ -1,4 +1,5 @@
 
+
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest, Notification } from '@/types';
@@ -57,12 +58,13 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
     const bannersRef = collection(db, 'siteBanners');
     const postersRef = collection(db, 'promotionalPosters');
     const rescheduleRef = collection(db, 'rescheduleRequests');
+    const feedbackRef = collection(db, 'feedback');
 
     const unsubs: (() => void)[] = [];
 
     const fetchData = async () => {
         try {
-            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap] = await Promise.all([
+            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap, feedbackSnap] = await Promise.all([
                 getDocs(usersRef),
                 getDocs(trainersRef),
                 getDocs(coursesRef),
@@ -72,6 +74,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 getDocs(bannersRef),
                 getDocs(postersRef),
                 getDocs(query(rescheduleRef, orderBy('requestTimestamp', 'desc'))),
+                getDocs(query(feedbackRef, orderBy('submissionDate', 'desc')))
             ]);
             
             const customers: UserProfile[] = usersSnap.docs.map(d => ({
@@ -100,9 +103,16 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     requestTimestamp: c.registrationTimestamp ? format(parseISO(c.registrationTimestamp), 'PPp') : 'N/A',
                 }));
 
-            // Derive Feedback & Referrals from other collections if they existed
-            // For now, these are empty as we don't have these collections yet.
-            const feedback: Feedback[] = [];
+            // Derive Feedback
+            const feedback: Feedback[] = feedbackSnap.docs.map(d => {
+                const data = d.data();
+                return {
+                    id: d.id,
+                    ...data,
+                    submissionDate: data.submissionDate?.toDate ? format(data.submissionDate.toDate(), 'PPp') : 'N/A',
+                } as Feedback;
+            });
+            
             const referrals: Referral[] = [];
 
             // Derive Lesson Progress
@@ -182,7 +192,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     fetchData(); // Initial fetch
 
-    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef];
+    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef, feedbackRef];
     collections.forEach(ref => {
         const unsubscribe = onSnapshot(ref, fetchData, (error) => console.error("Snapshot error:", error));
         unsubs.push(unsubscribe);
