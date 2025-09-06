@@ -404,50 +404,42 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {coursesData.map((course) => (
-            <div key={course.id} className="perspective-1000 h-[32rem]">
-                <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === course.id })}>
-                    {/* Front of the Card */}
-                    <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
-                        <div className="relative h-48 w-full">
-                            <Image src={course.imageSrc} alt={course.title} layout="fill" objectFit="cover" data-ai-hint={course.imageHint} />
-                        </div>
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center mb-2">
-                                <div className="p-2 bg-primary/10 rounded-md mr-3">
-                                <course.icon className="h-6 w-6 text-primary" />
-                                </div>
-                                <CardTitle as="h3" className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
-                            </div>
-                            <CardDescription>{course.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow"></CardContent>
-                        <CardFooter className="pt-2 flex justify-center">
-                            <Button variant="outline" onClick={() => setFlippedCardId(course.id)}>Details</Button>
-                        </CardFooter>
-                    </Card>
-                    {/* Back of the Card */}
-                    <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
-                        <CardHeader>
-                            <CardTitle as="h3" className="font-headline text-xl font-semibold">{course.title}</CardTitle>
-                            <CardDescription className="text-primary-foreground/80">Key features of this course.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                            <ul className="space-y-3">
-                                {course.details.map((detail, index) => (
-                                <li key={index} className="flex items-start">
-                                    <Check className="h-5 w-5 mr-3 mt-0.5 shrink-0"/>
-                                    <span>{detail}</span>
-                                </li>
-                                ))}
-                            </ul>
-                        </CardContent>
-                        <CardFooter className="flex justify-between items-center">
-                            <Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button>
-                            <Button variant="secondary" asChild><Link href="/payment?plan=Comprehensive Car Program&price=9999">Enroll Now</Link></Button>
-                        </CardFooter>
-                    </Card>
+            <Card key={course.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden">
+                <div className="relative h-48 w-full">
+                    <Image src={course.imageSrc} alt={course.title} layout="fill" objectFit="cover" data-ai-hint={course.imageHint} />
                 </div>
-            </div>
+                <CardHeader className="pb-3">
+                    <div className="flex items-center mb-2">
+                        <div className="p-2 bg-primary/10 rounded-md mr-3">
+                        <course.icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <CardTitle as="h3" className="font-headline text-xl font-semibold text-primary">{course.title}</CardTitle>
+                    </div>
+                    <CardDescription>{course.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <Accordion type="single" collapsible>
+                        <AccordionItem value="details">
+                            <AccordionTrigger>View Details</AccordionTrigger>
+                            <AccordionContent>
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    {course.details.map((detail, index) => (
+                                    <li key={index} className="flex items-start">
+                                        <Check className="h-4 w-4 mr-2 mt-1 shrink-0 text-green-500"/>
+                                        <span>{detail}</span>
+                                    </li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </CardContent>
+                <CardFooter className="pt-2">
+                    <Button className="w-full" asChild>
+                        <Link href="/payment?plan=Comprehensive Car Program&price=9999">Enroll Now</Link>
+                    </Button>
+                </CardFooter>
+            </Card>
           ))}
         </div>
       </div>
