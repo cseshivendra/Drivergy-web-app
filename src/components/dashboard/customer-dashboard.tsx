@@ -232,13 +232,15 @@ export default function CustomerDashboard() {
 
       if (lessonDateString) {
         try {
+          // This parsing needs to be robust.
+          // The format from the server is 'MMM dd, yyyy, h:mm a'
           lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
         } catch(e) { console.error("Error parsing date:", e)}
       } 
       
       setUpcomingLessonDate(lessonDate);
 
-      if (lessonDate) {
+      if (lessonDate && isFuture(lessonDate)) {
         setIsReschedulable(differenceInHours(lessonDate, now) > 24);
       } else {
         setIsReschedulable(false);

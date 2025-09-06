@@ -236,10 +236,10 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
     
     // Pre-process the date string from FormData into a Date object before validation.
     if (data.subscriptionStartDate && typeof data.subscriptionStartDate === 'string') {
-        data.subscriptionStartDate = new Date(data.subscriptionStartDate);
+        data.subscriptionStartDate = parseISO(data.subscriptionStartDate);
     }
     
-    // Convert empty strings for optional fields to undefined
+    // Convert empty strings for optional fields to undefined to prevent Zod errors
     Object.keys(data).forEach(key => {
         if (data[key] === '') {
             data[key] = undefined;
@@ -588,7 +588,9 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
     
     if (newStatus === 'Approved') {
         const userRef = adminDb.collection('users').doc(requestData.userId);
-        await userRef.update({ upcomingLesson: requestData.requestedRescheduleDate });
+        const requestedDate = parseISO(requestData.requestedRescheduleDate);
+        const formattedDate = format(requestedDate, "MMM dd, yyyy, h:mm a");
+        await userRef.update({ upcomingLesson: formattedDate });
         await createNotification({ userId: requestData.userId, message: `Your reschedule request was ${newStatus}.`, href: '/dashboard' });
     } else {
         await createNotification({ userId: requestData.userId, message: `Your reschedule request was unfortunately ${newStatus}.`, href: '/dashboard' });
