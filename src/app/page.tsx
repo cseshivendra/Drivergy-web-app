@@ -228,7 +228,7 @@ export default function HomePage() {
     if (heroSlides.length > 0) {
         const slideInterval = setInterval(() => {
           setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-        }, 3000); // Change slide every 3 seconds
+        }, 3000);
 
         return () => clearInterval(slideInterval);
     }
