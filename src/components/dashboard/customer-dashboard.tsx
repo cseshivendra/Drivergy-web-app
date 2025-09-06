@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,7 +14,7 @@ import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, 
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { differenceInHours, format, isFuture, parse, addDays, isPast } from 'date-fns';
+import { differenceInHours, format, isFuture, parse, addDays, isPast, parseISO } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -190,21 +189,17 @@ export default function CustomerDashboard() {
     if (user?.id) {
       const unsubscribe = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
-        // We set loading to false here, once we have a definitive answer (user or null)
         setLoading(false);
       });
       return unsubscribe;
     } else {
-      // If there's no user ID, there's nothing to listen to.
       setLoading(false);
       setProfile(null);
     }
-    // This is intentional. The function returns nothing if there's no user.
     return () => {};
   }, [user?.id]);
   
   useEffect(() => {
-    // Only set loading to true when we start the fetch.
     setLoading(true);
     const unsubscribe = refetchProfile();
     return () => {
@@ -227,13 +222,10 @@ export default function CustomerDashboard() {
       }
 
       const lessonDateString = profile.upcomingLesson;
-      const now = new Date();
       let lessonDate: Date | null = null;
 
       if (lessonDateString) {
         try {
-          // This parsing needs to be robust.
-          // The format from the server is 'MMM dd, yyyy, h:mm a'
           lessonDate = parse(lessonDateString, 'MMM dd, yyyy, h:mm a', new Date());
         } catch(e) { console.error("Error parsing date:", e)}
       } 
@@ -241,12 +233,12 @@ export default function CustomerDashboard() {
       setUpcomingLessonDate(lessonDate);
 
       if (lessonDate && isFuture(lessonDate)) {
-        setIsReschedulable(differenceInHours(lessonDate, now) > 24);
+        setIsReschedulable(differenceInHours(lessonDate, new Date()) > 24);
       } else {
         setIsReschedulable(false);
       }
     }
-  }, [profile]);
+  }, [profile, refetchProfile]);
 
   const handleStartDateChange = async () => {
     if (!profile || !newStartDate || !user) return;
@@ -347,11 +339,11 @@ export default function CustomerDashboard() {
                         <Hourglass className="h-12 w-12 text-yellow-500" />
                     </div>
                     <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
-                    <CardDescription className="text-lg mt-4">
+                     <CardDescription className="text-lg mt-4">
                         <div className="flex items-center justify-center gap-2">
-                            <span>Verification Status:</span>
+                            <span>Account Status:</span>
                             <Badge className={cn("text-base", getStatusBadgeClass(profile.approvalStatus))}>
-                                {profile.approvalStatus}
+                                {isPlanSelected ? profile.approvalStatus : "Awaiting Plan Selection"}
                             </Badge>
                         </div>
                     </CardDescription>
