@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, useEffect } from 'react';
-import PromotionalPopup from '@/components/popups/promotional-popup';
+// import PromotionalPopup from '@/components/popups/promotional-popup';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { DrivergyLogoIcon } from '@/components/ui/logo';
 
@@ -184,7 +184,7 @@ const DrivergyLogoMini = ({className} : {className?: string}) => (
 
 
 export default function HomePage() {
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  // const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
 
@@ -212,6 +212,7 @@ export default function HomePage() {
     }
   ];
 
+  /*
   useEffect(() => {
     const popupShown = sessionStorage.getItem('promotionalPopupShown');
     if (!popupShown) {
@@ -223,6 +224,7 @@ export default function HomePage() {
       return () => clearTimeout(popupTimer);
     }
   }, []);
+  */
 
   useEffect(() => {
     if (heroSlides.length > 0) {
@@ -237,7 +239,7 @@ export default function HomePage() {
 
   return (
     <>
-      <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} />
+      {/* <PromotionalPopup isOpen={isPopupOpen} onOpenChange={setIsPopupOpen} /> */}
       {/* Hero Section */}
       <section className="relative h-[60vh] md:h-[70vh] flex flex-col items-center justify-center text-center text-white overflow-hidden">
         {/* Background container for images and overlay */}
