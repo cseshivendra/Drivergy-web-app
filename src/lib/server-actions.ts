@@ -626,20 +626,20 @@ export async function updateReferralPayoutStatus(referralId: string, status: Pay
     return true;
 }
 
-export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<boolean> {
-    if (!adminDb) return false;
+export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<UserProfile | null> {
+    if (!adminDb) return null;
     
     const customerRef = adminDb.collection('users').doc(customerId);
     const trainerRef = adminDb.collection('trainers').doc(trainerId);
 
     const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
 
-    if (!customerDoc.exists || !trainerDoc.exists) return false;
+    if (!customerDoc.exists || !trainerDoc.exists) return null;
 
     const customerData = customerDoc.data();
     const trainerData = trainerDoc.data();
 
-    if (!customerData || !trainerData) return false;
+    if (!customerData || !trainerData) return null;
 
     const subscriptionPlan = customerData.subscriptionPlan;
     let totalLessons = 0;
@@ -666,18 +666,19 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     await createNotification({ userId: trainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
 
     revalidatePath('/dashboard');
-    return true;
+    const updatedCustomerDoc = await customerRef.get();
+    return { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() } as UserProfile;
 }
 
-export async function reassignTrainerToCustomer(customerId: string, newTrainerId: string): Promise<boolean> {
-    if (!adminDb) return false;
+export async function reassignTrainerToCustomer(customerId: string, newTrainerId: string): Promise<UserProfile | null> {
+    if (!adminDb) return null;
 
     const customerRef = adminDb.collection('users').doc(customerId);
     const newTrainerRef = adminDb.collection('trainers').doc(newTrainerId);
 
     const [customerDoc, newTrainerDoc] = await Promise.all([customerRef.get(), newTrainerRef.get()]);
 
-    if (!customerDoc.exists || !newTrainerDoc.exists) return false;
+    if (!customerDoc.exists || !newTrainerDoc.exists) return null;
     
     const customerData = customerDoc.data()!;
     const newTrainerData = newTrainerDoc.data()!;
@@ -697,7 +698,8 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
     await createNotification({ userId: newTrainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
 
     revalidatePath('/dashboard');
-    return true;
+    const updatedCustomerDoc = await customerRef.get();
+    return { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() } as UserProfile;
 }
 
 

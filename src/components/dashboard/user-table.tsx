@@ -87,38 +87,44 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
   
   const handleConfirmAssignment = async () => {
     if (!selectedUserForAssignment || !selectedTrainerId) {
-      toast({
-        title: "Assignment Error",
-        description: "Please select a trainer before confirming.",
-        variant: "destructive",
-      });
-      return;
+        toast({
+            title: "Assignment Error",
+            description: "Please select a trainer before confirming.",
+            variant: "destructive",
+        });
+        return;
     }
     
     setIsAssigning(true);
     
     const action = actionType === 'existing-customer' 
-      ? reassignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId)
-      : assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
+        ? reassignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId)
+        : assignTrainerToCustomer(selectedUserForAssignment.id, selectedTrainerId);
 
-    const success = await action;
-    
-    if (success) {
-      toast({
-        title: "Assignment Successful",
-        description: `${selectedUserForAssignment.name} has been assigned a new trainer.`,
-      });
-      onUserActioned();
-      setIsAssignDialogOpen(false);
-    } else {
-      toast({
-        title: "Assignment Failed",
-        description: "Could not complete the assignment. Please try again.",
-        variant: "destructive",
-      });
+    try {
+        const updatedProfile = await action;
+        
+        if (updatedProfile) {
+            toast({
+                title: "Assignment Successful",
+                description: `${selectedUserForAssignment.name} has been assigned a new trainer.`,
+            });
+            onUserActioned();
+            setIsAssignDialogOpen(false);
+        } else {
+            throw new Error("Could not complete the assignment. Please try again.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred during assignment.";
+        toast({
+            title: "Assignment Failed",
+            description: errorMessage,
+            variant: "destructive",
+        });
+    } finally {
+        setIsAssigning(false);
     }
-    setIsAssigning(false);
-  };
+};
 
   const handleUpdateStatus = async (user: UserProfile, newStatus: ApprovalStatusType) => {
     if (actionType === 'new-customer' && newStatus === 'Approved') {
