@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema } from '@/types';
 import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification } from '@/types';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parse, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
@@ -647,7 +647,8 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     else if (subscriptionPlan === 'Gold') totalLessons = 15;
     else if (subscriptionPlan === 'Premium') totalLessons = 20;
 
-    const startDate = customerData.subscriptionStartDate ? parseISO(customerData.subscriptionStartDate) : new Date();
+    const startDateString = customerData.subscriptionStartDate;
+    const startDate = startDateString ? parse(startDateString, 'MMM dd, yyyy', new Date()) : new Date();
 
     const updatePayload = {
         approvalStatus: 'Approved',
@@ -667,7 +668,11 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 
     revalidatePath('/dashboard');
     const updatedCustomerDoc = await customerRef.get();
-    return { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() } as UserProfile;
+    const updatedData = { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() };
+    if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
+        updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
+    }
+    return updatedData as UserProfile;
 }
 
 export async function reassignTrainerToCustomer(customerId: string, newTrainerId: string): Promise<UserProfile | null> {
@@ -699,7 +704,11 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
 
     revalidatePath('/dashboard');
     const updatedCustomerDoc = await customerRef.get();
-    return { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() } as UserProfile;
+    const updatedData = { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() };
+    if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
+        updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
+    }
+    return updatedData as UserProfile;
 }
 
 
