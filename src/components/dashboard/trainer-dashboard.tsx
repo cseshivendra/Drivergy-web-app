@@ -1,15 +1,17 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle, Hourglass } from "lucide-react";
+import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { listenToUser, listenToTrainerStudents } from '@/lib/mock-data';
+import { updateUserAttendance } from '@/lib/server-actions';
+import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback, RescheduleRequest } from '@/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -24,6 +26,7 @@ import {
 
 const TrainerDashboard = () => {
     const { user, loading: authLoading } = useAuth();
+    const { toast } = useToast();
     const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
     const [students, setStudents] = useState<UserProfile[]>([]);
     const [feedback, setFeedback] = useState<Feedback[]>([]);
@@ -31,14 +34,19 @@ const TrainerDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const refetchData = useCallback(() => {
+        if (user?.id) {
+            listenToTrainerStudents(user.id, (data) => {
+                setStudents(data.students);
+                setFeedback(data.feedback);
+                setRescheduleRequests(data.rescheduleRequests);
+            });
+        }
+    }, [user?.id]);
+    
     useEffect(() => {
-        if (authLoading) {
-            return; // Wait until auth state is confirmed
-        }
-        if (!user?.id) {
-            setLoading(false);
-            return;
-        }
+        if (authLoading) return;
+        if (!user?.id) { setLoading(false); return; }
 
         const unsubscribeTrainer = listenToUser(user.id, (profile) => {
             if (profile) {
@@ -62,19 +70,23 @@ const TrainerDashboard = () => {
 
         return () => unsubscribeTrainer();
     }, [user, authLoading]);
-
+    
+    const handleAttendance = async (studentId: string, status: 'Present' | 'Absent') => {
+        const success = await updateUserAttendance(studentId, status);
+        if (success) {
+            toast({ title: "Attendance Marked", description: `Student marked as ${status.toLowerCase()}.` });
+            refetchData(); // Re-fetch data to update the UI
+        } else {
+            toast({ title: "Error", description: "Failed to update attendance.", variant: "destructive" });
+        }
+    };
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'Approved':
-                return <CheckCircle className="h-10 w-10 text-green-500" />;
-            case 'Rejected':
-                return <XCircle className="h-10 w-10 text-red-500" />;
-            case 'In Progress':
-                return <Hourglass className="h-10 w-10 text-blue-500" />;
-            case 'Pending':
-            default:
-                return <Hourglass className="h-10 w-10 text-yellow-500" />;
+            case 'Approved': return <CheckCircle className="h-10 w-10 text-green-500" />;
+            case 'Rejected': return <XCircle className="h-10 w-10 text-red-500" />;
+            case 'In Progress': return <Hourglass className="h-10 w-10 text-blue-500" />;
+            default: return <Hourglass className="h-10 w-10 text-yellow-500" />;
         }
     };
 
@@ -83,7 +95,6 @@ const TrainerDashboard = () => {
             case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
             case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
             case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
-            case 'Pending':
             default: return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
         }
     };
@@ -110,9 +121,7 @@ const TrainerDashboard = () => {
                     <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-destructive mb-2">Error</h3>
                     <p className="text-muted-foreground mb-4">{error}</p>
-                    <Button onClick={() => window.location.reload()}>
-                        Try Again
-                    </Button>
+                    <Button onClick={() => window.location.reload()}>Try Again</Button>
                 </Card>
             </div>
         );
@@ -124,18 +133,13 @@ const TrainerDashboard = () => {
                 <Card className="w-full max-w-md p-6 text-center">
                     <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">Profile Not Found</h3>
-                    <p className="text-muted-foreground mb-4">
-                        We couldn't find your trainer profile. Please complete your registration.
-                    </p>
-                    <Button asChild>
-                        <Link href="/register">Complete Registration</Link>
-                    </Button>
+                    <p className="text-muted-foreground mb-4">We couldn't find your trainer profile. Please complete your registration.</p>
+                    <Button asChild><Link href="/register">Complete Registration</Link></Button>
                 </Card>
             </div>
         );
     }
 
-    // If trainer is not approved, only show status card
     if (trainerProfile.approvalStatus !== 'Approved') {
        return (
             <div className="flex flex-col items-center justify-center flex-grow p-4">
@@ -143,9 +147,7 @@ const TrainerDashboard = () => {
                     <div className="mx-auto mb-6 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
                         {getStatusIcon(trainerProfile.approvalStatus)}
                     </div>
-                    <CardTitle className="font-headline text-3xl font-bold mb-2">
-                        Welcome, {trainerProfile.name}!
-                    </CardTitle>
+                    <CardTitle className="font-headline text-3xl font-bold mb-2">Welcome, {trainerProfile.name}!</CardTitle>
                     <CardDescription className="text-lg mt-4 mb-6">
                         <div className="flex items-center justify-center gap-2">
                             <span>Verification Status:</span>
@@ -155,12 +157,9 @@ const TrainerDashboard = () => {
                         </div>
                     </CardDescription>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                        {trainerProfile.approvalStatus === 'Pending' && "Your profile is currently being verified by our team. You will be able to access your full dashboard and see assigned students once your account is approved."}
+                        {trainerProfile.approvalStatus === 'Pending' && "Your profile is being verified. You will be able to access your dashboard once approved."}
                         {trainerProfile.approvalStatus === 'In Progress' && "Your application is under review. This usually takes 2-3 business days."}
                         {trainerProfile.approvalStatus === 'Rejected' && "Unfortunately, your application was not approved. Please contact support for more information."}
-                    </p>
-                    <p className="text-muted-foreground max-w-md mx-auto mt-4">
-                        Thank you for your patience.
                     </p>
                 </Card>
             </div>
@@ -170,10 +169,8 @@ const TrainerDashboard = () => {
     const upcomingLessonsCount = students.filter(s => s.upcomingLesson).length;
     const avgRating = feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A';
     
-    // Full dashboard for approved trainers
     return (
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Trainer Dashboard</h1>
@@ -191,51 +188,11 @@ const TrainerDashboard = () => {
                 </div>
             </div>
 
-            {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{students.length}</div>
-                        <p className="text-xs text-muted-foreground">All assigned students</p>
-                    </CardContent>
-                </Card>
-
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Upcoming Lessons</CardTitle>
-                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{upcomingLessonsCount}</div>
-                        <p className="text-xs text-muted-foreground">Active scheduled lessons</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-                        <Star className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{avgRating}</div>
-                        <p className="text-xs text-muted-foreground">From {feedback.length} reviews</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Years of Experience</CardTitle>
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{trainerProfile.expertise || 'N/A'}</div>
-                        <p className="text-xs text-muted-foreground">Years</p>
-                    </CardContent>
-                </Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Students</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{students.length}</div><p className="text-xs text-muted-foreground">All assigned students</p></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Upcoming Lessons</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{upcomingLessonsCount}</div><p className="text-xs text-muted-foreground">Active scheduled lessons</p></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Average Rating</CardTitle><Star className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{avgRating}</div><p className="text-xs text-muted-foreground">From {feedback.length} reviews</p></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Years of Experience</CardTitle><BookOpen className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{trainerProfile.expertise || 'N/A'}</div><p className="text-xs text-muted-foreground">Years</p></CardContent></Card>
             </div>
             
             <Card>
@@ -251,6 +208,7 @@ const TrainerDashboard = () => {
                       <TableHead>Contact</TableHead>
                       <TableHead>Plan</TableHead>
                       <TableHead>Upcoming Lesson</TableHead>
+                      <TableHead className="text-center">Attendance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -258,27 +216,30 @@ const TrainerDashboard = () => {
                       <TableRow key={student.id}>
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>{student.phone}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{student.subscriptionPlan}</Badge>
-                        </TableCell>
+                        <TableCell><Badge variant="outline">{student.subscriptionPlan}</Badge></TableCell>
                         <TableCell>{student.upcomingLesson || 'Not Scheduled'}</TableCell>
+                        <TableCell className="text-center">
+                          {student.upcomingLesson ? (
+                            <div className="flex gap-2 justify-center">
+                              <Button size="sm" variant="outline" className="bg-green-100 text-green-700 hover:bg-green-200" onClick={() => handleAttendance(student.id, 'Present')}><Check className="h-4 w-4 mr-1" /> Present</Button>
+                              <Button size="sm" variant="outline" className="bg-red-100 text-red-700 hover:bg-red-200" onClick={() => handleAttendance(student.id, 'Absent')}><X className="h-4 w-4 mr-1" /> Absent</Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                          No students assigned yet.
-                        </TableCell>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No students assigned yet.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
-
         </div>
     );
 };
 
 export default TrainerDashboard;
-
-    
