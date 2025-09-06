@@ -6,12 +6,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -53,18 +47,9 @@ export default function Header() {
           ) : user ? (
             <>
               <NotificationsDropdown userId={user.id} />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out">
-                      <Power className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Log Out</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out">
+                <Power className="h-5 w-5" />
+              </Button>
             </>
           ) : (
             <Button variant="outline" asChild>
