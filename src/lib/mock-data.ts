@@ -118,13 +118,28 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
                 }));
             
-            const rescheduleRequests: RescheduleRequest[] = rescheduleSnap.docs.map(d => ({
-                id: d.id,
-                ...d.data(),
-                 originalLessonDate: d.data().originalLessonDate?.toDate ? format(d.data().originalLessonDate.toDate(), 'PPp') : 'N/A',
-                requestedRescheduleDate: d.data().requestedRescheduleDate?.toDate ? format(d.data().requestedRescheduleDate.toDate(), 'PPp') : 'N/A',
-                requestTimestamp: d.data().requestTimestamp?.toDate ? format(d.data().requestTimestamp.toDate(), 'PPp') : 'N/A',
-            } as RescheduleRequest));
+            const rescheduleRequests: RescheduleRequest[] = rescheduleSnap.docs.map(d => {
+                const data = d.data();
+                const formattedRequest: RescheduleRequest = {
+                    id: d.id,
+                    ...data,
+                    originalLessonDate: 'N/A',
+                    requestedRescheduleDate: 'N/A',
+                    requestTimestamp: data.requestTimestamp?.toDate ? format(data.requestTimestamp.toDate(), 'PPp') : 'N/A',
+                } as RescheduleRequest;
+
+                // Handle both ISO string and Firestore Timestamp for dates
+                if (data.originalLessonDate) {
+                    const originalDate = typeof data.originalLessonDate === 'string' ? parseISO(data.originalLessonDate) : data.originalLessonDate.toDate();
+                    formattedRequest.originalLessonDate = format(originalDate, 'PPp');
+                }
+                if (data.requestedRescheduleDate) {
+                    const requestedDate = typeof data.requestedRescheduleDate === 'string' ? parseISO(data.requestedRescheduleDate) : data.requestedRescheduleDate.toDate();
+                    formattedRequest.requestedRescheduleDate = format(requestedDate, 'PPp');
+                }
+
+                return formattedRequest;
+            });
 
 
             const summaryData: SummaryData = {
