@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -260,7 +261,7 @@ export default function UserDetailsPage() {
           
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-          <Button variant="outline" onClick={() => window.close()} className="w-full sm:w-auto order-last sm:order-first">Close Tab</Button>
+          <Button variant="outline" onClick={() => router.back()} className="w-full sm:w-auto order-last sm:order-first">Go Back</Button>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Button onClick={() => handleDownload('PDF')} className="w-full sm:w-auto bg-primary hover:bg-primary/90">
               <FileType className="mr-2 h-4 w-4" /> Download PDF
