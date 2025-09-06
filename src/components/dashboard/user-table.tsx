@@ -79,6 +79,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
   
   const openAssignDialog = (user: UserProfile) => {
     setSelectedUserForAssignment(user);
+    setIsAssigning(false); // Reset loading state when opening dialog
     setIsAssignDialogOpen(true);
     setSelectedTrainerId(null);
     setAssignFilters({});
