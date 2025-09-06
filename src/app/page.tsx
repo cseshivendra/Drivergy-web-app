@@ -184,7 +184,7 @@ const DrivergyLogoMini = ({className} : {className?: string}) => (
 
 
 export default function HomePage() {
-  // const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [flippedCardId, setFlippedCardId] = useState<string | null>(null);
 
@@ -434,11 +434,6 @@ export default function HomePage() {
                         </AccordionItem>
                     </Accordion>
                 </CardContent>
-                <CardFooter className="pt-2">
-                    <Button className="w-full" asChild>
-                        <Link href="/payment?plan=Comprehensive Car Program&price=9999">Enroll Now</Link>
-                    </Button>
-                </CardFooter>
             </Card>
           ))}
         </div>
