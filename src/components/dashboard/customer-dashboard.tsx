@@ -329,7 +329,7 @@ export default function CustomerDashboard() {
     );
   }
 
-  if (profile && profile.approvalStatus !== 'Approved') {
+  if (profile && (profile.approvalStatus === 'Pending' || profile.approvalStatus === 'In Progress')) {
     const isPlanSelected = profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -371,6 +371,29 @@ export default function CustomerDashboard() {
                 </CardContent>
             </Card>
         </div>
+    );
+  }
+
+  if (profile && profile.approvalStatus !== 'Approved') {
+    return (
+      <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <Card className="shadow-xl text-center p-8">
+          <CardHeader>
+            <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
+                <Hourglass className="h-12 w-12 text-yellow-500" />
+            </div>
+            <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
+            <CardDescription className="text-lg mt-4">
+              Your profile is currently under review.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Our team is verifying your details. You'll be notified as soon as your account is approved and you're assigned a trainer.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -662,3 +685,5 @@ export default function CustomerDashboard() {
     </div>
   );
 }
+
+    
