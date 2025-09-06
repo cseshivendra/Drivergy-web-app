@@ -514,7 +514,7 @@ export default function HomePage() {
                             <CardFooter className="mt-auto pt-6 flex gap-2"><Button className="w-full" variant="outline" onClick={() => setFlippedCardId('gold-plan')}>Details</Button><Button className="w-full" asChild><Link href="/payment?plan=Gold&price=7499">Buy Course</Link></Button></CardFooter>
                         </Card>
                          <Card className="absolute w-full h-full backface-hidden rotate-y-180 shadow-lg flex flex-col p-6 bg-primary text-primary-foreground">
-                            <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Gold Plan Details</CardTitle></Header>
+                            <CardHeader><CardTitle as="h3" className="font-headline text-xl font-semibold">Gold Plan Details</CardTitle></CardHeader>
                             <CardContent className="flex-grow"><ul className="space-y-3"><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>A balanced approach to learning.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>More practice sessions than Basic.</li><li><Check className="h-5 w-5 mr-3 mt-0.5 shrink-0 inline-block"/>Includes mock tests for confidence.</li></ul></CardContent>
                             <CardFooter className="flex justify-between items-center"><Button variant="secondary" onClick={() => setFlippedCardId(null)}>Back</Button><Button variant="secondary" asChild><Link href="/payment?plan=Gold&price=7499">Buy Course</Link></Button></CardFooter>
                         </Card>
