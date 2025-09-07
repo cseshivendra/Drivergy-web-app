@@ -31,6 +31,16 @@ export default function PaymentGateway() {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
+      toast({
+        title: "Already Subscribed",
+        description: "You already have an active subscription. Redirecting to your dashboard.",
+      });
+      router.push('/dashboard');
+    }
+  }, [user, authLoading, router, toast]);
+
   const handleSuccessfulPayment = useCallback(async () => {
     if (!user) return;
     setIsProcessing(true);
@@ -91,7 +101,7 @@ export default function PaymentGateway() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
     return <Loading />;
   }
 
