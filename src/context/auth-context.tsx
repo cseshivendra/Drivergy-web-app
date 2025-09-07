@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -102,13 +103,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else {
                  // Existing user
                 const userProfileData = userDoc.data();
-                 if (userProfileData.registrationTimestamp && typeof userProfileData.registrationTimestamp.toDate === 'function') {
-                    userProfileData.registrationTimestamp = userProfileData.registrationTimestamp.toDate().toISOString();
+                if (userProfileData.subscriptionPlan && userProfileData.subscriptionPlan !== 'None') {
+                    // If user already has a plan, go straight to dashboard
+                    toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
+                    router.push('/dashboard');
+                } else {
+                    // If user exists but has no plan, send them to subscribe
+                    toast({ title: 'Welcome Back!', description: 'Please choose a subscription to continue.' });
+                    router.push('/#subscriptions');
                 }
                 const userProfile = { id: userDoc.id, ...userProfileData } as UserProfile;
                 setUser(userProfile);
-                toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
-                router.push('/dashboard');
             }
         } catch (error: any) {
             toast({ title: 'Google Sign-In Failed', description: error.message, variant: 'destructive' });
