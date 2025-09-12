@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -71,11 +70,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
             
-            // Check if user exists in Firestore
+            // Check if user exists in Firestore in either collection
             const userDocRef = doc(db, "users", firebaseUser.uid);
+            const trainerDocRef = doc(db, "trainers", firebaseUser.uid);
+            
             const userDoc = await getDoc(userDocRef);
+            const trainerDoc = await getDoc(trainerDocRef);
 
-            if (!userDoc.exists()) {
+            if (!userDoc.exists() && !trainerDoc.exists()) {
                 // New user, create a profile in Firestore 'users' collection
                 const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
                     uniqueId: `CU-${Date.now().toString().slice(-6)}`,
@@ -102,8 +104,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 router.push('/#subscriptions');
             } else {
                  // Existing user
-                const userProfileData = userDoc.data();
-                if (userProfileData.subscriptionPlan && userProfileData.subscriptionPlan !== 'None') {
+                const profileDoc = userDoc.exists() ? userDoc : trainerDoc;
+                const userProfileData = profileDoc.data();
+                if (userProfileData?.subscriptionPlan && userProfileData.subscriptionPlan !== 'None') {
                     // If user already has a plan, go straight to dashboard
                     toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
                     router.push('/dashboard');
@@ -112,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     toast({ title: 'Welcome Back!', description: 'Please choose a subscription to continue.' });
                     router.push('/#subscriptions');
                 }
-                const userProfile = { id: userDoc.id, ...userProfileData } as UserProfile;
+                const userProfile = { id: profileDoc.id, ...userProfileData } as UserProfile;
                 setUser(userProfile);
             }
         } catch (error: any) {

@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import { z } from 'zod';
@@ -56,7 +54,25 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
         return { success: false, error: "Server is not configured for authentication." };
     }
     
-    const userRole = data.userRole;
+    // Universal check for email and username before proceeding
+    const { email, username, userRole } = data;
+    try {
+        const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
+        const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
+        if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
+            return { success: false, error: 'A user is already registered with this email address.' };
+        }
+
+        const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
+        const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
+        if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
+            return { success: false, error: 'This username is already taken. Please choose another one.' };
+        }
+    } catch (e) {
+        console.error("Pre-registration check failed:", e);
+        return { success: false, error: 'An error occurred while checking for existing users.' };
+    }
+
 
     if (userRole === 'trainer') {
         const validationResult = TrainerRegistrationFormSchema.safeParse(data);
@@ -65,22 +81,9 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             return { success: false, error: firstError };
         }
 
-        const { email, password, name, phone, username, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber } = validationResult.data;
+        const { password, name, phone, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber } = validationResult.data;
 
         try {
-            // Check both collections for existing user
-            const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-            const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
-            if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
-                return { success: false, error: 'A user is already registered with this email address.' };
-            }
-
-            const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-            const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
-            if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
-                return { success: false, error: 'This username is already taken. Please choose another one.' };
-            }
-            
             const userRecord = await adminAuth.createUser({
                 email: email,
                 emailVerified: true,
@@ -120,26 +123,15 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
         }
 
-    } else {
-        const validationResult = RegistrationFormSchema.safeParse(data);
+    } else { // Customer Role
+        const validationResult = CustomerRegistrationFormSchema.safeParse(data);
         if (!validationResult.success) {
             const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
             return { success: false, error: firstError };
         }
-        const { email, password, name, phone, username, gender } = validationResult.data;
+        const { password, name, phone, gender } = validationResult.data;
 
         try {
-            const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-            const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
-            if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
-                 return { success: false, error: 'A user is already registered with this email address.' };
-            }
-             const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-             const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
-            if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
-                return { success: false, error: 'This username is already taken. Please choose another one.' };
-            }
-
             const userRecord = await adminAuth.createUser({
                 email: email,
                 emailVerified: true,
