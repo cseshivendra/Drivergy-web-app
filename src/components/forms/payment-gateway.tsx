@@ -32,6 +32,7 @@ export default function PaymentGateway() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
+    // This effect handles redirecting users who are already subscribed.
     if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
       toast({
         title: "Already Subscribed",
@@ -101,10 +102,13 @@ export default function PaymentGateway() {
     }
   };
 
+  // If auth is loading OR if the user is already subscribed, show the loading screen.
+  // The useEffect will handle the redirection for subscribed users.
   if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
     return <Loading />;
   }
 
+  // This section is for users who are not logged in.
   if (!user) {
     const redirectUrl = encodeURIComponent(`/payment?plan=${plan}&price=${price}`);
     const registerUrl = `/register?role=customer&plan=${plan}&price=${price}&redirect=${redirectUrl}`;
@@ -139,6 +143,7 @@ export default function PaymentGateway() {
     )
   }
 
+  // This section is for logged-in users who DO NOT have a subscription.
   return (
     <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center">
@@ -255,5 +260,3 @@ export default function PaymentGateway() {
     </Card>
   )
 }
-
-    
