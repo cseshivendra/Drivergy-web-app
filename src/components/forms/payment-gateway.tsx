@@ -260,3 +260,5 @@ export default function PaymentGateway() {
     </Card>
   )
 }
+
+    
