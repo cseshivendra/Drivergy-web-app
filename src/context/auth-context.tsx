@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -106,7 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                  // Existing user
                 const profileDoc = userDoc.exists() ? userDoc : trainerDoc;
                 const userProfileData = profileDoc.data();
-                if (userProfileData?.subscriptionPlan && userProfileData.subscriptionPlan !== 'None') {
+                if (userProfileData?.subscriptionPlan && userProfileData.subscriptionPlan !== 'None' && userProfileData.subscriptionPlan !== 'Trainer' && userProfileData.subscriptionPlan !== 'Admin') {
                     // If user already has a plan, go straight to dashboard
                     toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
                     router.push('/dashboard');
@@ -201,3 +202,5 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
+
+    

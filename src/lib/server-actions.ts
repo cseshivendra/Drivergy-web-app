@@ -1,7 +1,8 @@
+
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema } from '@/types';
 import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification } from '@/types';
 import { format, parse, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
@@ -638,6 +639,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     if (subscriptionPlan === 'Basic') totalLessons = 10;
     else if (subscriptionPlan === 'Gold') totalLessons = 15;
     else if (subscriptionPlan === 'Premium') totalLessons = 20;
+    else if (subscriptionPlan === 'Custom Module') totalLessons = 1;
 
     const startDateString = customerData.subscriptionStartDate;
     const startDate = startDateString ? parse(startDateString, 'MMM dd, yyyy', new Date()) : new Date();
@@ -749,3 +751,5 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         return { success: false, error: "An unexpected error occurred." };
     }
 }
+
+    
