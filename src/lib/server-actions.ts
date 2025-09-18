@@ -10,6 +10,7 @@ import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
 import { seedPromotionalPosters } from './server-data'; 
 import { v4 as uuidv4 } from 'uuid';
+import { sendEmail } from './email';
 
 
 // Helper to convert file to buffer
@@ -176,11 +177,34 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
          return { success: false, error: "Server is not configured for authentication." };
     }
     try {
-        await adminAuth.generatePasswordResetLink(email);
+        // Generate the password reset link
+        const link = await adminAuth.generatePasswordResetLink(email);
+
+        // Send the email with the link
+        await sendEmail({
+            to: email,
+            subject: 'Reset Your Drivergy Password',
+            html: `
+                <h1>Drivergy Password Reset</h1>
+                <p>You are receiving this email because a password reset was requested for your account.</p>
+                <p>Please click the link below to reset your password:</p>
+                <p><a href="${link}" style="color: #ffffff; background-color: #ef4444; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a></p>
+                <p>If you did not request a password reset, you can safely ignore this email.</p>
+                <br>
+                <p>Thanks,</p>
+                <p>The Drivergy Team</p>
+            `,
+        });
+
         return { success: true };
     } catch (error: any) {
         console.error("Password reset error:", error);
-        return { success: true };
+        // It's a security best practice not to reveal if an email exists or not.
+        // So, we return success even if the user is not found.
+        if (error.code === 'auth/user-not-found') {
+            return { success: true }; 
+        }
+        return { success: false, error: "An unexpected error occurred while sending the reset link." };
     }
 }
 
