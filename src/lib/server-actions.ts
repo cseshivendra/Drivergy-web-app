@@ -11,6 +11,9 @@ import { uploadFileToCloudinary } from './cloudinary';
 import { seedPromotionalPosters } from './server-data'; 
 import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from './email';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 
 // Helper to convert file to buffer
