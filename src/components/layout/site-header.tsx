@@ -40,6 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
+import NotificationsDropdown from './notifications-dropdown';
 
 const SiteLogo = () => (
   <Link
@@ -86,39 +87,42 @@ export default function SiteHeader() {
   const renderDesktopAuth = () => {
     if (user) {
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className='flex items-center gap-2'
-            >
-              <Avatar className="h-6 w-6">
-                <AvatarImage
-                  src={user.photoURL || undefined}
-                  alt={user.name || 'User'}
-                />
-                <AvatarFallback>
-                  {(user.name || 'U').charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span>{user.name || 'User'}</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                My Dashboard
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut}>
-              <Power className="mr-2 h-4 w-4" />
-              Log Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+            <NotificationsDropdown userId={user.id} />
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                variant="outline"
+                className='flex items-center gap-2'
+                >
+                <Avatar className="h-6 w-6">
+                    <AvatarImage
+                    src={user.photoURL || undefined}
+                    alt={user.name || 'User'}
+                    />
+                    <AvatarFallback>
+                    {(user.name || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                </Avatar>
+                <span>{user.name || 'User'}</span>
+                <ChevronDown className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    My Dashboard
+                </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                <Power className="mr-2 h-4 w-4" />
+                Log Out
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       );
     }
     return (
