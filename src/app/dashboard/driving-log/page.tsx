@@ -14,7 +14,6 @@ import { NotebookText, Send, Lightbulb, ThumbsUp, Wrench, Loader2, Sparkles } fr
 import { analyzeDrivingSession, type DrivingAnalysisInput, type DrivingAnalysisOutput } from '@/ai/flows/driving-feedback-flow';
 
 // Define the Zod schema for the form directly in the client component.
-// This resolves the conflict with the server-side schema.
 const DrivingLogFormSchema = z.object({
   sessionDescription: z.string().min(20, {
     message: "Please describe your session in at least 20 characters.",
