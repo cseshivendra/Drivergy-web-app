@@ -4,31 +4,48 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { NotebookText, Send, Lightbulb, ThumbsUp, Wrench, Loader2, Sparkles } from 'lucide-react';
-import { analyzeDrivingSession, DrivingAnalysisInputSchema, type DrivingAnalysisInput, type DrivingAnalysisOutput } from '@/ai/flows/driving-feedback-flow';
+import { analyzeDrivingSession, type DrivingAnalysisInput, type DrivingAnalysisOutput } from '@/ai/flows/driving-feedback-flow';
+
+// Define the Zod schema for the form directly in the client component.
+// This resolves the conflict with the server-side schema.
+const DrivingLogFormSchema = z.object({
+  sessionDescription: z.string().min(20, {
+    message: "Please describe your session in at least 20 characters.",
+  }),
+});
+
+// Infer the type from the local schema.
+type DrivingLogFormValues = z.infer<typeof DrivingLogFormSchema>;
+
 
 export default function DrivingLogPage() {
     const { toast } = useToast();
     const [feedback, setFeedback] = useState<DrivingAnalysisOutput | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const form = useForm<DrivingAnalysisInput>({
-        resolver: zodResolver(DrivingAnalysisInputSchema),
+    const form = useForm<DrivingLogFormValues>({
+        resolver: zodResolver(DrivingLogFormSchema),
         defaultValues: {
             sessionDescription: '',
         },
     });
 
-    const onSubmit = async (data: DrivingAnalysisInput) => {
+    const onSubmit = async (data: DrivingLogFormValues) => {
         setIsLoading(true);
         setFeedback(null);
         try {
-            const result = await analyzeDrivingSession(data);
+            // The input for the AI flow is still of type DrivingAnalysisInput
+            const analysisInput: DrivingAnalysisInput = {
+                sessionDescription: data.sessionDescription,
+            };
+            const result = await analyzeDrivingSession(analysisInput);
             setFeedback(result);
         } catch (error) {
             console.error("Driving analysis error:", error);

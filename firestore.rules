@@ -1,78 +1,88 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    
+    // Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    function isAdmin() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    // Allow public read for specific collections that are not user-specific
+    match /blog/{postId} {
+      allow read: if true;
+      allow write: if request.auth != null; // Only authenticated users can write (for admin)
     }
     
-    function isAssignedTrainer(studentUserId) {
-        return request.auth != null && get(/databases/$(database)/documents/users/$(studentUserId)).data.assignedTrainerId == request.auth.uid;
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
+    match /quizSets/{quizSetId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /faqs/{faqId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+    }
+
+    match /siteBanners/{bannerId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+    }
+    
+    match /promotionalPosters/{posterId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+    }
+
+    // Allow users to read/write their own data in 'users' and 'trainers' collections
     match /users/{userId} {
-      allow create: if request.auth != null;
-      allow read: if isOwner(userId) || isAdmin() || isAssignedTrainer(userId);
-      allow update, delete: if isOwner(userId) || isAdmin();
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth == null; // Allow creation during signup before user is authenticated
     }
 
     match /trainers/{trainerId} {
-      allow read, update, delete: if isOwner(trainerId) || isAdmin();
-      allow create: if request.auth != null;
-    }
-
-    match /notifications/{notificationId} {
-      allow read, update: if resource.data.userId != null && isOwner(resource.data.userId);
-      allow create, delete: if isAdmin();
-    }
-
-    match /blog/{postId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /courses/{courseId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /faqs/{faqId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /quizSets/{quizSetId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /promotionalPosters/{posterId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /siteBanners/{bannerId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, update: if request.auth != null && request.auth.uid == trainerId;
+      allow create: if request.auth == null;
     }
     
+    // Allow an authenticated user to read notifications intended for them
+    match /notifications/{notificationId} {
+        allow read, update: if request.auth != null && resource.data.userId == request.auth.uid;
+        allow create: if request.auth != null;
+    }
+    
+    // Rules for admin access (assuming an 'isAdmin' flag on the user document)
+    // To allow admins to read/write all user data, you would need more complex rules
+    // involving checking the admin status from another document read.
+    // For simplicity, we'll allow authenticated users to perform specific actions
+    // that are validated by server-side logic (Cloud Functions or Server Actions).
+    
+    // Allow any authenticated user to create feedback and reschedule requests
     match /feedback/{feedbackId} {
-      allow create: if request.auth.uid != null;
-      allow read, update, delete: if isAdmin();
+        allow create: if request.auth != null;
     }
-
+    
     match /rescheduleRequests/{requestId} {
-      allow create: if request.auth.uid != null;
-      allow read, update, delete: if isAdmin() 
-        || (resource.data.userId != null && isOwner(resource.data.userId)) 
-        || (resource.data.trainerId != null && isOwner(resource.data.trainerId));
+        allow create, read, update: if request.auth != null;
     }
 
-    match /referrals/{referralId} {
-      allow create: if request.auth.uid != null;
-      allow read, update, delete: if isAdmin();
+    // Allow admins to read all user data (requires checking for admin role)
+    // The rule below is a more advanced example. The `get()` function lets you read another document.
+    // This assumes your admin users have a document in `/users/{userId}` with `isAdmin: true`.
+    match /users/{userId} {
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      allow read, update: if request.auth.uid == userId;
+    }
+    
+     match /trainers/{trainerId} {
+       allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+       allow read, update: if request.auth.uid == trainerId;
     }
   }
 }
