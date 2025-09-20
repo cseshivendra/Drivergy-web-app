@@ -4,6 +4,7 @@
  * @fileOverview An AI flow to analyze a user's driving session log and provide feedback.
  *
  * - analyzeDrivingSession - A function that takes a description of a driving session and returns structured feedback.
+ * - DrivingAnalysisInputSchema - The Zod schema for the input.
  * - DrivingAnalysisInput - The input type for the analyzeDrivingSession function.
  * - DrivingAnalysisOutput - The return type for the analyzeDrivingSession function.
  */
