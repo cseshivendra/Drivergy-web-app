@@ -453,7 +453,7 @@ export default function HomePage() {
                     <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === 'basic-plan' })}>
                         <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
                             <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Basic</CardTitle><CardDescription>Perfect for beginners to get started.</CardDescription></CardHeader>
-                            <CardContent className="flex-grow space-y-4">
+                            <CardContent className="space-y-4">
                                 <div className="text-center mb-2"><p className="text-4xl font-bold">₹3,999</p><p className="text-sm text-muted-foreground line-through">₹4,999</p></div>
                                 <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />10 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Basic Theory Classes</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Learner's License Assistance</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Slot Booking</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Free 15 Sets of RTO test Quiz</li></ul>
                             </CardContent>
@@ -475,7 +475,7 @@ export default function HomePage() {
                             <Card className="absolute w-full h-full backface-hidden shadow-xl hover:shadow-2xl border-2 border-primary overflow-hidden flex flex-col bg-card transition-transform duration-300 hover:-translate-y-2">
                                 <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-4 py-1.5 rounded-bl-lg shadow-md flex items-center"><Star className="h-3 w-3 mr-1.5" /> POPULAR</div>
                                 <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Premium</CardTitle><CardDescription>Our most comprehensive package.</CardDescription></CardHeader>
-                                <CardContent className="flex-grow space-y-4">
+                                <CardContent className="space-y-4">
                                     <div className="text-center mb-2"><p className="text-4xl font-bold">₹9,999</p><p className="text-sm text-muted-foreground line-through">₹12,999</p></div>
                                     <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />20 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Advanced Theory & Defensive Driving</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />RTO Test Slot Booking</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Dedicated Instructor Support</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Road Safety Workshop</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Free 15 Sets of RTO test Quiz</li></ul>
                                 </CardContent>
@@ -496,7 +496,7 @@ export default function HomePage() {
                     <div className={cn("relative w-full h-full transform-style-3d transition-transform duration-700", { 'rotate-y-180': flippedCardId === 'gold-plan' })}>
                         <Card className="absolute w-full h-full backface-hidden shadow-lg hover:shadow-xl flex flex-col transition-transform duration-300 hover:-translate-y-2">
                             <CardHeader className="pb-4"><CardTitle as="h3" className="text-2xl text-primary flex items-center justify-center">Gold</CardTitle><CardDescription>Excellent value with extra benefits.</CardDescription></CardHeader>
-                            <CardContent className="flex-grow space-y-4">
+                            <CardContent className="space-y-4">
                                 <div className="text-center mb-2"><p className="text-4xl font-bold">₹7,499</p><p className="text-sm text-muted-foreground line-through">₹9,999</p></div>
                                 <ul className="space-y-2 text-muted-foreground text-sm text-left"><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />15 Practical Driving Sessions</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Comprehensive Theory & Mock Tests</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Flexible Scheduling</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Progress Tracking App Access</li><li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" />Free 15 Sets of RTO test Quiz</li></ul>
                             </CardContent>
