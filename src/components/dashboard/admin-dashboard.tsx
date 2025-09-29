@@ -39,7 +39,6 @@ export default function AdminDashboard() {
 
     const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [tempSearchTerm, setTempSearchTerm] = useState('');
 
     const handleActioned = useCallback(() => {
         // This function re-triggers the listener in mock-data, simulating a refetch
@@ -78,15 +77,19 @@ export default function AdminDashboard() {
     const filteredUsers = useMemo(() => {
         if (!dashboardData?.allUsers) return [];
         return dashboardData.allUsers.filter(user => {
-            const searchTermMatch = !searchTerm || (
-                user.uniqueId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (user.contact && user.contact.toLowerCase().includes(searchTerm.toLowerCase()))
+            const normalizedSearchTerm = searchTerm.toLowerCase().trim();
+            
+            const searchTermMatch = !normalizedSearchTerm || (
+                user.uniqueId.toLowerCase().includes(normalizedSearchTerm) ||
+                user.name.toLowerCase().includes(normalizedSearchTerm) ||
+                user.contact.toLowerCase().includes(normalizedSearchTerm) ||
+                (user.phone && user.phone.toLowerCase().includes(normalizedSearchTerm))
             );
 
             // If a search term is present, only match against that.
             if (searchTerm) return searchTermMatch;
-
+            
+            // Apply dropdown filters only if there is no active search term
             const locationMatch = !filters.location || user.location === filters.location;
             const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
 
@@ -103,12 +106,14 @@ export default function AdminDashboard() {
 
     const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
         setFilters(newFilters);
-    };
-
-    const handleSearch = () => {
-        setSearchTerm(tempSearchTerm.trim());
+        setSearchTerm(''); // Clear search term when filters are applied
     };
     
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value);
+        setFilters({}); // Clear dropdown filters when searching
+    };
+
     const handleRescheduleAction = async (requestId: string, status: RescheduleRequestStatusType) => {
         const success = await updateRescheduleRequestStatus(requestId, status);
         if (success) {
@@ -274,19 +279,15 @@ export default function AdminDashboard() {
                     <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
                         {getPageTitle()}
                     </h1>
-                    <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Search ID, Name, Email..."
-                            value={tempSearchTerm}
-                            onChange={(e) => setTempSearchTerm(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-                            className="h-10 flex-grow sm:w-64"
+                            placeholder="Search by ID, Name, Email, Phone..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            className="h-10 pl-10 w-full"
                         />
-                        <Button onClick={handleSearch} className="h-10">
-                            <Search className="mr-0 sm:mr-2 h-4 w-4" />
-                            <span className="hidden sm:inline">Search</span>
-                        </Button>
                     </div>
                 </div>
 

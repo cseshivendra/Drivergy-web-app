@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserProfile, ApprovalStatusType } from '@/types';
 import { Locations, GenderOptions, ApprovalStatusOptions } from '@/types';
-import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2, UserCog, Play } from 'lucide-react';
+import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, Car, Settings2, Check, X, Eye, UserCheck, Loader2, ChevronDown, Hourglass, Trash2, UserCog, Play, AtSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
@@ -300,7 +300,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
                 <TableRow>
                   <TableHead><Fingerprint className="inline-block mr-2 h-4 w-4" />ID</TableHead>
                   <TableHead><User className="inline-block mr-2 h-4 w-4" />Name</TableHead>
-                  <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact</TableHead>
+                  <TableHead><AtSign className="inline-block mr-2 h-4 w-4" />Email</TableHead>
+                  <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Phone</TableHead>
                   {actionType !== 'interested-customer' && (
                     <>
                     <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Location</TableHead>
@@ -319,7 +320,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
                       <TableRow key={user.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="font-medium">{user.uniqueId}</TableCell>
                         <TableCell>{user.name}</TableCell>
-                        <TableCell>{user.phone || user.contact}</TableCell>
+                        <TableCell>{user.contact}</TableCell>
+                        <TableCell>{user.phone || 'N/A'}</TableCell>
                         {actionType !== 'interested-customer' && (
                             <>
                                 <TableCell>{user.location}</TableCell>
@@ -352,7 +354,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
                   )
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={actionType === 'interested-customer' ? 5 : 9} className="h-24 text-center"> 
+                    <TableCell colSpan={actionType === 'interested-customer' ? 6 : 10} className="h-24 text-center"> 
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                         <p className="text-lg">No {actionType.includes('customer') ? 'customers' : 'trainers'} found.</p>

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserById } from '@/lib/mock-data';
 import type { UserProfile } from '@/types';
-import { User, Mail, Phone, MapPin, FileText, CalendarDays, Fingerprint, Car, ShieldCheck, X, FileType, FileSpreadsheet, Users as GenderIcon, Home } from 'lucide-react';
+import { User, Mail, Phone, MapPin, FileText, CalendarDays, Fingerprint, Car, ShieldCheck, X, FileType, FileSpreadsheet, Users as GenderIcon, Home, AtSign } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -67,7 +67,8 @@ export default function UserDetailsPage() {
       content = `User Details: ${user.name}\n\n`;
       content += `User ID: ${user.uniqueId}\n`;
       content += `Internal ID: ${user.id}\n`;
-      content += `Contact: ${user.contact}\n`;
+      content += `Contact Email: ${user.contact}\n`;
+      content += `Phone: ${user.phone || 'N/A'}\n`;
       content += `Location: ${user.location}\n`;
       if (user.flatHouseNumber) content += `Flat/House No.: ${user.flatHouseNumber}\n`;
       if (user.street) content += `Street: ${user.street}\n`;
@@ -85,7 +86,8 @@ export default function UserDetailsPage() {
         `User ID,"${user.uniqueId}"`,
         `Internal ID,"${user.id}"`,
         `Name,"${user.name}"`,
-        `Contact,"${user.contact}"`,
+        `Email,"${user.contact}"`,
+        `Phone,"${user.phone || 'N/A'}"`,
         `Location,"${user.location || 'N/A'}"`,
         `Flat/House No.,"${user.flatHouseNumber || 'N/A'}"`,
         `Street,"${user.street || 'N/A'}"`,
@@ -199,7 +201,7 @@ export default function UserDetailsPage() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
               <InfoItem icon={Fingerprint} label="Internal ID" value={user.id} />
-              <InfoItem icon={Mail} label="Contact Email" value={user.contact} />
+              <InfoItem icon={AtSign} label="Contact Email" value={user.contact} />
               <InfoItem icon={Phone} label="Phone Number" value={user.phone} />
               <InfoItem icon={MapPin} label="Location" value={user.location} />
               <InfoItem icon={CalendarDays} label="Registration Date" value={user.registrationTimestamp} />
