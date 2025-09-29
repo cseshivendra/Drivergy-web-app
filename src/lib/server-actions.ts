@@ -234,9 +234,11 @@ export async function deleteUserAction({ userId, userRole }: { userId: string; u
     }
 
     try {
-        await adminAuth.deleteUser(userId);
         const collectionName = userRole === 'trainer' ? 'trainers' : 'users';
+        await adminAuth.deleteUser(userId);
         await adminDb.collection(collectionName).doc(userId).delete();
+
+        await createNotification({ userId: userId, message: `Your account has been deleted by an administrator.`, href: '/' });
 
         revalidatePath('/dashboard');
         return { success: true };
@@ -778,5 +780,3 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         return { success: false, error: "An unexpected error occurred." };
     }
 }
-
-    
