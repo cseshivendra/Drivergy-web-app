@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, UserPlus, LogIn, Ticket, Loader2 } from 'lucide-react';
+import { ShieldCheck, UserPlus, LogIn, Ticket, Loader2, SkipForward } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
@@ -93,6 +94,14 @@ function PaymentGateway() {
         setIsProcessing(false);
     }
   };
+  
+   const handleSkipPayment = () => {
+        toast({
+            title: "Payment Skipped",
+            description: "Proceeding to profile completion.",
+        });
+        router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}`);
+    };
 
   if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
     return <Loading />;
@@ -179,10 +188,14 @@ function PaymentGateway() {
                     </p>
                 )}
             </div>
-
-             <Button onClick={handlePhonePePayment} className="w-full h-12 text-lg" disabled={isProcessing}>
-                {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Pay ₹${finalPrice} with PhonePe`}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4">
+                 <Button onClick={handlePhonePePayment} className="w-full h-12 text-lg" disabled={isProcessing}>
+                    {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Pay ₹${finalPrice} with PhonePe`}
+                </Button>
+                 <Button onClick={handleSkipPayment} variant="outline" className="w-full sm:w-auto" disabled={isProcessing}>
+                    <SkipForward className="mr-2 h-4 w-4" /> Skip for now
+                </Button>
+            </div>
         </CardContent>
         <CardFooter>
             <p className="text-xs text-muted-foreground text-center w-full">You will be redirected to PhonePe to complete your payment securely.</p>
