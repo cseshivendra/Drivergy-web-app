@@ -340,11 +340,18 @@ export default function CustomerDashboard() {
                     </div>
                     <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
                      <CardDescription className="text-lg mt-4">
-                        <div className="flex items-center justify-center gap-2">
-                            <span>Account Status:</span>
-                            <Badge className={cn("text-base", getStatusBadgeClass(profile.approvalStatus))}>
-                                {isPlanSelected ? profile.approvalStatus : "Awaiting Plan Selection"}
-                            </Badge>
+                        <div className="flex flex-col items-center justify-center gap-2">
+                             <div>
+                                <span>Account Status: </span>
+                                <Badge className={cn("text-base", getStatusBadgeClass(profile.approvalStatus))}>
+                                    {isPlanSelected ? profile.approvalStatus : "Awaiting Plan Selection"}
+                                </Badge>
+                             </div>
+                             {isPlanSelected && (
+                                <div className="text-sm text-muted-foreground pt-2">
+                                    Your Customer ID: <span className="font-semibold text-foreground">{profile.uniqueId}</span>
+                                </div>
+                             )}
                         </div>
                     </CardDescription>
                 </CardHeader>
@@ -361,7 +368,7 @@ export default function CustomerDashboard() {
                    ) : (
                     <>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                          Your account is currently being processed by our team. You will be notified once your assigned trainer confirms your first lesson.
+                          Our team is verifying your details. You'll be notified as soon as your account is approved and you're assigned a trainer.
                       </p>
                        <p className="text-muted-foreground max-w-md mx-auto mt-4">
                           Thank you for your patience.
