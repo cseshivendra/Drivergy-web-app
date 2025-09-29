@@ -1,92 +1,104 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
+
+interface PhonePePaymentRequest {
+    merchantId: string;
+    merchantTransactionId: string;
+    merchantUserId: string;
+    amount: number; // in paise
+    redirectUrl: string;
+    redirectMode: 'POST';
+    callbackUrl: string;
+    paymentInstrument: {
+        type: 'PAY_PAGE';
+    };
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, userId } = await req.json();
+    const { amount, userId, plan } = await req.json();
+    const host = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
 
-    if (!amount || !userId) {
-        return NextResponse.json({ error: 'Amount and User ID are required.' }, { status: 400 });
+    if (!amount || !userId || !plan) {
+        return NextResponse.json({ error: 'Amount, User ID, and Plan are required.' }, { status: 400 });
     }
     
-    const merchantTransactionId = `T${uuidv4().slice(0, 10).replace(/-/g, '')}`;
+    const merchantTransactionId = `T${uuidv4().slice(0, 10).replace(/-/g, '')}${Date.now()}`;
+    const callbackPath = `/api/phonepe/webhook?merchantTransactionId=${merchantTransactionId}&userId=${userId}&plan=${plan}`;
 
-    const payload = {
-        merchantId: process.env.PHONEPE_CLIENT_ID,
+    const data: PhonePePaymentRequest = {
+        merchantId: process.env.PHONEPE_CLIENT_ID!,
         merchantTransactionId: merchantTransactionId,
         merchantUserId: userId,
         amount: amount * 100, // Amount in paise
-        redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`, // A dummy redirect URL
-        redirectMode: "POST",
-        callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/phonepe/webhook`, // A dummy callback URL
-        mobileNumber: "9999999999", // Dummy phone number
+        redirectUrl: `${host}/dashboard/complete-profile?plan=${encodeURIComponent(plan)}`,
+        redirectMode: 'POST',
+        callbackUrl: `${host}${callbackPath}`,
         paymentInstrument: {
-            type: "PAY_PAGE"
+            type: 'PAY_PAGE'
         }
     };
-
-    const payloadString = JSON.stringify(payload);
-    const base64Payload = Buffer.from(payloadString).toString('base64');
     
-    const saltKey = process.env.PHONEPE_CLIENT_SECRET;
-    const saltIndex = process.env.PHONEPE_CLIENT_VERSION;
-
-    const stringToHash = `${base64Payload}/pg/v1/pay${saltKey}`;
+    const payload = JSON.stringify(data);
+    const payloadBase64 = Buffer.from(payload).toString('base64');
+    
+    const saltKey = process.env.PHONEPE_CLIENT_SECRET!;
+    const saltIndex = parseInt(process.env.PHONEPE_CLIENT_VERSION!, 10);
+    
+    const stringToHash = `${payloadBase64}/pg/v1/pay${saltKey}`;
     const sha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
     const checksum = `${sha256}###${saltIndex}`;
 
-    // In a real application, you would now make a POST request to PhonePe's API endpoint
-    // with the base64Payload and the checksum in the headers.
-    // For this prototype, we will simulate a successful response from PhonePe.
+    const response = await fetch('https://api.phonepe.com/apis/hermes/pg/v1/pay', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-VERIFY': checksum,
+        },
+        body: JSON.stringify({ request: payloadBase64 }),
+    });
     
-    console.log("Simulating PhonePe API call with checksum:", checksum);
+    const responseData = await response.json();
 
-    // Simulate a successful response that provides a redirect URL for the payment page.
-    const simulatedPhonePeResponse = {
-        success: true,
-        code: "PAYMENT_INITIATED",
-        message: "Your payment has been successfully initiated.",
-        data: {
-            merchantId: process.env.PHONEPE_CLIENT_ID,
-            merchantTransactionId: merchantTransactionId,
-            instrumentResponse: {
-                type: "PAY_PAGE",
-                redirectInfo: {
-                    url: `/payment-success?plan=${req.nextUrl.searchParams.get('plan')}`, // Simulate a redirect to a success page
-                    method: "GET"
-                }
-            }
-        }
-    };
-    
-    // The actual PhonePe API would return a real URL to their payment page.
-    // We are simulating this by pointing to a local success page.
-    const paymentUrl = simulatedPhonePeResponse.data.instrumentResponse.redirectInfo.url;
+    if (responseData.success) {
+      return NextResponse.json({ paymentUrl: responseData.data.instrumentResponse.redirectInfo.url });
+    } else {
+      console.error("PhonePe API Error:", responseData.message);
+      return NextResponse.json({ error: 'Failed to initiate payment.', details: responseData.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ paymentUrl });
-
-  } catch (error) {
-    console.error("PhonePe API Error:", error);
-    return NextResponse.json({ error: 'An internal server error occurred.' }, { status: 500 });
+  } catch (error: any) {
+    console.error("PhonePe Route Error:", error);
+    return NextResponse.json({ error: 'An internal server error occurred.', details: error.message }, { status: 500 });
   }
 }
 
-// A dummy webhook handler to complete the flow.
-// In a real app, this would receive POST requests from PhonePe's servers.
-export async function GET(req: NextRequest) {
-    const { searchParams } = new URL(req.url);
-    const status = searchParams.get('status');
-    const transactionId = searchParams.get('transactionId');
+// Webhook handler to receive payment status updates from PhonePe
+export async function POST_WEBHOOK(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const checksum = req.headers.get('x-verify') || '';
 
-    if (status === 'success') {
-        // Here you would verify the payment status with your database and update the user's profile.
-        console.log(`Webhook: Payment successful for transaction ${transactionId}`);
-    } else {
-        console.log(`Webhook: Payment failed for transaction ${transactionId}`);
+        // This is a simplified verification. The SDK or manual crypto would be needed here.
+        // For now, we'll assume the callback is valid if it reaches here.
+        console.log("Received PhonePe Webhook:", body);
+
+        // Here you would typically:
+        // 1. Verify the checksum/signature.
+        // 2. Check the payment status (`body.code`).
+        // 3. If successful, update the user's subscription and profile in your database.
+        
+        // Example: If payment is successful
+        if (body.code === 'PAYMENT_SUCCESS') {
+            const { merchantTransactionId, userId, plan } = req.nextUrl.searchParams;
+            // Update user profile, etc.
+            console.log(`Payment successful for user ${userId}, plan ${plan}`);
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Webhook processing error:", error);
+        return NextResponse.json({ error: 'Webhook processing failed.' }, { status: 500 });
     }
-    
-    // Redirect user to their dashboard after processing.
-    return NextResponse.redirect(new URL('/dashboard', req.url));
 }
