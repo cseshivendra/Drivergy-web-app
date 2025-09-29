@@ -232,6 +232,21 @@ export const FeedbackFormSchema = z.object({
 });
 export type FeedbackFormValues = z.infer<typeof FeedbackFormSchema>;
 
+// AI Flow Schemas & Types
+export const DrivingAnalysisInputSchema = z.object({
+  sessionDescription: z.string().min(20, {
+    message: "Please describe your session in at least 20 characters.",
+  }),
+});
+export type DrivingAnalysisInput = z.infer<typeof DrivingAnalysisInputSchema>;
+
+export const DrivingAnalysisOutputSchema = z.object({
+  positiveReinforcement: z.string().describe("Positive and encouraging feedback based on the user's description."),
+  constructiveTips: z.string().describe("Actionable tips and advice for areas where the user struggled or can improve."),
+  safetyReminder: z.string().describe("A relevant, general road safety tip related to the context of the driving session."),
+});
+export type DrivingAnalysisOutput = z.infer<typeof DrivingAnalysisOutputSchema>;
+
 export const CourseModuleSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
@@ -492,3 +507,11 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
 }
+
+// Add the DrivingLog types that were missed before
+export const DrivingLogFormSchema = z.object({
+  sessionDescription: z.string().min(20, {
+    message: "Please describe your session in at least 20 characters.",
+  }),
+});
+export type DrivingLogFormValues = z.infer<typeof DrivingLogFormSchema>;

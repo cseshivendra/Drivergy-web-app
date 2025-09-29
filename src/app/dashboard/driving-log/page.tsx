@@ -4,24 +4,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { NotebookText, Send, Lightbulb, ThumbsUp, Wrench, Loader2, Sparkles } from 'lucide-react';
-import { analyzeDrivingSession, type DrivingAnalysisInput, type DrivingAnalysisOutput } from '@/ai/flows/driving-feedback-flow';
+import { analyzeDrivingSession, type DrivingAnalysisInput, type DrivingAnalysisOutput, DrivingLogFormSchema } from '@/types';
 
-// Define the Zod schema for the form directly in the client component.
-const DrivingLogFormSchema = z.object({
-  sessionDescription: z.string().min(20, {
-    message: "Please describe your session in at least 20 characters.",
-  }),
-});
-
-// Infer the type from the local schema.
-type DrivingLogFormValues = z.infer<typeof DrivingLogFormSchema>;
+// The Zod schema is now imported from types/index.ts
+type DrivingLogFormValues = DrivingAnalysisInput;
 
 
 export default function DrivingLogPage() {
@@ -40,11 +32,8 @@ export default function DrivingLogPage() {
         setIsLoading(true);
         setFeedback(null);
         try {
-            // The input for the AI flow is still of type DrivingAnalysisInput
-            const analysisInput: DrivingAnalysisInput = {
-                sessionDescription: data.sessionDescription,
-            };
-            const result = await analyzeDrivingSession(analysisInput);
+            // The input for the AI flow is the same as the form values
+            const result = await analyzeDrivingSession(data);
             setFeedback(result);
         } catch (error) {
             console.error("Driving analysis error:", error);

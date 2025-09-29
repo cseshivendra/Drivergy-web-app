@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Lock, User, QrCode, ShieldCheck, UserPlus, LogIn, Ticket } from 'lucide-react';
+import { ShieldCheck, UserPlus, LogIn, Ticket, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
@@ -21,7 +20,7 @@ export default function PaymentGateway() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { user, logInUser, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const plan = searchParams.get('plan') || 'Selected Plan';
   const price = searchParams.get('price') || '0';
@@ -32,7 +31,6 @@ export default function PaymentGateway() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    // This effect handles redirecting users who are already subscribed.
     if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
       toast({
         title: "Already Subscribed",
@@ -41,45 +39,6 @@ export default function PaymentGateway() {
       router.push('/dashboard');
     }
   }, [user, authLoading, router, toast]);
-
-  const handleSuccessfulPayment = useCallback(async () => {
-    if (!user) return;
-    setIsProcessing(true);
-  
-    // Update user profile with the selected plan on the server
-    const updatedProfile = await updateUserProfile(user.id, {
-        name: user.name,
-        email: user.contact,
-        phone: user.phone || '',
-        location: user.location || '',
-        subscriptionPlan: plan,
-        approvalStatus: 'Pending',
-    } as UserProfile);
-
-    if (updatedProfile) {
-        logInUser(updatedProfile, false);
-    
-        toast({
-          title: "Payment Successful!",
-          description: `Your subscription for the ${plan} plan has been activated. Please complete your profile.`,
-        });
-      
-        // Redirect to the profile completion page, passing the plan
-        router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}`);
-    } else {
-         toast({
-          title: "Update Failed",
-          description: "Could not update your profile with the new plan.",
-          variant: "destructive",
-        });
-        setIsProcessing(false);
-    }
-  }, [user, plan, logInUser, router, toast]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSuccessfulPayment();
-  };
   
   const handleApplyCode = () => {
     if (referralCode.trim().toUpperCase() === 'DRIVERGY10') {
@@ -102,13 +61,58 @@ export default function PaymentGateway() {
     }
   };
 
-  // If auth is loading OR if the user is already subscribed, show the loading screen.
-  // The useEffect will handle the redirection for subscribed users.
+  const handlePhonePePayment = async () => {
+    if (!user) return;
+    setIsProcessing(true);
+
+    try {
+        const response = await fetch('/api/phonepe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                amount: parseInt(finalPrice, 10),
+                userId: user.id,
+                plan: plan,
+             }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.paymentUrl) {
+            // This is a simulated redirect. In a real scenario, this would be a PhonePe URL.
+            // For the prototype, we are redirecting to a success page that then moves to profile completion.
+            // Update user profile with plan details before redirecting
+            await updateUserProfile(user.id, {
+                name: user.name,
+                email: user.contact,
+                phone: user.phone || '',
+                location: user.location || '',
+                subscriptionPlan: plan,
+            } as UserProfile);
+
+            toast({ title: "Redirecting to Payment...", description: "Please complete your payment."});
+            // We simulate the redirect by pushing to a "success" page that will then move to the next step.
+            router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}`);
+
+        } else {
+            throw new Error(data.error || 'Failed to initiate payment.');
+        }
+    } catch (error) {
+        console.error("Payment initiation failed:", error);
+        toast({
+            title: 'Payment Error',
+            description: error instanceof Error ? error.message : 'Could not start the payment process.',
+            variant: 'destructive',
+        });
+        setIsProcessing(false);
+    }
+  };
+
+
   if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
     return <Loading />;
   }
 
-  // This section is for users who are not logged in.
   if (!user) {
     const redirectUrl = encodeURIComponent(`/payment?plan=${plan}&price=${price}`);
     const registerUrl = `/register?role=customer&plan=${plan}&price=${price}&redirect=${redirectUrl}`;
@@ -143,7 +147,6 @@ export default function PaymentGateway() {
     )
   }
 
-  // This section is for logged-in users who DO NOT have a subscription.
   return (
     <Card className="w-full max-w-lg shadow-xl">
         <CardHeader className="text-center">
@@ -155,8 +158,8 @@ export default function PaymentGateway() {
                 Complete your purchase for the <span className="font-semibold text-primary">{plan}</span> plan.
             </CardDescription>
         </CardHeader>
-        <CardContent>
-            <div className="space-y-3 mb-6 border-b pb-6">
+        <CardContent className="space-y-6">
+            <div className="space-y-3 border-b pb-6">
               <Label htmlFor="referral-code" className="flex items-center"><Ticket className="mr-2 h-4 w-4" />Referral/Discount Code (Optional)</Label>
               <div className="flex items-center space-x-2">
                   <Input
@@ -177,7 +180,7 @@ export default function PaymentGateway() {
               </div>
             </div>
 
-            <div className="text-center mb-6 p-4 bg-muted/50 rounded-lg">
+            <div className="text-center p-4 bg-muted/50 rounded-lg">
                 <p className="text-muted-foreground">Amount to Pay</p>
                 {discountApplied && (
                     <p className="text-sm text-muted-foreground line-through">
@@ -192,71 +195,13 @@ export default function PaymentGateway() {
                 )}
             </div>
 
-            <Tabs defaultValue="card" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="card" disabled={isProcessing}><CreditCard className="mr-2 h-4 w-4" />Card</TabsTrigger>
-                    <TabsTrigger value="upi" disabled={isProcessing}><QrCode className="mr-2 h-4 w-4" />UPI / QR Code</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="card" className="pt-6">
-                   <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <Label htmlFor="cardNumber" className="flex items-center mb-1"><CreditCard className="mr-2 h-4 w-4" />Card Number</Label>
-                            <Input id="cardNumber" placeholder="1234 5678 9012 3456" required disabled={isProcessing} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="expiryDate" className="flex items-center mb-1"><Calendar className="mr-2 h-4 w-4" />Expiry Date</Label>
-                                <Input id="expiryDate" placeholder="MM / YY" required disabled={isProcessing} />
-                            </div>
-                            <div>
-                                <Label htmlFor="cvv" className="flex items-center mb-1"><Lock className="mr-2 h-4 w-4" />CVV</Label>
-                                <Input id="cvv" placeholder="123" required disabled={isProcessing} />
-                            </div>
-                        </div>
-                        <div>
-                            <Label htmlFor="cardHolderName" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Cardholder Name</Label>
-                            <Input id="cardHolderName" placeholder="John Doe" required disabled={isProcessing} />
-                        </div>
-                        <Button type="submit" className="w-full h-11" disabled={isProcessing}>
-                            {isProcessing ? "Processing..." : `Pay ₹${finalPrice}`}
-                        </Button>
-                    </form>
-                </TabsContent>
-
-                <TabsContent value="upi" className="pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <Label htmlFor="upiId" className="flex items-center mb-1">Enter your UPI ID</Label>
-                            <Input id="upiId" placeholder="yourname@bank" required disabled={isProcessing}/>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <div className="flex-grow border-t border-muted"></div>
-                            <span className="text-muted-foreground text-sm">OR</span>
-                            <div className="flex-grow border-t border-muted"></div>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center space-y-3 p-4 border-dashed border-2 border-muted-foreground/30 rounded-lg">
-                            <p className="text-sm font-medium text-muted-foreground">Scan QR Code to Pay</p>
-                            <div className="p-2 bg-white rounded-md">
-                                <Image 
-                                    src="https://placehold.co/150x150/000000/ffffff.png"
-                                    alt="UPI QR Code"
-                                    width={150}
-                                    height={150}
-                                    data-ai-hint="qr code"
-                                />
-                            </div>
-                        </div>
-
-                        <Button type="submit" className="w-full h-11" disabled={isProcessing}>
-                             {isProcessing ? "Processing..." : `Verify & Pay ₹${finalPrice}`}
-                        </Button>
-                    </form>
-                </TabsContent>
-            </Tabs>
+             <Button onClick={handlePhonePePayment} className="w-full h-12 text-lg" disabled={isProcessing}>
+                {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Pay ₹${finalPrice} with PhonePe`}
+            </Button>
         </CardContent>
+        <CardFooter>
+            <p className="text-xs text-muted-foreground text-center w-full">You will be redirected to PhonePe to complete your payment securely.</p>
+        </CardFooter>
     </Card>
   )
 }

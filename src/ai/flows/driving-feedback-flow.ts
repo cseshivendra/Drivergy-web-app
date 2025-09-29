@@ -4,25 +4,13 @@
  * @fileOverview An AI flow to analyze a user's driving session log and provide feedback.
  *
  * - analyzeDrivingSession - A function that takes a description of a driving session and returns structured feedback.
- * - DrivingAnalysisInputSchema - The Zod schema for the input.
  * - DrivingAnalysisInput - The input type for the analyzeDrivingSession function.
  * - DrivingAnalysisOutput - The return type for the analyzeDrivingSession function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { DrivingAnalysisInputSchema, DrivingAnalysisOutputSchema, type DrivingAnalysisInput, type DrivingAnalysisOutput } from '@/types';
 
-export const DrivingAnalysisInputSchema = z.object({
-  sessionDescription: z.string().describe("A user's description of their recent driving practice session."),
-});
-export type DrivingAnalysisInput = z.infer<typeof DrivingAnalysisInputSchema>;
-
-export const DrivingAnalysisOutputSchema = z.object({
-  positiveReinforcement: z.string().describe("Positive and encouraging feedback based on the user's description."),
-  constructiveTips: z.string().describe("Actionable tips and advice for areas where the user struggled or can improve."),
-  safetyReminder: z.string().describe("A relevant, general road safety tip related to the context of the driving session."),
-});
-export type DrivingAnalysisOutput = z.infer<typeof DrivingAnalysisOutputSchema>;
 
 export async function analyzeDrivingSession(input: DrivingAnalysisInput): Promise<DrivingAnalysisOutput> {
   return drivingFeedbackFlow(input);
