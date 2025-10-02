@@ -14,7 +14,7 @@ import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-export default function UserDetailsPage() {
+function UserDetailsPage() {
   const params = useParams();
   const userId = params.userId as string;
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -119,56 +119,11 @@ export default function UserDetailsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
-        <Card className="shadow-xl">
-          <CardHeader className="bg-muted/30 p-6 border-b">
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-20 w-20 rounded-full" />
-              <div>
-                <Skeleton className="h-8 w-48 mb-2" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <Skeleton className="h-6 w-1/3 mb-2" />
-            {Array(5).fill(0).map((_, i) => (
-              <div key={i} className="flex items-start space-x-3">
-                <Skeleton className="h-5 w-5 mt-0.5" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-4 w-40" />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-          <CardFooter className="bg-muted/30 p-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-            <Skeleton className="h-10 w-24" />
-            <div className="flex gap-3">
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-          </CardFooter>
-        </Card>
-      </div>
-    );
+    return <UserDetailsSkeleton />;
   }
 
   if (!user) {
-    return (
-      <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8 text-center">
-        <Card className="shadow-xl inline-block">
-          <CardHeader>
-            <CardTitle className="text-destructive">User Not Found</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>The user details could not be loaded or the user does not exist. Please check the ID and try again.</p>
-            <Button onClick={() => router.back()} className="mt-4">Go Back</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <UserNotFound onBack={() => router.back()} />;
   }
   
   const isCustomer = user.userRole !== 'trainer';
@@ -176,58 +131,28 @@ export default function UserDetailsPage() {
   return (
     <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
       <Card className="shadow-xl overflow-hidden">
-        <CardHeader className="bg-muted/30 p-6 border-b">
-          <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Image 
-              src={user.photoURL || (isCustomer ? "https://placehold.co/100x100/60a5fa/ffffff.png" : "https://placehold.co/100x100/facc15/44403c.png")} 
-              alt={user.name} 
-              width={100} 
-              height={100} 
-              className="rounded-full border-4 border-primary shadow-md"
-              data-ai-hint={isCustomer ? "customer avatar" : "instructor avatar"}
-            />
-            <div className="text-center sm:text-left">
-              <CardTitle className="font-headline text-3xl font-bold text-primary">{user.name}</CardTitle>
-              <CardDescription className="text-md text-muted-foreground mt-1">
-                {isCustomer ? "Customer Profile" : "Trainer Profile"} | ID: {user.uniqueId}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
+        <UserDetailsHeader user={user} isCustomer={isCustomer} />
         <CardContent className="p-6 space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold text-foreground mb-3 border-b pb-2 flex items-center">
-              <User className="mr-2 h-5 w-5 text-primary" /> Personal Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-              <InfoItem icon={Fingerprint} label="Internal ID" value={user.id} />
-              <InfoItem icon={AtSign} label="Contact Email" value={user.contact} />
-              <InfoItem icon={Phone} label="Phone Number" value={user.phone} />
-              <InfoItem icon={MapPin} label="Location" value={user.location} />
-              <InfoItem icon={CalendarDays} label="Registration Date" value={user.registrationTimestamp} />
-            </div>
-          </div>
+          
+          <InfoSection title="Personal Information" icon={User}>
+            <InfoItem icon={Fingerprint} label="Internal ID" value={user.id} />
+            <InfoItem icon={AtSign} label="Contact Email" value={user.contact} />
+            <InfoItem icon={Phone} label="Phone Number" value={user.phone} />
+            <InfoItem icon={MapPin} label="Location" value={user.location} />
+            <InfoItem icon={CalendarDays} label="Registration Date" value={user.registrationTimestamp} />
+          </InfoSection>
           
           {isCustomer && (user.flatHouseNumber || user.street || user.district || user.state || user.pincode) && (
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mt-4 mb-3 border-b pb-2 flex items-center">
-                <Home className="mr-2 h-5 w-5 text-primary" /> Address Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                  <InfoItem icon={Home} label="Flat/House No." value={user.flatHouseNumber} />
-                  <InfoItem icon={MapPin} label="Street/Road" value={user.street} />
-                  <InfoItem icon={MapPin} label="District" value={user.district} />
-                  <InfoItem icon={MapPin} label="State" value={user.state} />
-                  <InfoItem icon={MapPin} label="Pincode" value={user.pincode} />
-              </div>
-            </div>
+            <InfoSection title="Address Details" icon={Home}>
+                <InfoItem icon={Home} label="Flat/House No." value={user.flatHouseNumber} />
+                <InfoItem icon={MapPin} label="Street/Road" value={user.street} />
+                <InfoItem icon={MapPin} label="District" value={user.district} />
+                <InfoItem icon={MapPin} label="State" value={user.state} />
+                <InfoItem icon={MapPin} label="Pincode" value={user.pincode} />
+            </InfoSection>
           )}
 
-          <div>
-            <h3 className="text-xl font-semibold text-foreground mt-4 mb-3 border-b pb-2 flex items-center">
-              <FileText className="mr-2 h-5 w-5 text-primary" /> Account & Role Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+          <InfoSection title="Account & Role Details" icon={FileText}>
               <InfoItem 
                 icon={user.approvalStatus === 'Approved' ? ShieldCheck : user.approvalStatus === 'Rejected' ? X : FileText} 
                 label="Approval Status" 
@@ -258,8 +183,7 @@ export default function UserDetailsPage() {
               {!isCustomer && user.specialization && (
                  <InfoItem icon={Car} label="Specialization" value={user.specialization} />
               )}
-            </div>
-          </div>
+          </InfoSection>
           
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -277,6 +201,89 @@ export default function UserDetailsPage() {
     </div>
   );
 }
+
+// Sub-components for better organization
+
+const UserDetailsHeader = ({ user, isCustomer }: { user: UserProfile; isCustomer: boolean }) => (
+  <CardHeader className="bg-muted/30 p-6 border-b">
+    <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+      <Image 
+        src={user.photoURL || (isCustomer ? "https://placehold.co/100x100/60a5fa/ffffff.png" : "https://placehold.co/100x100/facc15/44403c.png")} 
+        alt={user.name} 
+        width={100} 
+        height={100} 
+        className="rounded-full border-4 border-primary shadow-md"
+        data-ai-hint={isCustomer ? "customer avatar" : "instructor avatar"}
+      />
+      <div className="text-center sm:text-left">
+        <CardTitle className="font-headline text-3xl font-bold text-primary">{user.name}</CardTitle>
+        <CardDescription className="text-md text-muted-foreground mt-1">
+          {isCustomer ? "Customer Profile" : "Trainer Profile"} | ID: {user.uniqueId}
+        </CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+);
+
+const UserDetailsSkeleton = () => (
+  <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8">
+    <Card className="shadow-xl">
+      <CardHeader className="bg-muted/30 p-6 border-b">
+        <div className="flex items-center space-x-4">
+          <Skeleton className="h-20 w-20 rounded-full" />
+          <div>
+            <Skeleton className="h-8 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6 space-y-6">
+        <Skeleton className="h-6 w-1/3 mb-2" />
+        {Array(5).fill(0).map((_, i) => (
+          <div key={i} className="flex items-start space-x-3">
+            <Skeleton className="h-5 w-5 mt-0.5" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </div>
+        ))}
+      </CardContent>
+      <CardFooter className="bg-muted/30 p-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+        <Skeleton className="h-10 w-24" />
+        <div className="flex gap-3">
+          <Skeleton className="h-10 w-32" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </CardFooter>
+    </Card>
+  </div>
+);
+
+const UserNotFound = ({ onBack }: { onBack: () => void }) => (
+  <div className="container mx-auto max-w-3xl p-4 py-8 sm:p-6 lg:p-8 text-center">
+    <Card className="shadow-xl inline-block">
+      <CardHeader>
+        <CardTitle className="text-destructive">User Not Found</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>The user details could not be loaded or the user does not exist. Please check the ID and try again.</p>
+        <Button onClick={onBack} className="mt-4">Go Back</Button>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const InfoSection = ({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) => (
+  <div>
+    <h3 className="text-xl font-semibold text-foreground mb-3 border-b pb-2 flex items-center">
+      <Icon className="mr-2 h-5 w-5 text-primary" /> {title}
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+      {children}
+    </div>
+  </div>
+);
 
 interface InfoItemProps {
   icon: React.ElementType;
@@ -296,3 +303,5 @@ function InfoItem({ icon: Icon, label, value, valueClassName }: InfoItemProps) {
     </div>
   );
 }
+
+export default UserDetailsPage;
