@@ -34,6 +34,13 @@ export default function NotificationsDropdown({ userId }: { userId: string }) {
     await markNotificationsAsRead(userId, unreadIds);
   };
 
+  const getTimestampDate = (timestamp: any): Date => {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+      return timestamp.toDate(); // Firestore Timestamp object
+    }
+    return new Date(timestamp); // Fallback for ISO string
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -78,7 +85,7 @@ export default function NotificationsDropdown({ userId }: { userId: string }) {
                       <div className="flex-1">
                         <p className="text-sm text-foreground">{notif.message}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {formatDistanceToNow(new Date(notif.timestamp), { addSuffix: true })}
+                          {formatDistanceToNow(getTimestampDate(notif.timestamp), { addSuffix: true })}
                         </p>
                       </div>
                     </div>

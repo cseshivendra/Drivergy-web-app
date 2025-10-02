@@ -32,7 +32,7 @@ async function createNotification(notification: Omit<Notification, 'id' | 'times
         await adminDb.collection('notifications').add({
             ...notification,
             isRead: false,
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(), // Use native Date object for Firestore Timestamp
         });
     } catch (error) {
         console.error("Error creating notification:", error);
