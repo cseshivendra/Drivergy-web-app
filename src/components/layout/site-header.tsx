@@ -40,7 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
-import NotificationsDropdown from './notifications-dropdown';
+
 
 const SiteLogo = () => (
   <Link
@@ -88,7 +88,7 @@ export default function SiteHeader() {
     if (user) {
       return (
         <div className="flex items-center gap-2">
-            <NotificationsDropdown userId={user.id} />
+            
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
