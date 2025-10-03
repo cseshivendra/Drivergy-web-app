@@ -60,7 +60,7 @@ export default function NotificationToaster() {
     });
 
     return () => unsubscribe();
-  }, [user, toast, shownNotificationIds]);
+  }, [user, toast]); // Correctly removed shownNotificationIds from dependencies
 
   return null; // This component doesn't render anything
 }
