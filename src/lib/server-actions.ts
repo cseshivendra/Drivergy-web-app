@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { z } from 'zod';
@@ -255,20 +256,29 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
     }
     
     let data = Object.fromEntries(formData.entries());
+    const file = data.photoIdFile as File;
+    
+    // Create a separate object for validation that doesn't include the file object itself.
+    const validationData = { ...data };
+    if (file && file.size > 0) {
+        validationData.photoIdFile = file;
+    } else {
+        delete validationData.photoIdFile; // Remove if no file is uploaded for validation purposes
+    }
     
     // Pre-process the date string from FormData into a Date object before validation.
-    if (data.subscriptionStartDate && typeof data.subscriptionStartDate === 'string') {
-        data.subscriptionStartDate = parseISO(data.subscriptionStartDate);
+    if (validationData.subscriptionStartDate && typeof validationData.subscriptionStartDate === 'string') {
+        validationData.subscriptionStartDate = parseISO(validationData.subscriptionStartDate);
     }
     
     // Convert empty strings for optional fields to undefined to prevent Zod errors
-    Object.keys(data).forEach(key => {
-        if (data[key] === '') {
-            data[key] = undefined;
+    Object.keys(validationData).forEach(key => {
+        if (validationData[key] === '') {
+            validationData[key] = undefined;
         }
     });
 
-    const validationResult = FullCustomerDetailsSchema.safeParse(data);
+    const validationResult = FullCustomerDetailsSchema.safeParse(validationData);
 
     if (!validationResult.success) {
         console.error("Profile completion validation failed:", validationResult.error.format());
@@ -780,3 +790,4 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         return { success: false, error: "An unexpected error occurred." };
     }
 }
+
