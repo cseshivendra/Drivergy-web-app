@@ -333,7 +333,14 @@ export function listenToNotifications(userId: string, callback: (notifications: 
     );
   
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+      const notifications = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+              id: doc.id,
+              ...data,
+              timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toISOString() : new Date().toISOString(),
+          } as Notification
+      });
       callback(notifications);
     }, (error) => {
         console.error("Error listening to notifications:", error);

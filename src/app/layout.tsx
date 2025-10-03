@@ -10,7 +10,6 @@ import SiteHeader from '@/components/layout/site-header';
 import SiteFooter from '@/components/layout/site-footer';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import { usePathname } from 'next/navigation';
-import NotificationToaster from '@/components/layout/notification-toaster';
 
 // RootLayout is a client component because it uses AuthProvider and ThemeProvider
 // which rely on client-side state and hooks.
@@ -60,7 +59,6 @@ export default function RootLayout({
                         </div>
                     )}
                     <Toaster />
-                    <NotificationToaster />
                 </ThemeProvider>
             </AuthProvider>
         </body>

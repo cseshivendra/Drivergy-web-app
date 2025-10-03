@@ -10,6 +10,7 @@ import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
+import NotificationsDropdown from './notifications-dropdown';
 
 
 export default function Header() {
@@ -46,7 +47,7 @@ export default function Header() {
             </Button>
           ) : user ? (
             <>
-              
+              <NotificationsDropdown />
               <Button variant="ghost" size="icon" onClick={signOut} aria-label="Log out">
                 <Power className="h-5 w-5" />
               </Button>
