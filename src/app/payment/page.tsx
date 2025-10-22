@@ -1,8 +1,6 @@
-
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -13,8 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
 import { useState, useEffect } from 'react';
-import { updateUserProfile } from '@/lib/server-actions';
-import { UserProfile } from '@/types';
 
 function PaymentGateway() {
   const router = useRouter();
@@ -66,7 +62,7 @@ function PaymentGateway() {
     setIsProcessing(true);
 
     try {
-        const response = await fetch('/api/phonepe', {
+        const response = await fetch('/api/payments/phonepe/initiate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -78,11 +74,11 @@ function PaymentGateway() {
 
         const data = await response.json();
 
-        if (response.ok && data.paymentUrl) {
+        if (response.ok && data.redirectUrl) {
             toast({ title: "Redirecting to Payment...", description: "Please complete your payment."});
-            window.location.href = data.paymentUrl;
+            window.location.href = data.redirectUrl;
         } else {
-            throw new Error(data.details || 'Failed to initiate payment.');
+            throw new Error(data.error || 'Failed to initiate payment.');
         }
     } catch (error) {
         console.error("Payment initiation failed:", error);
