@@ -80,7 +80,6 @@ const navLinks: NavLink[] = [
   },
   { href: '/career', label: 'Careers' },
   { href: '/contact', label: 'Support' },
-  { href: '/store', label: 'Store', icon: Store },
 ];
 
 export default function SiteHeader() {
