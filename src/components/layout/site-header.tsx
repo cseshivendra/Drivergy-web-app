@@ -13,6 +13,7 @@ import {
   Sun,
   ChevronDown,
   Menu,
+  Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -59,6 +60,7 @@ const SiteLogo = () => (
 interface NavLink {
   href?: string;
   label: string;
+  icon?: LucideIcon;
   children?: NavLink[];
 }
 
@@ -73,11 +75,12 @@ const navLinks: NavLink[] = [
       { href: '/faq', label: 'FAQ' },
       { href: '/#testimonials', label: 'Testimonials' },
       { href: '/blog', label: 'Blogs' },
+      { href: '/about', label: 'About Us' },
     ],
   },
-  { href: '/about', label: 'About Us' },
   { href: '/career', label: 'Careers' },
   { href: '/contact', label: 'Support' },
+  { href: '/store', label: 'Store', icon: Store },
 ];
 
 export default function SiteHeader() {
@@ -214,7 +217,10 @@ export default function SiteHeader() {
                   </DropdownMenu>
                 ) : (
                   <Button variant="ghost" asChild key={link.label}>
-                    <Link href={link.href!}>{link.label}</Link>
+                    <Link href={link.href!} className="flex items-center gap-2">
+                        {link.icon && <link.icon className="h-4 w-4" />}
+                        {link.label}
+                    </Link>
                   </Button>
                 )
               )}
@@ -294,7 +300,10 @@ export default function SiteHeader() {
                           href={link.href!}
                           className="block py-2 text-lg font-medium text-foreground/80 hover:text-primary"
                         >
-                          {link.label}
+                           <span className="flex items-center gap-2">
+                             {link.icon && <link.icon className="h-4 w-4" />}
+                             {link.label}
+                           </span>
                         </Link>
                       </SheetClose>
                     )
