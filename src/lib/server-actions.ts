@@ -695,9 +695,32 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     };
     await customerRef.update(updatePayload);
 
-    // Create notifications
+    // Create notifications & send email
     await createNotification({ userId: customerId, message: `You have been assigned to trainer ${trainerData.name}. Your first lesson is scheduled!`, href: '/dashboard' });
     await createNotification({ userId: trainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
+
+    try {
+        await sendEmail({
+            to: customerData.contact,
+            subject: 'Your Drivergy Trainer has been Assigned!',
+            html: `
+                <h1>Welcome to the Next Step!</h1>
+                <p>Hello ${customerData.name},</p>
+                <p>We're excited to let you know that you've been assigned a trainer for your driving lessons. Here are their details:</p>
+                <ul>
+                    <li><strong>Trainer Name:</strong> ${trainerData.name}</li>
+                    <li><strong>Contact Number:</strong> ${trainerData.phone}</li>
+                    <li><strong>Vehicle:</strong> ${trainerData.vehicleInfo}</li>
+                </ul>
+                <p>Your first lesson is scheduled for: <strong>${updatePayload.upcomingLesson}</strong>. Your trainer will contact you shortly to coordinate.</p>
+                <p>Happy driving!</p>
+                <p>The Drivergy Team</p>
+            `,
+        });
+    } catch(emailError) {
+        console.error("Failed to send trainer assignment email:", emailError);
+        // Don't block the main action if email fails
+    }
 
     revalidatePath('/dashboard');
     const updatedCustomerDoc = await customerRef.get();
@@ -734,6 +757,28 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
         await createNotification({ userId: oldTrainerId, message: `Your student ${customerData.name} has been reassigned to another trainer.`, href: '/dashboard' });
     }
     await createNotification({ userId: newTrainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
+    
+     try {
+        await sendEmail({
+            to: customerData.contact,
+            subject: 'Your Drivergy Trainer has been Changed!',
+            html: `
+                <h1>Trainer Assignment Update</h1>
+                <p>Hello ${customerData.name},</p>
+                <p>Please note that your driving trainer has been updated. Here are the details of your new trainer:</p>
+                <ul>
+                    <li><strong>Trainer Name:</strong> ${newTrainerData.name}</li>
+                    <li><strong>Contact Number:</strong> ${newTrainerData.phone}</li>
+                    <li><strong>Vehicle:</strong> ${newTrainerData.vehicleInfo}</li>
+                </ul>
+                <p>Your upcoming lesson schedule remains the same. Your new trainer will contact you shortly.</p>
+                <p>Happy driving!</p>
+                <p>The Drivergy Team</p>
+            `,
+        });
+    } catch(emailError) {
+        console.error("Failed to send trainer re-assignment email:", emailError);
+    }
 
     revalidatePath('/dashboard');
     const updatedCustomerDoc = await customerRef.get();
@@ -782,12 +827,34 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
             userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
         }
+
+        const userProfile = { id: userDoc.id, ...userData } as UserProfile;
+
+        // Send login notification email
+        try {
+            await sendEmail({
+                to: userProfile.contact,
+                subject: 'Successful Login to Drivergy',
+                html: `
+                    <h1>Login Confirmation</h1>
+                    <p>Hello ${userProfile.name},</p>
+                    <p>This is a confirmation that you have successfully logged into your Drivergy account.</p>
+                    <p>Your current subscription plan is: <strong>${userProfile.subscriptionPlan}</strong>.</p>
+                    <p>If you did not initiate this login, please change your password immediately and contact our support team.</p>
+                    <p>The Drivergy Team</p>
+                `
+            });
+        } catch (emailError) {
+            console.error("Failed to send login notification email:", emailError);
+            // We don't want to fail the login if the email fails, so we just log the error.
+        }
         
-        return { success: true, user: { id: userDoc.id, ...userData } as UserProfile };
+        return { success: true, user: userProfile };
 
     } catch (error) {
         console.error("Error in getLoginUser server action:", error);
         return { success: false, error: "An unexpected error occurred." };
     }
 }
+
 
