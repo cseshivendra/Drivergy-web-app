@@ -1,5 +1,4 @@
 
-
 require('dotenv').config();
 
 /** @type {import('next').NextConfig} */
@@ -40,7 +39,7 @@ const nextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https,
         hostname: 'storage.googleapis.com',
         port: '',
         pathname: '/**',
@@ -77,9 +76,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-
-
-
-
-
-    
