@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToUser } from '@/lib/mock-data';
-import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
+import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate, requestSubscriptionCancellation } from '@/lib/server-actions';
 import type { UserProfile, FeedbackFormValues } from '@/types';
 import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -26,6 +26,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { Badge } from '../ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 
 
 // Helper component for Star Rating input
@@ -159,6 +160,7 @@ const getStatusBadgeClass = (status: UserProfile['approvalStatus']): string => {
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700';
       case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700';
+      case 'On Hold': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200 dark:border-orange-700';
       case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-700';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
@@ -184,6 +186,8 @@ export default function CustomerDashboard() {
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
   const [newRescheduleTime, setNewRescheduleTime] = useState<string>('');
+
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   
   const refetchProfile = useCallback(() => {
     if (user?.id) {
@@ -275,13 +279,26 @@ export default function CustomerDashboard() {
     router.push('/#subscriptions');
   };
   
-  const handleCancelPlan = () => {
-     toast({
-        title: 'Cancellation Request Submitted',
-        description: 'We have received your request. Our team will contact you shortly.',
-        variant: 'destructive'
-    });
-  }
+  const handleConfirmCancellation = async () => {
+    if (!user) return;
+    setIsSubmitting(true);
+    const result = await requestSubscriptionCancellation(user.id);
+    if (result.success) {
+        toast({
+            title: 'Cancellation Request Submitted',
+            description: 'We have received your request. Our team will contact you shortly.',
+        });
+        refetchProfile();
+    } else {
+        toast({
+            title: 'Error',
+            description: result.error || 'Could not submit your cancellation request.',
+            variant: 'destructive',
+        });
+    }
+    setIsSubmitting(false);
+    setIsCancelConfirmOpen(false);
+  };
 
   const handleRescheduleRequest = async () => {
     if (!profile || !upcomingLessonDate || !user || !newRescheduleDate || !newRescheduleTime) return;
@@ -381,7 +398,7 @@ export default function CustomerDashboard() {
     );
   }
 
-  if (profile && profile.approvalStatus !== 'Approved') {
+  if (profile && profile.approvalStatus !== 'Approved' && profile.approvalStatus !== 'On Hold') {
     return (
       <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
         <Card className="shadow-xl text-center p-8">
@@ -475,9 +492,9 @@ export default function CustomerDashboard() {
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Status:</span>
-                <span className={`font-semibold ${profile?.approvalStatus === 'Approved' ? 'text-green-500' : 'text-yellow-500'}`}>
+                 <Badge variant="outline" className={cn("font-semibold", getStatusBadgeClass(profile?.approvalStatus || ''))}>
                   {profile?.approvalStatus}
-                </span>
+                </Badge>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Start Date:</span>
@@ -487,7 +504,7 @@ export default function CustomerDashboard() {
                 variant="outline"
                 className="w-full"
                 onClick={() => setIsStartDateDialogOpen(true)}
-                disabled={!isStartDateEditable}
+                disabled={!isStartDateEditable || profile?.approvalStatus === 'On Hold'}
               >
                 <CalendarClock className="mr-2 h-4 w-4" /> Change Start Date
               </Button>
@@ -498,13 +515,15 @@ export default function CustomerDashboard() {
                 variant="default"
                 onClick={handleUpgradePlan}
                 className="w-full bg-green-600 hover:bg-green-700"
+                disabled={profile?.approvalStatus === 'On Hold'}
             >
               <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade
             </Button>
              <Button 
                 variant="destructive"
-                onClick={handleCancelPlan}
+                onClick={() => setIsCancelConfirmOpen(true)}
                 className="w-full"
+                disabled={profile?.approvalStatus === 'On Hold'}
             >
               <XCircle className="mr-2 h-4 w-4" /> Cancel
             </Button>
@@ -689,8 +708,24 @@ export default function CustomerDashboard() {
         </DialogContent>
       </Dialog>
 
+        {/* Cancellation Confirmation Dialog */}
+      <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send a cancellation request to our admin team. Your subscription will be put on hold pending approval. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancellation} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+              {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : 'Yes, Request Cancellation'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
-
-    

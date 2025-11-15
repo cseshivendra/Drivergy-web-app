@@ -13,7 +13,7 @@ import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, 
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction, reassignTrainerToCustomer } from '@/lib/server-actions';
+import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction, reassignTrainerToCustomer, approveSubscriptionCancellation, rejectSubscriptionCancellation } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -22,7 +22,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 
-type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer' | 'existing-customer';
+type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer' | 'existing-customer' | 'cancellation-request';
 
 interface UserTableProps {
   title: ReactNode;
@@ -137,11 +137,19 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
     }
 
     try {
-      const result = await updateUserApprovalStatus({ userId: user.id, newStatus, role: user.userRole || 'customer' });
+      let result;
+      if (actionType === 'cancellation-request' && newStatus === 'Approved') {
+        result = await approveSubscriptionCancellation(user.id);
+      } else if(actionType === 'cancellation-request' && newStatus === 'Rejected') {
+        result = await rejectSubscriptionCancellation(user.id);
+      } else {
+        result = await updateUserApprovalStatus({ userId: user.id, newStatus, role: user.userRole || 'customer' });
+      }
+
       if (result.success) {
         toast({
           title: `User ${newStatus}`,
-          description: `${user.name} has been successfully ${newStatus.toLowerCase()}.`,
+          description: `${user.name} has been successfully updated.`,
         });
         onUserActioned();
       } else {
@@ -201,8 +209,8 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
       case 'Pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700/30 dark:text-yellow-300';
       case 'Approved': return 'bg-green-100 text-green-700 dark:bg-green-700/30 dark:text-green-300';
       case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-700/30 dark:text-blue-300';
+      case 'On Hold': return 'bg-orange-100 text-orange-700 dark:bg-orange-700/30 dark:text-orange-300';
       case 'Rejected': return 'bg-red-100 text-red-700 dark:bg-red-700/30 dark:text-red-300';
-      case 'On Hold': return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-700/30 dark:text-gray-300';
     }
   };
@@ -257,6 +265,13 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        );
+      case 'cancellation-request':
+        return (
+            <div className="flex items-center justify-center space-x-1.5">
+                <Button variant="default" size="sm" onClick={() => handleUpdateStatus(user, 'Approved')} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1" aria-label={`Approve cancellation for ${user.name}`}><Check className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Approve</span></Button>
+                <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(user, 'Rejected')} className="px-2 py-1" aria-label={`Reject cancellation for ${user.name}`}><X className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Reject</span></Button>
+            </div>
         );
       case 'new-trainer':
       case 'existing-trainer':
