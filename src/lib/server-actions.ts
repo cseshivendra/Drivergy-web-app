@@ -117,8 +117,19 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             };
             
             await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
-            revalidatePath('/dashboard');
+            
+            // Send welcome email
+            try {
+                await sendEmail({
+                    to: email,
+                    subject: 'Welcome to Drivergy, Trainer!',
+                    html: `<h1>Welcome Aboard, ${name}!</h1><p>Thank you for registering as a trainer on Drivergy. Your profile is now under review. We will notify you once it's approved.</p><p>The Drivergy Team</p>`,
+                });
+            } catch (emailError) {
+                console.error("Failed to send trainer welcome email:", emailError);
+            }
 
+            revalidatePath('/dashboard');
             return { success: true, user: { ...trainerProfile, id: userRecord.uid } };
 
         } catch (error: any) {
@@ -160,6 +171,17 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             };
              await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
              await createNotification({ userId: userRecord.uid, message: `Welcome to Drivergy, ${name}! Complete your profile to get started.`, href: '/dashboard/complete-profile' });
+            
+            // Send welcome email
+            try {
+                await sendEmail({
+                    to: email,
+                    subject: 'Welcome to Drivergy!',
+                    html: `<h1>Welcome, ${name}!</h1><p>Thank you for registering with Drivergy. Your journey to becoming a confident driver starts now. Please proceed to select a subscription plan to get started.</p><p>The Drivergy Team</p>`,
+                });
+            } catch (emailError) {
+                console.error("Failed to send customer welcome email:", emailError);
+            }
 
             revalidatePath('/dashboard');
             revalidatePath('/login');
@@ -856,5 +878,6 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         return { success: false, error: "An unexpected error occurred." };
     }
 }
+
 
 
