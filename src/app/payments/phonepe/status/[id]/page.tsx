@@ -14,6 +14,9 @@ export default async function StatusPage({ params }: Props) {
   const { merchantId } = phonepeEnv();
   
   let statusResult;
+  let plan = '';
+  let price = '0';
+  
   try {
       statusResult = await getStatus(merchantId, params.id);
 
@@ -23,6 +26,8 @@ export default async function StatusPage({ params }: Props) {
           const orderSnap = await orderRef.get();
           if (orderSnap.exists) {
             const orderData = orderSnap.data()!;
+            plan = orderData.plan;
+            price = orderData.amount;
             await orderRef.update({ 
                 status: statusResult.code, 
                 gatewayResponse: statusResult.data 
@@ -76,7 +81,7 @@ export default async function StatusPage({ params }: Props) {
             </CardContent>
             <CardFooter>
                  <Button asChild className="w-full">
-                    <Link href={isSuccess ? `/dashboard/complete-profile?plan=${encodeURIComponent(statusResult?.data?.merchantTransactionId || '')}` : '/#subscriptions'}>
+                    <Link href={isSuccess ? `/dashboard/complete-profile?plan=${encodeURIComponent(plan)}&price=${price}` : '/#subscriptions'}>
                        {isSuccess ? 'Complete Your Profile' : 'Try Another Plan'}
                     </Link>
                 </Button>

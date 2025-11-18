@@ -96,7 +96,7 @@ function PaymentGateway() {
             title: "Payment Skipped",
             description: "Proceeding to profile completion.",
         });
-        router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}`);
+        router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}&price=${finalPrice}`);
     };
 
   if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
