@@ -3,69 +3,83 @@ import crypto from "crypto";
 
 type EnvCfg = {
   merchantId: string;
-  saltKey: string;
-  saltIndex: string;
+  clientId: string;
+  clientSecret: string;
   baseUrl: string;
 };
 
+// Provides PhonePe V2 credentials based on the environment.
 export function phonepeEnv(): EnvCfg {
   const isProd = process.env.PHONEPE_ENV === "production";
   return {
     merchantId: process.env.PHONEPE_MERCHANT_ID!,
-    saltKey: isProd ? process.env.PHONEPE_MERCHANT_PROD_SALT_KEY! : process.env.PHONEPE_MERCHANT_UAT_SALT_KEY!,
-    saltIndex: process.env.PHONEPE_MERCHANT_SALT_INDEX || "1",
-    baseUrl: isProd ? process.env.PHONEPE_BASE_URL_PROD! : process.env.PHONEPE_BASE_URL_SANDBOX!,
+    clientId: isProd ? process.env.PHONEPE_PROD_CLIENT_ID! : process.env.PHONEPE_UAT_CLIENT_ID!,
+    clientSecret: isProd ? process.env.PHONEPE_PROD_CLIENT_SECRET! : process.env.PHONEPE_UAT_CLIENT_SECRET!,
+    baseUrl: isProd 
+      ? "https://api.phonepe.com/apis/hermes" 
+      : "https://api-preprod.phonepe.com/apis/pg-sandbox",
   };
 }
 
-// PhonePe requires payload base64 + X-VERIFY header: SHA256(payload + "/pg/v1/pay" + saltKey) + "###" + saltIndex
-// Endpoints and signature patterns vary; confirm in latest docs for your chosen flow.
-export function signForPath(base64Payload: string, path: string, saltKey: string, saltIndex: string) {
-  const toSign = base64Payload + path + saltKey;
+// PhonePe V2 Signature: SHA256(base64Payload + apiEndpoint + salt) + ### + saltIndex
+// For V2, the salt is the clientSecret and the saltIndex is always 1.
+export function signV2(base64Payload: string, apiEndpoint: string, clientSecret: string) {
+  const toSign = base64Payload + apiEndpoint + clientSecret;
   const sha = crypto.createHash("sha256").update(toSign).digest("hex");
-  return `${sha}###${saltIndex}`;
+  return `${sha}###1`;
 }
 
+// POST request function for V2 API
 export async function postPhonePe(path: string, body: unknown) {
-  const { baseUrl, saltKey, saltIndex } = phonepeEnv();
+  const { baseUrl, clientSecret, clientId } = phonepeEnv();
   const payload = Buffer.from(JSON.stringify(body)).toString("base64");
-  const xVerify = signForPath(payload, path, saltKey, saltIndex);
+  const xVerify = signV2(payload, path, clientSecret);
 
   const res = await fetch(`${baseUrl}${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-VERIFY": xVerify,
+      "X-CLIENT-ID": clientId,
     },
     body: JSON.stringify({ request: payload }),
     cache: "no-store",
   });
+
   if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`PhonePe ${path} failed: ${res.status} ${t}`);
+    const text = await res.text();
+    console.error(`PhonePe POST ${path} failed: ${res.status}`, text);
+    throw new Error(`PhonePe ${path} failed: ${res.status} ${text}`);
   }
   return res.json();
 }
 
-// For order status verify: GET with X-VERIFY built over path only form; check docs for exact pattern.
-export function signForStatus(path: string, saltKey: string, saltIndex: string) {
-  const sha = crypto.createHash("sha256").update(path + saltKey).digest("hex");
-  return `${sha}###${saltIndex}`;
-}
 
+// GET request function for V2 API (used for checking status)
 export async function getStatus(merchantId: string, merchantTransactionId: string) {
-  const { baseUrl, saltKey, saltIndex } = phonepeEnv();
-  const path = `/pg/v1/status/${merchantId}/${merchantTransactionId}`;
-  const xVerify = signForStatus(path, saltKey, saltIndex);
+    const { baseUrl, clientSecret, clientId } = phonepeEnv();
+    const path = `/pg/v1/status/${merchantId}/${merchantTransactionId}`;
 
-  const res = await fetch(`${baseUrl}${path}`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json", "X-VERIFY": xVerify, "X-MERCHANT-ID": merchantId },
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`PhonePe status failed: ${res.status} ${t}`);
-  }
-  return res.json();
+    // For V2 GET requests, the signature is calculated on the path + salt
+    const toSign = path + clientSecret;
+    const sha = crypto.createHash("sha256").update(toSign).digest("hex");
+    const xVerify = `${sha}###1`;
+
+    const res = await fetch(`${baseUrl}${path}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "X-VERIFY": xVerify,
+            "X-CLIENT-ID": clientId,
+            "X-MERCHANT-ID": merchantId,
+        },
+        cache: "no-store",
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        console.error(`PhonePe GET ${path} failed: ${res.status}`, text);
+        throw new Error(`PhonePe status check failed: ${res.status} ${text}`);
+    }
+    return res.json();
 }

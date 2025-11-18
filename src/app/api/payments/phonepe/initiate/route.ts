@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
         });
     }
 
-
     const payload = {
       merchantId,
       merchantTransactionId,
@@ -40,8 +39,10 @@ export async function POST(req: NextRequest) {
         type: "PAY_PAGE",
       },
     };
-
-    const data = await postPhonePe("/pg/v1/pay", payload);
+    
+    // The path for the V2 pay API
+    const apiPath = "/pg/v1/pay";
+    const data = await postPhonePe(apiPath, payload);
 
     const redirectUrl =
       data?.data?.instrumentResponse?.redirectInfo?.url ||
@@ -49,12 +50,12 @@ export async function POST(req: NextRequest) {
 
     if (!redirectUrl) {
       console.error("PhonePe Initiation Error Raw Response:", data);
-      return NextResponse.json({ error: "No redirect URL received", raw: data }, { status: 500 });
+      return NextResponse.json({ error: "No redirect URL received from PhonePe V2 API", raw: data }, { status: 500 });
     }
 
     return NextResponse.json({ redirectUrl, merchantTransactionId });
   } catch (e: any) {
-    console.error("PhonePe Initiate Error:", e);
+    console.error("PhonePe V2 Initiate Error:", e);
     return NextResponse.json({ error: e.message || "initiate failed" }, { status: 500 });
   }
 }
