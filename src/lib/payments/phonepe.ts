@@ -36,14 +36,27 @@ export async function postPhonePe(path: string, body: unknown) {
   const payload = Buffer.from(JSON.stringify(body)).toString("base64");
   const xVerify = signV2(payload, path, clientSecret);
 
-  const res = await fetch(`${baseUrl}${path}`, {
+  const headers = {
+    "Content-Type": "application/json",
+    "X-VERIFY": xVerify,
+    "X-CLIENT-ID": clientId,
+  };
+
+  const requestBody = { request: payload };
+  const fullUrl = `${baseUrl}${path}`;
+
+  // --- Start of Added Debug Logging ---
+  console.log("--- PhonePe V2 Request Debug Info ---");
+  console.log("API Host (Endpoint):", fullUrl);
+  console.log("Request Headers:", JSON.stringify(headers, null, 2));
+  console.log("Request Payload (Body):", JSON.stringify(requestBody, null, 2));
+  console.log("--- End of Debug Info ---");
+  // --- End of Added Debug Logging ---
+
+  const res = await fetch(fullUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-VERIFY": xVerify,
-      "X-CLIENT-ID": clientId,
-    },
-    body: JSON.stringify({ request: payload }),
+    headers: headers,
+    body: JSON.stringify(requestBody),
     cache: "no-store",
   });
 
