@@ -515,3 +515,19 @@ export const DrivingLogFormSchema = z.object({
   }),
 });
 export type DrivingLogFormValues = z.infer<typeof DrivingLogFormSchema>;
+
+// New Store/Product Types
+export interface Product {
+  id: string;
+  title: string;
+  description: string;
+  imageSrc: string;
+  imageHint: string;
+  amazonId: string; // ASIN
+  flipkartId: string; // FSN/LID
+}
+
+export interface PriceData {
+    amazonPrice: number | null;
+    flipkartPrice: number | null;
+}

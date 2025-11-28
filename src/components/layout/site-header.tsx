@@ -68,6 +68,7 @@ const navLinks: NavLink[] = [
   { href: '/#services', label: 'Services' },
   { href: '/#courses', label: 'Courses' },
   { href: '/#subscriptions', label: 'Plans' },
+  { href: '/store', label: 'Store', icon: Store },
   { href: '/rto-services', label: 'RTO Services' },
   {
     label: 'Insights',

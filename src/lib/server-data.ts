@@ -1,7 +1,8 @@
 
+
 'use server';
 
-import type { BlogPost, UserProfile, Course, QuizSet } from '@/types';
+import type { BlogPost, UserProfile, Course, QuizSet, Product } from '@/types';
 import { adminAuth, adminDb } from './firebase/admin';
 
 // This file is for server-side data fetching and data seeding logic only.
@@ -112,9 +113,63 @@ export const seedPromotionalPosters = async () => {
     }
 };
 
+
+const seedStoreProducts = async () => {
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot seed store products.");
+        return;
+    }
+
+    const productsRef = adminDb.collection('storeProducts');
+    const snapshot = await productsRef.limit(1).get();
+
+    if (snapshot.empty) {
+        console.log("Seeding store products...");
+        const products: Product[] = [
+            {
+                id: 'prod-1',
+                title: 'Magnetic Car Phone Holder',
+                description: 'A sturdy and reliable magnetic phone holder that mounts on your dashboard or windshield. Keeps your phone secure for easy navigation.',
+                imageSrc: 'https://placehold.co/600x400/3b82f6/ffffff?text=Phone+Holder',
+                imageHint: 'car phone mount',
+                amazonId: 'B07Y62883J',
+                flipkartId: 'MOBG937GZJ4H3G3Y',
+            },
+            {
+                id: 'prod-2',
+                title: 'Blind Spot Mirrors (2-Pack)',
+                description: 'Increase your field of view and reduce blind spots with these easy-to-install, adjustable convex mirrors for your car\'s side mirrors.',
+                imageSrc: 'https://placehold.co/600x400/ef4444/ffffff?text=Blind+Spot+Mirror',
+                imageHint: 'car blind spot',
+                amazonId: 'B01CV4ANCC',
+                flipkartId: 'ACCG2HFYHHGZSZQY',
+            },
+            {
+                id: 'prod-3',
+                title: 'Digital Tyre Pressure Gauge',
+                description: 'Ensure your tyres are properly inflated for safety and fuel efficiency with this easy-to-use digital pressure gauge.',
+                imageSrc: 'https://placehold.co/600x400/22c55e/ffffff?text=Tyre+Gauge',
+                imageHint: 'tyre pressure gauge',
+                amazonId: 'B073733564',
+                flipkartId: 'ACCGV5Z8GZ5GJZJG',
+            },
+        ];
+
+        const batch = adminDb.batch();
+        products.forEach(product => {
+            const docRef = productsRef.doc(product.id);
+            batch.set(docRef, product);
+        });
+        await batch.commit();
+        console.log("Store products seeded successfully.");
+    }
+};
+
+
 // Call the seeding functions when the server starts up.
 const initializeServerData = async () => {
     await createDefaultAdmin();
+    await seedStoreProducts();
 };
 initializeServerData();
 
@@ -182,6 +237,28 @@ export async function fetchQuizSets(): Promise<QuizSet[]> {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuizSet));
     } catch (error) {
         console.error("Error fetching quiz sets:", error);
+        return [];
+    }
+}
+
+/**
+ * Fetches all products from the storeProducts collection in Firestore.
+ * @returns A promise that resolves to an array of products.
+ */
+export async function fetchStoreProducts(): Promise<Product[]> {
+    if (!adminDb) {
+        console.error("Admin DB not initialized. Cannot fetch store products.");
+        return [];
+    }
+    
+    try {
+        const snapshot = await adminDb.collection('storeProducts').get();
+        if (snapshot.empty) {
+            return [];
+        }
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+    } catch (error) {
+        console.error("Error fetching store products:", error);
         return [];
     }
 }
