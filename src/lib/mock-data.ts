@@ -60,12 +60,12 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
     const rescheduleRef = collection(db, 'rescheduleRequests');
     const feedbackRef = collection(db, 'feedback');
     const productsRef = collection(db, 'storeProducts');
+    const referralsRef = collection(db, 'referrals');
 
-    const unsubs: (() => void)[] = [];
 
     const fetchData = async () => {
         try {
-            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap, feedbackSnap, productsSnap] = await Promise.all([
+            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap, feedbackSnap, productsSnap, referralsSnap] = await Promise.all([
                 getDocs(usersRef),
                 getDocs(trainersRef),
                 getDocs(coursesRef),
@@ -76,7 +76,8 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 getDocs(postersRef),
                 getDocs(query(rescheduleRef, orderBy('requestTimestamp', 'desc'))),
                 getDocs(query(feedbackRef, orderBy('submissionDate', 'desc'))),
-                getDocs(productsRef)
+                getDocs(productsRef),
+                getDocs(collection(db, 'referrals'))
             ]);
             
             const customers: UserProfile[] = usersSnap.docs.map(d => ({
@@ -93,9 +94,8 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
             const allUsers = [...customers, ...instructors];
             
-            // Derive Lesson Requests
             const lessonRequests: LessonRequest[] = customers
-                .filter(c => c.subscriptionPlan !== 'None' && !c.assignedTrainerId)
+                .filter(c => c.subscriptionPlan !== 'None' && !c.assignedTrainerId && c.approvalStatus === 'Pending')
                 .map(c => ({
                     id: c.id,
                     customerId: c.id,
@@ -105,7 +105,6 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     requestTimestamp: c.registrationTimestamp ? format(parseISO(c.registrationTimestamp), 'PPp') : 'N/A',
                 }));
 
-            // Derive Feedback
             const feedback: Feedback[] = feedbackSnap.docs.map(d => {
                 const data = d.data();
                 return {
@@ -114,10 +113,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     submissionDate: data.submissionDate?.toDate ? format(data.submissionDate.toDate(), 'PPp') : 'N/A',
                 } as Feedback;
             });
-            
-            const referrals: Referral[] = [];
 
-            // Derive Lesson Progress
             const lessonProgress: LessonProgressData[] = customers
                 .filter(c => c.assignedTrainerId && c.totalLessons)
                 .map(c => ({
@@ -140,7 +136,6 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     requestTimestamp: data.requestTimestamp?.toDate ? format(data.requestTimestamp.toDate(), 'PPp') : 'N/A',
                 } as RescheduleRequest;
 
-                // Handle both ISO string and Firestore Timestamp for dates
                 if (data.originalLessonDate) {
                     const originalDate = typeof data.originalLessonDate === 'string' ? parseISO(data.originalLessonDate) : data.originalLessonDate.toDate();
                     formattedRequest.originalLessonDate = format(originalDate, 'PPp');
@@ -152,6 +147,19 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
                 return formattedRequest;
             });
+            
+            const referrals = await Promise.all(referralsSnap.docs.map(async (d) => {
+                const data = d.data();
+                const refereeSnap = await getDoc(doc(db, 'users', data.refereeId));
+                return {
+                    id: d.id,
+                    ...data,
+                    timestamp: data.timestamp?.toDate ? format(data.timestamp.toDate(), 'PP') : 'N/A',
+                    refereeUniqueId: refereeSnap.exists() ? refereeSnap.data().uniqueId : 'N/A',
+                    refereeSubscriptionPlan: refereeSnap.exists() ? refereeSnap.data().subscriptionPlan : 'N/A',
+                    refereeApprovalStatus: refereeSnap.exists() ? refereeSnap.data().approvalStatus : 'N/A',
+                } as Referral
+            }));
 
 
             const summaryData: SummaryData = {
@@ -165,6 +173,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     if (curr.subscriptionPlan === 'Basic') return acc + 3999;
                     if (curr.subscriptionPlan === 'Gold') return acc + 7499;
                     if (curr.subscriptionPlan === 'Premium') return acc + 9999;
+                    if (curr.subscriptionPlan === 'Custom Module') return acc + 999;
                     return acc;
                 }, 0),
             };
@@ -193,13 +202,10 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
         }
     };
 
-    fetchData(); // Initial fetch
+    fetchData(); 
 
-    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef, feedbackRef, productsRef];
-    collections.forEach(ref => {
-        const unsubscribe = onSnapshot(ref, fetchData, (error) => console.error("Snapshot error:", error));
-        unsubs.push(unsubscribe);
-    });
+    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef, feedbackRef, productsRef, referralsRef];
+    const unsubs = collections.map(ref => onSnapshot(ref, fetchData, (error) => console.error("Snapshot error on", ref.id, ":", error)));
 
     return () => unsubs.forEach(unsub => unsub());
 };
@@ -352,3 +358,5 @@ export function listenToNotifications(userId: string, callback: (notifications: 
   
     return unsubscribe;
 }
+
+    
