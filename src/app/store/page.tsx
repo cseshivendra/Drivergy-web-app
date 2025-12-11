@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { fetchStoreProducts } from '@/lib/server-data';
 import type { Product } from '@/types';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, Info } from 'lucide-react';
 import type { Metadata } from 'next';
 import PriceChecker from './price-checker';
 
@@ -57,6 +57,16 @@ export default async function StorePage() {
           ))}
         </div>
       )}
+
+      <div className="mt-16 p-4 bg-muted/50 rounded-lg text-center">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Info className="h-4 w-4" />
+            <p>
+                <strong>Affiliate Disclosure:</strong> When you purchase through our links, we may earn a small commission at no extra cost to you.
+            </p>
+        </div>
+      </div>
+
     </div>
   );
 }

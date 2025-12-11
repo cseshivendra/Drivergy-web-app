@@ -73,7 +73,7 @@ export default function PriceChecker({ amazonId, flipkartId }: PriceCheckerProps
   }, [amazonId, flipkartId]);
 
   const amazonUrl = `https://www.amazon.in/dp/${amazonId}/?tag=${amazonAffiliateTag}`;
-  const flipkartUrl = `https://www.flipkart.com/product/p/itme?pid=${flipkartId}&affid=${flipkartAffiliateId}`;
+  const flipkartUrl = `https://www.flipkart.com/p/itme?pid=${flipkartId}&affid=${flipkartAffiliateId}`;
   
   const amazonPrice = prices?.amazonPrice;
   const flipkartPrice = prices?.flipkartPrice;
