@@ -2,9 +2,9 @@
 
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
-import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest, Notification } from '@/types';
+import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest, Notification, Product } from '@/types';
 import { format, parseISO } from 'date-fns';
-import { fetchCourses as serverFetchCourses, fetchQuizSets as serverFetchQuizSets, fetchBlogPosts as serverFetchBlogPosts, fetchBlogPostBySlug as serverFetchBlogPostBySlug, fetchUserById as serverFetchUserById } from './server-data';
+import { fetchCourses as serverFetchCourses, fetchQuizSets as serverFetchQuizSets, fetchBlogPosts as serverFetchBlogPosts, fetchBlogPostBySlug as serverFetchBlogPostBySlug, fetchUserById as serverFetchUserById, fetchStoreProducts as serverFetchStoreProducts } from './server-data';
 
 export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster[]) => void) => {
   if (!db) {
@@ -59,12 +59,13 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
     const postersRef = collection(db, 'promotionalPosters');
     const rescheduleRef = collection(db, 'rescheduleRequests');
     const feedbackRef = collection(db, 'feedback');
+    const productsRef = collection(db, 'storeProducts');
 
     const unsubs: (() => void)[] = [];
 
     const fetchData = async () => {
         try {
-            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap, feedbackSnap] = await Promise.all([
+            const [usersSnap, trainersSnap, coursesSnap, quizSetsSnap, faqsSnap, blogSnap, bannersSnap, postersSnap, rescheduleSnap, feedbackSnap, productsSnap] = await Promise.all([
                 getDocs(usersRef),
                 getDocs(trainersRef),
                 getDocs(coursesRef),
@@ -74,7 +75,8 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 getDocs(bannersRef),
                 getDocs(postersRef),
                 getDocs(query(rescheduleRef, orderBy('requestTimestamp', 'desc'))),
-                getDocs(query(feedbackRef, orderBy('submissionDate', 'desc')))
+                getDocs(query(feedbackRef, orderBy('submissionDate', 'desc'))),
+                getDocs(productsRef)
             ]);
             
             const customers: UserProfile[] = usersSnap.docs.map(d => ({
@@ -181,6 +183,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 blogPosts: blogSnap.docs.map(d => ({ slug: d.id, ...d.data() }) as BlogPost),
                 siteBanners: bannersSnap.docs.map(d => ({ id: d.id, ...d.data() }) as SiteBanner),
                 promotionalPosters: postersSnap.docs.map(d => ({ id: d.id, ...d.data() }) as PromotionalPoster),
+                storeProducts: productsSnap.docs.map(d => ({ id: d.id, ...d.data() }) as Product),
             };
             
             callback(data);
@@ -192,7 +195,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     fetchData(); // Initial fetch
 
-    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef, feedbackRef];
+    const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef, feedbackRef, productsRef];
     collections.forEach(ref => {
         const unsubscribe = onSnapshot(ref, fetchData, (error) => console.error("Snapshot error:", error));
         unsubs.push(unsubscribe);
@@ -224,6 +227,7 @@ export const fetchQuizSets = serverFetchQuizSets;
 export const fetchBlogPosts = serverFetchBlogPosts;
 export const fetchBlogPostBySlug = serverFetchBlogPostBySlug;
 export const fetchUserById = serverFetchUserById;
+export const fetchStoreProducts = serverFetchStoreProducts;
 
 
 export const listenToBlogPosts = (callback: (posts: BlogPost[]) => void) => {

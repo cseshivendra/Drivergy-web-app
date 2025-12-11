@@ -3,7 +3,7 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema, ProductFormSchema, ProductFormValues } from '@/types';
 import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification } from '@/types';
 import { format, parse, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
@@ -537,6 +537,46 @@ export async function deleteFaq(faqId: string): Promise<boolean> {
     return true;
 }
 
+export async function addProduct(data: ProductFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const { imageFile, ...productData } = data;
+    let imageUrl = productData.imageSrc || '';
+
+    if (imageFile) {
+        const imageBuffer = await fileToBuffer(imageFile);
+        imageUrl = await uploadFileToCloudinary(imageBuffer, 'store_products');
+    }
+    
+    await adminDb.collection('storeProducts').add({ ...productData, imageSrc: imageUrl });
+    revalidatePath('/dashboard');
+    revalidatePath('/store');
+    return true;
+}
+
+export async function updateProduct(id: string, data: ProductFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const { imageFile, ...productData } = data;
+    let imageUrl = productData.imageSrc || '';
+
+    if (imageFile) {
+        const imageBuffer = await fileToBuffer(imageFile);
+        imageUrl = await uploadFileToCloudinary(imageBuffer, 'store_products');
+    }
+    
+    await adminDb.collection('storeProducts').doc(id).update({ ...productData, imageSrc: imageUrl });
+    revalidatePath('/dashboard');
+    revalidatePath('/store');
+    return true;
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('storeProducts').doc(id).delete();
+    revalidatePath('/dashboard');
+    revalidatePath('/store');
+    return true;
+}
+
 export async function updateSiteBanner(bannerId: string, data: VisualContentFormValues): Promise<boolean> {
     if (!adminDb) return false;
     const { imageFile, ...bannerData } = data;
@@ -878,6 +918,3 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         return { success: false, error: "An unexpected error occurred." };
     }
 }
-
-
-

@@ -1,4 +1,5 @@
 
+
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { fetchStoreProducts } from '@/lib/server-data';

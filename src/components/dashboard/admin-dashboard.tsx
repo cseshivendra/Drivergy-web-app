@@ -12,8 +12,8 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { listenToAdminDashboardData } from '@/lib/mock-data';
 import { updateRescheduleRequestStatus } from '@/lib/server-actions';
-import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat } from 'lucide-react';
+import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest, RescheduleRequestStatusType, Product } from '@/types';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, Store } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,6 +26,7 @@ import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
 import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
+import ProductManagement from './product-management';
 
 
 export default function AdminDashboard() {
@@ -231,6 +232,12 @@ export default function AdminDashboard() {
 
     const renderContentView = () => (
         <div className="space-y-8">
+            <ProductManagement
+                title={<><Store className="inline-block mr-3 h-6 w-6 align-middle" />Store Product Management</>}
+                products={dashboardData?.storeProducts || []}
+                isLoading={loading}
+                onAction={handleActioned}
+            />
             <CourseManagement
                 title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Management</>}
                 courses={dashboardData?.courses || []}
