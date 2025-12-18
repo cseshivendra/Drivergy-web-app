@@ -13,6 +13,7 @@ import { seedPromotionalPosters } from './server-data';
 import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from './email';
 import dotenv from 'dotenv';
+import { sendSms } from './sms';
 
 dotenv.config();
 
@@ -129,6 +130,15 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 console.error("Failed to send trainer welcome email:", emailError);
             }
 
+            try {
+              if (phone) {
+                const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
+                await sendSms(formattedPhone, `Hi ${name}, welcome to Drivergy! Your trainer profile is under review. We'll notify you upon approval.`);
+              }
+            } catch (smsError) {
+                console.error("Failed to send trainer welcome SMS:", smsError);
+            }
+
             revalidatePath('/dashboard');
             return { success: true, user: { ...trainerProfile, id: userRecord.uid } };
 
@@ -181,6 +191,15 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 });
             } catch (emailError) {
                 console.error("Failed to send customer welcome email:", emailError);
+            }
+            
+            try {
+                if (phone) {
+                    const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
+                    await sendSms(formattedPhone, `Hi ${name}, welcome to Drivergy! Your registration is complete. Please select a subscription plan to begin your lessons.`);
+                }
+            } catch (smsError) {
+                console.error("Failed to send customer welcome SMS:", smsError);
             }
 
             revalidatePath('/dashboard');
@@ -916,5 +935,65 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
     } catch (error) {
         console.error("Error in getLoginUser server action:", error);
         return { success: false, error: "An unexpected error occurred." };
+    }
+}
+
+export async function requestSubscriptionCancellation(userId: string): Promise<{ success: boolean, error?: string }> {
+    if (!adminDb) return { success: false, error: "Server not configured." };
+    
+    try {
+        const userRef = adminDb.collection('users').doc(userId);
+        await userRef.update({ approvalStatus: 'On Hold' });
+        
+        // Notify admin (This assumes a single admin for simplicity, in a real app this would be more robust)
+        // For now, we rely on the admin dashboard view.
+        
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        console.error("Error requesting cancellation:", error);
+        return { success: false, error: "An error occurred while submitting your request." };
+    }
+}
+
+export async function approveSubscriptionCancellation(userId: string): Promise<{ success: boolean; error?: string }> {
+    if (!adminDb) return { success: false, error: "Server not configured." };
+
+    try {
+        const userRef = adminDb.collection('users').doc(userId);
+        await userRef.update({ 
+            subscriptionPlan: 'None', 
+            approvalStatus: 'Cancelled', // A new status
+            assignedTrainerId: null,
+            assignedTrainerName: null,
+            assignedTrainerPhone: null,
+            assignedTrainerVehicleDetails: null,
+            upcomingLesson: null
+        });
+        
+        await createNotification({ userId: userId, message: "Your subscription cancellation has been approved and processed.", href: '/dashboard' });
+
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        console.error("Error approving cancellation:", error);
+        return { success: false, error: "An error occurred while approving the cancellation." };
+    }
+}
+
+export async function rejectSubscriptionCancellation(userId: string): Promise<{ success: boolean; error?: string }> {
+    if (!adminDb) return { success: false, error: "Server not configured." };
+
+    try {
+        const userRef = adminDb.collection('users').doc(userId);
+        await userRef.update({ approvalStatus: 'Approved' }); // Revert status to Approved
+        
+        await createNotification({ userId: userId, message: "Your subscription cancellation request has been reviewed and rejected. Your plan remains active.", href: '/dashboard' });
+
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        console.error("Error rejecting cancellation:", error);
+        return { success: false, error: "An error occurred while rejecting the cancellation." };
     }
 }
