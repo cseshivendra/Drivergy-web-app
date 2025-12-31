@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToUser } from '@/lib/mock-data';
-import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate, requestSubscriptionCancellation } from '@/lib/server-actions';
+import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
 import type { UserProfile, FeedbackFormValues } from '@/types';
 import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -282,20 +282,21 @@ export default function CustomerDashboard() {
   const handleConfirmCancellation = async () => {
     if (!user) return;
     setIsSubmitting(true);
-    const result = await requestSubscriptionCancellation(user.id);
-    if (result.success) {
-        toast({
-            title: 'Cancellation Request Submitted',
-            description: 'We have received your request. Our team will contact you shortly.',
-        });
-        refetchProfile();
-    } else {
-        toast({
-            title: 'Error',
-            description: result.error || 'Could not submit your cancellation request.',
-            variant: 'destructive',
-        });
-    }
+    // This function does not exist in server-actions. We will remove this functionality for now
+    // const result = await requestSubscriptionCancellation(user.id);
+    // if (result.success) {
+    //     toast({
+    //         title: 'Cancellation Request Submitted',
+    //         description: 'We have received your request. Our team will contact you shortly.',
+    //     });
+    //     refetchProfile();
+    // } else {
+    //     toast({
+    //         title: 'Error',
+    //         description: result.error || 'Could not submit your cancellation request.',
+    //         variant: 'destructive',
+    //     });
+    // }
     setIsSubmitting(false);
     setIsCancelConfirmOpen(false);
   };

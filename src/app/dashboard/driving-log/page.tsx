@@ -10,7 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { NotebookText, Send, Lightbulb, ThumbsUp, Wrench, Loader2, Sparkles } from 'lucide-react';
-import { analyzeDrivingSession, type DrivingAnalysisInput, type DrivingAnalysisOutput, DrivingLogFormSchema } from '@/types';
+import { type DrivingAnalysisInput, type DrivingAnalysisOutput, DrivingLogFormSchema } from '@/types';
+import { analyzeDrivingSession } from '@/ai/flows/driving-feedback-flow';
 
 // The Zod schema is now imported from types/index.ts
 type DrivingLogFormValues = DrivingAnalysisInput;
