@@ -1,17 +1,6 @@
 
-require('dotenv').config();
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/site/:path*',
-        destination: '/:path*',
-        permanent: true,
-      },
-    ]
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -45,7 +34,7 @@ const nextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https' ,
         hostname: 'res.cloudinary.com',
         port: '',
         pathname: '/**',

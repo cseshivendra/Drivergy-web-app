@@ -13,7 +13,7 @@ import { User, Phone, MapPin, FileText, CalendarDays, AlertCircle, Fingerprint, 
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { fetchApprovedInstructors } from '@/lib/mock-data';
-import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction, reassignTrainerToCustomer, approveSubscriptionCancellation, rejectSubscriptionCancellation } from '@/lib/server-actions';
+import { updateUserApprovalStatus, assignTrainerToCustomer, deleteUserAction, reassignTrainerToCustomer } from '@/lib/server-actions';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -138,13 +138,13 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
 
     try {
       let result;
-      if (actionType === 'cancellation-request' && newStatus === 'Approved') {
-        result = await approveSubscriptionCancellation(user.id);
-      } else if(actionType === 'cancellation-request' && newStatus === 'Rejected') {
-        result = await rejectSubscriptionCancellation(user.id);
-      } else {
+    //   if (actionType === 'cancellation-request' && newStatus === 'Approved') {
+    //     result = await approveSubscriptionCancellation(user.id);
+    //   } else if(actionType === 'cancellation-request' && newStatus === 'Rejected') {
+    //     result = await rejectSubscriptionCancellation(user.id);
+    //   } else {
         result = await updateUserApprovalStatus({ userId: user.id, newStatus, role: user.userRole || 'customer' });
-      }
+    //   }
 
       if (result.success) {
         toast({
