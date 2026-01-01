@@ -42,7 +42,7 @@ const nextConfig = {
     ],
   },
   serverActions: {
-    bodySizeLimit: '10mb',
+    bodySizeLimit: '5mb',
   },
   serverExternalPackages: ['@genkit-ai/core', 'genkit'],
   webpack: (config, { isServer }) => {
