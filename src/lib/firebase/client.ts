@@ -1,4 +1,3 @@
-
 // src/lib/firebase/client.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -14,13 +13,10 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Basic validation to prevent Firebase errors on the client
-if (!firebaseConfig.apiKey) {
-    console.error("Firebase API Key is missing. Please check your .env file and ensure NEXT_PUBLIC_FIREBASE_API_KEY is set.");
-}
-
-
-// Initialize Firebase for client-side
+// Robust singleton pattern for Firebase initialization in Next.js
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { app, auth, db };
