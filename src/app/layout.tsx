@@ -10,6 +10,7 @@ import SiteHeader from '@/components/layout/site-header';
 import SiteFooter from '@/components/layout/site-footer';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import { usePathname } from 'next/navigation';
+import FirebaseErrorListener from '@/components/FirebaseErrorListener';
 
 // RootLayout is a client component because it uses AuthProvider and ThemeProvider
 // which rely on client-side state and hooks.
@@ -32,22 +33,11 @@ export default function RootLayout({
             <meta name="description" content="Drivergy is the top-rated driving school in India. Offering affordable car and motorcycle driving lessons with male & female instructors. Prepare for your RTO test and learn to drive safely. Sign up now!" />
             <meta name="keywords" content="driving school, car driving school, driving lessons, car driving lessons near me, learn to drive car, driving school in India, RTO test, two wheeler driving school, motorcycle training, female driving instructor" />
             
-            {/* <!-- Google tag (gtag.js) --> */}
-            <script async src="https://www.googletagmanager.com/gtag/js?id=G-S6E5K1808K"></script>
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', 'G-S6E5K1808K');
-                `,
-              }}
-            />
         </head>
         <body className="font-body antialiased">
             <AuthProvider>
                 <ThemeProvider>
+                    <FirebaseErrorListener />
                     {isAppRoute ? (
                         children // The dashboard layout will provide its own structure
                     ) : (

@@ -13,6 +13,8 @@ import { seedPromotionalPosters } from './server-data';
 import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from './email';
 import dotenv from 'dotenv';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 dotenv.config();
 
@@ -331,36 +333,70 @@ export async function completeCustomerProfileAction(prevState: any, formData: Fo
 }
 
 export async function updateUserProfile(userId: string, data: UserProfileUpdateValues): Promise<UserProfile | null> {
-  if (!adminDb) return null;
-  const { photo, ...profileData } = data;
-  const updatePayload: { [key: string]: any } = { ...profileData };
+    if (!adminDb) return null;
+    const { photo, ...profileData } = data;
+    const updatePayload: { [key: string]: any } = { ...profileData };
 
-  if (photo) {
-    const photoBuffer = await fileToBuffer(photo);
-    const photoURL = await uploadFileToCloudinary(photoBuffer, 'profile_pictures');
-    updatePayload.photoURL = photoURL;
-  }
+    if (photo) {
+        try {
+            const photoBuffer = await fileToBuffer(photo);
+            const photoURL = await uploadFileToCloudinary(photoBuffer, 'profile_pictures');
+            updatePayload.photoURL = photoURL;
+        } catch (uploadError) {
+            console.error("Cloudinary upload failed:", uploadError);
+            // Decide if you want to fail the whole update or just proceed without the new photo
+            return null;
+        }
+    }
 
-  const userRef = adminDb.collection('users').doc(userId);
-  const trainerRef = adminDb.collection('trainers').doc(userId);
-  const userDoc = await userRef.get();
+    const userRef = adminDb.collection('users').doc(userId);
+    const trainerRef = adminDb.collection('trainers').doc(userId);
 
-  let updatedDoc;
-  if(userDoc.exists) {
-      await userRef.update(updatePayload);
-      updatedDoc = await userRef.get();
-  } else {
-      await trainerRef.update(updatePayload);
-      updatedDoc = await trainerRef.get();
-  }
-  
-  revalidatePath('/dashboard/profile');
-  const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
-  if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
-      updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
-  }
-  return updatedData as UserProfile;
+    try {
+        const userDoc = await userRef.get();
+        let docToUpdate;
+        let collectionPath;
+
+        if (userDoc.exists) {
+            docToUpdate = userRef;
+            collectionPath = 'users';
+        } else {
+            const trainerDoc = await trainerRef.get();
+            if (trainerDoc.exists) {
+                docToUpdate = trainerRef;
+                collectionPath = 'trainers';
+            } else {
+                return null; // User not found in either collection
+            }
+        }
+        
+        await docToUpdate.update(updatePayload);
+
+        const updatedDoc = await docToUpdate.get();
+        revalidatePath('/dashboard/profile');
+        const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
+        if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
+            updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
+        }
+        return updatedData as UserProfile;
+
+    } catch (error: any) {
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: (userRef.path || trainerRef.path),
+                operation: 'update',
+                requestResourceData: updatePayload,
+            });
+            // This is a server action, so we can't emit to a client-side emitter.
+            // We'll throw the error so the client-side fetch can catch it.
+            // In a real app, you'd have a centralized server-side logging/error handling mechanism.
+            console.error(permissionError.message);
+        }
+        console.error("Error updating user profile:", error);
+        return null;
+    }
 }
+
 
 export async function changeUserPassword(userId: string, currentPass: string, newPass: string): Promise<boolean> {
    if (!adminAuth) {
@@ -878,6 +914,3 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
         return { success: false, error: "An unexpected error occurred." };
     }
 }
-
-
-

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -28,6 +27,8 @@ import { Locations } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import NextImage from 'next/image';
 import { cn } from '@/lib/utils';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   const { toast } = useToast();
@@ -67,19 +68,31 @@ function ProfileUpdateForm({ profile }: { profile: UserProfile }) {
   }, [selectedState, form, availableDistricts]);
 
   async function onSubmit(data: UserProfileUpdateValues) {
-    const updatedProfile = await updateUserProfile(profile.id, data);
-    if (updatedProfile) {
-      toast({
-        title: "Profile Updated",
-        description: "Your personal information has been successfully updated.",
-      });
-      logInUser(updatedProfile, false); 
-    } else {
-      toast({
-        title: "Update Failed",
-        description: "Could not update your profile. Please try again.",
-        variant: "destructive",
-      });
+    try {
+      const updatedProfile = await updateUserProfile(profile.id, data);
+      if (updatedProfile) {
+        toast({
+          title: "Profile Updated",
+          description: "Your personal information has been successfully updated.",
+        });
+        logInUser(updatedProfile, false); 
+      } else {
+        toast({
+          title: "Update Failed",
+          description: "Could not update your profile. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (e: any) {
+        if (e instanceof FirestorePermissionError) {
+            errorEmitter.emit('permission-error', e);
+        } else {
+            toast({
+              title: "Uh oh! Something went wrong.",
+              description: e.message || "Could not save profile.",
+              variant: "destructive"
+            });
+        }
     }
   }
 
