@@ -41,6 +41,9 @@ const nextConfig = {
       },
     ],
   },
+  serverActions: {
+    bodySizeLimit: '10mb',
+  },
   serverExternalPackages: ['@genkit-ai/core', 'genkit'],
   webpack: (config, { isServer }) => {
     config.resolve.alias = {
