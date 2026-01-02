@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Users, BookOpen, Star, Clock, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X } from "lucide-react";
+import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { listenToUser, listenToTrainerStudents } from '@/lib/mock-data';
+import { listenToUser, fetchTrainerDashboardData } from '@/lib/mock-data';
 import { updateUserAttendance } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback, RescheduleRequest } from '@/types';
@@ -30,44 +30,49 @@ const TrainerDashboard = () => {
     const [trainerProfile, setTrainerProfile] = useState<UserProfile | null>(null);
     const [students, setStudents] = useState<UserProfile[]>([]);
     const [feedback, setFeedback] = useState<Feedback[]>([]);
-    const [rescheduleRequests, setRescheduleRequests] = useState<RescheduleRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const refetchData = useCallback(() => {
         if (user?.id) {
-            listenToTrainerStudents(user.id, (data) => {
-                setStudents(data.students);
-                setFeedback(data.feedback);
-                setRescheduleRequests(data.rescheduleRequests);
+            fetchTrainerDashboardData(user.id).then(data => {
+                if (data) {
+                    setStudents(data.students);
+                    setFeedback(data.feedback);
+                }
             });
         }
     }, [user?.id]);
     
     useEffect(() => {
         if (authLoading) return;
-        if (!user?.id) { setLoading(false); return; }
+        if (!user?.id) { 
+            setLoading(false); 
+            setError("You are not logged in.");
+            return; 
+        }
 
-        // Correctly fetch from 'trainers' collection
-        const unsubscribeTrainer = listenToUser(user.id, (profile) => {
+        setLoading(true);
+        const unsubscribeTrainer = listenToUser(user.id, async (profile) => {
             if (profile) {
                 setTrainerProfile(profile);
-                 // Only fetch student data if the trainer is approved
                 if (profile.approvalStatus === 'Approved') {
-                     const unsubscribeStudents = listenToTrainerStudents(profile.id, (data) => {
-                        setStudents(data.students);
-                        setFeedback(data.feedback);
-                        setRescheduleRequests(data.rescheduleRequests);
-                        setLoading(false); // Stop loading ONLY after all data is fetched
-                    });
-                    // Return the cleanup function for the nested listener
-                    return () => unsubscribeStudents();
+                    try {
+                        const dashboardData = await fetchTrainerDashboardData(profile.id);
+                        if (dashboardData) {
+                            setStudents(dashboardData.students);
+                            setFeedback(dashboardData.feedback);
+                        }
+                    } catch (e) {
+                         setError("Failed to fetch dashboard data.");
+                    } finally {
+                        setLoading(false);
+                    }
                 } else {
-                    // If not approved, stop loading and show status screen
-                    setLoading(false);
+                    setLoading(false); // Not approved, stop loading
                 }
             } else {
-                setError("Trainer profile not found. Please complete your trainer registration.");
+                setError("Trainer profile not found. Please complete your registration.");
                 setLoading(false);
             }
         }, 'trainers'); // Explicitly tell the listener to use the 'trainers' collection
@@ -79,7 +84,7 @@ const TrainerDashboard = () => {
         const success = await updateUserAttendance(studentId, status);
         if (success) {
             toast({ title: "Attendance Marked", description: `Student marked as ${status.toLowerCase()}.` });
-            refetchData(); // Re-fetch data to update the UI
+            refetchData();
         } else {
             toast({ title: "Error", description: "Failed to update attendance.", variant: "destructive" });
         }
@@ -172,56 +177,91 @@ const TrainerDashboard = () => {
 
     const upcomingLessonsCount = students.filter(s => s.upcomingLesson).length;
     const avgRating = feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A';
+    const totalEarnings = students.reduce((acc, student) => acc + (student.completedLessons || 0) * 300, 0);
+
+    const newStudentRequests = students.filter(s => s.completedLessons === 0 || !s.completedLessons);
+    const existingStudents = students.filter(s => (s.completedLessons || 0) > 0);
     
     return (
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Trainer Dashboard</h1>
-                    <p className="text-gray-600 dark:text-gray-400">Welcome back, {trainerProfile.name}</p>
-                </div>
-                <div className="flex items-center gap-4 mt-4 md:mt-0">
-                    <Badge variant="outline" className={getStatusColor(trainerProfile.approvalStatus)}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Approved Trainer
-                    </Badge>
-                    <Avatar className="h-10 w-10">
-                        <AvatarImage src={trainerProfile.photoURL} alt={trainerProfile.name} />
-                        <AvatarFallback>{trainerProfile.name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+                        Welcome, {trainerProfile.name}
+                        <Badge variant="outline" className={cn("ml-3", getStatusColor(trainerProfile.approvalStatus))}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Verified
+                        </Badge>
+                    </h1>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Students</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{students.length}</div><p className="text-xs text-muted-foreground">All assigned students</p></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Upcoming Lessons</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{upcomingLessonsCount}</div><p className="text-xs text-muted-foreground">Active scheduled lessons</p></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Average Rating</CardTitle><Star className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{avgRating}</div><p className="text-xs text-muted-foreground">From {feedback.length} reviews</p></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Years of Experience</CardTitle><BookOpen className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{trainerProfile.expertise || 'N/A'}</div><p className="text-xs text-muted-foreground">Years</p></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Students</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{students.length}</div></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Earnings</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">₹{totalEarnings.toLocaleString('en-IN')}</div></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Upcoming Lessons</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{upcomingLessonsCount}</div></CardContent></Card>
+                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Your Rating</CardTitle><Star className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{avgRating}</div></CardContent></Card>
             </div>
             
             <Card>
               <CardHeader>
-                <CardTitle>My Students</CardTitle>
-                <CardDescription>An overview of your assigned students and their progress.</CardDescription>
+                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> New Student Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Student</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Upcoming Lesson</TableHead>
-                      <TableHead className="text-center">Attendance</TableHead>
+                      <TableHead className="flex items-center"><Phone className="mr-2 h-4 w-4" /> Contact</TableHead>
+                      <TableHead><MapPin className="mr-2 h-4 w-4" /> Pickup</TableHead>
+                      <TableHead><Car className="mr-2 h-4 w-4" /> Vehicle</TableHead>
+                      <TableHead className="text-center">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {students.length > 0 ? students.map(student => (
+                    {newStudentRequests.length > 0 ? newStudentRequests.map(student => (
                       <TableRow key={student.id}>
                         <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell>{student.phone}</TableCell>
+                        <TableCell>{student.location}</TableCell>
+                        <TableCell>{student.vehiclePreference}</TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex gap-2 justify-center">
+                              <Button size="sm" variant="outline" className="bg-green-100 text-green-700 hover:bg-green-200" onClick={() => handleAttendance(student.id, 'Present')}><Check className="h-4 w-4 mr-1" /> Accept</Button>
+                              <Button size="sm" variant="outline" className="bg-red-100 text-red-700 hover:bg-red-200" onClick={() => handleAttendance(student.id, 'Absent')}><X className="h-4 w-4 mr-1" /> Reject</Button>
+                            </div>
+                        </TableCell>
+                      </TableRow>
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No new student requests.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> My Students</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Plan</TableHead>
+                      <TableHead>Completed/Total</TableHead>
+                      <TableHead className="text-center">Mark Attendance</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {existingStudents.length > 0 ? existingStudents.map(student => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
                         <TableCell><Badge variant="outline">{student.subscriptionPlan}</Badge></TableCell>
-                        <TableCell>{student.upcomingLesson || 'Not Scheduled'}</TableCell>
+                        <TableCell>{student.completedLessons || 0} / {student.totalLessons || 0}</TableCell>
                         <TableCell className="text-center">
                           {student.upcomingLesson ? (
                             <div className="flex gap-2 justify-center">
@@ -229,19 +269,20 @@ const TrainerDashboard = () => {
                               <Button size="sm" variant="outline" className="bg-red-100 text-red-700 hover:bg-red-200" onClick={() => handleAttendance(student.id, 'Absent')}><X className="h-4 w-4 mr-1" /> Absent</Button>
                             </div>
                           ) : (
-                            <span className="text-xs text-muted-foreground">N/A</span>
+                            <span className="text-xs text-muted-foreground">No upcoming lesson</span>
                           )}
                         </TableCell>
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No students assigned yet.</TableCell>
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No existing students found.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
+
         </div>
     );
 };
