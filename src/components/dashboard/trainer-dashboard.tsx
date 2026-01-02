@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { listenToUser, fetchTrainerDashboardData } from '@/lib/mock-data';
+import { fetchTrainerDashboardData } from '@/lib/mock-data';
 import { updateUserAttendance } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback, RescheduleRequest } from '@/types';
@@ -23,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/client';
 
 const TrainerDashboard = () => {
     const { user, loading: authLoading } = useAuth();
@@ -45,39 +46,48 @@ const TrainerDashboard = () => {
     }, [user?.id]);
     
     useEffect(() => {
-        if (authLoading) return;
-        if (!user?.id) { 
-            setLoading(false); 
-            setError("You are not logged in.");
-            return; 
-        }
+        const fetchInitialData = async () => {
+            if (authLoading) return;
+            if (!user?.id) {
+                setLoading(false);
+                setError("You are not logged in.");
+                return;
+            }
 
-        setLoading(true);
-        const unsubscribeTrainer = listenToUser(user.id, async (profile) => {
-            if (profile) {
-                setTrainerProfile(profile);
-                if (profile.approvalStatus === 'Approved') {
-                    try {
-                        const dashboardData = await fetchTrainerDashboardData(profile.id);
+            setLoading(true);
+            setError(null);
+
+            try {
+                // Step 1: Fetch the trainer's profile directly
+                const trainerDocRef = doc(db, 'trainers', user.id);
+                const profileDoc = await getDoc(trainerDocRef);
+
+                if (profileDoc.exists()) {
+                    const profileData = { id: profileDoc.id, ...profileDoc.data() } as UserProfile;
+                    setTrainerProfile(profileData);
+
+                    // Step 2: Check for approval status
+                    if (profileData.approvalStatus === 'Approved') {
+                        // Step 3: Fetch dashboard data ONLY if approved
+                        const dashboardData = await fetchTrainerDashboardData(profileData.id);
                         if (dashboardData) {
                             setStudents(dashboardData.students);
                             setFeedback(dashboardData.feedback);
                         }
-                    } catch (e) {
-                         setError("Failed to fetch dashboard data.");
-                    } finally {
-                        setLoading(false);
                     }
+                    // If not approved, we will just show the status message, no need for an else block here.
                 } else {
-                    setLoading(false); // Not approved, stop loading
+                    setError("Trainer profile not found. Please complete your registration.");
                 }
-            } else {
-                setError("Trainer profile not found. Please complete your registration.");
+            } catch (e) {
+                console.error("Failed to fetch initial trainer data:", e);
+                setError("Failed to fetch dashboard data.");
+            } finally {
                 setLoading(false);
             }
-        }, 'trainers'); // Explicitly tell the listener to use the 'trainers' collection
+        };
 
-        return () => unsubscribeTrainer();
+        fetchInitialData();
     }, [user, authLoading]);
     
     const handleAttendance = async (studentId: string, status: 'Present' | 'Absent') => {
