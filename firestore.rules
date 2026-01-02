@@ -13,12 +13,17 @@ service cloud.firestore {
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-
-    // Default deny all reads and writes to all documents
-    match /{document=**} {
-      allow read, write: if false;
-    }
     
+    // Notifications: Allow a user to read their own notifications.
+    // This requires a rule that allows a 'list' operation on the collection
+    // for queries filtered by the user's ID.
+    match /notifications/{notificationId} {
+      allow read, write: if isSignedIn() && request.auth.uid == resource.data.userId;
+    }
+    match /notifications/{notificationId} {
+      allow list: if isSignedIn() && request.query.where.userId == request.auth.uid;
+    }
+
     // Allow users to read and write their own profile data
     match /users/{userId} {
       allow read, write: if isSignedIn() && isOwner(userId);
@@ -27,13 +32,6 @@ service cloud.firestore {
     // Allow trainers to read and write their own profile data
     match /trainers/{userId} {
       allow read, write: if isSignedIn() && isOwner(userId);
-    }
-
-    // Notifications: A user can read/write their own notifications.
-    // The query in the app uses a `where('userId', '==', request.auth.uid)` clause,
-    // which requires a rule that allows a `list` operation on the collection.
-    match /notifications/{notificationId} {
-       allow read, write: if isSignedIn() && isOwner(resource.data.userId);
     }
     
     // Public collections that anyone can read
@@ -54,6 +52,11 @@ service cloud.firestore {
     }
     match /promotionalPosters/{posterId} {
         allow read: if true;
+    }
+
+    // Default deny all reads and writes to all other documents
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
