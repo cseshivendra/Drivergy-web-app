@@ -19,21 +19,21 @@ service cloud.firestore {
       allow read, write: if false;
     }
     
-    // Allow users to read their own profile data
+    // Allow users to read and write their own profile data
     match /users/{userId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      allow write: if isSignedIn() && isOwner(userId); 
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
-    // Allow trainers to read their own profile data
+    // Allow trainers to read and write their own profile data
     match /trainers/{userId} {
-      allow read: if isSignedIn() && isOwner(userId);
-      allow write: if isSignedIn() && isOwner(userId); 
+      allow read, write: if isSignedIn() && isOwner(userId);
     }
 
-    // Notifications: A user can read/write their own notifications
-    match /notifications/{docId} {
-      allow read, write: if isSignedIn() && isOwner(resource.data.userId);
+    // Notifications: A user can read/write their own notifications.
+    // The query in the app uses a `where('userId', '==', request.auth.uid)` clause,
+    // which requires a rule that allows a `list` operation on the collection.
+    match /notifications/{notificationId} {
+       allow read, write: if isSignedIn() && isOwner(resource.data.userId);
     }
     
     // Public collections that anyone can read
