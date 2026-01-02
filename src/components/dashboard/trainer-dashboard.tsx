@@ -48,25 +48,29 @@ const TrainerDashboard = () => {
         if (authLoading) return;
         if (!user?.id) { setLoading(false); return; }
 
+        // Correctly fetch from 'trainers' collection
         const unsubscribeTrainer = listenToUser(user.id, (profile) => {
             if (profile) {
                 setTrainerProfile(profile);
+                 // Only fetch student data if the trainer is approved
                 if (profile.approvalStatus === 'Approved') {
-                    const unsubscribeStudents = listenToTrainerStudents(profile.id, (data) => {
+                     const unsubscribeStudents = listenToTrainerStudents(profile.id, (data) => {
                         setStudents(data.students);
                         setFeedback(data.feedback);
                         setRescheduleRequests(data.rescheduleRequests);
-                        setLoading(false);
+                        setLoading(false); // Stop loading ONLY after all data is fetched
                     });
+                    // Return the cleanup function for the nested listener
                     return () => unsubscribeStudents();
                 } else {
+                    // If not approved, stop loading and show status screen
                     setLoading(false);
                 }
             } else {
                 setError("Trainer profile not found. Please complete your trainer registration.");
                 setLoading(false);
             }
-        }, 'trainers'); 
+        }, 'trainers'); // Explicitly tell the listener to use the 'trainers' collection
 
         return () => unsubscribeTrainer();
     }, [user, authLoading]);
@@ -142,7 +146,7 @@ const TrainerDashboard = () => {
 
     if (trainerProfile.approvalStatus !== 'Approved') {
        return (
-            <div className="flex flex-col items-center justify-center flex-grow p-4">
+            <div className="flex flex-col items-center justify-center flex-grow p-4 min-h-[calc(100vh-200px)]">
                 <Card className="w-full max-w-lg text-center shadow-2xl p-8">
                     <div className="mx-auto mb-6 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
                         {getStatusIcon(trainerProfile.approvalStatus)}
