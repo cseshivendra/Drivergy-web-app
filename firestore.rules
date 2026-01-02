@@ -21,8 +21,9 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == resource.data.userId;
     }
     match /notifications/{notificationId} {
-      allow list: if isSignedIn() && request.query.where.userId == request.auth.uid;
+       allow list: if isSignedIn() && request.query.where.userId == request.auth.uid;
     }
+
 
     // Allow users to read and write their own profile data
     match /users/{userId} {
