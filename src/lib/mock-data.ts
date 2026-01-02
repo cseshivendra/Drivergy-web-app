@@ -255,71 +255,42 @@ export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]
 };
 
 
-export const listenToTrainerStudents = (
-    trainerId: string,
-    callback: (data: { students: UserProfile[], feedback: Feedback[], rescheduleRequests: RescheduleRequest[] }) => void
-) => {
+export async function fetchTrainerDashboardData(trainerId: string): Promise<{ students: UserProfile[], feedback: Feedback[] }> {
     if (!db) {
         console.error('Firestore not initialized.');
-        // Immediately call back with empty data to prevent infinite loading
-        callback({ students: [], feedback: [], rescheduleRequests: [] });
-        return () => {};
+        return { students: [], feedback: [] };
     }
 
-    const studentsQuery = query(collection(db, 'users'), where('assignedTrainerId', '==', trainerId));
-    const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
-    const rescheduleQuery = query(collection(db, 'rescheduleRequests'), where('trainerId', '==', trainerId));
+    try {
+        const studentsQuery = query(collection(db, 'users'), where('assignedTrainerId', '==', trainerId));
+        const feedbackQuery = query(collection(db, 'feedback'), where('trainerId', '==', trainerId));
 
-    const processData = async () => {
-        try {
-            const [studentsSnap, feedbackSnap, rescheduleSnap] = await Promise.all([
-                getDocs(studentsQuery),
-                getDocs(feedbackQuery),
-                getDocs(rescheduleQuery)
-            ]);
-            
-            const students = studentsSnap.docs.map(d => ({
-                id: d.id,
-                ...d.data(),
-                upcomingLesson: d.data().upcomingLesson,
-                registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
-            } as UserProfile));
+        const [studentsSnap, feedbackSnap] = await Promise.all([
+            getDocs(studentsQuery),
+            getDocs(feedbackQuery)
+        ]);
 
-            const feedback = feedbackSnap.docs.map(d => ({
-                id: d.id,
-                ...d.data(),
-                submissionDate: d.data().submissionDate?.toDate ? format(d.data().submissionDate.toDate(), 'PP') : 'N/A',
-            } as Feedback));
-            
-             const rescheduleRequests = rescheduleSnap.docs.map(d => ({
-                id: d.id,
-                ...d.data(),
-                 originalLessonDate: d.data().originalLessonDate?.toDate ? format(d.data().originalLessonDate.toDate(), 'PPp') : 'N/A',
-                requestedRescheduleDate: d.data().requestedRescheduleDate?.toDate ? format(d.data().requestedRescheduleDate.toDate(), 'PPp') : 'N/A',
-                requestTimestamp: d.data().requestTimestamp?.toDate ? format(d.data().requestTimestamp.toDate(), 'PPp') : 'N/A',
-            } as RescheduleRequest));
+        const students = studentsSnap.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            upcomingLesson: d.data().upcomingLesson,
+            registrationTimestamp: d.data().registrationTimestamp?.toDate ? d.data().registrationTimestamp.toDate().toISOString() : d.data().registrationTimestamp,
+        } as UserProfile));
 
-            // This is the crucial part: call the callback even if results are empty.
-            callback({ students, feedback, rescheduleRequests });
-        } catch (error) {
-            console.error("Error fetching trainer student data:", error);
-            // Also call back on error to stop loading
-            callback({ students: [], feedback: [], rescheduleRequests: [] });
-        }
-    };
-    
-    // Set up listeners for all collections
-    const unsubStudents = onSnapshot(studentsQuery, processData);
-    const unsubFeedback = onSnapshot(feedbackQuery, processData);
-    const unsubReschedule = onSnapshot(rescheduleQuery, processData);
+        const feedback = feedbackSnap.docs.map(d => ({
+            id: d.id,
+            ...d.data(),
+            submissionDate: d.data().submissionDate?.toDate ? format(d.data().submissionDate.toDate(), 'PP') : 'N/A',
+        } as Feedback));
 
-    // Return a function that unsubscribes from all listeners
-    return () => {
-        unsubStudents();
-        unsubFeedback();
-        unsubReschedule();
-    };
-};
+        return { students, feedback };
+
+    } catch (error) {
+        console.error("Error fetching trainer dashboard data:", error);
+        return { students: [], feedback: [] };
+    }
+}
+
 
 export function listenToNotifications(userId: string, callback: (notifications: Notification[]) => void): () => void {
     if (!db) {
