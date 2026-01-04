@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Loading from '@/app/loading';
+import SiteFooter from '@/components/layout/site-footer';
 
 export default function AuthenticatedAppLayout({
   children,
@@ -45,6 +46,7 @@ export default function AuthenticatedAppLayout({
               <main className="flex-1 overflow-y-auto">
                 {children}
               </main>
+              <SiteFooter />
             </SidebarInset>
           </div>
         </SidebarProvider>
