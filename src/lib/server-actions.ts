@@ -3,8 +3,8 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification } from '@/types';
+import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema, SkillSchema } from '@/types';
+import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification, Skill, SkillStatus } from '@/types';
 import { format, parse, parseISO, addDays } from 'date-fns';
 import { adminAuth, adminDb, adminStorage } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
@@ -912,5 +912,22 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
     } catch (error) {
         console.error("Error in getLoginUser server action:", error);
         return { success: false, error: "An unexpected error occurred." };
+    }
+}
+
+export async function updateStudentProgress(studentId: string, skills: Skill[], lessonNotes: string): Promise<boolean> {
+    if (!adminDb) return false;
+
+    try {
+        const studentRef = adminDb.collection('users').doc(studentId);
+        await studentRef.update({
+            skills: skills,
+            lessonNotes: lessonNotes,
+        });
+        revalidatePath(`/dashboard/student-progress/${studentId}`);
+        return true;
+    } catch (error) {
+        console.error("Error updating student progress:", error);
+        return false;
     }
 }

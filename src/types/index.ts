@@ -1,5 +1,4 @@
 
-
 import { z } from 'zod';
 import type { LucideIcon } from 'lucide-react';
 
@@ -21,6 +20,7 @@ export const ApprovalStatusOptions = ['Pending', 'Approved', 'Rejected', 'In Pro
 export const LessonRequestStatusOptions = ['Pending', 'Active', 'Completed'] as const;
 export const PayoutStatusOptions = ['Pending', 'Paid', 'Withdraw to UPI'] as const;
 export const RescheduleRequestStatusOptions = ['Pending', 'Approved', 'Rejected'] as const;
+export const SkillStatusOptions = ['Not Started', 'Needs Practice', 'Proficient'] as const;
 
 export const IndianStates = [ "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry", ] as const;
 
@@ -34,6 +34,17 @@ export const DistrictsByState = {
 // =================================================================
 // ZOD SCHEMAS & TYPES
 // =================================================================
+
+// Student Progress Tracking
+export const SkillStatusSchema = z.enum(SkillStatusOptions);
+export type SkillStatus = z.infer<typeof SkillStatusSchema>;
+
+export const SkillSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: SkillStatusSchema,
+});
+export type Skill = z.infer<typeof SkillSchema>;
 
 // Core User Profile
 export const UserProfileSchema = z.object({
@@ -80,6 +91,8 @@ export const UserProfileSchema = z.object({
   feedbackSubmitted: z.boolean().optional(),
   totalReferralPoints: z.number().optional(),
   referralCode: z.string().optional(),
+  skills: z.array(SkillSchema).optional(),
+  lessonNotes: z.string().optional(),
 
   // Trainer specific
   specialization: z.string().optional(),

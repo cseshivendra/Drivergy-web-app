@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee } from "lucide-react";
+import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
 import { updateUserAttendance } from '@/lib/server-actions';
@@ -35,7 +35,7 @@ const TrainerDashboard = () => {
 
     const refetchData = useCallback(async () => {
         if (!user?.id) return;
-        setLoading(true); // Set loading to true for refetch
+        setLoading(true);
         try {
             const data = await fetchTrainerDashboardData(user.id);
             if (data.trainerProfile) {
@@ -54,7 +54,7 @@ const TrainerDashboard = () => {
     
     useEffect(() => {
         const fetchInitialData = async () => {
-            if (authLoading) return; // Wait for authentication to settle
+            if (authLoading) return;
             if (!user?.id) {
                 setLoading(false);
                 setError("You are not logged in or user ID is missing.");
@@ -66,7 +66,6 @@ const TrainerDashboard = () => {
 
             try {
                 const data = await fetchTrainerDashboardData(user.id);
-
                 if (data.trainerProfile) {
                     setTrainerProfile(data.trainerProfile);
                     setStudents(data.students);
@@ -90,7 +89,7 @@ const TrainerDashboard = () => {
         const success = await updateUserAttendance(studentId, status);
         if (success) {
             toast({ title: "Attendance Marked", description: `Student marked as ${status.toLowerCase()}.` });
-            await refetchData(); // Refetch data to update the UI
+            await refetchData();
         } else {
             toast({ title: "Error", description: "Failed to update attendance.", variant: "destructive" });
         }
@@ -195,7 +194,7 @@ const TrainerDashboard = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-foreground flex items-center">
                         Welcome, {trainerProfile.name}!
-                        <Badge variant="outline" className={cn("ml-3", getStatusColor(trainerProfile.approvalStatus))}>
+                        <Badge variant="outline" className={cn("ml-3 border-destructive text-destructive", getStatusColor(trainerProfile.approvalStatus))}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Verified
                         </Badge>
@@ -262,6 +261,7 @@ const TrainerDashboard = () => {
                       <TableHead>Plan</TableHead>
                       <TableHead>Completed/Total</TableHead>
                       <TableHead className="text-center">Mark Attendance</TableHead>
+                      <TableHead className="text-center">Track Progress</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -280,10 +280,18 @@ const TrainerDashboard = () => {
                             <span className="text-xs text-muted-foreground">No upcoming lesson</span>
                           )}
                         </TableCell>
+                        <TableCell className="text-center">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/dashboard/student-progress/${student.id}`}>
+                                    <BarChart className="h-4 w-4 mr-1" />
+                                    View Progress
+                                </Link>
+                            </Button>
+                        </TableCell>
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">No existing students found.</TableCell>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No existing students found.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -296,5 +304,3 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
-
-    
