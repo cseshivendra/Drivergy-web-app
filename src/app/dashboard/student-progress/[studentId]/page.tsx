@@ -15,20 +15,43 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 
-const initialSkills: Skill[] = [
-    { id: 'steering', name: 'Steering Control & Basic Maneuvers', status: 'Not Started' },
-    { id: 'gear', name: 'Gear Shifting & Clutch Control (Manual)', status: 'Not Started' },
-    { id: 'braking', name: 'Braking Techniques', status: 'Not Started' },
-    { id: 'lane', name: 'Lane Discipline & Changing Lanes', status: 'Not Started' },
-    { id: 'traffic', name: 'Navigating Light & Heavy Traffic', status: 'Not Started' },
-    { id: 'parking-parallel', name: 'Parallel Parking', status: 'Not Started' },
-    { id: 'parking-perpendicular', name: 'Perpendicular & Angle Parking', status: 'Not Started' },
-    { id: 'u-turn', name: 'U-Turns & Three-Point Turns', status: 'Not Started' },
-    { id: 'highway', name: 'Highway Driving & Overtaking', status: 'Not Started' },
-    { id: 'night', name: 'Night Driving', status: 'Not Started' },
-    { id: 'reverse', name: 'Reversing & Reverse Parking', status: 'Not Started' },
-    { id: 'slopes', name: 'Uphill & Downhill Driving', status: 'Not Started' },
+const basicSkills: Omit<Skill, 'status'>[] = [
+    { id: 'steering', name: 'Steering Control & Basic Maneuvers' },
+    { id: 'gear', name: 'Gear Shifting & Clutch Control (Manual)' },
+    { id: 'braking', name: 'Braking Techniques' },
+    { id: 'lane', name: 'Lane Discipline' },
+    { id: 'reverse', name: 'Reversing in a Straight Line' },
+    { id: 'u-turn', name: 'U-Turns' },
 ];
+
+const goldSkills: Omit<Skill, 'status'>[] = [
+    ...basicSkills,
+    { id: 'traffic', name: 'Navigating Light Traffic' },
+    { id: 'parking-perpendicular', name: 'Perpendicular Parking' },
+    { id: 'slopes', name: 'Uphill & Downhill Driving' },
+    { id: 'lane-changing', name: 'Changing Lanes Safely' },
+];
+
+const premiumSkills: Omit<Skill, 'status'>[] = [
+    ...goldSkills,
+    { id: 'traffic-heavy', name: 'Navigating Heavy Traffic' },
+    { id: 'parking-parallel', name: 'Parallel Parking' },
+    { id: 'highway', name: 'Highway Driving & Overtaking' },
+    { id: 'night', name: 'Night Driving' },
+    { id: 'three-point', name: 'Three-Point Turns' },
+];
+
+const getSkillsForPlan = (plan: string): Omit<Skill, 'status'>[] => {
+    switch (plan) {
+        case 'Gold':
+            return goldSkills;
+        case 'Premium':
+            return premiumSkills;
+        case 'Basic':
+        default:
+            return basicSkills;
+    }
+};
 
 export default function StudentProgressPage() {
     const params = useParams();
@@ -37,7 +60,7 @@ export default function StudentProgressPage() {
     const { toast } = useToast();
 
     const [student, setStudent] = useState<UserProfile | null>(null);
-    const [skills, setSkills] = useState<Skill[]>(initialSkills);
+    const [skills, setSkills] = useState<Skill[]>([]);
     const [lessonNotes, setLessonNotes] = useState('');
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -48,10 +71,24 @@ export default function StudentProgressPage() {
             fetchUserById(studentId).then(userProfile => {
                 if (userProfile) {
                     setStudent(userProfile);
-                    // If skills are already saved on the profile, use them
+                    
+                    // Determine the initial skill list based on the subscription plan
+                    const planSkills = getSkillsForPlan(userProfile.subscriptionPlan);
+                    
+                    // If skills are already saved on the profile, merge them with the plan's skill list
                     if (userProfile.skills && userProfile.skills.length > 0) {
-                        setSkills(userProfile.skills);
+                        const savedSkillsMap = new Map(userProfile.skills.map(s => [s.id, s.status]));
+                        const mergedSkills = planSkills.map(skill => ({
+                            ...skill,
+                            status: savedSkillsMap.get(skill.id) || 'Not Started',
+                        }));
+                        setSkills(mergedSkills);
+                    } else {
+                        // Otherwise, initialize all skills with 'Not Started'
+                        const initialSkills = planSkills.map(skill => ({ ...skill, status: 'Not Started' as SkillStatus }));
+                        setSkills(initialSkills);
                     }
+
                     if (userProfile.lessonNotes) {
                         setLessonNotes(userProfile.lessonNotes);
                     }
@@ -121,7 +158,7 @@ export default function StudentProgressPage() {
                         </div>
                         <div>
                             <CardTitle className="font-headline text-2xl">Progress for {student.name}</CardTitle>
-                            <CardDescription>Track and update the student's driving skills.</CardDescription>
+                            <CardDescription>Plan: <span className="font-semibold text-primary">{student.subscriptionPlan}</span>. Track and update driving skills.</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -167,4 +204,3 @@ export default function StudentProgressPage() {
         </div>
     );
 }
-
