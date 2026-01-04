@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car } from "lucide-react";
+import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
 import { updateUserAttendance } from '@/lib/server-actions';
@@ -23,28 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <path d="M6 3h12" />
-    <path d="M6 8h12" />
-    <path d="M6 13h12" />
-    <path d="M6 18h12" />
-    <path d="M8.67 21L7 3" />
-  </svg>
-);
-
-
 const TrainerDashboard = () => {
     const { user, loading: authLoading } = useAuth();
     const { toast } = useToast();
@@ -57,7 +35,7 @@ const TrainerDashboard = () => {
 
     const refetchData = useCallback(async () => {
         if (!user?.id) return;
-        setIsSubmitting(true);
+        setLoading(true); // Set loading to true for refetch
         try {
             const data = await fetchTrainerDashboardData(user.id);
             if (data.trainerProfile) {
@@ -70,7 +48,7 @@ const TrainerDashboard = () => {
         } catch (e) {
             setError("Failed to refetch data.");
         } finally {
-            setIsSubmitting(false);
+            setLoading(false);
         }
     }, [user?.id]);
     
@@ -227,10 +205,10 @@ const TrainerDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">TOTAL STUDENTS</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{students.length}</div><p className="text-xs text-muted-foreground">All students assigned to you</p></CardContent></Card>
-                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">TOTAL EARNINGS</CardTitle><RupeeIconSvg className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">₹{totalEarnings.toLocaleString('en-IN')}</div><p className="text-xs text-muted-foreground">Your gross earnings</p></CardContent></Card>
-                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">UPCOMING LESSONS</CardTitle><CalendarDays className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{upcomingLessonsCount}</div><p className="text-xs text-muted-foreground">Confirmed upcoming sessions</p></CardContent></Card>
-                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">YOUR RATING</CardTitle><Star className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{avgRating}</div><p className="text-xs text-muted-foreground">Average student rating</p></CardContent></Card>
+                <Card className="border-l-4 border-destructive"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">TOTAL STUDENTS</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{students.length}</div><p className="text-xs text-muted-foreground">All students assigned to you</p></CardContent></Card>
+                <Card className="border-l-4 border-destructive"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">TOTAL EARNINGS</CardTitle><IndianRupee className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">₹{totalEarnings.toLocaleString('en-IN')}</div><p className="text-xs text-muted-foreground">Your gross earnings</p></CardContent></Card>
+                <Card className="border-l-4 border-destructive"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">UPCOMING LESSONS</CardTitle><CalendarDays className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{upcomingLessonsCount}</div><p className="text-xs text-muted-foreground">Confirmed upcoming sessions</p></CardContent></Card>
+                <Card className="border-l-4 border-destructive"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">YOUR RATING</CardTitle><Star className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{avgRating}</div><p className="text-xs text-muted-foreground">Average student rating</p></CardContent></Card>
             </div>
             
             <Card>

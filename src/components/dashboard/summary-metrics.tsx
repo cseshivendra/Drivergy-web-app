@@ -1,36 +1,11 @@
 
 'use client';
 
-import { Users, UserCheck, ListChecks, CreditCard, Repeat } from 'lucide-react'; 
+import { Users, UserCheck, ListChecks, CreditCard, Repeat, IndianRupee } from 'lucide-react'; 
 import SummaryCard from './summary-card';
 import type { SummaryData } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import type React from 'react';
-
-// Custom Rupee Icon SVG component
-const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="none"
-    {...props}
-  >
-    <text
-      x="50%"
-      y="50%"
-      dominantBaseline="middle"
-      textAnchor="middle"
-      fontSize="18" // Adjusted for visual prominence within 24x24 viewbox
-      fontFamily="system-ui, sans-serif"
-      fill="currentColor"
-    >
-      ₹
-    </text>
-  </svg>
-);
 
 interface SummaryMetricsProps {
   data: SummaryData | null;
@@ -61,9 +36,11 @@ export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps)
       <SummaryCard 
         title="Total Earning" 
         value={`₹${(data?.totalEarnings ?? 0).toLocaleString('en-IN')}`} 
-        icon={RupeeIconSvg}
+        icon={IndianRupee}
         description="Gross revenue generated" 
       />
     </div>
   );
 }
+
+    
