@@ -377,3 +377,5 @@ export async function fetchTrainerDashboardData(trainerId: string): Promise<{ tr
         return { trainerProfile: null, students: [], feedback: [] };
     }
 }
+
+    

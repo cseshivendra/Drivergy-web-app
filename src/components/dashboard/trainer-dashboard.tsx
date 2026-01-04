@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { fetchTrainerDashboardData } from '@/lib/mock-data';
+import { fetchTrainerDashboardData } from '@/lib/server-data';
 import { updateUserAttendance } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback } from '@/types';
@@ -56,24 +56,30 @@ const TrainerDashboard = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const refetchData = useCallback(async () => {
-      if (user?.id) {
+        if (!user?.id) return;
         setIsSubmitting(true);
-        const data = await fetchTrainerDashboardData(user.id);
-        if (data) {
-          setTrainerProfile(data.trainerProfile);
-          setStudents(data.students);
-          setFeedback(data.feedback);
+        try {
+            const data = await fetchTrainerDashboardData(user.id);
+            if (data.trainerProfile) {
+                setTrainerProfile(data.trainerProfile);
+                setStudents(data.students);
+                setFeedback(data.feedback);
+            } else {
+                setError("Trainer profile not found after refetch.");
+            }
+        } catch (e) {
+            setError("Failed to refetch data.");
+        } finally {
+            setIsSubmitting(false);
         }
-        setIsSubmitting(false);
-      }
     }, [user?.id]);
     
     useEffect(() => {
         const fetchInitialData = async () => {
-            if (authLoading) return;
+            if (authLoading) return; // Wait for authentication to settle
             if (!user?.id) {
                 setLoading(false);
-                setError("You are not logged in.");
+                setError("You are not logged in or user ID is missing.");
                 return;
             }
 
@@ -92,7 +98,7 @@ const TrainerDashboard = () => {
                 }
             } catch (e) {
                 console.error("Failed to fetch initial trainer data:", e);
-                setError("Failed to fetch dashboard data.");
+                setError("Could not fetch dashboard data.");
             } finally {
                 setLoading(false);
             }
@@ -312,3 +318,5 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
+
+    
