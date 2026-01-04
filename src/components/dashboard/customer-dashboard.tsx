@@ -192,20 +192,20 @@ export default function CustomerDashboard() {
   
   const refetchProfile = useCallback(() => {
     if (user?.id) {
+      setLoading(true);
       const unsubscribe = listenToUser(user.id, (userProfile) => {
         setProfile(userProfile);
         setLoading(false);
-      });
+      }, 'users');
       return unsubscribe;
-    } else {
+    } else if (!authLoading) {
       setLoading(false);
       setProfile(null);
     }
     return () => {};
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
   
   useEffect(() => {
-    setLoading(true);
     const unsubscribe = refetchProfile();
     return () => {
       if (unsubscribe) unsubscribe();
@@ -243,7 +243,7 @@ export default function CustomerDashboard() {
         setIsReschedulable(false);
       }
     }
-  }, [profile, refetchProfile]);
+  }, [profile]);
 
   const handleStartDateChange = async () => {
     if (!profile || !newStartDate || !user) return;
@@ -421,6 +421,14 @@ export default function CustomerDashboard() {
         </Card>
       </div>
     );
+  }
+
+  if (!profile) {
+      return (
+          <div className="container mx-auto p-4 py-8 space-y-8">
+              <p>Could not load your profile. Please try logging in again.</p>
+          </div>
+      )
   }
 
 
