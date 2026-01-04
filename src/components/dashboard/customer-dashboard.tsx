@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useRouter } from 'next/navigation';
 import { Badge } from '../ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import StudentProgressDisplay from './student-progress-display';
 
 
 // Helper component for Star Rating input
@@ -624,6 +625,10 @@ export default function CustomerDashboard() {
             </Button>
           </CardFooter>
         </Card>
+        
+        {/* Progress Display Card */}
+        {profile && <StudentProgressDisplay profile={profile} />}
+
       </div>
       
       {/* Feedback Dialog */}

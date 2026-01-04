@@ -99,6 +99,7 @@ export const UserProfileSchema = z.object({
   drivingLicenseUrl: z.string().optional(),
   drivingLicenseNumber: z.string().optional(),
   expertise: z.string().optional(),
+  yearsOfExperience: z.number().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
@@ -147,6 +148,7 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
     vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
     drivingLicenseNumber: z.string().min(1, 'License number is required.'),
+    yearsOfExperience: z.coerce.number().min(1, 'Experience is required.'),
 });
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 
