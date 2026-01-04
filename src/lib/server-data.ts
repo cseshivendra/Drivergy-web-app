@@ -2,8 +2,9 @@
 
 'use server';
 
-import type { BlogPost, UserProfile, Course, QuizSet, Product } from '@/types';
+import type { BlogPost, UserProfile, Course, QuizSet, Product, Feedback } from '@/types';
 import { adminAuth, adminDb } from './firebase/admin';
+import { format } from 'date-fns';
 
 // This file is for server-side data fetching and data seeding logic only.
 
@@ -321,5 +322,58 @@ export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null
     } catch (error) {
         console.error(`Error fetching blog post by slug ${slug}:`, error);
         return null;
+    }
+}
+
+export async function fetchTrainerDashboardData(trainerId: string): Promise<{ trainerProfile: UserProfile | null, students: UserProfile[], feedback: Feedback[] }> {
+    if (!adminDb) {
+        console.error('Firestore not initialized.');
+        return { trainerProfile: null, students: [], feedback: [] };
+    }
+
+    try {
+        // Fetch trainer profile, students, and feedback in parallel
+        const [trainerProfileSnap, studentsSnap, feedbackSnap] = await Promise.all([
+            adminDb.collection('trainers').doc(trainerId).get(),
+            adminDb.collection('users').where('assignedTrainerId', '==', trainerId).get(),
+            adminDb.collection('feedback').where('trainerId', '==', trainerId).get()
+        ]);
+
+        // Process trainer profile
+        let trainerProfile: UserProfile | null = null;
+        if (trainerProfileSnap.exists) {
+            const data = trainerProfileSnap.data();
+             if (data?.registrationTimestamp && typeof data.registrationTimestamp.toDate === 'function') {
+                data.registrationTimestamp = data.registrationTimestamp.toDate().toISOString();
+            }
+            trainerProfile = { id: trainerProfileSnap.id, ...data } as UserProfile;
+        }
+
+        // Process students
+        const students = studentsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                upcomingLesson: data.upcomingLesson, // Ensure this field is passed through
+                registrationTimestamp: data.registrationTimestamp?.toDate ? data.registrationTimestamp.toDate().toISOString() : data.registrationTimestamp,
+            } as UserProfile;
+        });
+
+        // Process feedback
+        const feedback = feedbackSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                submissionDate: data.submissionDate?.toDate ? format(data.submissionDate.toDate(), 'PP') : 'N/A',
+            } as Feedback;
+        });
+
+        return { trainerProfile, students, feedback };
+
+    } catch (error) {
+        console.error("Error fetching trainer dashboard data:", error);
+        return { trainerProfile: null, students: [], feedback: [] };
     }
 }

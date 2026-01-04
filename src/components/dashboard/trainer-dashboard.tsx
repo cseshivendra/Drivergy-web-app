@@ -1,17 +1,17 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/mock-data';
 import { updateUserAttendance } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
-import type { UserProfile, Feedback, RescheduleRequest } from '@/types';
+import type { UserProfile, Feedback } from '@/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
@@ -21,9 +21,29 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/client';
+} from "@/components/ui/table";
+
+const RupeeIconSvg = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M6 3h12" />
+    <path d="M6 8h12" />
+    <path d="M6 13h12" />
+    <path d="M6 18h12" />
+    <path d="M8.67 21L7 3" />
+  </svg>
+);
+
 
 const TrainerDashboard = () => {
     const { user, loading: authLoading } = useAuth();
@@ -33,16 +53,19 @@ const TrainerDashboard = () => {
     const [feedback, setFeedback] = useState<Feedback[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const refetchData = useCallback(() => {
-        if (user?.id) {
-            fetchTrainerDashboardData(user.id).then(data => {
-                if (data) {
-                    setStudents(data.students);
-                    setFeedback(data.feedback);
-                }
-            });
+    const refetchData = useCallback(async () => {
+      if (user?.id) {
+        setIsSubmitting(true);
+        const data = await fetchTrainerDashboardData(user.id);
+        if (data) {
+          setTrainerProfile(data.trainerProfile);
+          setStudents(data.students);
+          setFeedback(data.feedback);
         }
+        setIsSubmitting(false);
+      }
     }, [user?.id]);
     
     useEffect(() => {
@@ -58,24 +81,12 @@ const TrainerDashboard = () => {
             setError(null);
 
             try {
-                // Step 1: Fetch the trainer's profile directly
-                const trainerDocRef = doc(db, 'trainers', user.id);
-                const profileDoc = await getDoc(trainerDocRef);
+                const data = await fetchTrainerDashboardData(user.id);
 
-                if (profileDoc.exists()) {
-                    const profileData = { id: profileDoc.id, ...profileDoc.data() } as UserProfile;
-                    setTrainerProfile(profileData);
-
-                    // Step 2: Check for approval status
-                    if (profileData.approvalStatus === 'Approved') {
-                        // Step 3: Fetch dashboard data ONLY if approved
-                        const dashboardData = await fetchTrainerDashboardData(profileData.id);
-                        if (dashboardData) {
-                            setStudents(dashboardData.students);
-                            setFeedback(dashboardData.feedback);
-                        }
-                    }
-                    // If not approved, we will just show the status message, no need for an else block here.
+                if (data.trainerProfile) {
+                    setTrainerProfile(data.trainerProfile);
+                    setStudents(data.students);
+                    setFeedback(data.feedback);
                 } else {
                     setError("Trainer profile not found. Please complete your registration.");
                 }
@@ -91,13 +102,15 @@ const TrainerDashboard = () => {
     }, [user, authLoading]);
     
     const handleAttendance = async (studentId: string, status: 'Present' | 'Absent') => {
+        setIsSubmitting(true);
         const success = await updateUserAttendance(studentId, status);
         if (success) {
             toast({ title: "Attendance Marked", description: `Student marked as ${status.toLowerCase()}.` });
-            refetchData();
+            await refetchData(); // Refetch data to update the UI
         } else {
             toast({ title: "Error", description: "Failed to update attendance.", variant: "destructive" });
         }
+        setIsSubmitting(false);
     };
 
     const getStatusIcon = (status: string) => {
@@ -153,7 +166,7 @@ const TrainerDashboard = () => {
                     <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-foreground mb-2">Profile Not Found</h3>
                     <p className="text-muted-foreground mb-4">We couldn't find your trainer profile. Please complete your registration.</p>
-                    <Button asChild><Link href="/register">Complete Registration</Link></Button>
+                    <Button asChild><Link href="/register?role=trainer">Complete Registration</Link></Button>
                 </Card>
             </div>
         );
@@ -189,43 +202,44 @@ const TrainerDashboard = () => {
     const avgRating = feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A';
     const totalEarnings = students.reduce((acc, student) => acc + (student.completedLessons || 0) * 300, 0);
 
-    const newStudentRequests = students.filter(s => s.completedLessons === 0 || !s.completedLessons);
+    const newStudentRequests = students.filter(s => !s.completedLessons || s.completedLessons === 0);
     const existingStudents = students.filter(s => (s.completedLessons || 0) > 0);
     
     return (
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
-                        Welcome, {trainerProfile.name}
+                    <h1 className="text-3xl font-bold text-foreground flex items-center">
+                        Welcome, {trainerProfile.name}!
                         <Badge variant="outline" className={cn("ml-3", getStatusColor(trainerProfile.approvalStatus))}>
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Verified
                         </Badge>
                     </h1>
+                    <p className="text-muted-foreground mt-1">Manage your students and track your progress.</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Students</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{students.length}</div></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Earnings</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">₹{totalEarnings.toLocaleString('en-IN')}</div></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Upcoming Lessons</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{upcomingLessonsCount}</div></CardContent></Card>
-                <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Your Rating</CardTitle><Star className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{avgRating}</div></CardContent></Card>
+                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">TOTAL STUDENTS</CardTitle><Users className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{students.length}</div><p className="text-xs text-muted-foreground">All students assigned to you</p></CardContent></Card>
+                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">TOTAL EARNINGS</CardTitle><RupeeIconSvg className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">₹{totalEarnings.toLocaleString('en-IN')}</div><p className="text-xs text-muted-foreground">Your gross earnings</p></CardContent></Card>
+                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">UPCOMING LESSONS</CardTitle><CalendarDays className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{upcomingLessonsCount}</div><p className="text-xs text-muted-foreground">Confirmed upcoming sessions</p></CardContent></Card>
+                <Card className="border-l-4 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">YOUR RATING</CardTitle><Star className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{avgRating}</div><p className="text-xs text-muted-foreground">Average student rating</p></CardContent></Card>
             </div>
             
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> New Student Requests</CardTitle>
+                <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5 text-primary"/> New Student Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead className="flex items-center"><Phone className="mr-2 h-4 w-4" /> Contact</TableHead>
-                      <TableHead><MapPin className="mr-2 h-4 w-4" /> Pickup</TableHead>
-                      <TableHead><Car className="mr-2 h-4 w-4" /> Vehicle</TableHead>
-                      <TableHead className="text-center">Action</TableHead>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Contact No.</TableHead>
+                      <TableHead>Pickup Location</TableHead>
+                      <TableHead>Vehicle</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -237,8 +251,8 @@ const TrainerDashboard = () => {
                         <TableCell>{student.vehiclePreference}</TableCell>
                         <TableCell className="text-center">
                             <div className="flex gap-2 justify-center">
-                              <Button size="sm" variant="outline" className="bg-green-100 text-green-700 hover:bg-green-200" onClick={() => handleAttendance(student.id, 'Present')}><Check className="h-4 w-4 mr-1" /> Accept</Button>
-                              <Button size="sm" variant="outline" className="bg-red-100 text-red-700 hover:bg-red-200" onClick={() => handleAttendance(student.id, 'Absent')}><X className="h-4 w-4 mr-1" /> Reject</Button>
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAttendance(student.id, 'Present')} disabled={isSubmitting}><Check className="h-4 w-4 mr-1" /> Accept</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleAttendance(student.id, 'Absent')} disabled={isSubmitting}><X className="h-4 w-4 mr-1" /> Reject</Button>
                             </div>
                         </TableCell>
                       </TableRow>
@@ -275,8 +289,8 @@ const TrainerDashboard = () => {
                         <TableCell className="text-center">
                           {student.upcomingLesson ? (
                             <div className="flex gap-2 justify-center">
-                              <Button size="sm" variant="outline" className="bg-green-100 text-green-700 hover:bg-green-200" onClick={() => handleAttendance(student.id, 'Present')}><Check className="h-4 w-4 mr-1" /> Present</Button>
-                              <Button size="sm" variant="outline" className="bg-red-100 text-red-700 hover:bg-red-200" onClick={() => handleAttendance(student.id, 'Absent')}><X className="h-4 w-4 mr-1" /> Absent</Button>
+                              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAttendance(student.id, 'Present')} disabled={isSubmitting}><Check className="h-4 w-4 mr-1" /> Present</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleAttendance(student.id, 'Absent')} disabled={isSubmitting}><X className="h-4 w-4 mr-1" /> Absent</Button>
                             </div>
                           ) : (
                             <span className="text-xs text-muted-foreground">No upcoming lesson</span>
