@@ -2,23 +2,22 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { nanoid } from "nanoid";
 
+const BASE_URL = "https://api.phonepe.com/apis/hermes";
+
 export async function POST(req: Request) {
   try {
     const { amount, userId } = await req.json();
 
     if (!amount || !userId) {
-      return NextResponse.json(
-        { error: "Amount and userId required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Amount & userId required" }, { status: 400 });
     }
 
     const txnId = `TXN_${nanoid(10)}`;
 
     const body = {
-      merchantId: process.env.PHONEPE_PROD_CLIENT_ID, // YOUR LIVE MERCHANT ID
+      merchantId: process.env.PHONEPE_PROD_CLIENT_ID,
       merchantTransactionId: txnId,
-      merchantUserId: String(userId),
+      merchantUserId: userId,
       amount: Number(amount) * 100,
       redirectUrl: `${process.env.APP_BASE_URL}/payment/success`,
       redirectMode: "POST",
@@ -34,17 +33,14 @@ export async function POST(req: Request) {
         .update(payload + "/pg/v1/pay" + process.env.PHONEPE_PROD_CLIENT_SECRET)
         .digest("hex") + "###1";
 
-        const res = await fetch(
-          "https://api.phonepe.com/apis/pg/pg/v1/pay",        
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-VERIFY": checksum,
-        },
-        body: JSON.stringify({ request: payload }),
-      }
-    );
+    const res = await fetch(`${BASE_URL}/pg/v1/pay`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum,
+      },
+      body: JSON.stringify({ request: payload }),
+    });
 
     const text = await res.text();
     if (!res.ok) throw new Error(text);
