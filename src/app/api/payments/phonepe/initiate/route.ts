@@ -34,8 +34,8 @@ export async function POST(req: Request) {
         .update(payload + "/pg/v1/pay" + process.env.PHONEPE_PROD_CLIENT_SECRET)
         .digest("hex") + "###1";
 
-    const res = await fetch(
-      "https://api.phonepe.com/apis/hermes/pg/v1/pay",
+        const res = await fetch(
+          "https://api.phonepe.com/apis/pg/pg/v1/pay",        
       {
         method: "POST",
         headers: {
