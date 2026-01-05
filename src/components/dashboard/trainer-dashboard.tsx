@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { fetchTrainerDashboardData } from '@/lib/server-data';
+import { fetchTrainerDashboardData } from '@/lib/server-actions';
 import { updateUserAttendance } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback } from '@/types';
@@ -213,6 +214,9 @@ const TrainerDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5 text-primary"/> New Student Requests</CardTitle>
+                 <CardDescription>
+                    These are newly assigned students. Please contact them to confirm their first lesson and mark your acceptance.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -252,6 +256,7 @@ const TrainerDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center"><Users className="mr-2 h-5 w-5" /> My Students</CardTitle>
+                <CardDescription>Manage attendance for your ongoing students.</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>

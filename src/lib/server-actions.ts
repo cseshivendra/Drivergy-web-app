@@ -758,29 +758,51 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
 
     // Create notifications & send email
     await createNotification({ userId: customerId, message: `You have been assigned to trainer ${trainerData.name}. Your first lesson is scheduled!`, href: '/dashboard' });
-    await createNotification({ userId: trainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
+    await createNotification({ userId: trainerId, message: `You have a new student! Please contact ${customerData.name} to confirm their first lesson.`, href: '/dashboard' });
 
     try {
+        // Email to Customer
         await sendEmail({
             to: customerData.contact,
             subject: 'Your Drivergy Trainer has been Assigned!',
-            text: `Hello ${customerData.name}, We're excited to let you know that you've been assigned a trainer for your driving lessons. Trainer Name: ${trainerData.name}, Contact Number: ${trainerData.phone}, Vehicle: ${trainerData.vehicleInfo}. Your first lesson is scheduled for: ${updatePayload.upcomingLesson}. Your trainer will contact you shortly to coordinate. Happy driving! The Drivergy Team`,
+            text: `Hello ${customerData.name},\n\nWe're excited to let you know that you've been assigned a trainer for your driving lessons.\n\nTrainer Name: ${trainerData.name}\nContact Number: ${trainerData.phone}\nVehicle: ${trainerData.vehicleInfo}\n\nYour first lesson is tentatively scheduled for: ${updatePayload.upcomingLesson}. Your trainer will contact you shortly to confirm and coordinate.\n\nHappy driving!\nThe Drivergy Team`,
             html: `
                 <h1>Welcome to the Next Step!</h1>
                 <p>Hello ${customerData.name},</p>
                 <p>We're excited to let you know that you've been assigned a trainer for your driving lessons. Here are their details:</p>
                 <ul>
                     <li><strong>Trainer Name:</strong> ${trainerData.name}</li>
-                    <li><strong>Contact Number:</strong> ${trainerData.phone}</li>
+                    <li><strong>Contact Number:</strong> <a href="tel:${trainerData.phone}">${trainerData.phone}</a></li>
                     <li><strong>Vehicle:</strong> ${trainerData.vehicleInfo}</li>
                 </ul>
-                <p>Your first lesson is scheduled for: <strong>${updatePayload.upcomingLesson}</strong>. Your trainer will contact you shortly to coordinate.</p>
+                <p>Your first lesson is tentatively scheduled for: <strong>${updatePayload.upcomingLesson}</strong>. Your trainer will contact you shortly to confirm and coordinate.</p>
                 <p>Happy driving!</p>
                 <p>The Drivergy Team</p>
             `,
         });
+
+        // Email to Trainer
+        await sendEmail({
+            to: trainerData.contact,
+            subject: 'New Student Assignment on Drivergy',
+            text: `Hello ${trainerData.name},\n\nYou have been assigned a new student on Drivergy.\n\nStudent Name: ${customerData.name}\nContact Number: ${customerData.phone}\nPickup Location: ${customerData.location}\n\nPlease contact your new student as soon as possible to confirm the details of their first lesson, which is tentatively scheduled for ${updatePayload.upcomingLesson}.\n\nThank you,\nThe Drivergy Team`,
+            html: `
+                <h1>New Student Assignment!</h1>
+                <p>Hello ${trainerData.name},</p>
+                <p>You have been assigned a new student on Drivergy. Please see their details below:</p>
+                <ul>
+                    <li><strong>Student Name:</strong> ${customerData.name}</li>
+                    <li><strong>Contact Number:</strong> <a href="tel:${customerData.phone}">${customerData.phone}</a></li>
+                    <li><strong>Pickup Location:</strong> ${customerData.location}</li>
+                </ul>
+                <p>Please contact your new student as soon as possible to confirm the details of their first lesson, which is tentatively scheduled for <strong>${updatePayload.upcomingLesson}</strong>.</p>
+                <p>You can manage your students from your dashboard.</p>
+                <p>Thank you,</p>
+                <p>The Drivergy Team</p>
+            `,
+        });
     } catch(emailError) {
-        console.error("Failed to send trainer assignment email:", emailError);
+        console.error("Failed to send trainer assignment emails:", emailError);
         // Don't block the main action if email fails
     }
 
@@ -792,6 +814,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     }
     return updatedData as UserProfile;
 }
+
 
 export async function reassignTrainerToCustomer(customerId: string, newTrainerId: string): Promise<UserProfile | null> {
     if (!adminDb) return null;
