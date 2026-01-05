@@ -125,6 +125,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 await sendEmail({
                     to: email,
                     subject: 'Welcome to Drivergy, Trainer!',
+                    text: `Welcome Aboard, ${name}! Thank you for registering as a trainer on Drivergy. Your profile is now under review. We will notify you once it's approved. The Drivergy Team`,
                     html: `<h1>Welcome Aboard, ${name}!</h1><p>Thank you for registering as a trainer on Drivergy. Your profile is now under review. We will notify you once it's approved.</p><p>The Drivergy Team</p>`,
                 });
             } catch (emailError) {
@@ -179,6 +180,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 await sendEmail({
                     to: email,
                     subject: 'Welcome to Drivergy!',
+                    text: `Welcome, ${name}! Thank you for registering with Drivergy. Your journey to becoming a confident driver starts now. Please proceed to select a subscription plan to get started. The Drivergy Team`,
                     html: `<h1>Welcome, ${name}!</h1><p>Thank you for registering with Drivergy. Your journey to becoming a confident driver starts now. Please proceed to select a subscription plan to get started.</p><p>The Drivergy Team</p>`,
                 });
             } catch (emailError) {
@@ -212,6 +214,7 @@ export async function sendPasswordResetLink(email: string): Promise<{ success: b
         await sendEmail({
             to: email,
             subject: 'Reset Your Drivergy Password',
+            text: `You are receiving this email because a password reset was requested for your account. Please click the link to reset your password: ${link}. If you did not request this, you can ignore this email. Thanks, The Drivergy Team`,
             html: `
                 <h1>Drivergy Password Reset</h1>
                 <p>You are receiving this email because a password reset was requested for your account.</p>
@@ -761,6 +764,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         await sendEmail({
             to: customerData.contact,
             subject: 'Your Drivergy Trainer has been Assigned!',
+            text: `Hello ${customerData.name}, We're excited to let you know that you've been assigned a trainer for your driving lessons. Trainer Name: ${trainerData.name}, Contact Number: ${trainerData.phone}, Vehicle: ${trainerData.vehicleInfo}. Your first lesson is scheduled for: ${updatePayload.upcomingLesson}. Your trainer will contact you shortly to coordinate. Happy driving! The Drivergy Team`,
             html: `
                 <h1>Welcome to the Next Step!</h1>
                 <p>Hello ${customerData.name},</p>
@@ -820,6 +824,7 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
         await sendEmail({
             to: customerData.contact,
             subject: 'Your Drivergy Trainer has been Changed!',
+            text: `Hello ${customerData.name}, Please note that your driving trainer has been updated. New Trainer: ${newTrainerData.name}, Contact: ${newTrainerData.phone}, Vehicle: ${newTrainerData.vehicleInfo}. Your upcoming lesson schedule remains the same. The Drivergy Team`,
             html: `
                 <h1>Trainer Assignment Update</h1>
                 <p>Hello ${customerData.name},</p>
@@ -893,6 +898,7 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
             await sendEmail({
                 to: userProfile.contact,
                 subject: 'Successful Login to Drivergy',
+                text: `Hello ${userProfile.name}, This is a confirmation that you have successfully logged into your Drivergy account. Your current subscription plan is: ${userProfile.subscriptionPlan}. If you did not initiate this login, please change your password immediately and contact our support team. The Drivergy Team`,
                 html: `
                     <h1>Login Confirmation</h1>
                     <p>Hello ${userProfile.name},</p>
