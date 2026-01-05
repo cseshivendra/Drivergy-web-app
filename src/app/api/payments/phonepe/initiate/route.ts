@@ -1,61 +1,43 @@
+import { NextResponse } from "next/server";
+import { postPhonePe } from "@/lib/payments/phonepe";
+import { nanoid } from "nanoid";
 
-// src/app/api/payments/phonepe/initiate/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from 'uuid';
-import { phonepeEnv, postPhonePe } from "@/lib/payments/phonepe";
-import { adminDb } from "@/lib/firebase/admin";
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { amount, plan, userId } = await req.json();
-    if (!amount || !plan || !userId) {
-      return NextResponse.json({ error: "amount, plan, and userId required" }, { status: 400 });
+    const { amount, userId } = await req.json();
+
+    if (!amount || !userId) {
+      return NextResponse.json(
+        { error: "Amount and userId required" },
+        { status: 400 }
+      );
     }
 
-    const { merchantId } = phonepeEnv();
-    const appBase = process.env.APP_BASE_URL!;
-    const merchantTransactionId = `T${uuidv4().slice(0, 10).replace(/-/g, '')}${Date.now()}`;
+    const txnId = `TXN_${nanoid(10)}`;
 
-    // Persist your order with status="PENDING" here
-    if (adminDb) {
-        await adminDb.collection('orders').doc(merchantTransactionId).set({
-            userId,
-            plan,
-            amount,
-            status: 'PENDING',
-            createdAt: new Date(),
-        });
-    }
-
-    const payload = {
-      merchantId,
-      merchantTransactionId,
-      merchantUserId: userId,
-      amount: amount * 100, // in paise
-      redirectUrl: `${appBase}/payments/phonepe/status/${merchantTransactionId}`,
-      redirectMode: "REDIRECT",
-      callbackUrl: `${appBase}/api/payments/phonepe/webhook`,
-      paymentInstrument: {
-        type: "PAY_PAGE",
-      },
+    const body = {
+      merchantId: process.env.PHONEPE_UAT_CLIENT_ID, // IMPORTANT FIX
+      merchantTransactionId: txnId,
+      merchantUserId: String(userId),
+      amount: Number(amount) * 100, // paise
+      redirectUrl: `${process.env.APP_BASE_URL}/payment/success`,
+      redirectMode: "POST",
+      callbackUrl: `${process.env.APP_BASE_URL}/api/phonepe/webhook`,
+      paymentInstrument: { type: "PAY_PAGE" },
     };
-    
-    // The path for the V2 pay API
-    const apiPath = "/pg/v1/pay";
-    const data = await postPhonePe(apiPath, payload);
 
-    const redirectUrl =
-      data?.data?.instrumentResponse?.redirectInfo?.url ||
-      null;
+    const result = await postPhonePe("/pg/v1/pay", body);
 
-    if (!redirectUrl) {
-      console.error("PhonePe Initiation Error Raw Response:", data);
-      return NextResponse.json({ error: "No redirect URL received from PhonePe V2 API", raw: data }, { status: 500 });
-    }
-
-    return NextResponse.json({ redirectUrl, merchantTransactionId });
-  } catch (e: any) {
-    console.error("PhonePe V2 Initiate Error:", e);
-    return NextResponse.json({ error: e.message || "initiate failed" }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      url: result.data.instrumentResponse.redirectInfo.url,
+      txnId,
+    });
+  } catch (err: any) {
+    console.error("PHONEPE INIT ERROR", err);
+    return NextResponse.json(
+      { error: err.message || "Payment failed" },
+      { status: 500 }
+    );
   }
 }
