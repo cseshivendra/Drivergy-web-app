@@ -10,15 +10,18 @@ type EnvCfg = {
 };
 
 // Provides PhonePe V2 credentials based on the environment.
-export function phonepeEnv(): EnvCfg {
+export function phonepeEnv() {
   const isProd = process.env.PHONEPE_ENV === "production";
   return {
-    merchantId: process.env.PHONEPE_MERCHANT_ID!,
-    clientId: isProd ? process.env.PHONEPE_PROD_CLIENT_ID! : process.env.PHONEPE_UAT_CLIENT_ID!,
-    clientSecret: isProd ? process.env.PHONEPE_PROD_CLIENT_SECRET! : process.env.PHONEPE_UAT_CLIENT_SECRET!,
+    clientId: isProd
+      ? process.env.PHONEPE_PROD_CLIENT_ID!
+      : process.env.PHONEPE_UAT_CLIENT_ID!,
+    clientSecret: isProd
+      ? process.env.PHONEPE_PROD_CLIENT_SECRET!
+      : process.env.PHONEPE_UAT_CLIENT_SECRET!,
     baseUrl: isProd
-    ? "https://api.phonepe.com/apis/hermes"
-    : "https://api-preprod.phonepe.com/apis/pg-sandbox",  
+      ? "https://api.phonepe.com/apis/hermes"
+      : "https://api-preprod.phonepe.com/apis/pg-sandbox",
   };
 }
 
