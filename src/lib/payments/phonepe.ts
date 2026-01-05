@@ -16,9 +16,9 @@ export function phonepeEnv(): EnvCfg {
     merchantId: process.env.PHONEPE_MERCHANT_ID!,
     clientId: isProd ? process.env.PHONEPE_PROD_CLIENT_ID! : process.env.PHONEPE_UAT_CLIENT_ID!,
     clientSecret: isProd ? process.env.PHONEPE_PROD_CLIENT_SECRET! : process.env.PHONEPE_UAT_CLIENT_SECRET!,
-    baseUrl: isProd 
-      ? "https://api.phonepe.com/apis/pg" 
-      : "https://api-preprod.phonepe.com/apis/pg-sandbox",
+    baseUrl: isProd
+    ? "https://api.phonepe.com/apis/hermes"
+    : "https://api-preprod.phonepe.com/apis/pg-sandbox",  
   };
 }
 
