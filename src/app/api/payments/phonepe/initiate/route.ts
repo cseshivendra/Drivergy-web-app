@@ -1,52 +1,62 @@
-import { NextResponse } from "next/server";
-import crypto from "crypto";
-import { nanoid } from "nanoid";
 
-const PAY_URL = "https://api.phonepe.com/apis/pg/pg/v1/pay";
+import { NextResponse } from "next/server";
+import { nanoid } from "nanoid";
+import { getPhonePeToken } from "@/lib/phonepe/token";
 
 export async function POST(req: Request) {
   try {
-    const { amount, userId } = await req.json();
+    const { amount, mobile, userId } = await req.json();
 
-    if (!amount || !userId) {
-      return NextResponse.json({ error: "Amount & userId required" }, { status: 400 });
+    if (!amount || !userId || !mobile) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    const txnId = `TXN_${nanoid(10)}`;
+    const txnId = "DRV_" + nanoid(10);
 
-    const payloadObj = {
-      merchantId: process.env.PHONEPE_PROD_CLIENT_ID,
+    const tokenData = await getPhonePeToken();
+    const accessToken = tokenData.access_token;
+
+    const body = {
+      merchantId: process.env.PHONEPE_MERCHANT_ID,
       merchantTransactionId: txnId,
-      merchantUserId: String(userId),
+      merchantUserId: userId.toString(),
       amount: Number(amount) * 100,
       redirectUrl: `${process.env.APP_BASE_URL}/payment/success`,
       redirectMode: "POST",
       callbackUrl: `${process.env.APP_BASE_URL}/api/phonepe/webhook`,
-      paymentInstrument: { type: "PAY_PAGE" }
+      mobileNumber: mobile,
+      paymentInstrument: { type: "PAY_PAGE" },
     };
 
-    const base64Payload = Buffer.from(JSON.stringify(payloadObj)).toString("base64");
+    const res = await fetch(
+      `${process.env.PHONEPE_BASE_URL}/checkout/v2/pay`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      }
+    );
 
-    const checksum =
-      crypto.createHash("sha256")
-        .update(base64Payload + "/pg/v1/pay" + process.env.PHONEPE_PROD_CLIENT_SECRET)
-        .digest("hex") + "###1";
+    const data = await res.json();
+    if (!res.ok) {
+      console.error("PhonePe Pay Error:", data);
+      throw new Error(JSON.stringify(data));
+    }
 
-    const phonepeRes = await fetch(PAY_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-VERIFY": checksum,
-      },
-      body: JSON.stringify({ request: base64Payload }),
+    return NextResponse.json({
+      success: true,
+      url: data.data.instrumentResponse.redirectInfo.url,
+      txnId,
     });
-
-    const text = await phonepeRes.text();
-    if (!phonepeRes.ok) throw new Error(text);
-
-    return NextResponse.json(JSON.parse(text));
-  } catch (e: any) {
-    console.error("PHONEPE INIT ERROR:", e.message);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (err: any) {
+    console.error("PHONEPE INIT ERROR:", err);
+    return NextResponse.json(
+      { error: err.message || "Payment failed" },
+      { status: 500 }
+    );
   }
 }

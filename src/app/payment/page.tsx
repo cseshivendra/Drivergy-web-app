@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -58,7 +59,14 @@ function PaymentGateway() {
   };
 
   const handlePhonePePayment = async () => {
-    if (!user) return;
+    if (!user || !user.phone) {
+        toast({
+            title: 'Missing Information',
+            description: 'Your phone number is required for payment. Please update your profile.',
+            variant: 'destructive',
+        });
+        return;
+    }
     setIsProcessing(true);
 
     try {
@@ -68,15 +76,15 @@ function PaymentGateway() {
             body: JSON.stringify({ 
                 amount: parseInt(finalPrice, 10),
                 userId: user.id,
-                plan: plan,
+                mobile: user.phone,
              }),
         });
 
         const data = await response.json();
 
-        if (response.ok && data.redirectUrl) {
+        if (response.ok && data.url) {
             toast({ title: "Redirecting to Payment...", description: "Please complete your payment."});
-            window.location.href = data.redirectUrl;
+            window.location.href = data.url;
         } else {
             throw new Error(data.error || 'Failed to initiate payment.');
         }
@@ -207,5 +215,3 @@ export default function PaymentPage() {
     </div>
   );
 }
-
-    
