@@ -6,6 +6,13 @@ export async function POST(req: Request) {
   try {
     const { amount, userId } = await req.json();
 
+    if (!amount || !userId) {
+      return NextResponse.json(
+        { error: "amount and userId required" },
+        { status: 400 }
+      );
+    }
+
     const orderId = "DRV_" + nanoid(10);
 
     const token = await getPhonePeToken();
@@ -47,11 +54,14 @@ export async function POST(req: Request) {
     if (!res.ok) throw new Error(JSON.stringify(data));
 
     return NextResponse.json({
-      url: data.data.redirectUrl,
+      url: data.data.instrumentResponse.redirectInfo.url,
       orderId,
     });
   } catch (err: any) {
-    console.error("PHONEPE V2 ERROR:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("PHONEPE INIT ERROR:", err);
+    return NextResponse.json(
+      { error: err.message || "Payment failed" },
+      { status: 500 }
+    );
   }
 }
