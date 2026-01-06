@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     const token = await getPhonePeToken();
 
-    const body = {
+    const payload = {
       merchantOrderId: orderId,
       amount: Number(amount) * 100,
       expireAfter: 1200,
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
           Authorization: `O-Bearer ${token.access_token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(payload),
         cache: "no-store",
       }
     );
@@ -53,10 +53,17 @@ export async function POST(req: Request) {
     const data = await res.json();
     if (!res.ok) throw new Error(JSON.stringify(data));
 
-    return NextResponse.json({
-      url: data.data.instrumentResponse.redirectInfo.url,
-      orderId,
-    });
+    const redirectUrl =
+      data?.data?.instrumentResponse?.redirectInfo?.url ||
+      data?.data?.redirectUrl ||
+      data?.redirectUrl;
+
+    if (!redirectUrl) {
+      console.error("PHONEPE RAW RESPONSE:", JSON.stringify(data, null, 2));
+      throw new Error("Redirect URL not found in PhonePe response");
+    }
+
+    return NextResponse.json({ url: redirectUrl, orderId });
   } catch (err: any) {
     console.error("PHONEPE INIT ERROR:", err);
     return NextResponse.json(
