@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,14 +12,14 @@ export default function DeprecatedPaymentStatusPage() {
                     <AlertCircle className="h-12 w-12 text-destructive" />
                 </div>
                 <CardTitle className="text-2xl font-bold">
-                    Payment Page Unavailable
+                    Page Unavailable
                 </CardTitle>
                 <CardDescription>
                     This payment status page is no longer in use.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>Our payment system has been updated. Please check your dashboard for your subscription status.</p>
+                <p>Our payment system has been updated. Please check your dashboard or the success/failure page for your payment status.</p>
             </CardContent>
             <CardFooter>
                  <Button asChild className="w-full">
