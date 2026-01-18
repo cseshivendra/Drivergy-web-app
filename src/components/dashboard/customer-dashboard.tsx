@@ -348,87 +348,66 @@ export default function CustomerDashboard() {
     );
   }
 
-  if (profile && (profile.approvalStatus === 'Pending' || profile.approvalStatus === 'In Progress')) {
-    const isPlanSelected = profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
-    return (
-        <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-            <Card className="shadow-xl text-center p-8">
-                <CardHeader>
-                    <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
-                        <Hourglass className="h-12 w-12 text-yellow-500" />
-                    </div>
-                    <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
-                     <CardDescription className="text-lg mt-4">
-                        <div className="flex flex-col items-center justify-center gap-2">
-                             <div>
-                                <span>Account Status: </span>
-                                <Badge className={cn("text-base", getStatusBadgeClass(profile.approvalStatus))}>
-                                    {isPlanSelected ? profile.approvalStatus : "Awaiting Plan Selection"}
-                                </Badge>
-                             </div>
-                             {isPlanSelected && (
-                                <div className="text-sm text-muted-foreground pt-2">
-                                    Your Customer ID: <span className="font-semibold text-foreground">{profile.uniqueId}</span>
-                                </div>
-                             )}
-                        </div>
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                   {!isPlanSelected ? (
-                       <>
-                        <p className="text-muted-foreground max-w-md mx-auto">
-                            Your account is registered. To begin your learning journey, please select a subscription plan.
-                        </p>
-                        <Button asChild className="mt-6">
-                            <Link href="/#subscriptions">Choose a Plan</Link>
-                        </Button>
-                       </>
-                   ) : (
-                    <>
-                      <p className="text-muted-foreground max-w-md mx-auto">
-                          Our team is verifying your details. You'll be notified as soon as your account is approved and you're assigned a trainer.
-                      </p>
-                       <p className="text-muted-foreground max-w-md mx-auto mt-4">
-                          Thank you for your patience.
-                      </p>
-                    </>
-                   )}
-                </CardContent>
-            </Card>
-        </div>
-    );
-  }
-
-  if (profile && profile.approvalStatus !== 'Approved' && profile.approvalStatus !== 'On Hold') {
-    return (
-      <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-        <Card className="shadow-xl text-center p-8">
-          <CardHeader>
-            <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
-                <Hourglass className="h-12 w-12 text-yellow-500" />
-            </div>
-            <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
-            <CardDescription className="text-lg mt-4">
-              Your profile is currently under review.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Our team is verifying your details. You'll be notified as soon as your account is approved and you're assigned a trainer.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   if (!profile) {
       return (
           <div className="container mx-auto p-4 py-8 space-y-8">
               <p>Could not load your profile. Please try logging in again.</p>
           </div>
       )
+  }
+
+  // Step 1: Check if the user has selected a plan. This is the very first step for a new user.
+  if (profile.subscriptionPlan === 'None') {
+      return (
+          <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+              <Card className="shadow-xl text-center p-8">
+                  <CardHeader>
+                      <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
+                          <Hourglass className="h-12 w-12 text-yellow-500" />
+                      </div>
+                      <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
+                      <CardDescription className="text-lg mt-4">
+                          Your account registration is complete. One last step!
+                      </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                          To activate your account and start learning, please choose a subscription plan.
+                      </p>
+                      <Button asChild className="mt-6" size="lg">
+                          <Link href="/#subscriptions">Choose Your Plan</Link>
+                      </Button>
+                  </CardContent>
+              </Card>
+          </div>
+      );
+  }
+
+  // Step 2: If a plan is selected, check if the approval is still pending.
+  if (profile.approvalStatus === 'Pending' || profile.approvalStatus === 'In Progress') {
+      return (
+          <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+              <Card className="shadow-xl text-center p-8">
+                  <CardHeader>
+                      <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 p-4 w-fit">
+                          <Hourglass className="h-12 w-12 text-blue-500" />
+                      </div>
+                      <CardTitle className="font-headline text-2xl font-bold">Verification In Progress</CardTitle>
+                       <CardDescription className="text-lg mt-4">
+                          Your account status is currently: 
+                          <Badge className={cn("text-base ml-2", getStatusBadgeClass(profile.approvalStatus))}>
+                              {profile.approvalStatus}
+                          </Badge>
+                      </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                          Thank you for subscribing! Our team is verifying your details. You'll be notified as soon as your account is approved and a trainer is assigned. This usually takes a few hours.
+                      </p>
+                  </CardContent>
+              </Card>
+          </div>
+      );
   }
 
 
@@ -742,4 +721,5 @@ export default function CustomerDashboard() {
 
     </div>
   );
-}
+
+    
