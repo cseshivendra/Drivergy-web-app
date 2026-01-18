@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import { fetchTrainerDashboardData } from '@/lib/server-actions';
+import { fetchTrainerDashboardData } from '@/lib/server-data';
 import { updateUserAttendance } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback } from '@/types';
