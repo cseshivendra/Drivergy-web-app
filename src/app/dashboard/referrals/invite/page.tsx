@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { fetchUserById } from '@/lib/mock-data';
+import { listenToUser } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,24 +20,43 @@ export default function InviteReferralsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user?.id) {
+        if (authLoading) {
             setLoading(true);
-            fetchUserById(user.id).then(async (profile) => {
-                if (profile) {
-                    if (profile.myReferralCode) {
-                        setReferralCode(profile.myReferralCode);
-                    } else {
-                        // If the referral code is missing, generate and save it
-                        const newCode = await generateAndSaveReferralCode(user.id);
-                        setReferralCode(newCode);
-                    }
-                }
-                setLoading(false);
-            });
-        } else if (!authLoading) {
-            setLoading(false);
+            return;
         }
-    }, [user, authLoading]);
+        if (!user?.id) {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        // Use a realtime listener to get the user profile
+        const unsubscribe = listenToUser(user.id, (profile) => {
+            if (profile) {
+                if (profile.myReferralCode) {
+                    setReferralCode(profile.myReferralCode);
+                    setLoading(false);
+                } else {
+                    // Profile exists but no code, so we generate it.
+                    // The listener will automatically pick up the new code once it's saved.
+                    generateAndSaveReferralCode(user.id).catch(err => {
+                        console.error("Failed to generate referral code on the fly:", err);
+                        toast({ title: "Error", description: "Could not generate a referral code."});
+                        setLoading(false);
+                    });
+                }
+            } else {
+                // This case is unlikely if the user is authenticated, but good to handle.
+                toast({ title: "Error", description: "Could not load your profile for referrals." });
+                setLoading(false);
+            }
+        }, user.userRole === 'trainer' ? 'trainers' : 'users');
+
+        // Cleanup the listener when the component unmounts
+        return () => unsubscribe();
+        
+    }, [user, authLoading, toast]);
+
 
     const referralUrl = referralCode ? `https://drivergy.in/register?ref=${referralCode}` : '';
 
