@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -434,6 +433,11 @@ export default function HomePage() {
                         </AccordionItem>
                     </Accordion>
                 </CardContent>
+                <CardFooter className="mt-auto pt-6 border-t border-border/50">
+                    <Button className="w-full" asChild>
+                        <Link href="/#subscriptions">Choose a Plan</Link>
+                    </Button>
+                </CardFooter>
             </Card>
           ))}
         </div>
