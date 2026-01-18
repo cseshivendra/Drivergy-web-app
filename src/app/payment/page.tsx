@@ -30,6 +30,16 @@ export default function PaymentPage() {
     const plan = searchParams.get('plan') || 'Selected Plan';
     const price = searchParams.get('price') || '0';
     
+    useEffect(() => {
+        if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
+            toast({
+                title: "Already Subscribed",
+                description: "You already have an active subscription. Redirecting to your dashboard.",
+            });
+            router.push('/dashboard');
+        }
+    }, [user, authLoading, router, toast]);
+    
     const handlePayment = async () => {
         if (!user) {
             toast({ title: 'Authentication Error', description: 'You must be logged in to make a payment.', variant: 'destructive' });
@@ -73,7 +83,7 @@ export default function PaymentPage() {
         // The component will then show the payment summary for the now-logged-in user.
     };
 
-    if (authLoading) {
+    if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
         return <Loading />;
     }
     
