@@ -298,7 +298,7 @@ export default function HomePage() {
               className="w-full sm:w-auto font-semibold px-8 py-3 text-base transition-colors duration-300"
               asChild
             >
-              <Link href="/register">Become a Driving Trainer</Link>
+              <Link href="/register?role=trainer">Become a Driving Trainer</Link>
             </Button>
           </div>
         </div>
