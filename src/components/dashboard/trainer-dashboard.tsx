@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart } from "lucide-react";
+import { CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, FileText } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
 import { updateUserAttendance } from '@/lib/server-actions';
@@ -195,7 +195,7 @@ const TrainerDashboard = () => {
                 <div>
                     <h1 className="text-3xl font-bold text-foreground flex items-center">
                         Welcome, {trainerProfile.name}!
-                        <Badge variant="outline" className={cn("ml-3 border-destructive text-destructive", getStatusColor(trainerProfile.approvalStatus))}>
+                        <Badge variant="outline" className="ml-3 bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300">
                             <CheckCircle className="mr-2 h-4 w-4" />
                             Verified
                         </Badge>
@@ -222,10 +222,10 @@ const TrainerDashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student Name</TableHead>
-                      <TableHead>Contact No.</TableHead>
-                      <TableHead>Pickup Location</TableHead>
-                      <TableHead>Vehicle</TableHead>
+                      <TableHead><UserIcon className="inline-block mr-2 h-4 w-4" />Student Name</TableHead>
+                      <TableHead><Phone className="inline-block mr-2 h-4 w-4" />Contact No.</TableHead>
+                      <TableHead><MapPin className="inline-block mr-2 h-4 w-4" />Pickup Location</TableHead>
+                      <TableHead><Car className="inline-block mr-2 h-4 w-4" />Vehicle</TableHead>
                       <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -262,11 +262,11 @@ const TrainerDashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Completed/Total</TableHead>
-                      <TableHead className="text-center">Mark Attendance</TableHead>
-                      <TableHead className="text-center">Track Progress</TableHead>
+                      <TableHead><UserIcon className="inline-block mr-2 h-4 w-4" />Student</TableHead>
+                      <TableHead><FileText className="inline-block mr-2 h-4 w-4" />Plan</TableHead>
+                      <TableHead><BarChart className="inline-block mr-2 h-4 w-4" />Completed/Total</TableHead>
+                      <TableHead className="text-center"><CheckCircle className="inline-block mr-2 h-4 w-4" />Mark Attendance</TableHead>
+                      <TableHead className="text-center"><BarChart className="inline-block mr-2 h-4 w-4" />Track Progress</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
