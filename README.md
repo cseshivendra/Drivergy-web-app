@@ -45,8 +45,13 @@ This key is required for all AI-powered features, such as the chatbot.
 - Copy the generated API key.
 - Paste it into the `GOOGLE_API_KEY` variable in your `.env` file.
 
-### 3. Other Services
-The `.env` file also contains placeholders for email (Nodemailer) and file storage (Cloudinary). Fill these in if you are using these services.
+### 3. Razorpay API Keys
+
+These keys are required to process payments.
+- Log in to your **Razorpay Dashboard**.
+- Navigate to **Settings > API Keys**.
+- Click **"Generate New Key"** to get your `Key ID` and `Key Secret`.
+- Paste these values into the `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` variables in your `.env` file.
 
 ### IMPORTANT: Fixing "Permission Denied" Errors
 
