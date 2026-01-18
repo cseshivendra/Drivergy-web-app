@@ -45,8 +45,8 @@ export default async function CoursesPage() {
                   <Image 
                     src={course.image} 
                     alt={course.title} 
-                    layout="fill" 
-                    objectFit="cover" 
+                    fill
+                    className="object-cover"
                     data-ai-hint={course.title.toLowerCase().split(' ').slice(0,2).join(' ')} 
                   />
                    {CourseIcon && (

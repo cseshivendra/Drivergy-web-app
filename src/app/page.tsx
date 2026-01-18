@@ -35,8 +35,8 @@ function ServiceCard({ icon: Icon, title, description, imageSrc, imageHint }: Se
         <Image 
           src={imageSrc} 
           alt={title} 
-          layout="fill" 
-          objectFit="cover" 
+          fill
+          className="object-cover" 
           data-ai-hint={imageHint}
         />
       </div>
@@ -405,7 +405,7 @@ export default function HomePage() {
           {coursesData.map((course) => (
             <Card key={course.id} className="shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out flex flex-col overflow-hidden">
                 <div className="relative h-48 w-full">
-                    <Image src={course.imageSrc} alt={course.title} layout="fill" objectFit="cover" data-ai-hint={course.imageHint} />
+                    <Image src={course.imageSrc} alt={course.title} fill className="object-cover" data-ai-hint={course.imageHint} />
                 </div>
                 <CardHeader className="pb-3">
                     <div className="flex items-center mb-2">

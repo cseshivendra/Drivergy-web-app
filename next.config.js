@@ -42,26 +42,6 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ['@genkit-ai/core', 'genkit'],
-  webpack: (config, { isServer }) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      handlebars: 'handlebars/dist/handlebars.min.js'
-    };
-
-    // This rule is necessary to support .wasm files, which are used by some of our dependencies.
-    config.module.rules.push({
-      test: /\.wasm$/,
-      type: "asset/resource",
-    });
-
-    // This is required by Genkit to work properly with Next.js.
-    config.module.rules.push({
-      test: /node_modules\/@genkit-ai\//,
-      loader: "shebang-loader",
-    });
-
-    return config;
-  },
 };
 
 module.exports = nextConfig;

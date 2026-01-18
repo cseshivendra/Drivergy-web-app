@@ -38,8 +38,8 @@ export default async function StorePage() {
                   <Image 
                     src={product.imageSrc} 
                     alt={product.title} 
-                    layout="fill" 
-                    objectFit="cover" 
+                    fill
+                    className="object-cover" 
                     data-ai-hint={product.imageHint}
                   />
                 </div>

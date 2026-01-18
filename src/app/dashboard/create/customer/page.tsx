@@ -12,8 +12,8 @@ export default function CreateCustomerPage() {
             <Image
                 src="https://placehold.co/800x300/3b82f6/ffffff.png"
                 alt="New customer registration banner"
-                layout="fill"
-                objectFit="cover"
+                fill
+                className="object-cover"
                 data-ai-hint="happy student driver"
             />
             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">

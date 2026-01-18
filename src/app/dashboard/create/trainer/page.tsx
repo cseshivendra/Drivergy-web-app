@@ -12,8 +12,8 @@ export default function CreateTrainerPage() {
             <Image
                 src="https://placehold.co/800x300/E53E3E/ffffff.png"
                 alt="New trainer registration banner"
-                layout="fill"
-                objectFit="cover"
+                fill
+                className="object-cover"
                 data-ai-hint="driving instructor teaching"
             />
             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">

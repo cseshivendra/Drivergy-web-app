@@ -92,8 +92,8 @@ export default function BlogPage() {
                             <Image
                                 src={post.imageSrc}
                                 alt={post.title}
-                                layout="fill"
-                                objectFit="cover"
+                                fill
+                                className="object-cover"
                                 data-ai-hint={post.imageHint}
                             />
                         </div>

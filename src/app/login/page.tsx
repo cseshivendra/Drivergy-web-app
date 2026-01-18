@@ -65,9 +65,8 @@ export default function LoginPage() {
       <Image
         src="https://placehold.co/1920x1080/1f2937/ffffff.png"
         alt="Scenic driving route"
-        layout="fill"
-        objectFit="cover"
-        className="z-0 opacity-50 dark:opacity-30 transition-opacity duration-500 ease-in-out"
+        fill
+        className="object-cover z-0 opacity-50 dark:opacity-30 transition-opacity duration-500 ease-in-out"
         data-ai-hint="road learning earning"
         priority
       />

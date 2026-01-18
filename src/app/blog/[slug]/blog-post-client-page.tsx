@@ -87,8 +87,8 @@ export default function BlogPostClientPage({ initialPost }: { initialPost: BlogP
                             <Image
                                 src={post.imageSrc}
                                 alt={post.title}
-                                layout="fill"
-                                objectFit="cover"
+                                fill
+                                className="object-cover"
                                 priority
                                 data-ai-hint={post.imageHint}
                             />
