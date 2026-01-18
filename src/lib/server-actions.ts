@@ -100,8 +100,12 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 disabled: false,
             });
             
+            const uniqueId = `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`;
+            const myReferralCode = `${username.toLowerCase().replace(/\s/g, '')}${uniqueId.slice(-3)}`;
+            
             const trainerProfile: Omit<UserProfile, 'id'> = {
-                uniqueId: `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                uniqueId,
+                myReferralCode,
                 name,
                 username,
                 contact: email,
@@ -159,9 +163,13 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 displayName: name,
                 disabled: false,
             });
+            
+            const uniqueId = `CU-${userRecord.uid.slice(0, 6).toUpperCase()}`;
+            const myReferralCode = `${username.toLowerCase().replace(/\s/g, '')}${uniqueId.slice(-3)}`;
 
             const userProfileData: Omit<UserProfile, 'id'> = {
-                uniqueId: `CU-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                uniqueId,
+                myReferralCode,
                 name,
                 username,
                 contact: email,
@@ -875,6 +883,42 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
     return updatedData as UserProfile;
 }
 
+export async function generateAndSaveReferralCode(userId: string): Promise<string | null> {
+    if (!adminDb) return null;
+    
+    let userDoc;
+    const userRef = adminDb.collection('users').doc(userId);
+    const trainerRef = adminDb.collection('trainers').doc(userId);
+
+    userDoc = await userRef.get();
+    let docToUpdate = userRef;
+
+    if (!userDoc.exists) {
+        userDoc = await trainerRef.get();
+        docToUpdate = trainerRef;
+    }
+    
+    if (!userDoc.exists) {
+        return null; // User not found
+    }
+    
+    const userData = userDoc.data();
+    if (!userData) return null;
+
+    if (userData.myReferralCode) {
+        return userData.myReferralCode;
+    }
+
+    const username = userData.username || 'user';
+    const uniqueId = userData.uniqueId || userId.slice(0,6);
+    const newReferralCode = `${username.toLowerCase().replace(/\s/g, '')}${uniqueId.slice(-3)}`;
+    
+    await docToUpdate.update({ myReferralCode: newReferralCode });
+    
+    revalidatePath('/dashboard/referrals/invite');
+    
+    return newReferralCode;
+}
 
 export async function getLoginUser(identifier: string): Promise<{ success: boolean, user?: UserProfile, error?: string, code?: string }> {
     if (!adminDb) {

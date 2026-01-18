@@ -11,6 +11,7 @@ import { Gift, Copy, Share2, Twitter, Facebook, MessageSquare, Mail } from 'luci
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
+import { generateAndSaveReferralCode } from '@/lib/server-actions';
 
 export default function InviteReferralsPage() {
     const { user, loading: authLoading } = useAuth();
@@ -21,9 +22,15 @@ export default function InviteReferralsPage() {
     useEffect(() => {
         if (user?.id) {
             setLoading(true);
-            fetchUserById(user.id).then(profile => {
-                if (profile && profile.myReferralCode) {
-                    setReferralCode(profile.myReferralCode);
+            fetchUserById(user.id).then(async (profile) => {
+                if (profile) {
+                    if (profile.myReferralCode) {
+                        setReferralCode(profile.myReferralCode);
+                    } else {
+                        // If the referral code is missing, generate and save it
+                        const newCode = await generateAndSaveReferralCode(user.id);
+                        setReferralCode(newCode);
+                    }
                 }
                 setLoading(false);
             });
