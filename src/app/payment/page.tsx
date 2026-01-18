@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck, UserPlus, LogIn, Ticket, Loader2, SkipForward } from 'lucide-react';
+import { ShieldCheck, UserPlus, LogIn, Ticket, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import Loading from '@/app/loading';
@@ -58,51 +58,11 @@ function PaymentGateway() {
     }
   };
 
-  const handlePhonePePayment = async () => {
-    if (!user || !user.phone) {
+  const handleProceed = () => {
+        setIsProcessing(true);
         toast({
-            title: 'Missing Information',
-            description: 'Your phone number is required for payment. Please update your profile.',
-            variant: 'destructive',
-        });
-        return;
-    }
-    setIsProcessing(true);
-
-    try {
-        const response = await fetch('/api/payments/phonepe/initiate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                amount: parseInt(finalPrice, 10),
-                userId: user.id,
-                mobile: user.phone,
-             }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.url) {
-            toast({ title: "Redirecting to Payment...", description: "Please complete your payment."});
-            window.location.href = data.url;
-        } else {
-            throw new Error(data.error || 'Failed to initiate payment.');
-        }
-    } catch (error) {
-        console.error("Payment initiation failed:", error);
-        toast({
-            title: 'Payment Error',
-            description: error instanceof Error ? error.message : 'Could not start the payment process.',
-            variant: 'destructive',
-        });
-        setIsProcessing(false);
-    }
-  };
-  
-   const handleSkipPayment = () => {
-        toast({
-            title: "Payment Skipped",
-            description: "Proceeding to profile completion.",
+            title: "Enrollment Initiated",
+            description: "Proceeding to complete your profile.",
         });
         router.push(`/dashboard/complete-profile?plan=${encodeURIComponent(plan)}&price=${finalPrice}`);
     };
@@ -151,9 +111,9 @@ function PaymentGateway() {
             <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
                 <ShieldCheck className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="font-headline text-3xl font-bold">Secure Payment</CardTitle>
+            <CardTitle className="font-headline text-3xl font-bold">Complete Your Enrollment</CardTitle>
             <CardDescription>
-                Complete your purchase for the <span className="font-semibold text-primary">{plan}</span> plan.
+                Confirm your selection for the <span className="font-semibold text-primary">{plan}</span> plan.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -179,7 +139,7 @@ function PaymentGateway() {
             </div>
 
             <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground">Amount to Pay</p>
+                <p className="text-muted-foreground">Amount Due</p>
                 {discountApplied && (
                     <p className="text-sm text-muted-foreground line-through">
                         Original Price: ₹{price}
@@ -192,17 +152,12 @@ function PaymentGateway() {
                     </p>
                 )}
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-                 <Button onClick={handlePhonePePayment} className="w-full h-12 text-lg" disabled={isProcessing}>
-                    {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Pay ₹${finalPrice} with PhonePe`}
-                </Button>
-                 <Button onClick={handleSkipPayment} variant="outline" className="w-full sm:w-auto" disabled={isProcessing}>
-                    <SkipForward className="mr-2 h-4 w-4" /> Skip for now
-                </Button>
-            </div>
+            <Button onClick={handleProceed} className="w-full h-12 text-lg" disabled={isProcessing}>
+                {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Confirm and Complete Profile`}
+            </Button>
         </CardContent>
         <CardFooter>
-            <p className="text-xs text-muted-foreground text-center w-full">You will be redirected to PhonePe to complete your payment securely.</p>
+            <p className="text-xs text-muted-foreground text-center w-full">You will be asked to complete your profile details after confirming.</p>
         </CardFooter>
     </Card>
   )
