@@ -71,7 +71,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const result = await signInWithPopup(auth, provider);
             const firebaseUser = result.user;
             
-            // Check if user exists in Firestore in either collection
             const userDocRef = doc(db, "users", firebaseUser.uid);
             const trainerDocRef = doc(db, "trainers", firebaseUser.uid);
             
@@ -79,7 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const trainerDoc = await getDoc(trainerDocRef);
 
             if (!userDoc.exists() && !trainerDoc.exists()) {
-                // New user, create a profile in Firestore 'users' collection
                 const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
                     uniqueId: `CU-${Date.now().toString().slice(-6)}`,
                     name: firebaseUser.displayName || 'Google User',
@@ -89,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     photoURL: firebaseUser.photoURL || '',
                     subscriptionPlan: 'None',
                     approvalStatus: 'Pending',
-                    gender: 'Prefer not to say', // Default value
+                    gender: 'Prefer not to say',
                     registrationTimestamp: serverTimestamp(),
                 };
                 await setDoc(userDocRef, newUserProfile);
@@ -102,22 +100,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
                 setUser(clientProfile);
                 toast({ title: 'Welcome!', description: 'Your account has been created.' });
-                router.push('/#subscriptions');
             } else {
-                 // Existing user
                 const profileDoc = userDoc.exists() ? userDoc : trainerDoc;
-                const userProfileData = profileDoc.data();
-                if (userProfileData?.subscriptionPlan && userProfileData.subscriptionPlan !== 'None' && userProfileData.subscriptionPlan !== 'Trainer' && userProfileData.subscriptionPlan !== 'Admin') {
-                    // If user already has a plan, go straight to dashboard
-                    toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
-                    router.push('/dashboard');
-                } else {
-                    // If user exists but has no plan, send them to subscribe
-                    toast({ title: 'Welcome Back!', description: 'Please choose a subscription to continue.' });
-                    router.push('/#subscriptions');
-                }
-                const userProfile = { id: profileDoc.id, ...userProfileData } as UserProfile;
+                const userProfile = { id: profileDoc.id, ...profileDoc.data() } as UserProfile;
                 setUser(userProfile);
+                toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
             }
         } catch (error: any) {
             toast({ title: 'Google Sign-In Failed', description: error.message, variant: 'destructive' });
@@ -135,12 +122,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 throw new Error(result.error || "Invalid credentials or user not found.");
             }
 
-            const userProfile = result.user;
-            await signInWithEmailAndPassword(auth, userProfile.contact, password);
+            await signInWithEmailAndPassword(auth, result.user.contact, password);
             
             // onAuthStateChanged will handle setting the user state.
-            toast({ title: 'Login Successful!', description: 'Redirecting to your dashboard...' });
-            router.push('/dashboard');
+            toast({ title: 'Login Successful!', description: 'You are now logged in.' });
 
         } catch (error: any) {
             console.error("Login error:", error);
@@ -202,5 +187,3 @@ export const useAuth = (): AuthContextType => {
     }
     return context;
 };
-
-    

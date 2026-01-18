@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,24 +6,30 @@ import { useAuth } from '@/context/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, ShieldCheck, User, Phone, Mail, IndianRupee } from 'lucide-react';
+import { Loader2, ShieldCheck, User, Phone, Mail, IndianRupee, UserPlus, Lock } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
 import { DrivergyLogo } from '@/components/ui/logo';
 import Image from 'next/image';
+import Link from 'next/link';
 
-export default function PhonePePaymentPage() {
-    const { user, loading: authLoading } = useAuth();
+const GoogleIcon = () => (
+    <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+      <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+    </svg>
+);
+
+export default function PaymentPage() {
+    const { user, loading: authLoading, signInWithGoogle } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
     const searchParams = useSearchParams();
     
     const [isProcessing, setIsProcessing] = useState(false);
     
-    // Get plan details from URL, provide defaults for direct access
     const plan = searchParams.get('plan') || 'Selected Plan';
     const price = searchParams.get('price') || '0';
-
+    
     const handlePayment = async () => {
         if (!user) {
             toast({ title: 'Authentication Error', description: 'You must be logged in to make a payment.', variant: 'destructive' });
@@ -59,15 +66,55 @@ export default function PhonePePaymentPage() {
             setIsProcessing(false);
         }
     };
+    
+    const handleGoogleSignIn = async () => {
+        await signInWithGoogle();
+        // After signInWithGoogle, the useAuth effect will trigger a re-render.
+        // The component will then show the payment summary for the now-logged-in user.
+    };
 
     if (authLoading) {
         return <Loading />;
     }
     
+    // AUTHENTICATION GATE
     if (!user) {
-        // This shouldn't happen with the updated auth flow, but as a fallback
-        router.push(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-        return <Loading />;
+        const redirectPath = `/payment?plan=${plan}&price=${price}`;
+        const loginUrl = `/login?redirect=${encodeURIComponent(redirectPath)}`;
+        const registerUrl = `/register?role=customer&redirect=${encodeURIComponent(redirectPath)}`;
+
+        return (
+            <div className="flex items-center justify-center p-4 min-h-screen bg-gray-50 dark:bg-gray-900">
+                <Card className="w-full max-w-md shadow-2xl">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto mb-3 flex items-center justify-center rounded-full bg-primary/10 p-3 w-fit">
+                            <Lock className="h-8 w-8 text-primary" />
+                        </div>
+                        <CardTitle className="font-headline text-2xl font-bold">Authentication Required</CardTitle>
+                        <CardDescription>
+                            Please sign in or create an account to purchase the <span className="font-semibold text-primary">{plan}</span> plan.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Button onClick={handleGoogleSignIn} className="w-full h-12 text-base">
+                            <GoogleIcon /> Continue with Google
+                        </Button>
+                        <div className="relative my-2">
+                          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                          <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div>
+                        </div>
+                         <Button asChild variant="secondary" className="w-full h-12 text-base">
+                            <Link href={registerUrl}>
+                                <UserPlus className="mr-2 h-5 w-5" /> Register as a New Customer
+                            </Link>
+                        </Button>
+                    </CardContent>
+                    <CardFooter className="flex justify-center text-sm">
+                        <p className="text-muted-foreground">Already have an account? <Link href={loginUrl} className="font-semibold text-primary hover:underline">Log in</Link></p>
+                    </CardFooter>
+                </Card>
+            </div>
+        );
     }
 
     return (
