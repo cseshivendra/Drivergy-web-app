@@ -6,6 +6,13 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getStatusV2 } from "@/lib/payments/phonepe";
 
 export async function POST(req: Request) {
+  if (!adminDb) {
+    return NextResponse.json(
+      { error: "Internal Server Error", details: "Database not configured." },
+      { status: 500 }
+    );
+  }
+
   const body = await req.json();
 
   const merchantOrderId = body.data.merchantTransactionId;

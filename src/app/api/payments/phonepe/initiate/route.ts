@@ -6,6 +6,13 @@ import { adminDb } from "@/lib/firebase/admin";
 
 export async function POST(req: Request) {
   try {
+    if (!adminDb) {
+      return NextResponse.json(
+        { error: "Internal Server Error", details: "Database not configured." },
+        { status: 500 }
+      );
+    }
+    
     const { amount, userId, plan, mobile } = await req.json();
 
     if (!amount || !userId || !plan || !mobile) {
