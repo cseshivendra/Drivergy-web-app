@@ -1,3 +1,4 @@
+
 'use server';
 
 // -------- ENV --------
@@ -5,35 +6,40 @@ export async function phonepeEnv() {
   if (
     !process.env.PHONEPE_BASE_URL ||
     !process.env.PHONEPE_CLIENT_ID ||
-    !process.env.PHONEPE_CLIENT_SECRET
+    !process.env.PHONEPE_CLIENT_SECRET ||
+    !process.env.PHONEPE_CLIENT_VERSION
   ) {
-    throw new Error("Missing PhonePe V2 credentials. Please check Vercel env.");
+    throw new Error("Missing PhonePe V2 credentials. Please check environment variables.");
   }
 
   return {
-    baseUrl: process.env.PHONEPE_BASE_URL, // https://api.phonepe.com/apis
+    baseUrl: process.env.PHONEPE_BASE_URL,
     clientId: process.env.PHONEPE_CLIENT_ID,
     clientSecret: process.env.PHONEPE_CLIENT_SECRET,
+    clientVersion: process.env.PHONEPE_CLIENT_VERSION,
   };
 }
 
-// -------- V2 AUTH TOKEN (FIXED FORMAT) --------
+// -------- V2 AUTH TOKEN --------
 export async function getPhonePeTokenV2() {
-  const { baseUrl, clientId, clientSecret } = await phonepeEnv();
-
-  const authUrl = `${baseUrl}/identity-manager/v2/oauth/token`;
+  const { clientId, clientSecret, clientVersion } = await phonepeEnv();
+  
+  // As per docs, this URL is for production
+  const authUrl = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
 
   try {
+    const params = new URLSearchParams();
+    params.append('client_id', clientId);
+    params.append('client_secret', clientSecret);
+    params.append('client_version', clientVersion);
+    params.append('grant_type', 'client_credentials');
+
     const res = await fetch(authUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "X-CLIENT-ID": clientId,
-        "X-CLIENT-SECRET": clientSecret,
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify({
-        grant_type: "client_credentials",
-      }),
+      body: params.toString(),
       cache: "no-store",
     });
 
@@ -41,20 +47,16 @@ export async function getPhonePeTokenV2() {
 
     if (!res.ok) {
       console.error("PhonePe V2 token error response:", responseData);
-      throw new Error(
-        `Token API failed with status ${res.status}: ${
-          responseData?.message || "Unknown authentication error"
-        }`
-      );
+      throw new Error(`Token API failed with status ${res.status}: ${responseData?.msg || "Unknown authentication error"}`);
     }
 
-    if (!responseData?.data?.accessToken) {
+    if (!responseData?.access_token) {
       console.error("Invalid token response structure:", responseData);
-      throw new Error("Token response missing accessToken");
+      throw new Error("Token response missing access_token");
     }
 
     console.log("✅ PhonePe V2 token obtained successfully");
-    return responseData.data.accessToken;
+    return responseData.access_token;
   } catch (error: any) {
     console.error("❌ Failed to get PhonePe token:", error.message);
     throw error;
@@ -107,7 +109,7 @@ export async function initiateRefundV2(
 
   const payload = {
     merchantId: clientId,
-    merchantRefundId,      // ✅ must be unique refund id
+    merchantRefundId,      // must be unique refund id
     originalTransactionId, // PhonePe txn id
     amount: amount * 100,  // paise
   };
