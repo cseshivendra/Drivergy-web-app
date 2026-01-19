@@ -3,7 +3,7 @@
 
 export async function phonepeEnv() {
   if (
-    !process.env.PHONEPE_BASE_URL ||
+    !process.env.PHONEPE_API_DOMAIN ||
     !process.env.PHONEPE_CLIENT_ID ||
     !process.env.PHONEPE_CLIENT_SECRET
   ) {
@@ -11,7 +11,7 @@ export async function phonepeEnv() {
   }
 
   return {
-    baseUrl: process.env.PHONEPE_BASE_URL,
+    apiDomain: process.env.PHONEPE_API_DOMAIN,
     clientId: process.env.PHONEPE_CLIENT_ID,
     clientSecret: process.env.PHONEPE_CLIENT_SECRET,
   };
@@ -19,10 +19,9 @@ export async function phonepeEnv() {
 
 // -------- V2 AUTH TOKEN --------
 export async function getPhonePeTokenV2() {
-  const { clientId, clientSecret } = await phonepeEnv();
+  const { apiDomain, clientId, clientSecret } = await phonepeEnv();
   
-  // This URL is different from the payment gateway base URL.
-  const authUrl = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
+  const authUrl = `${apiDomain}/apis/identity-manager/v1/oauth/token`;
 
   const res = await fetch(authUrl, {
     method: "POST",
@@ -45,11 +44,13 @@ export async function getPhonePeTokenV2() {
 
 // -------- V2 ORDER STATUS --------
 export async function getStatusV2(merchantTransactionId: string) {
-  const { baseUrl, clientId } = await phonepeEnv();
+  const { apiDomain, clientId } = await phonepeEnv();
   const token = await getPhonePeTokenV2();
 
+  const statusUrl = `${apiDomain}/apis/pg/checkout/v2/order/${merchantTransactionId}/status`;
+
   const res = await fetch(
-    `${baseUrl}/pg/checkout/v2/order/${merchantTransactionId}/status`,
+    statusUrl,
     {
       method: "GET",
       headers: {

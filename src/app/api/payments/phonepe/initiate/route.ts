@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     });
 
-    const { baseUrl, clientId } = await phonepeEnv();
+    const { apiDomain, clientId } = await phonepeEnv();
     const token = await getPhonePeTokenV2();
 
     const payload = {
@@ -43,7 +43,9 @@ export async function POST(req: Request) {
       paymentInstrument: { type: "PAY_PAGE" },
     };
 
-    const res = await fetch(`${baseUrl}/pg/checkout/v2/pay`, {
+    const paymentUrl = `${apiDomain}/apis/pg/checkout/v2/pay`;
+
+    const res = await fetch(paymentUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
