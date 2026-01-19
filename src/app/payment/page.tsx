@@ -168,16 +168,13 @@ export default function PaymentPage() {
                 <CardFooter className="flex flex-col gap-4">
                     <Button 
                         onClick={handlePayment} 
-                        className="w-full h-14 text-lg bg-[#6739B7] hover:bg-[#562E9C] text-white flex items-center gap-2" 
+                        className="w-full h-14 text-lg bg-[#6739B7] hover:bg-[#562E9C] text-white flex items-center justify-center gap-2" 
                         disabled={isProcessing}
                     >
                         {isProcessing ? (
                             <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Processing...</>
                         ) : (
-                            <>
-                                <Image src="https://res.cloudinary.com/dssbgilba/image/upload/v1753303666/phonepe-icon-new_xxtj7t.png" alt="PhonePe" width={28} height={28} />
-                                Pay with PhonePe
-                            </>
+                            "Pay with PhonePe"
                         )}
                     </Button>
                     <div className="flex items-center text-xs text-gray-400">
