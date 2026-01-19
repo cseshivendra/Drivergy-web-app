@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       paymentInstrument: { type: "PAY_PAGE" },
     };
 
-    const res = await fetch(`${baseUrl}/v2/checkout/pay`, {
+    const res = await fetch(`${baseUrl}/checkout/v2/pay`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

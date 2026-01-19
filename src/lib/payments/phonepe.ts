@@ -46,7 +46,7 @@ export async function getStatusV2(merchantTransactionId: string) {
   const token = await getPhonePeTokenV2();
 
   const res = await fetch(
-    `${baseUrl}/v2/checkout/status/${clientId}/${merchantTransactionId}`,
+    `${baseUrl}/checkout/v2/order/${merchantTransactionId}/status`,
     {
       method: "GET",
       headers: {
