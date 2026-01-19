@@ -7,11 +7,11 @@ export async function phonepeEnv() {
     !process.env.PHONEPE_CLIENT_ID ||
     !process.env.PHONEPE_CLIENT_SECRET
   ) {
-    throw new Error("Missing PhonePe V2 credentials");
+    throw new Error("Missing PhonePe V2 credentials. Please check your .env file.");
   }
 
   return {
-    baseUrl: process.env.PHONEPE_BASE_URL, // https://api.phonepe.com/apis
+    baseUrl: process.env.PHONEPE_BASE_URL, // e.g., https://api.phonepe.com/apis
     clientId: process.env.PHONEPE_CLIENT_ID,
     clientSecret: process.env.PHONEPE_CLIENT_SECRET,
   };
@@ -34,23 +34,24 @@ export async function getPhonePeTokenV2() {
       body: JSON.stringify({
         grant_type: "client_credentials",
       }),
+      cache: "no-store",
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("PhonePe V2 token error response:", errorText);
-      throw new Error(`Token API failed with status ${res.status}: ${errorText}`);
-    }
+    const responseData = await res.json();
 
-    const data = await res.json();
+    if (!res.ok) {
+      console.error("PhonePe V2 token error response:", responseData);
+      // Throw a detailed error message
+      throw new Error(`Token API failed with status ${res.status}: ${responseData.message || 'Unknown authentication error'}`);
+    }
     
-    if (!data?.data?.accessToken) {
-      console.error("Invalid token response structure:", data);
+    if (!responseData?.data?.accessToken) {
+      console.error("Invalid token response structure:", responseData);
       throw new Error("Token response missing accessToken");
     }
 
     console.log("✅ PhonePe token obtained successfully");
-    return data.data.accessToken;
+    return responseData.data.accessToken;
   } catch (error: any) {
     console.error("❌ Failed to get PhonePe token:", error.message);
     throw error;

@@ -77,15 +77,16 @@ export async function POST(req: Request) {
     } catch (tokenError: any) {
       console.error("❌ Token generation failed:", tokenError.message);
       
-      // Update order status
+      // Update order status in DB
       await adminDb.collection("orders").doc(merchantTransactionId).update({
         status: "TOKEN_FAILED",
         error: tokenError.message,
         updatedAt: new Date().toISOString(),
       });
       
+      // Return the specific error to the client
       return NextResponse.json(
-        { error: "Authentication Failed", details: "Failed to obtain payment gateway token" },
+        { error: "Authentication Failed", details: tokenError.message },
         { status: 500 }
       );
     }
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate success response
+    // Validate success response from PhonePe
     if (!responseData.success) {
       console.error("❌ PhonePe returned success=false:", responseData);
       
