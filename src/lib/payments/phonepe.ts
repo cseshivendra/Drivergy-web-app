@@ -32,7 +32,7 @@ export async function getPhonePeTokenV2() {
         "X-CLIENT-SECRET": clientSecret,
       },
       body: JSON.stringify({
-        grantType: "client_credentials",   // ✅ PhonePe expects THIS key (camelCase)
+        grant_type: "client_credentials",
       }),
       cache: "no-store",
     });
