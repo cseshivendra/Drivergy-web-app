@@ -21,7 +21,7 @@ export async function phonepeEnv() {
 export async function getPhonePeTokenV2() {
   const { baseUrl, clientId, clientSecret } = await phonepeEnv();
 
-  const authUrl = `${baseUrl}/identity-manager/v1/oauth/token`;
+  const authUrl = `${baseUrl}/identity-manager/v2/oauth/token`;
 
   try {
     const res = await fetch(authUrl, {
