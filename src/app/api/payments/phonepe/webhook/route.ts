@@ -2,59 +2,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { headers } from "next/headers";
-
-const PHONEPE_AUTH_URL = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
-const PHONEPE_STATUS_URL_BASE = "https://api.phonepe.com/apis/pg/checkout/v2/order";
-
-async function verifyPaymentStatus(merchantTransactionId: string): Promise<{ code: string; data: any } | null> {
-    const clientId = process.env.PHONEPE_CLIENT_ID;
-    const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
-
-    if (!clientId || !clientSecret) {
-        console.error("Webhook Error: PhonePe credentials not set.");
-        return null;
-    }
-
-    try {
-        // Get Auth Token
-        const authRes = await fetch(PHONEPE_AUTH_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CLIENT-ID": clientId,
-                "X-CLIENT-SECRET": clientSecret,
-            },
-        });
-        if (!authRes.ok) {
-            console.error("Webhook Error: Failed to get auth token.");
-            return null;
-        }
-        const authData = await authRes.json();
-        const token = authData.data.accessToken;
-
-        // Check Status
-        const statusUrl = `${PHONEPE_STATUS_URL_BASE}/${merchantTransactionId}/status`;
-        const statusRes = await fetch(statusUrl, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-                "X-MERCHANT-ID": clientId,
-            },
-            cache: "no-store",
-        });
-
-        if (!statusRes.ok) {
-            console.error("Webhook Error: Status check API call failed.");
-            return null;
-        }
-        return statusRes.json();
-    } catch (error) {
-        console.error("Webhook Error: Exception during status verification.", error);
-        return null;
-    }
-}
-
+import { getStatusV2 } from "@/lib/payments/phonepe";
 
 export async function POST(req: Request) {
     // 1. Authenticate the webhook request
@@ -69,6 +17,7 @@ export async function POST(req: Request) {
     }
 
     if (!authHeader || !authHeader.startsWith('Basic ')) {
+        console.log("Webhook Unauthorized: Missing or malformed Basic Auth header");
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
@@ -77,8 +26,10 @@ export async function POST(req: Request) {
     const [username, password] = decodedCreds.split(':');
 
     if (username !== webhookUser || password !== webhookPass) {
+        console.log("Webhook Forbidden: Invalid credentials");
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+    console.log("✅ Webhook authenticated successfully.");
 
     // 2. Process the webhook payload
     try {
@@ -88,45 +39,79 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const merchantOrderId = body.data.merchantTransactionId;
+        console.log("🔔 PhonePe webhook received:", body);
 
-        const orderRef = adminDb.collection("orders").doc(merchantOrderId);
+        // PhonePe sends a base64 encoded response for server-to-server callbacks
+        if (!body.response) {
+             console.error("❌ Webhook missing 'response' field.");
+             return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
+        }
+        
+        const decodedResponse = JSON.parse(Buffer.from(body.response, 'base64').toString('utf8'));
+        console.log("🔔 Decoded Webhook Response:", decodedResponse);
+
+        const { merchantTransactionId } = decodedResponse;
+
+        if (!merchantTransactionId) {
+            console.error("❌ Webhook missing merchantTransactionId in decoded payload.");
+            return NextResponse.json({ error: "Invalid webhook data" }, { status: 400 });
+        }
+
+        // 3. Verify status with PhonePe before updating DB (Security Best Practice)
+        const verifiedStatusResult = await getStatusV2(merchantTransactionId);
+        
+        if (!verifiedStatusResult || !verifiedStatusResult.success) {
+            console.error(`❌ Webhook S2S verification failed for ${merchantTransactionId}.`);
+            await adminDb.collection("orders").doc(merchantTransactionId).update({
+                status: "VERIFICATION_FAILED",
+                webhookData: body,
+                s2sVerificationResponse: verifiedStatusResult,
+                updatedAt: new Date().toISOString(),
+            });
+             return NextResponse.json({ success: true, message: "Handled unverified payment." });
+        }
+        
+        const verifiedState = verifiedStatusResult.data.state;
+        
+        // 4. Update Database based on verified status
+        const orderRef = adminDb.collection("orders").doc(merchantTransactionId);
         const orderSnap = await orderRef.get();
 
         if (!orderSnap.exists) {
+            console.error(`❌ Order ${merchantTransactionId} not found in DB.`);
             return NextResponse.json({ error: "Order Not Found" }, { status: 404 });
         }
-
-        // 3. Verify status with PhonePe before updating DB
-        const verifiedStatusResult = await verifyPaymentStatus(merchantOrderId);
         
-        if (!verifiedStatusResult || verifiedStatusResult.code !== "PAYMENT_SUCCESS") {
+        if (verifiedState === "COMPLETED") {
+            // If we reach here, the payment is verified as successful.
+            await orderRef.update({
+                status: "PAYMENT_SUCCESS",
+                webhookData: body,
+                s2sVerificationResponse: verifiedStatusResult.data,
+                updatedAt: new Date().toISOString(),
+                paidAt: new Date().toISOString(),
+                transactionId: verifiedStatusResult.data.transactionId
+            });
+
+            const orderData = orderSnap.data()!;
+            const userRef = adminDb.collection("users").doc(orderData.userId);
+            await userRef.update({ subscriptionPlan: orderData.plan });
+
+            console.log(`✅ Webhook processed successfully for ${merchantTransactionId}: PAYMENT_SUCCESS`);
+        } else {
              await orderRef.update({
                 status: "PAYMENT_FAILED",
-                gatewayResponse: body,
-                verifiedStatus: verifiedStatusResult,
+                webhookData: body,
+                s2sVerificationResponse: verifiedStatusResult.data,
                 updatedAt: new Date().toISOString(),
             });
-             return NextResponse.json({ success: true, message: "Handled failed or unverified payment." });
+            console.log(`✅ Webhook processed successfully for ${merchantTransactionId}: PAYMENT_FAILED`);
         }
-        
-        // If we reach here, the payment is verified as successful.
-        await orderRef.update({
-            status: "PAYMENT_SUCCESS",
-            gatewayResponse: body,
-            verifiedStatus: verifiedStatusResult,
-            updatedAt: new Date().toISOString(),
-            paidAt: new Date().toISOString(),
-        });
-
-        const orderData = orderSnap.data()!;
-        const userRef = adminDb.collection("users").doc(orderData.userId);
-        await userRef.update({ subscriptionPlan: orderData.plan });
 
         return NextResponse.json({ success: true });
 
     } catch (error: any) {
-        console.error("Webhook processing error:", error);
+        console.error("❌ Webhook processing error:", error);
         return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
     }
 }

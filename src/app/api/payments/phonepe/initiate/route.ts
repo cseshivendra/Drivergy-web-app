@@ -1,81 +1,118 @@
 
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
+import { phonepeEnv, getPhonePeTokenV2 } from "@/lib/payments/phonepe";
 import { adminDb } from "@/lib/firebase/admin";
-
-// URLs are now hardcoded here for clarity
-const PHONEPE_AUTH_URL = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
-const PHONEPE_PAY_URL = "https://api.phonepe.com/apis/pg/checkout/v2/pay";
 
 export async function POST(req: Request) {
   try {
-    // 1. Check for Firebase Admin initialization
+    // Validate database connection
     if (!adminDb) {
-      console.error("PHONEPE INIT ERROR: Database not configured.");
+      console.error("❌ Database not configured");
       return NextResponse.json(
         { error: "Internal Server Error", details: "Database not configured." },
         { status: 500 }
       );
     }
     
-    // 2. Validate environment variables for PhonePe
-    const clientId = process.env.PHONEPE_CLIENT_ID;
-    const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
-    const appBaseUrl = process.env.APP_BASE_URL;
-
-    if (!clientId || !clientSecret || !appBaseUrl) {
-      console.error("PHONEPE INIT ERROR: Missing PhonePe or App credentials in .env file.");
-      throw new Error("Server configuration is incomplete.");
-    }
-
-    // 3. Get data from client
+    // Parse and validate request body
     const { amount, userId, plan, mobile } = await req.json();
 
+    console.log("📝 Payment initiation request:", { amount, userId, plan, mobile });
+
     if (!amount || !userId || !plan || !mobile) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields", details: "amount, userId, plan, and mobile are required" },
+        { status: 400 }
+      );
     }
 
-    // 4. Create an order record in our database
-    const merchantTransactionId = "DRV_" + uuidv4().slice(-12);
-    await adminDb.collection("orders").doc(merchantTransactionId).set({
-      userId,
-      plan,
-      amount,
-      status: "PAYMENT_INITIATED",
-      createdAt: new Date().toISOString(),
-    });
-
-    // 5. Get PhonePe V2 Auth Token (Inlined logic)
-    const authRes = await fetch(PHONEPE_AUTH_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CLIENT-ID": clientId,
-          "X-CLIENT-SECRET": clientSecret,
-        },
-    });
-
-    if (!authRes.ok) {
-        const text = await authRes.text();
-        console.error("PhonePe V2 token error:", text);
-        throw new Error("Failed to get PhonePe auth token.");
+    // Validate amount
+    if (typeof amount !== 'number' || amount <= 0) {
+      return NextResponse.json(
+        { error: "Invalid amount", details: "Amount must be a positive number" },
+        { status: 400 }
+      );
     }
-    const authData = await authRes.json();
-    const token = authData.data.accessToken;
 
-    // 6. Prepare and send the payment initiation request
+    // Validate mobile number (basic validation)
+    if (!/^\d{10}$/.test(mobile)) {
+      return NextResponse.json(
+        { error: "Invalid mobile number", details: "Mobile number must be 10 digits" },
+        { status: 400 }
+      );
+    }
+
+    // Generate unique merchant transaction ID
+    const merchantTransactionId = "DRV_" + uuidv4().replace(/-/g, '').slice(0, 30);
+
+    // Create order in database
+    try {
+      await adminDb.collection("orders").doc(merchantTransactionId).set({
+        userId,
+        plan,
+        amount,
+        mobile,
+        status: "PAYMENT_INITIATED",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      console.log("✅ Order created in database:", merchantTransactionId);
+    } catch (dbError: any) {
+      console.error("❌ Database error:", dbError.message);
+      return NextResponse.json(
+        { error: "Database Error", details: dbError.message },
+        { status: 500 }
+      );
+    }
+
+    // Get PhonePe configuration
+    const { baseUrl, clientId } = await phonepeEnv();
+    console.log("📱 PhonePe config loaded - Base URL:", baseUrl);
+    
+    // Get OAuth token
+    let token: string;
+    try {
+      token = await getPhonePeTokenV2();
+    } catch (tokenError: any) {
+      console.error("❌ Token generation failed:", tokenError.message);
+      
+      // Update order status
+      await adminDb.collection("orders").doc(merchantTransactionId).update({
+        status: "TOKEN_FAILED",
+        error: tokenError.message,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      return NextResponse.json(
+        { error: "Authentication Failed", details: "Failed to obtain payment gateway token" },
+        { status: 500 }
+      );
+    }
+
+    // Prepare payment payload
     const payload = {
       merchantId: clientId,
       merchantTransactionId,
-      merchantUserId: userId.slice(0, 35),
-      amount: amount * 100, // Amount must be in paise
-      redirectUrl: `${appBaseUrl}/payments/phonepe/status/${merchantTransactionId}`,
-      callbackUrl: `${appBaseUrl}/api/payments/phonepe/webhook`,
+      merchantUserId: userId.slice(0, 35), // PhonePe limit
+      amount: Math.round(amount * 100), // Convert to paise
+      redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${merchantTransactionId}`,
+      callbackUrl: `${process.env.APP_BASE_URL}/api/payments/phonepe/webhook`,
       mobileNumber: mobile,
-      paymentInstrument: { type: "PAY_PAGE" },
+      paymentInstrument: {
+        type: "PAY_PAGE"
+      },
     };
+
+    console.log("💳 Initiating payment with payload:", {
+      ...payload,
+      amount: `₹${amount} (${payload.amount} paise)`
+    });
+
+    // Call PhonePe payment API
+    const paymentUrl = `${baseUrl}/pg/checkout/v2/pay`;
     
-    const paymentRes = await fetch(PHONEPE_PAY_URL, {
+    const res = await fetch(paymentUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -85,23 +122,96 @@ export async function POST(req: Request) {
       body: JSON.stringify(payload),
     });
 
-    const paymentData = await paymentRes.json();
+    const responseData = await res.json();
 
-    if (!paymentRes.ok || !paymentData.success) {
-      console.error("PhonePe V2 Initiation Error:", paymentData);
-      throw new Error(paymentData.message || "Failed to initiate PhonePe payment.");
+    console.log("📡 PhonePe API response status:", res.status);
+    console.log("📡 PhonePe API response data:", responseData);
+
+    // Handle non-OK responses
+    if (!res.ok) {
+      console.error("❌ PhonePe API error:", responseData);
+      
+      await adminDb.collection("orders").doc(merchantTransactionId).update({
+        status: "INITIATION_FAILED",
+        error: responseData.message || `API returned ${res.status}`,
+        phonepeResponse: responseData,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      return NextResponse.json(
+        { 
+          error: "Payment Initiation Failed", 
+          details: responseData.message || `PhonePe API returned ${res.status}`,
+          code: responseData.code
+        },
+        { status: 500 }
+      );
     }
 
-    // 7. Return the redirect URL to the client
+    // Validate success response
+    if (!responseData.success) {
+      console.error("❌ PhonePe returned success=false:", responseData);
+      
+      await adminDb.collection("orders").doc(merchantTransactionId).update({
+        status: "INITIATION_FAILED",
+        error: responseData.message || "Payment initiation unsuccessful",
+        phonepeResponse: responseData,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      return NextResponse.json(
+        { 
+          error: "Payment Initiation Failed", 
+          details: responseData.message || "Payment initiation unsuccessful"
+        },
+        { status: 500 }
+      );
+    }
+
+    // Extract payment URL
+    const paymentRedirectUrl = responseData?.data?.instrumentResponse?.redirectInfo?.url;
+    
+    if (!paymentRedirectUrl) {
+      console.error("❌ Missing payment URL in response:", responseData);
+      
+      await adminDb.collection("orders").doc(merchantTransactionId).update({
+        status: "INITIATION_FAILED",
+        error: "Missing payment redirect URL",
+        phonepeResponse: responseData,
+        updatedAt: new Date().toISOString(),
+      });
+      
+      return NextResponse.json(
+        { error: "Invalid Response", details: "Payment URL not found in response" },
+        { status: 500 }
+      );
+    }
+
+    // Update order with payment URL
+    await adminDb.collection("orders").doc(merchantTransactionId).update({
+      status: "PAYMENT_PENDING",
+      paymentUrl: paymentRedirectUrl,
+      phonepeResponse: responseData,
+      updatedAt: new Date().toISOString(),
+    });
+
+    console.log("✅ Payment initiated successfully:", merchantTransactionId);
+
     return NextResponse.json({
-      url: paymentData.data.instrumentResponse.redirectInfo.url,
+      success: true,
+      url: paymentRedirectUrl,
       orderId: merchantTransactionId,
     });
 
-  } catch (e: any) {
-    console.error("PHONEPE INIT EXCEPTION:", e.message);
+  } catch (error: any) {
+    console.error("❌ PHONEPE INIT EXCEPTION:", error);
+    console.error("Stack trace:", error.stack);
+    
     return NextResponse.json(
-      { error: "Internal Server Error", details: e.message },
+      { 
+        error: "Internal Server Error", 
+        details: error.message || "An unexpected error occurred"
+      },
       { status: 500 }
     );
   }
