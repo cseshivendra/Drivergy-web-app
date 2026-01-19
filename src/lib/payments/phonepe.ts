@@ -19,9 +19,12 @@ export async function phonepeEnv() {
 
 // -------- V2 AUTH TOKEN --------
 export async function getPhonePeTokenV2() {
-  const { baseUrl, clientId, clientSecret } = await phonepeEnv();
+  const { clientId, clientSecret } = await phonepeEnv();
+  
+  // This URL is different from the payment gateway base URL.
+  const authUrl = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
 
-  const res = await fetch(`${baseUrl}/v2/auth/token`, {
+  const res = await fetch(authUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -46,7 +49,7 @@ export async function getStatusV2(merchantTransactionId: string) {
   const token = await getPhonePeTokenV2();
 
   const res = await fetch(
-    `${baseUrl}/checkout/v2/order/${merchantTransactionId}/status`,
+    `${baseUrl}/pg/checkout/v2/order/${merchantTransactionId}/status`,
     {
       method: "GET",
       headers: {
