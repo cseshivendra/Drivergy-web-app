@@ -1,26 +1,68 @@
 
-import crypto from "crypto";
+'use server';
 
-// Provides PhonePe credentials.
-export function phonepeEnv() {
-    return {
-        merchantId: process.env.PHONEPE_MERCHANT_ID!,
-        saltKey: process.env.PHONEPE_SALT_KEY!,
-        saltIndex: parseInt(process.env.PHONEPE_SALT_INDEX!, 10),
-        baseUrl: process.env.PHONEPE_BASE_URL!,
-        webhookUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payments/phonepe/webhook`,
-    };
+export async function phonepeEnv() {
+  if (
+    !process.env.PHONEPE_BASE_URL ||
+    !process.env.PHONEPE_CLIENT_ID ||
+    !process.env.PHONEPE_CLIENT_SECRET
+  ) {
+    throw new Error("Missing PhonePe V2 credentials");
+  }
+
+  return {
+    baseUrl: process.env.PHONEPE_BASE_URL,
+    clientId: process.env.PHONEPE_CLIENT_ID,
+    clientSecret: process.env.PHONEPE_CLIENT_SECRET,
+  };
 }
 
-// Function to generate the X-VERIFY signature for the /pg/v1/pay API
-export function generatePayPageSignature(base64Payload: string, saltKey: string, saltIndex: number): string {
-    const dataToSign = base64Payload + '/pg/v1/pay' + saltKey;
-    const sha256 = crypto.createHash('sha256').update(dataToSign).digest('hex');
-    return `${sha256}###${saltIndex}`;
+// -------- V2 AUTH TOKEN --------
+export async function getPhonePeTokenV2() {
+  const { baseUrl, clientId, clientSecret } = await phonepeEnv();
+
+  const res = await fetch(`${baseUrl}/v2/auth/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CLIENT-ID": clientId,
+      "X-CLIENT-SECRET": clientSecret,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("PhonePe V2 token error:", text);
+    throw new Error("Failed to get V2 token");
+  }
+
+  const data = await res.json();
+  return data.data.accessToken;
 }
 
-// Function to verify the webhook signature
-export function verifyWebhookSignature(base64Payload: string, saltKey: string, saltIndex: number, xVerifyHeader: string): boolean {
-    const expectedSignature = crypto.createHash('sha256').update(base64Payload + saltKey).digest('hex') + '###' + saltIndex;
-    return expectedSignature === xVerifyHeader;
+// -------- V2 ORDER STATUS --------
+export async function getStatusV2(merchantTransactionId: string) {
+  const { baseUrl, clientId } = await phonepeEnv();
+  const token = await getPhonePeTokenV2();
+
+  const res = await fetch(
+    `${baseUrl}/v2/checkout/status/${clientId}/${merchantTransactionId}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        "X-MERCHANT-ID": clientId,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("PhonePe V2 status error:", text);
+    throw new Error("Status check failed");
+  }
+
+  return res.json();
 }

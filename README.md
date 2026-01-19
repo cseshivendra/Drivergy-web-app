@@ -47,10 +47,10 @@ This key is required for all AI-powered features, such as the chatbot.
 
 ### 3. PhonePe API Keys
 
-These keys are required to process payments.
-- Log in to your **PhonePe Merchant Dashboard**.
-- Your `MERCHANT_ID` is available on your profile page.
-- The `SALT_KEY` and `SALT_INDEX` are provided during your onboarding process.
+These keys are required to process payments with PhonePe's V2 API.
+- Log in to the **PhonePe Developer Dashboard**.
+- Navigate to the "API Keys" section for your application.
+- Your `PHONEPE_CLIENT_ID` and `PHONEPE_CLIENT_SECRET` will be available there.
 - Paste these values into the corresponding variables in your `.env` file.
 
 ### IMPORTANT: Fixing "Permission Denied" Errors

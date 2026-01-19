@@ -1,10 +1,15 @@
+
 import { NextResponse } from "next/server";
+import { getStatusV2 } from "@/lib/payments/phonepe";
 
 export async function GET(req: Request) {
-  // This endpoint is deprecated as the PhonePe integration has been updated.
-  // The new flow uses a webhook and redirect pages.
-  return NextResponse.json(
-    { error: "This API endpoint is no longer in use." },
-    { status: 410 } // HTTP 410 Gone
-  );
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("merchantTransactionId");
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  const result = await getStatusV2(id);
+  return NextResponse.json({ status: result.code, data: result.data });
 }

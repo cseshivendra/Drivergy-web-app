@@ -41,8 +41,8 @@ export default function PaymentPage() {
     }, [user, authLoading, router, toast]);
     
     const handlePayment = async () => {
-        if (!user) {
-            toast({ title: 'Authentication Error', description: 'You must be logged in to make a payment.', variant: 'destructive' });
+        if (!user || !user.phone) {
+            toast({ title: 'Authentication Error', description: 'You must be logged in and have a phone number on your profile to make a payment.', variant: 'destructive' });
             return;
         }
 
@@ -53,16 +53,16 @@ export default function PaymentPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     amount: parseInt(price, 10),
-                    name: user.name,
-                    phone: user.phone,
-                    email: user.contact,
+                    userId: user.id,
+                    plan: plan,
+                    mobile: user.phone,
                 }),
             });
 
             const data = await response.json();
 
-            if (data.success && data.redirectUrl) {
-                router.push(data.redirectUrl);
+            if (data.url) {
+                router.push(data.url);
             } else {
                 throw new Error(data.error || 'Failed to initiate payment.');
             }

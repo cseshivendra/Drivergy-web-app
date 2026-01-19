@@ -1,34 +1,93 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { AlertCircle } from "lucide-react";
 
-export default function DeprecatedPaymentStatusPage() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
-        <Card className="w-full max-w-md text-center shadow-xl">
-            <CardHeader>
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full mb-4 bg-destructive/10">
-                    <AlertCircle className="h-12 w-12 text-destructive" />
+'use client';
+
+import { useEffect, useState, Suspense } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+function StatusChecker() {
+    const router = useRouter();
+    const params = useParams();
+    const merchantTransactionId = params.id as string;
+
+    const [status, setStatus] = useState('PENDING');
+    const [attempts, setAttempts] = useState(0);
+
+    useEffect(() => {
+        if (!merchantTransactionId) return;
+
+        const checkStatus = async () => {
+            try {
+                const response = await fetch(`/api/payments/phonepe/status?merchantTransactionId=${merchantTransactionId}`);
+                if (!response.ok) {
+                    // Stop polling on server error
+                    setStatus('ERROR');
+                    router.push(`/payment/failed?orderId=${merchantTransactionId}&reason=error`);
+                    return;
+                }
+                const result = await response.json();
+
+                if (result.status === 'PAYMENT_SUCCESS') {
+                    setStatus('SUCCESS');
+                    router.push(`/payment/success?orderId=${merchantTransactionId}`);
+                } else if (['PAYMENT_ERROR', 'PAYMENT_CANCELLED', 'TIMED_OUT', 'PAYMENT_DECLINED', 'TRANSACTION_NOT_FOUND'].includes(result.status)) {
+                    setStatus('FAILED');
+                    router.push(`/payment/failed?orderId=${merchantTransactionId}`);
+                } else {
+                    setAttempts(prev => prev + 1);
+                }
+            } catch (error) {
+                console.error("Status check failed:", error);
+                setStatus('ERROR');
+                 router.push(`/payment/failed?orderId=${merchantTransactionId}&reason=error`);
+            }
+        };
+
+        const intervalId = setInterval(() => {
+            // Stop polling after 10 attempts (e.g., 30 seconds)
+            if (attempts >= 10) {
+                clearInterval(intervalId);
+                setStatus('TIMED_OUT');
+                 router.push(`/payment/failed?orderId=${merchantTransactionId}&reason=timeout`);
+                return;
+            }
+            if (status === 'PENDING') {
+              checkStatus();
+            }
+        }, 3000); // Poll every 3 seconds
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
+
+    }, [merchantTransactionId, router, attempts, status]);
+
+    return (
+        <Card className="w-full max-w-md shadow-2xl">
+            <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex items-center justify-center">
+                    <Loader2 className="h-16 w-16 animate-spin text-primary" />
                 </div>
-                <CardTitle className="text-2xl font-bold">
-                    Page Unavailable
-                </CardTitle>
+                <CardTitle className="font-headline text-2xl font-bold">Verifying Payment</CardTitle>
                 <CardDescription>
-                    This payment status page is no longer in use.
+                    Please wait while we confirm your payment status. Do not close this window.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>Our payment system has been updated. Please check your dashboard or the success/failure page for your payment status.</p>
+            <CardContent className="text-center text-sm text-muted-foreground">
+                <p>Order ID: {merchantTransactionId}</p>
+                <p className="mt-2">This may take a few moments.</p>
             </CardContent>
-            <CardFooter>
-                 <Button asChild className="w-full">
-                    <Link href="/dashboard">
-                       Go to Dashboard
-                    </Link>
-                </Button>
-            </CardFooter>
         </Card>
-    </div>
-  );
+    );
+}
+
+
+export default function PaymentStatusPage() {
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+           <Suspense fallback={<Loader2 className="h-16 w-16 animate-spin text-primary" />}>
+                <StatusChecker />
+           </Suspense>
+        </div>
+    );
 }
