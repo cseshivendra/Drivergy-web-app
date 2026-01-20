@@ -64,7 +64,8 @@ export default function PaymentPage() {
             if (data.url) {
                 router.push(data.url);
             } else {
-                throw new Error(data.error || 'Failed to initiate payment.');
+                // Use the 'details' field for a more specific error message.
+                throw new Error(data.details || data.error || 'Failed to initiate payment.');
             }
         } catch (error) {
             console.error("Payment initiation failed:", error);

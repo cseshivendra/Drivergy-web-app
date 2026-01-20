@@ -21,12 +21,15 @@ export async function getPhonePeTokenV2(): Promise<string> {
     formData.append('client_version', clientVersion);
     formData.append('client_secret', clientSecret);
     formData.append('grant_type', 'client_credentials');
+    
+    // Explicitly convert the form data to a string to ensure correct encoding.
+    const requestBody = formData.toString();
 
     const response = await axios({
         method: 'post',
         url: authUrl,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data: formData,
+        data: requestBody,
     });
     
     if (!response.data || !response.data.access_token) {
@@ -44,7 +47,8 @@ export async function getPhonePeTokenV2(): Promise<string> {
       console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
     }
     // Re-throw a more specific error to be caught by the API route
-    throw new Error(error.response?.data?.msg || "Failed to obtain payment gateway token");
+    const errorMessage = error.response?.data?.msg || error.response?.data?.message || "Failed to obtain payment gateway token";
+    throw new Error(errorMessage);
   }
 }
 
