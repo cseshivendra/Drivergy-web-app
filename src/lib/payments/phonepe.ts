@@ -1,6 +1,8 @@
 
 'use server';
 
+import axios from 'axios';
+
 // -------- V2 AUTH TOKEN --------
 export async function getPhonePeTokenV2(): Promise<string> {
   const clientId = process.env.PHONEPE_CLIENT_ID;
@@ -20,70 +22,57 @@ export async function getPhonePeTokenV2(): Promise<string> {
     formData.append('client_secret', clientSecret);
     formData.append('grant_type', 'client_credentials');
 
-    const res = await fetch(authUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formData.toString(),
-      cache: "no-store",
+    const response = await axios({
+        method: 'post',
+        url: authUrl,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        data: formData,
     });
-
-    const responseData = await res.json();
     
-    if (!res.ok) {
-      console.error("PhonePe V2 token error response:", responseData);
-      throw new Error(`Token API failed with status ${res.status}: ${responseData?.msg || "Unknown authentication error"}`);
-    }
-
-    if (!responseData?.access_token) {
-      console.error("Invalid token response structure:", responseData);
-      throw new Error("Token response missing access_token");
+    if (!response.data || !response.data.access_token) {
+      console.error("Invalid auth response from PhonePe:", response.data);
+      throw new Error('Invalid auth response from PhonePe: Missing access_token');
     }
 
     console.log("✅ PhonePe V2 token obtained successfully");
-    return responseData.access_token;
+    return response.data.access_token;
 
   } catch (error: any) {
-    console.error("❌ Failed to get PhonePe token:", error.message);
-    throw error;
+    console.error('Error getting PhonePe auth token:', error.message);
+    if (error.response) {
+      console.error('Response Status:', error.response.status);
+      console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
+    }
+    // Re-throw a more specific error to be caught by the API route
+    throw new Error(error.response?.data?.msg || "Failed to obtain payment gateway token");
   }
 }
 
 // -------- V2 ORDER STATUS --------
 export async function getStatusV2(merchantTransactionId: string) {
   const phonepeBaseUrl = process.env.PHONEPE_BASE_URL;
-  const phonepeClientId = process.env.PHONEPE_CLIENT_ID;
-
-  if (!phonepeBaseUrl || !phonepeClientId) {
-      throw new Error("PhonePe environment variables not set for status check.");
+  if (!phonepeBaseUrl) {
+      throw new Error("PhonePe base URL not set for status check.");
   }
-
   const token = await getPhonePeTokenV2();
-
-  const statusUrl = `${phonepeBaseUrl}/pg/checkout/v2/order/${merchantTransactionId}/status`;
+  const statusUrl = `${phonepeBaseUrl}/checkout/v2/order/${merchantTransactionId}/status`;
 
   try {
-    const res = await fetch(statusUrl, {
-      method: "GET",
+    const response = await axios.get(statusUrl, {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `O-Bearer ${token}`,
       },
-      cache: "no-store",
     });
 
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("PhonePe V2 status error:", errorText);
-      throw new Error(`Status check failed with ${res.status}: ${errorText}`);
-    }
-
-    const data = await res.json();
-    console.log("✅ Payment status retrieved:", data);
-    return data;
+    console.log("✅ Payment status retrieved:", response.data);
+    return response.data;
   } catch (error: any) {
     console.error("❌ Failed to check payment status:", error.message);
+    if (error.response) {
+        console.error('Status Check Response Status:', error.response.status);
+        console.error('Status Check Response Data:', JSON.stringify(error.response.data, null, 2));
+    }
     throw error;
   }
 }
@@ -95,43 +84,34 @@ export async function initiateRefundV2(
   amount: number
 ) {
   const phonepeBaseUrl = process.env.PHONEPE_BASE_URL;
-  const phonepeClientId = process.env.PHONEPE_CLIENT_ID;
-
-  if (!phonepeBaseUrl || !phonepeClientId) {
+  if (!phonepeBaseUrl) {
       throw new Error("PhonePe environment variables not set for refund.");
   }
   const token = await getPhonePeTokenV2();
-
-  const refundUrl = `${phonepeBaseUrl}/pg/payments/v2/refund`;
+  const refundUrl = `${phonepeBaseUrl}/payments/v2/refund`;
 
   const payload = {
-    merchantId: phonepeClientId,
+    merchantId: process.env.PHONEPE_CLIENT_ID,
     merchantRefundId,      // must be unique refund id
     originalTransactionId, // PhonePe txn id
     amount: amount * 100,  // paise
   };
 
   try {
-    const res = await fetch(refundUrl, {
-      method: "POST",
+    const response = await axios.post(refundUrl, payload, {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `O-Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
     });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error("PhonePe V2 refund error:", errorText);
-      throw new Error(`Refund failed with ${res.status}: ${errorText}`);
-    }
-
-    const data = await res.json();
-    console.log("✅ Refund initiated:", data);
-    return data;
+    console.log("✅ Refund initiated:", response.data);
+    return response.data;
   } catch (error: any) {
     console.error("❌ Failed to initiate refund:", error.message);
+     if (error.response) {
+        console.error('Refund Response Status:', error.response.status);
+        console.error('Refund Response Data:', JSON.stringify(error.response.data, null, 2));
+    }
     throw error;
   }
 }
