@@ -111,14 +111,13 @@ export async function POST(req: Request) {
     });
 
     // Call PhonePe payment API
-    const paymentUrl = `${phonepeBaseUrl}/checkout/v2/pay`;
+    const paymentUrl = `${phonepeBaseUrl}/pg/checkout/v2/pay`;
     
     const res = await fetch(paymentUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": phonepeClientId,
+        "Authorization": `O-Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });

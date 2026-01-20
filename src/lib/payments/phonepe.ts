@@ -8,17 +8,16 @@ export async function getPhonePeTokenV2(): Promise<string> {
   const clientVersion = process.env.PHONEPE_CLIENT_VERSION;
 
   if (!clientId || !clientSecret || !clientVersion) {
-    throw new Error("Missing PhonePe V2 credentials. Check environment variables.");
+    throw new Error("Missing PhonePe V2 credentials. Check environment variables: CLIENT_ID, CLIENT_SECRET, CLIENT_VERSION");
   }
   
-  // As per docs, this URL is for production
   const authUrl = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
 
   try {
     const formData = new URLSearchParams();
     formData.append('client_id', clientId);
-    formData.append('client_secret', clientSecret);
     formData.append('client_version', clientVersion);
+    formData.append('client_secret', clientSecret);
     formData.append('grant_type', 'client_credentials');
 
     const res = await fetch(authUrl, {
@@ -31,7 +30,7 @@ export async function getPhonePeTokenV2(): Promise<string> {
     });
 
     const responseData = await res.json();
-
+    
     if (!res.ok) {
       console.error("PhonePe V2 token error response:", responseData);
       throw new Error(`Token API failed with status ${res.status}: ${responseData?.msg || "Unknown authentication error"}`);
@@ -44,6 +43,7 @@ export async function getPhonePeTokenV2(): Promise<string> {
 
     console.log("✅ PhonePe V2 token obtained successfully");
     return responseData.access_token;
+
   } catch (error: any) {
     console.error("❌ Failed to get PhonePe token:", error.message);
     throw error;
@@ -61,15 +61,14 @@ export async function getStatusV2(merchantTransactionId: string) {
 
   const token = await getPhonePeTokenV2();
 
-  const statusUrl = `${phonepeBaseUrl}/checkout/v2/order/${merchantTransactionId}/status`;
+  const statusUrl = `${phonepeBaseUrl}/pg/checkout/v2/order/${merchantTransactionId}/status`;
 
   try {
     const res = await fetch(statusUrl, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": phonepeClientId,
+        "Authorization": `O-Bearer ${token}`,
       },
       cache: "no-store",
     });
@@ -117,8 +116,7 @@ export async function initiateRefundV2(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": phonepeClientId,
+        "Authorization": `O-Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
