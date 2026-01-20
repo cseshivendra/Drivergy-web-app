@@ -3,14 +3,31 @@
 
 import axios from 'axios';
 
+// V2 AUTH TOKEN CACHING
+let tokenCache = {
+  token: null as string | null,
+  expiresAt: 0,
+};
+
 // -------- V2 AUTH TOKEN --------
 export async function getPhonePeTokenV2(): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  // Use cached token if it's still valid for at least 5 more minutes (300s)
+  if (tokenCache.token && tokenCache.expiresAt > now + 300) {
+    console.log('Using cached PhonePe auth token');
+    return tokenCache.token;
+  }
+
+  console.log(`Fetching new PhonePe auth token...`);
+
   const clientId = process.env.PHONEPE_CLIENT_ID;
   const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
   const clientVersion = process.env.PHONEPE_CLIENT_VERSION;
 
   if (!clientId || !clientSecret || !clientVersion) {
-    throw new Error("Missing PhonePe V2 credentials. Check environment variables: CLIENT_ID, CLIENT_SECRET, CLIENT_VERSION");
+    throw new Error(
+      "Missing PhonePe V2 credentials. Check environment variables: PHONEPE_CLIENT_ID, PHONEPE_CLIENT_SECRET, PHONEPE_CLIENT_VERSION"
+    );
   }
   
   const authUrl = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
@@ -22,23 +39,29 @@ export async function getPhonePeTokenV2(): Promise<string> {
     formData.append('client_secret', clientSecret);
     formData.append('grant_type', 'client_credentials');
     
-    // Explicitly convert the form data to a string to ensure correct encoding.
-    const requestBody = formData.toString();
-
+    // Pass the URLSearchParams object directly to axios as per the reference code.
     const response = await axios({
         method: 'post',
         url: authUrl,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        data: requestBody,
+        data: formData,
     });
-    
+
     if (!response.data || !response.data.access_token) {
       console.error("Invalid auth response from PhonePe:", response.data);
       throw new Error('Invalid auth response from PhonePe: Missing access_token');
     }
 
     console.log("✅ PhonePe V2 token obtained successfully");
-    return response.data.access_token;
+
+    // Cache the new token and its expiry time
+    tokenCache = {
+      token: response.data.access_token,
+      // Use expires_at if available, otherwise default to 1 hour (3600s)
+      expiresAt: response.data.expires_at || (now + 3600), 
+    };
+    
+    return tokenCache.token;
 
   } catch (error: any) {
     console.error('Error getting PhonePe auth token:', error.message);
@@ -46,7 +69,6 @@ export async function getPhonePeTokenV2(): Promise<string> {
       console.error('Response Status:', error.response.status);
       console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
     }
-    // Re-throw a more specific error to be caught by the API route
     const errorMessage = error.response?.data?.msg || error.response?.data?.message || "Failed to obtain payment gateway token";
     throw new Error(errorMessage);
   }
