@@ -1,45 +1,32 @@
 
 'use server';
 
-// -------- ENV --------
-export async function phonepeEnv() {
-  if (
-    !process.env.PHONEPE_BASE_URL ||
-    !process.env.PHONEPE_CLIENT_ID ||
-    !process.env.PHONEPE_CLIENT_SECRET ||
-    !process.env.PHONEPE_CLIENT_VERSION
-  ) {
-    throw new Error("Missing PhonePe V2 credentials. Please check environment variables.");
-  }
-
-  return {
-    baseUrl: process.env.PHONEPE_BASE_URL,
-    clientId: process.env.PHONEPE_CLIENT_ID,
-    clientSecret: process.env.PHONEPE_CLIENT_SECRET,
-    clientVersion: process.env.PHONEPE_CLIENT_VERSION,
-  };
-}
-
 // -------- V2 AUTH TOKEN --------
-export async function getPhonePeTokenV2() {
-  const { clientId, clientSecret, clientVersion } = await phonepeEnv();
+export async function getPhonePeTokenV2(): Promise<string> {
+  const clientId = process.env.PHONEPE_CLIENT_ID;
+  const clientSecret = process.env.PHONEPE_CLIENT_SECRET;
+  const clientVersion = process.env.PHONEPE_CLIENT_VERSION;
+
+  if (!clientId || !clientSecret || !clientVersion) {
+    throw new Error("Missing PhonePe V2 credentials. Check environment variables.");
+  }
   
   // As per docs, this URL is for production
   const authUrl = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token";
 
   try {
-    const params = new URLSearchParams();
-    params.append('client_id', clientId);
-    params.append('client_secret', clientSecret);
-    params.append('client_version', clientVersion);
-    params.append('grant_type', 'client_credentials');
+    const formData = new URLSearchParams();
+    formData.append('client_id', clientId);
+    formData.append('client_secret', clientSecret);
+    formData.append('client_version', clientVersion);
+    formData.append('grant_type', 'client_credentials');
 
     const res = await fetch(authUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: params.toString(),
+      body: formData.toString(),
       cache: "no-store",
     });
 
@@ -65,10 +52,16 @@ export async function getPhonePeTokenV2() {
 
 // -------- V2 ORDER STATUS --------
 export async function getStatusV2(merchantTransactionId: string) {
-  const { baseUrl, clientId } = await phonepeEnv();
+  const phonepeBaseUrl = process.env.PHONEPE_BASE_URL;
+  const phonepeClientId = process.env.PHONEPE_CLIENT_ID;
+
+  if (!phonepeBaseUrl || !phonepeClientId) {
+      throw new Error("PhonePe environment variables not set for status check.");
+  }
+
   const token = await getPhonePeTokenV2();
 
-  const statusUrl = `${baseUrl}/pg/checkout/v2/order/${merchantTransactionId}/status`;
+  const statusUrl = `${phonepeBaseUrl}/checkout/v2/order/${merchantTransactionId}/status`;
 
   try {
     const res = await fetch(statusUrl, {
@@ -76,7 +69,7 @@ export async function getStatusV2(merchantTransactionId: string) {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": clientId,
+        "X-MERCHANT-ID": phonepeClientId,
       },
       cache: "no-store",
     });
@@ -102,13 +95,18 @@ export async function initiateRefundV2(
   originalTransactionId: string,
   amount: number
 ) {
-  const { baseUrl, clientId } = await phonepeEnv();
+  const phonepeBaseUrl = process.env.PHONEPE_BASE_URL;
+  const phonepeClientId = process.env.PHONEPE_CLIENT_ID;
+
+  if (!phonepeBaseUrl || !phonepeClientId) {
+      throw new Error("PhonePe environment variables not set for refund.");
+  }
   const token = await getPhonePeTokenV2();
 
-  const refundUrl = `${baseUrl}/pg/payments/v2/refund`;
+  const refundUrl = `${phonepeBaseUrl}/pg/payments/v2/refund`;
 
   const payload = {
-    merchantId: clientId,
+    merchantId: phonepeClientId,
     merchantRefundId,      // must be unique refund id
     originalTransactionId, // PhonePe txn id
     amount: amount * 100,  // paise
@@ -120,7 +118,7 @@ export async function initiateRefundV2(
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": clientId,
+        "X-MERCHANT-ID": phonepeClientId,
       },
       body: JSON.stringify(payload),
     });

@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { phonepeEnv, getPhonePeTokenV2 } from "@/lib/payments/phonepe";
+import { getPhonePeTokenV2 } from "@/lib/payments/phonepe";
 import { adminDb } from "@/lib/firebase/admin";
 
 export async function POST(req: Request) {
@@ -67,15 +67,15 @@ export async function POST(req: Request) {
     }
 
     // Get PhonePe configuration
-    const { baseUrl, clientId } = await phonepeEnv();
-    console.log("📱 PhonePe config loaded - Base URL:", baseUrl);
+    const phonepeBaseUrl = process.env.PHONEPE_BASE_URL;
+    const phonepeClientId = process.env.PHONEPE_CLIENT_ID;
     
     // Get OAuth token
     let token: string;
     try {
       token = await getPhonePeTokenV2();
     } catch (tokenError: any) {
-      console.error("❌ Token generation failed:", tokenError.message);
+      console.error("❌ Token generation failed in API route:", tokenError.message);
       
       // Update order status in DB
       await adminDb.collection("orders").doc(merchantTransactionId).update({
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
 
     // Prepare payment payload
     const payload = {
-      merchantId: clientId,
+      merchantId: phonepeClientId,
       merchantTransactionId,
       merchantUserId: userId.slice(0, 35), // PhonePe limit
       amount: Math.round(amount * 100), // Convert to paise
@@ -111,14 +111,14 @@ export async function POST(req: Request) {
     });
 
     // Call PhonePe payment API
-    const paymentUrl = `${baseUrl}/pg/checkout/v2/pay`;
+    const paymentUrl = `${phonepeBaseUrl}/checkout/v2/pay`;
     
     const res = await fetch(paymentUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": clientId,
+        "X-MERCHANT-ID": phonepeClientId,
       },
       body: JSON.stringify(payload),
     });
