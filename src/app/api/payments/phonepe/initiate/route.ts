@@ -17,6 +17,8 @@ export async function POST(req: Request) {
     
     const { amount, userId, plan, mobile } = await req.json();
 
+    console.log("📝 Payment initiation request:", { amount, userId, plan, mobile });
+
     if (!amount || !userId || !plan || !mobile) {
       return NextResponse.json(
         { error: "Missing required fields", details: "amount, userId, plan, and mobile are required" },
@@ -56,9 +58,6 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-
-    const phonepeBaseUrl = process.env.PHONEPE_BASE_URL;
-    const phonepeClientId = process.env.PHONEPE_CLIENT_ID;
     
     let token: string;
     try {
@@ -71,25 +70,48 @@ export async function POST(req: Request) {
         updatedAt: new Date().toISOString(),
       });
       return NextResponse.json(
-        { error: "Authentication Failed", details: tokenError.message },
+        { error: "Authentication Failed", details: tokenError.message || "Failed to obtain payment gateway token" },
         { status: 500 }
       );
     }
 
     const payload = {
-      merchantId: phonepeClientId,
-      merchantTransactionId,
-      merchantUserId: userId.slice(0, 35),
-      amount: Math.round(amount * 100),
-      redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${merchantTransactionId}`,
-      callbackUrl: `${process.env.APP_BASE_URL}/api/payments/phonepe/webhook`,
-      mobileNumber: mobile,
-      paymentInstrument: {
-        type: "PAY_PAGE"
-      },
+        merchantTransactionId: merchantTransactionId,
+        amount: Math.round(amount * 100),
+        expireAfter: 1200,
+        metaInfo: {
+            udf1: userId,
+            udf2: plan,
+            udf3: mobile,
+            udf4: "",
+            udf5: "",
+            udf6: "",
+            udf7: "",
+            udf8: "",
+            udf9: "",
+            udf10: "",
+            udf11: "",
+            udf12: "",
+            udf13: "",
+            udf14: "",
+            udf15: ""
+        },
+        paymentFlow: {
+            type: "PG_CHECKOUT",
+            message: "Payment for Drivergy",
+            merchantUrls: {
+                redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${merchantTransactionId}`
+            }
+        },
+        disablePaymentRetry: true,
+        // Crucial fields from the original payload structure
+        merchantId: process.env.PHONEPE_CLIENT_ID,
+        merchantUserId: userId,
+        callbackUrl: `${process.env.APP_BASE_URL}/api/payments/phonepe/webhook`,
+        mobileNumber: mobile,
     };
 
-    const paymentUrl = `${phonepeBaseUrl}/checkout/v2/pay`;
+    const paymentUrl = `https://api.phonepe.com/apis/pg/checkout/v2/pay`;
     
     const response = await axios.post(paymentUrl, payload, {
         headers: {
@@ -120,18 +142,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const paymentRedirectUrl = responseData?.data?.instrumentResponse?.redirectInfo?.url;
+    // The redirect URL is now nested inside the `paymentFlow` response
+    const paymentRedirectUrl = responseData?.data?.paymentFlow?.merchantUrls?.redirectUrl;
     
     if (!paymentRedirectUrl) {
-      console.error("❌ Missing payment URL in response:", responseData);
+      console.error("❌ Missing payment URL in new response structure:", responseData);
       await adminDb.collection("orders").doc(merchantTransactionId).update({
         status: "INITIATION_FAILED",
-        error: "Missing payment redirect URL",
+        error: "Missing payment redirect URL in paymentFlow",
         phonepeResponse: responseData,
         updatedAt: new Date().toISOString(),
       });
       return NextResponse.json(
-        { error: "Invalid Response", details: "Payment URL not found in response" },
+        { error: "Invalid Response", details: "Payment URL not found in new response structure" },
         { status: 500 }
       );
     }
