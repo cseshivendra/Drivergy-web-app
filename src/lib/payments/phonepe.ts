@@ -1,6 +1,7 @@
 
 'use server';
 import axios from 'axios';
+import { URLSearchParams } from 'url';
 
 let tokenCache: { token: string | null; expiresAt: number } = {
   token: null,
@@ -20,6 +21,8 @@ export async function getPhonePeTokenV2(): Promise<string> {
     console.log('Using cached PhonePe auth token');
     return tokenCache.token!;
   }
+  
+  console.log('Fetching new PhonePe auth token');
 
   const formData = new URLSearchParams();
   formData.append('client_id', PHONEPE_CLIENT_ID);
@@ -42,6 +45,8 @@ export async function getPhonePeTokenV2(): Promise<string> {
       console.error('Invalid auth response from PhonePe:', tokenData);
       throw new Error('Invalid auth response from PhonePe: Missing access_token');
     }
+    
+    console.log('Auth token obtained successfully');
 
     tokenCache = {
       token: tokenData.access_token,
@@ -67,7 +72,7 @@ export async function getStatusV2(merchantOrderId: string) {
   const { PHONEPE_BASE_URL } = process.env;
 
   const url =
-    `${PHONEPE_BASE_URL}/v2/order/${merchantOrderId}/status`;
+    `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
 
   const response = await axios.get(url, {
     headers: {
