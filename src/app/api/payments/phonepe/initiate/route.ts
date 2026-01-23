@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     const payload = {
         merchantTransactionId: merchantTransactionId,
         amount: Math.round(amount * 100),
-        expireAfter: 1200,
+        expireAfter: 120
         paymentFlow: {
             type: "PG_CHECKOUT",
             message: "Payment for Drivergy",
