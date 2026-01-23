@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Configuration Error" }, { status: 500 });
     }
     
-    const credentials = `${webhookUser}:${password}`;
+    const credentials = `${webhookUser}:${webhookPass}`;
     const expectedHash = crypto.createHash('sha256').update(credentials).digest('hex');
 
     if (authHeader !== expectedHash) {
