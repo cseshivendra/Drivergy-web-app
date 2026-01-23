@@ -1,9 +1,9 @@
 
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { getPhonePeTokenV2 } from "@/lib/payments/phonepe";
 import { adminDb } from "@/lib/firebase/admin";
 import axios from 'axios';
+import { getPhonePeTokenV2 } from "@/lib/payments/phonepe";
 
 export async function POST(req: Request) {
   try {
@@ -125,19 +125,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // The redirect URL is now nested inside the `paymentFlow` response
-    const paymentRedirectUrl = responseData?.data?.paymentFlow?.merchantUrls?.redirectUrl;
+    // Correctly extract the redirect URL from the standard checkout response structure
+    const paymentRedirectUrl = responseData?.data?.instrumentResponse?.redirectInfo?.url;
     
     if (!paymentRedirectUrl) {
-      console.error("❌ Missing payment URL in new response structure:", responseData);
+      console.error("❌ Missing payment URL in instrumentResponse:", responseData);
       await adminDb.collection("orders").doc(merchantTransactionId).update({
         status: "INITIATION_FAILED",
-        error: "Missing payment redirect URL in paymentFlow",
+        error: "Missing payment redirect URL in instrumentResponse",
         phonepeResponse: responseData,
         updatedAt: new Date().toISOString(),
       });
       return NextResponse.json(
-        { error: "Invalid Response", details: "Payment URL not found in new response structure" },
+        { error: "Invalid Response", details: "Payment URL not found in API response" },
         { status: 500 }
       );
     }
