@@ -35,7 +35,7 @@ export async function getPhonePeTokenV2(): Promise<string> {
     const response = await axios({
       method: 'post',
       url: PHONEPE_AUTH_URL,
-      data: formData, // passing object directly
+      data: formData.toString(),
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -69,20 +69,44 @@ export async function getPhonePeTokenV2(): Promise<string> {
    PAYMENT STATUS
 ====================================================== */
 export async function getStatusV2(merchantOrderId: string) {
-  const token = await getPhonePeTokenV2();
-  const { PHONEPE_BASE_URL } = process.env;
+  try {
+    const token = await getPhonePeTokenV2();
+    const { PHONEPE_BASE_URL, PHONEPE_CLIENT_ID } = process.env;
 
-  const url =
-    `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
+    const url = `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
 
-  const response = await axios.get(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `O-Bearer ${token}`,
+    console.log(`🔍 Checking status for order: ${merchantOrderId}`);
+    console.log(`📡 Status API URL: ${url}`);
+
+    const response = await axios.get(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `O-Bearer ${token}`,
+        'X-MERCHANT-ID': PHONEPE_CLIENT_ID,
+      }
+    });
+
+    console.log(`✅ Status check successful:`, response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(`❌ Error checking status for ${merchantOrderId}:`, error.message);
+    
+    if (error.response) {
+      console.error('Response Status:', error.response.status);
+      console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
+      console.error('Response Headers:', JSON.stringify(error.response.headers, null, 2));
+      
+      // Throw error with response data for better debugging
+      const errorMessage = error.response.data?.message || error.response.data?.error || error.message;
+      throw new Error(`PhonePe API Error (${error.response.status}): ${errorMessage}`);
+    } else if (error.request) {
+      console.error('No response received from PhonePe API');
+      throw new Error('No response from PhonePe API - Check network connectivity');
+    } else {
+      console.error('Error setting up request:', error.message);
+      throw new Error(`Request setup error: ${error.message}`);
     }
-  });
-
-  return response.data;
+  }
 }
 
 /* ======================================================
