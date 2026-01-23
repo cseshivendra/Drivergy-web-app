@@ -35,7 +35,7 @@ export async function getPhonePeTokenV2(): Promise<string> {
     const response = await axios({
       method: 'post',
       url: PHONEPE_AUTH_URL,
-      data: formData.toString(),
+      data: formData, // passing object directly
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -70,7 +70,7 @@ export async function getPhonePeTokenV2(): Promise<string> {
 ====================================================== */
 export async function getStatusV2(merchantOrderId: string) {
   const token = await getPhonePeTokenV2();
-  const { PHONEPE_BASE_URL, PHONEPE_CLIENT_ID } = process.env;
+  const { PHONEPE_BASE_URL } = process.env;
 
   const url =
     `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
@@ -79,7 +79,6 @@ export async function getStatusV2(merchantOrderId: string) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `O-Bearer ${token}`,
-      'X-MERCHANT-ID': PHONEPE_CLIENT_ID,
     }
   });
 
