@@ -1,4 +1,6 @@
 
+'use server';
+
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { adminDb } from "@/lib/firebase/admin";
@@ -108,40 +110,27 @@ export async function POST(req: Request) {
     console.log("📡 PhonePe API response status:", response.status);
     console.log("📡 PhonePe API response data:", responseData);
 
-    if (!responseData.success) {
-      console.error("❌ PhonePe returned success=false:", responseData);
+    const paymentRedirectUrl = responseData?.redirectUrl;
+    
+    if (!paymentRedirectUrl) {
+      const errorMessage = responseData.message || "Payment initiation failed and no redirect URL was provided.";
+      console.error("❌ Missing payment URL in PhonePe response:", responseData);
       await adminDb.collection("orders").doc(merchantTransactionId).update({
         status: "INITIATION_FAILED",
-        error: responseData.message || "Payment initiation unsuccessful",
+        error: errorMessage,
         phonepeResponse: responseData,
         updatedAt: new Date().toISOString(),
       });
       return NextResponse.json(
         { 
           error: "Payment Initiation Failed", 
-          details: responseData.message || "Payment initiation unsuccessful"
+          details: errorMessage
         },
         { status: 500 }
       );
     }
 
-    // Correctly extract the redirect URL from the standard checkout response structure
-    const paymentRedirectUrl = responseData?.data?.instrumentResponse?.redirectInfo?.url;
-    
-    if (!paymentRedirectUrl) {
-      console.error("❌ Missing payment URL in instrumentResponse:", responseData);
-      await adminDb.collection("orders").doc(merchantTransactionId).update({
-        status: "INITIATION_FAILED",
-        error: "Missing payment redirect URL in instrumentResponse",
-        phonepeResponse: responseData,
-        updatedAt: new Date().toISOString(),
-      });
-      return NextResponse.json(
-        { error: "Invalid Response", details: "Payment URL not found in API response" },
-        { status: 500 }
-      );
-    }
-
+    // If we have a redirectUrl, it's a success, regardless of the 'success' flag
     await adminDb.collection("orders").doc(merchantTransactionId).update({
       status: "PAYMENT_PENDING",
       paymentUrl: paymentRedirectUrl,
