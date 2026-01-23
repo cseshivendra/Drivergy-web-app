@@ -1,4 +1,5 @@
 
+
 'use server';
 import axios from 'axios';
 import { URLSearchParams } from 'url';
@@ -69,7 +70,7 @@ export async function getPhonePeTokenV2(): Promise<string> {
 ====================================================== */
 export async function getStatusV2(merchantOrderId: string) {
   const token = await getPhonePeTokenV2();
-  const { PHONEPE_BASE_URL } = process.env;
+  const { PHONEPE_BASE_URL, PHONEPE_CLIENT_ID } = process.env;
 
   const url =
     `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`;
@@ -77,7 +78,8 @@ export async function getStatusV2(merchantOrderId: string) {
   const response = await axios.get(url, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `O-Bearer ${token}`
+      'Authorization': `O-Bearer ${token}`,
+      'X-MERCHANT-ID': PHONEPE_CLIENT_ID,
     }
   });
 
@@ -115,3 +117,4 @@ export async function initiateRefundV2(
 
   return response.data;
 }
+
