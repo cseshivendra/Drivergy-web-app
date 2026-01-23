@@ -1,3 +1,4 @@
+'use client';
 
 import type { LucideIcon } from 'lucide-react'; // Keep for type documentation if needed, or remove if React.ElementType is sufficient
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -37,7 +37,7 @@ export default function RtoServicesPage() {
                                 <div className="p-3 bg-primary/10 rounded-lg">
                                     <service.icon className="h-7 w-7 text-primary" />
                                 </div>
-                                <CardTitle as="h2" className="font-headline text-xl text-primary">{service.title}</CardTitle>
+                                <CardTitle asChild className="font-headline text-xl text-primary"><h2>{service.title}</h2></CardTitle>
                             </div>
                         </CardHeader>
                         <CardContent className="flex-grow">

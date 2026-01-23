@@ -41,6 +41,23 @@ const nextConfig = {
       },
     ],
   },
+   async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
+          },
+        ],
+      },
+    ];
+  },
   serverExternalPackages: ['@genkit-ai/core', 'genkit'],
 };
 

@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
@@ -30,9 +32,9 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & {asChild?: boolean}
+>(({ className, asChild, ...props }, ref) => (
   <h3
     ref={ref}
     className={cn(

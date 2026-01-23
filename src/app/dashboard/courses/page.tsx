@@ -57,7 +57,7 @@ export default async function CoursesPage() {
                 </div>
               )}
               <CardHeader className="pb-3">
-                <CardTitle as="h2" className="font-headline text-2xl font-semibold text-primary">{course.title}</CardTitle>
+                <CardTitle className="font-headline text-2xl font-semibold text-primary">{course.title}</CardTitle>
                 <CardDescription className="text-sm text-muted-foreground pt-1 min-h-[3.5rem]">{course.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5 flex-grow">

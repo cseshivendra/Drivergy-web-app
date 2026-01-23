@@ -6,7 +6,7 @@ import { getStatusV2 } from "@/lib/payments/phonepe";
 
 export async function POST(req: Request) {
     // 1. Authenticate the webhook request
-    const headersList = headers();
+    const headersList = await headers();
     const authHeader = headersList.get('authorization');
     const webhookUser = process.env.PHONEPE_WEBHOOK_USER;
     const webhookPass = process.env.PHONEPE_WEBHOOK_PASS;

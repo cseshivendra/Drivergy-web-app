@@ -46,6 +46,7 @@ export async function POST(req: Request) {
     // Generate unique merchant transaction ID
     const merchantTransactionId = "DRV_" + uuidv4().replace(/-/g, '').slice(0, 30);
 
+
     // Create order in database
     try {
       await adminDb.collection("orders").doc(merchantTransactionId).set({
@@ -74,6 +75,7 @@ export async function POST(req: Request) {
     let token: string;
     try {
       token = await getPhonePeTokenV2();
+      // console.log(" Phonepe Token: ", token);
     } catch (tokenError: any) {
       console.error("❌ Token generation failed:", tokenError.message);
       
@@ -93,21 +95,53 @@ export async function POST(req: Request) {
 
     // Prepare payment payload
     const payload = {
-      merchantId: clientId,
-      merchantTransactionId,
-      merchantUserId: userId.slice(0, 35), // PhonePe limit
-      amount: Math.round(amount * 100), // Convert to paise
-      redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${merchantTransactionId}`,
-      callbackUrl: `${process.env.APP_BASE_URL}/api/payments/phonepe/webhook`,
-      mobileNumber: mobile,
-      paymentInstrument: {
-        type: "PAY_PAGE"
-      },
-    };
+      // merchantId: clientId,
+      // merchantTransactionId,
+      // merchantUserId: userId.slice(0, 35), // PhonePe limit
+      // amount: Math.round(amount * 100), // Convert to paise
+      // redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${merchantTransactionId}`,
+      // callbackUrl: `${process.env.APP_BASE_URL}/api/payments/phonepe/webhook`,
+      // mobileNumber: mobile,
+      // paymentInstrument: {
+      //   type: "PAY_PAGE"
+      // },
+    
+    "merchantOrderId": "TX123457",
+    "amount": 1000,
+    "expireAfter": 1200,
+    // "metaInfo": {
+    //     "udf1": "additional-information-1",
+    //     "udf2": "additional-information-2",
+    //     "udf3": "additional-information-3",
+    //     "udf4": "additional-information-4",
+    //     "udf5": "additional-information-5",
+    //     "udf6": "additional-information-6",
+    //     "udf7": "additional-information-7",
+    //     "udf8": "additional-information-8",
+    //     "udf9": "additional-information-9",
+    //     "udf10": "additional-information-10",
+    //     "udf11": "additional-information-11",
+    //     "udf12": "additional-information-12",
+    //     "udf13": "additional-information-13",
+    //     "udf14": "additional-information-14",
+    //     "udf15": "additional-information-15"
+    // },
+    "paymentFlow": {
+        "type": "PG_CHECKOUT",
+        "message": "Payment message used for collect requests",
+        "merchantUrls": {
+            "redirectUrl": "https://www.drivergy.in/#services"
+        }
+    },
+    "disablePaymentRetry": true
+
+};
+    
 
     console.log("💳 Initiating payment with payload:", {
       ...payload,
-      amount: `₹${amount} (${payload.amount} paise)`
+      // amount: `₹${amount} (${payload.amount} paise)`
+      amount: `${payload.amount}`
     });
 
     // Call PhonePe payment API
@@ -117,8 +151,8 @@ export async function POST(req: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-        "X-MERCHANT-ID": clientId,
+        "Authorization": `O-Bearer ${token}`,
+        // "X-MERCHANT-ID": clientId,
       },
       body: JSON.stringify(payload),
     });
@@ -148,7 +182,6 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-
     // Validate success response from PhonePe
     if (!responseData.success) {
       console.error("❌ PhonePe returned success=false:", responseData);
