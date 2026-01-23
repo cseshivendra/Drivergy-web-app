@@ -79,23 +79,6 @@ export async function POST(req: Request) {
         merchantTransactionId: merchantTransactionId,
         amount: Math.round(amount * 100),
         expireAfter: 1200,
-        metaInfo: {
-            udf1: userId,
-            udf2: plan,
-            udf3: mobile,
-            udf4: "",
-            udf5: "",
-            udf6: "",
-            udf7: "",
-            udf8: "",
-            udf9: "",
-            udf10: "",
-            udf11: "",
-            udf12: "",
-            udf13: "",
-            udf14: "",
-            udf15: ""
-        },
         paymentFlow: {
             type: "PG_CHECKOUT",
             message: "Payment for Drivergy",
