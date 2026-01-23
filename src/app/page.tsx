@@ -378,12 +378,12 @@ export default function HomePage() {
                                         <span className="font-semibold">Duration:</span>
                                         <span className="font-bold text-lg">{mod.duration}</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-primary">₹999</p>
+                                    <p className="text-2xl font-bold text-primary">₹1</p>
                                 </div>
                             </CardContent>
                             <CardFooter className="mt-auto pt-4 border-t border-border/50">
                                 <Button className="w-full" asChild>
-                                    <Link href="/payment?plan=Custom Module&price=999">Ride Now</Link>
+                                    <Link href="/payment?plan=Custom Module&price=1">Ride Now</Link>
                                 </Button>
                             </CardFooter>
                         </Card>
