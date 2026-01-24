@@ -753,7 +753,7 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     const startDate = startDateString ? parse(startDateString, 'MMM dd, yyyy', new Date()) : new Date();
 
     const updatePayload = {
-        approvalStatus: 'Approved',
+        approvalStatus: 'In Progress',
         assignedTrainerId: trainerId,
         assignedTrainerName: trainerData.name,
         assignedTrainerPhone: trainerData.phone,
@@ -1004,3 +1004,41 @@ export async function updateStudentProgress(studentId: string, skills: Skill[], 
         return false;
     }
 }
+
+export async function unassignTrainerFromCustomer(customerId: string, trainerId: string): Promise<boolean> {
+    if (!adminDb) return false;
+
+    const customerRef = adminDb.collection('users').doc(customerId);
+    const customerDoc = await customerRef.get();
+    if (!customerDoc.exists) return false;
+    const customerData = customerDoc.data()!;
+
+    await customerRef.update({
+        approvalStatus: 'Pending', // Back to admin queue
+        assignedTrainerId: null,
+        assignedTrainerName: null,
+        assignedTrainerPhone: null,
+        assignedTrainerVehicleDetails: null,
+        upcomingLesson: null,
+        totalLessons: null,
+        completedLessons: null,
+    });
+    
+    // Find an admin to notify
+    const adminQuery = await adminDb.collection('users').where('isAdmin', '==', true).limit(1).get();
+    if (!adminQuery.empty) {
+        const adminId = adminQuery.docs[0].id;
+        await createNotification({ 
+            userId: adminId, 
+            message: `A trainer rejected the assignment for ${customerData.name}. Please re-assign.`, 
+            href: `/dashboard` 
+        });
+    }
+    
+    // Notify trainer (confirmation of action)
+    await createNotification({ userId: trainerId, message: `You have rejected the assignment for ${customerData.name}.`, href: '/dashboard' });
+
+    revalidatePath('/dashboard');
+    return true;
+}
+

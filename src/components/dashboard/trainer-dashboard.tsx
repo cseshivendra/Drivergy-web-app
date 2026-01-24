@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
-import { updateUserAttendance } from '@/lib/server-actions';
+import { updateUserAttendance, updateUserApprovalStatus, unassignTrainerFromCustomer } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
 import type { UserProfile, Feedback } from '@/types';
 import Link from 'next/link';
@@ -85,6 +85,31 @@ const TrainerDashboard = () => {
             await refetchData();
         } else {
             toast({ title: "Error", description: "Failed to update attendance.", variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+    
+    const handleAcceptRequest = async (studentId: string) => {
+        setIsSubmitting(true);
+        const result = await updateUserApprovalStatus({ userId: studentId, newStatus: 'Approved', role: 'customer' });
+        if (result.success) {
+            toast({ title: "Student Accepted", description: "The student has been added to your list." });
+            await refetchData();
+        } else {
+            toast({ title: "Error", description: result.error || "Failed to accept student.", variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
+    const handleRejectRequest = async (studentId: string) => {
+        if (!user) return;
+        setIsSubmitting(true);
+        const success = await unassignTrainerFromCustomer(studentId, user.id);
+        if (success) {
+            toast({ title: "Student Rejected", description: "The student has been removed from your requests." });
+            await refetchData();
+        } else {
+            toast({ title: "Error", description: "Failed to reject student.", variant: "destructive" });
         }
         setIsSubmitting(false);
     };
@@ -172,8 +197,8 @@ const TrainerDashboard = () => {
     const avgRating = feedback.length > 0 ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1) : 'N/A';
     const totalEarnings = students.reduce((acc, student) => acc + (student.completedLessons || 0) * 300, 0);
 
-    const newStudentRequests = students.filter(s => !s.assignedTrainerId || s.approvalStatus === 'In Progress');
-    const existingStudents = students.filter(s => s.assignedTrainerId && s.approvalStatus === 'Approved');
+    const newStudentRequests = students.filter(s => s.assignedTrainerId === user.id && s.approvalStatus === 'In Progress');
+    const existingStudents = students.filter(s => s.assignedTrainerId === user.id && s.approvalStatus === 'Approved');
     
     return (
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
@@ -187,7 +212,7 @@ const TrainerDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <SummaryCard title="Total Students" value={students.length} icon={Users} description="All students assigned to you" />
+                <SummaryCard title="Total Students" value={existingStudents.length} icon={Users} description="All active students assigned to you" />
                 <SummaryCard title="Total Earnings" value={`₹${totalEarnings.toLocaleString('en-IN')}`} icon={IndianRupee} description="Your gross earnings" />
                 <SummaryCard title="Upcoming Lessons" value={upcomingLessonsCount} icon={CalendarDays} description="Confirmed upcoming sessions" />
                 <SummaryCard title="Your Rating" value={avgRating} icon={Star} description="Average student rating" />
@@ -212,8 +237,8 @@ const TrainerDashboard = () => {
                                     <div className="flex items-center gap-2 text-muted-foreground"><Car className="h-4 w-4"/><span>{student.vehiclePreference}</span></div>
                                 </CardContent>
                                 <CardFooter className="grid grid-cols-2 gap-2">
-                                     <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAttendance(student.id, 'Present')} disabled={isSubmitting}><Check className="h-4 w-4 mr-1" /> Accept</Button>
-                                     <Button size="sm" variant="destructive" onClick={() => handleAttendance(student.id, 'Absent')} disabled={isSubmitting}><X className="h-4 w-4 mr-1" /> Reject</Button>
+                                     <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAcceptRequest(student.id)} disabled={isSubmitting}><Check className="h-4 w-4 mr-1" /> Accept</Button>
+                                     <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(student.id)} disabled={isSubmitting}><X className="h-4 w-4 mr-1" /> Reject</Button>
                                 </CardFooter>
                             </Card>
                         )) : (
@@ -265,9 +290,9 @@ const TrainerDashboard = () => {
                                         </div>
                                     ) : null }
                                      <Button asChild variant="outline" size="sm">
-                                        <Link href={`/dashboard/student-progress/${student.id}`}>
-                                            <BarChart className="h-4 w-4 mr-1" />
-                                            View Progress
+                                        <Link href={`/dashboard/users/${student.id}`} target="_blank">
+                                            <FileText className="h-4 w-4 mr-1" />
+                                            Details
                                         </Link>
                                     </Button>
                                 </CardFooter>
@@ -287,3 +312,4 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
+
