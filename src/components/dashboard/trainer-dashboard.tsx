@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, FileText, MessageSquare, ShieldCheck
+    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
@@ -293,9 +292,9 @@ const TrainerDashboard = () => {
                                         </div>
                                     ) : null }
                                      <Button asChild variant="outline" size="sm">
-                                        <Link href={`/dashboard/users/${student.id}`} target="_blank">
-                                            <FileText className="h-4 w-4 mr-1" />
-                                            Details
+                                        <Link href={`/dashboard/student-progress/${student.id}`}>
+                                            <BarChart className="h-4 w-4 mr-1" />
+                                            Manage Progress
                                         </Link>
                                     </Button>
                                 </CardFooter>
