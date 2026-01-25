@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -72,14 +71,14 @@ export default function LoginPage() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background z-10 transition-colors duration-500 ease-in-out"></div>
 
-      <div className="absolute top-6 right-6 z-30 flex items-center space-x-2">
+      {/* <div className="absolute top-6 right-6 z-30 flex items-center space-x-2">
         <Button variant="outline" size="icon" asChild className="bg-card/80 backdrop-blur-sm hover:bg-accent/80">
           <Link href="/" aria-label="Back to site"><Home className="h-5 w-5" /></Link>
         </Button>
         <Button variant="outline" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="bg-card/80 backdrop-blur-sm hover:bg-accent/80">
           {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
-      </div>
+      </div> */}
 
       <div className="relative z-20 flex min-h-screen flex-col items-center justify-center p-4">
         <Card className={`w-full max-w-md bg-card/90 backdrop-blur-md shadow-2xl rounded-xl border-border/50 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
