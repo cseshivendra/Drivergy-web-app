@@ -1042,3 +1042,5 @@ export async function unassignTrainerFromCustomer(customerId: string, trainerId:
     return true;
 }
 
+
+    
