@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck
+    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck, Eye
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
@@ -111,6 +111,14 @@ const TrainerDashboard = () => {
             toast({ title: "Error", description: "Failed to reject student.", variant: "destructive" });
         }
         setIsSubmitting(false);
+    };
+    
+    const handleViewDetails = (student: UserProfile) => {
+        window.open(`/dashboard/users/${student.id}`, '_blank');
+        toast({ 
+          title: "Opening Details",
+          description: `Opening details for ${student.name} in a new tab.`,
+        });
     };
 
     // UI state helper functions
@@ -235,12 +243,13 @@ const TrainerDashboard = () => {
                                 </CardHeader>
                                 <CardContent className="flex-grow space-y-3 text-sm">
                                     <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4"/><span>{student.phone}</span></div>
-                                    <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4"/><span>{student.location}</span></div>
+                                    <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4"/><span>{student.district || student.location}</span></div>
                                     <div className="flex items-center gap-2 text-muted-foreground"><Car className="h-4 w-4"/><span>{student.vehiclePreference}</span></div>
                                 </CardContent>
-                                <CardFooter className="grid grid-cols-2 gap-2">
+                                <CardFooter className="grid grid-cols-3 gap-2">
                                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAcceptRequest(student.id)} disabled={isSubmitting}><Check className="h-4 w-4 mr-1" /> Accept</Button>
                                      <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(student.id)} disabled={isSubmitting}><X className="h-4 w-4 mr-1" /> Reject</Button>
+                                     <Button size="sm" variant="outline" onClick={() => handleViewDetails(student)} disabled={isSubmitting}><Eye className="h-4 w-4 mr-1" /> Details</Button>
                                 </CardFooter>
                             </Card>
                         )) : (
@@ -314,3 +323,5 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
+
+    
