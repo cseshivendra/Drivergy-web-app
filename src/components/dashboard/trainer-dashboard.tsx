@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, FileText, MessageSquare 
+    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, FileText, MessageSquare, ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
@@ -204,8 +204,11 @@ const TrainerDashboard = () => {
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
+                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                         Welcome, {trainerProfile.name}!
+                        {trainerProfile.approvalStatus === 'Approved' && (
+                            <ShieldCheck className="h-7 w-7 text-green-500" />
+                        )}
                     </h1>
                     <p className="text-muted-foreground mt-1">Manage your students and track your progress.</p>
                 </div>
@@ -312,4 +315,3 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
-
