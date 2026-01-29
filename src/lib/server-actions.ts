@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { z } from 'zod';
@@ -89,7 +88,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             return { success: false, error: firstError };
         }
 
-        const { password, name, phone, gender, location, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber } = validationResult.data;
+        const { password, name, phone, gender, state, district, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, yearsOfExperience } = validationResult.data;
 
         try {
             const userRecord = await adminAuth.createUser({
@@ -114,12 +113,15 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 userRole: 'trainer',
                 subscriptionPlan: 'Trainer',
                 approvalStatus: 'Pending',
-                location,
+                location: district,
+                state,
+                district,
                 specialization,
                 vehicleInfo: `${trainerVehicleType} (${fuelType})`,
                 vehicleNumber,
                 drivingLicenseNumber,
                 registrationTimestamp: new Date().toISOString(),
+                yearsOfExperience,
             };
             
             await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
@@ -1042,5 +1044,7 @@ export async function unassignTrainerFromCustomer(customerId: string, trainerId:
     return true;
 }
 
+
+    
 
     

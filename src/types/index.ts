@@ -25,7 +25,7 @@ export const SkillStatusOptions = ['Not Started', 'Needs Practice', 'Proficient'
 export const IndianStates = ["Uttar Pradesh"] as const;
 
 export const DistrictsByState = {
-  "Uttar Pradesh": ["Prayagraj"],
+  "Uttar Pradesh": ["Prayagraj", "Kanpur", "Lucknow", "Varanasi"],
 } as const;
 
 // =================================================================
@@ -139,7 +139,8 @@ export type CustomerRegistrationFormValues = z.infer<typeof CustomerRegistration
 
 export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     userRole: z.literal('trainer'),
-    location: z.enum(Locations, { required_error: "Location is required." }),
+    state: z.string().min(1, 'State is required.'),
+    district: z.string().min(1, 'District is required.'),
     specialization: z.enum(SpecializationOptions, { required_error: "Specialization is required." }),
     trainerVehicleType: z.enum(TrainerVehicleTypeOptions, { required_error: "Vehicle type is required." }),
     fuelType: z.enum(FuelTypeOptions, { required_error: "Fuel type is required." }),
@@ -544,3 +545,5 @@ export interface PriceData {
     amazonPrice: number | null;
     flipkartPrice: number | null;
 }
+
+    

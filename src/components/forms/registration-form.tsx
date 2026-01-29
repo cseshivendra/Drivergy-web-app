@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,9 +23,11 @@ import {
   TrainerVehicleTypeOptions,
   FuelTypeOptions,
   GenderOptions,
+  IndianStates,
+  DistrictsByState,
 } from '@/types';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { registerUserAction } from '@/lib/server-actions';
@@ -54,12 +57,14 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       confirmPassword: '', 
       phone: '',
       gender: undefined,
-      location: undefined, 
+      state: '',
+      district: '',
       specialization: undefined, 
       trainerVehicleType: undefined,
       fuelType: undefined, 
       vehicleNumber: '', 
       drivingLicenseNumber: '',
+      yearsOfExperience: undefined,
     },
     mode: 'onBlur',
   });
@@ -67,6 +72,24 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { isSubmitting } = form.formState;
+  const { watch, setValue } = form;
+
+  const selectedState = watch('state');
+
+  const availableDistricts = useMemo(() => {
+    if (selectedState && DistrictsByState[selectedState as keyof typeof DistrictsByState]) {
+      return DistrictsByState[selectedState as keyof typeof DistrictsByState];
+    }
+    return [];
+  }, [selectedState]);
+
+  useEffect(() => {
+    const currentDistrict = form.getValues('district');
+    if (selectedState && currentDistrict && !availableDistricts.includes(currentDistrict)) {
+      setValue('district', '');
+    }
+  }, [selectedState, form, setValue, availableDistricts]);
+
 
   const handleSubmit = async (data: RegistrationFormValues) => {
       setError(undefined); // Clear previous errors
@@ -149,10 +172,57 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
           <>
             <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Professional Details</h3>
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                 <FormField control={form.control} name="location" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />Location<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger></FormControl><SelectContent>{Locations.map(loc => ( <SelectItem key={loc} value={loc}>{loc}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
+                <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />State<span className="text-destructive ml-1">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {IndianStates.map(state => (
+                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="district"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="flex items-center"><MapPin className="mr-2 h-4 w-4 text-primary" />District<span className="text-destructive ml-1">*</span></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedState || availableDistricts.length === 0}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select district" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {availableDistricts.length > 0 ? (
+                                availableDistricts.map(district => (
+                                    <SelectItem key={district} value={district}>{district}</SelectItem>
+                                ))
+                                ) : (
+                                <SelectItem value="disabled" disabled>Select a state first</SelectItem>
+                                )}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
                 <FormField control={form.control} name="specialization" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Bike className="mr-2 h-4 w-4 text-primary" />Specialization<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select specialization" /></SelectTrigger></FormControl><SelectContent>{SpecializationOptions.map(spec => ( <SelectItem key={spec} value={spec}>{spec}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
             </div>
-            <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            <FormField control={form.control} name="yearsOfExperience" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Years of Experience<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input type="number" placeholder="e.g., 5" {...field} onChange={event => field.onChange(+event.target.value)}/></FormControl><FormMessage /></FormItem> )} />
             <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
                 <FormField control={form.control} name="trainerVehicleType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Type of Vehicle Used for Training<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select vehicle type" /></SelectTrigger></FormControl><SelectContent>{TrainerVehicleTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="fuelType" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Fuel className="mr-2 h-4 w-4 text-primary" />Type of Fuel<span className="text-destructive ml-1">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue placeholder="Select fuel type" /></SelectTrigger></FormControl><SelectContent>{FuelTypeOptions.map(type => ( <SelectItem key={type} value={type}>{type}</SelectItem> ))}</SelectContent></Select><FormMessage /></FormItem> )} />
@@ -174,3 +244,5 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
     </Form>
   );
 }
+
+    
