@@ -88,7 +88,7 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             return { success: false, error: firstError };
         }
 
-        const { password, name, phone, gender, state, district, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, yearsOfExperience } = validationResult.data;
+        const { password, name, phone, gender, state, district, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, yearsOfExperience, drivingSchoolName, ownerName, drivingSchoolCertificateNumber } = validationResult.data;
 
         try {
             const userRecord = await adminAuth.createUser({
@@ -122,6 +122,9 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 drivingLicenseNumber,
                 registrationTimestamp: new Date().toISOString(),
                 yearsOfExperience,
+                drivingSchoolName,
+                ownerName,
+                drivingSchoolCertificateNumber,
             };
             
             await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);

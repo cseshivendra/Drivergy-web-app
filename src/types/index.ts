@@ -97,6 +97,9 @@ export const UserProfileSchema = z.object({
   drivingLicenseNumber: z.string().optional(),
   expertise: z.string().optional(),
   yearsOfExperience: z.number().optional(),
+  drivingSchoolName: z.string().optional(),
+  ownerName: z.string().optional(),
+  drivingSchoolCertificateNumber: z.string().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
@@ -147,6 +150,9 @@ export const TrainerRegistrationFormSchema = baseRegistrationSchema.extend({
     vehicleNumber: z.string().min(1, 'Vehicle number is required.'),
     drivingLicenseNumber: z.string().min(1, 'License number is required.'),
     yearsOfExperience: z.coerce.number().min(1, 'Experience is required.'),
+    drivingSchoolName: z.string().optional(),
+    ownerName: z.string().optional(),
+    drivingSchoolCertificateNumber: z.string().optional(),
 });
 export type TrainerRegistrationFormValues = z.infer<typeof TrainerRegistrationFormSchema>;
 
@@ -545,5 +551,3 @@ export interface PriceData {
     amazonPrice: number | null;
     flipkartPrice: number | null;
 }
-
-    

@@ -65,6 +65,9 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       vehicleNumber: '', 
       drivingLicenseNumber: '',
       yearsOfExperience: undefined,
+      drivingSchoolName: '',
+      ownerName: '',
+      drivingSchoolCertificateNumber: '',
     },
     mode: 'onBlur',
   });
@@ -231,6 +234,12 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
                 <FormField control={form.control} name="vehicleNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ScanLine className="mr-2 h-4 w-4 text-primary" />Vehicle Registration Number<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="e.g., MH01AB1234" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="drivingLicenseNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><UserSquare2 className="mr-2 h-4 w-4 text-primary" />Driving License No.<span className="text-destructive ml-1">*</span></FormLabel><FormControl><Input placeholder="Enter DL number" {...field} /></FormControl><FormMessage /></FormItem> )} />
             </div>
+            <h3 className="text-lg font-medium leading-6 text-foreground pt-4 border-b pb-2 mb-6">Driving School Details (Optional)</h3>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                <FormField control={form.control} name="drivingSchoolName" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><Car className="mr-2 h-4 w-4 text-primary" />Driving School Name</FormLabel><FormControl><Input placeholder="Your driving school" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="ownerName" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><User className="mr-2 h-4 w-4 text-primary" />Owner Name</FormLabel><FormControl><Input placeholder="Owner of the school" {...field} /></FormControl><FormMessage /></FormItem> )} />
+            </div>
+            <FormField control={form.control} name="drivingSchoolCertificateNumber" render={({ field }) => ( <FormItem><FormLabel className="flex items-center"><ShieldCheck className="mr-2 h-4 w-4 text-primary" />Driving School Certificate No.</FormLabel><FormControl><Input placeholder="Certificate number" {...field} /></FormControl><FormMessage /></FormItem> )} />
           </>
         )}
 
@@ -244,5 +253,3 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
     </Form>
   );
 }
-
-    
