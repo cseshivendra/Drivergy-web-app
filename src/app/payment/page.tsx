@@ -6,12 +6,14 @@ import { useAuth } from '@/context/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, ShieldCheck, User, Phone, Mail, IndianRupee, UserPlus, Lock } from 'lucide-react';
+import { Loader2, ShieldCheck, User, Phone, Mail, IndianRupee, UserPlus, Lock, Ticket } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
 import { DrivergyLogo } from '@/components/ui/logo';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -29,6 +31,10 @@ export default function PaymentPage() {
     
     const plan = searchParams.get('plan') || 'Selected Plan';
     const price = searchParams.get('price') || '0';
+
+    const [referralCode, setReferralCode] = useState('');
+    const [finalPrice, setFinalPrice] = useState(price);
+    const [discountApplied, setDiscountApplied] = useState(false);
     
     useEffect(() => {
         if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
@@ -39,7 +45,32 @@ export default function PaymentPage() {
             router.push('/dashboard');
         }
     }, [user, authLoading, router, toast]);
+
+    useEffect(() => {
+      setFinalPrice(price);
+    }, [price]);
     
+    const handleApplyCode = () => {
+        if (referralCode.trim().toUpperCase() === 'DRIVERGY10') {
+          const originalPrice = parseInt(price, 10);
+          if (isNaN(originalPrice) || originalPrice <= 0) return;
+    
+          const discountAmount = originalPrice * 0.10;
+          setFinalPrice((originalPrice - discountAmount).toString());
+          setDiscountApplied(true);
+          toast({
+            title: "Discount Applied!",
+            description: "A 10% discount has been applied to your order."
+          });
+        } else {
+          toast({
+            title: "Invalid Code",
+            description: "The referral or discount code you entered is not valid.",
+            variant: "destructive"
+          });
+        }
+    };
+
     const handlePayment = async () => {
         if (!user || !user.phone) {
             toast({ title: 'Authentication Error', description: 'You must be logged in and have a phone number on your profile to make a payment.', variant: 'destructive' });
@@ -52,7 +83,7 @@ export default function PaymentPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: parseInt(price, 10),
+                    amount: parseInt(finalPrice, 10),
                     userId: user.id,
                     plan: plan,
                     mobile: user.phone,
@@ -156,13 +187,45 @@ export default function PaymentPage() {
                         </div>
                     </div>
 
+                    <div className="space-y-2 border-t pt-4">
+                        <Label htmlFor="referral-code" className="flex items-center text-sm"><Ticket className="mr-2 h-4 w-4" />Referral/Discount Code</Label>
+                        <div className="flex space-x-2">
+                            <Input
+                            id="referral-code"
+                            placeholder="Enter code"
+                            value={referralCode}
+                            onChange={(e) => setReferralCode(e.target.value)}
+                            disabled={discountApplied || isProcessing}
+                            />
+                            <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleApplyCode}
+                            disabled={discountApplied || !referralCode.trim() || isProcessing}
+                            >
+                            {discountApplied ? "Applied" : "Apply"}
+                            </Button>
+                        </div>
+                    </div>
+
+
                     <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-dashed border-red-200 dark:border-red-800">
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount to Pay</p>
+                         {discountApplied && (
+                            <p className="text-sm text-muted-foreground line-through">
+                                Original Price: ₹{parseInt(price, 10).toLocaleString('en-IN')}
+                            </p>
+                        )}
                         <p className="text-5xl font-bold text-red-600 dark:text-red-500 tracking-tight">
                             <IndianRupee className="inline-block h-8 w-8 -mt-2" />
-                            {parseInt(price, 10).toLocaleString('en-IN')}
+                            {parseInt(finalPrice, 10).toLocaleString('en-IN')}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">For {plan} Plan</p>
+                        {discountApplied && (
+                            <p className="text-sm font-semibold text-green-600 mt-2">
+                                You saved ₹{(parseInt(price, 10) - parseInt(finalPrice, 10)).toLocaleString('en-IN')}!
+                            </p>
+                        )}
                     </div>
 
                 </CardContent>
@@ -175,7 +238,7 @@ export default function PaymentPage() {
                         {isProcessing ? (
                             <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Processing...</>
                         ) : (
-                            "Pay with PhonePe"
+                            `Pay ₹${parseInt(finalPrice, 10).toLocaleString('en-IN')} with PhonePe`
                         )}
                     </Button>
                     <div className="flex items-center text-xs text-gray-400">
