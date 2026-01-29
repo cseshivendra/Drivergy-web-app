@@ -18,7 +18,7 @@ service cloud.firestore {
     // This requires a rule that allows a 'list' operation on the collection
     // for queries filtered by the user's ID.
     match /notifications/{notificationId} {
-      allow read, write: if isSignedIn() && isOwner(resource.data.userId);
+      allow write: if isSignedIn() && isOwner(resource.data.userId);
       allow list: if isSignedIn() && request.query.where.userId == request.auth.uid;
     }
 
@@ -59,3 +59,4 @@ service cloud.firestore {
     }
   }
 }
+
