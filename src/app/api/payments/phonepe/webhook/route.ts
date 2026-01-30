@@ -1,4 +1,3 @@
-
 'use server';
 
 import { NextResponse } from "next/server";
@@ -40,15 +39,26 @@ export async function POST(req: Request) {
         const body = await req.json();
         console.log("🔔 PhonePe webhook received:", JSON.stringify(body, null, 2));
 
-        const { payload } = body;
-        if (!payload || !payload.merchantTransactionId) {
-            console.error("❌ Webhook missing 'payload' or 'merchantTransactionId'.");
-            return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
+        // The payload is a base64 encoded string in the 'response' field
+        const base64Payload = body.response;
+        if (!base64Payload) {
+            console.error("❌ Webhook missing 'response' field.");
+            return NextResponse.json({ error: "Invalid webhook payload: missing response" }, { status: 400 });
         }
+        
+        const decodedPayload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+        const payload = JSON.parse(decodedPayload);
+        
+        console.log("📝 Decoded webhook payload:", payload);
 
         const { merchantTransactionId: orderId, state, transactionId } = payload;
+        
+        if (!orderId) {
+            console.error("❌ Decoded payload missing 'merchantTransactionId'.");
+            return NextResponse.json({ error: "Invalid webhook payload: missing merchantTransactionId" }, { status: 400 });
+        }
 
-        // Update Database based on webhook status directly
+        // Find order in DB using orderId
         const ordersRef = adminDb.collection("orders");
         const q = query(ordersRef, where("orderId", "==", orderId));
         const querySnapshot = await q.get();
@@ -62,17 +72,25 @@ export async function POST(req: Request) {
         const orderDoc = querySnapshot.docs[0];
         const orderRef = orderDoc.ref;
         
+        const orderData = orderDoc.data();
+        if (!orderData) {
+            console.error(`❌ Order data is invalid for ${orderId}.`);
+            return NextResponse.json({ error: "Invalid Order Data" }, { status: 500 });
+        }
+        
+        // Trust the webhook's state
         if (state === "COMPLETED") {
-            // If we reach here, the payment is considered successful based on webhook.
+            // Update order status in DB
             await orderRef.update({
                 status: "PAYMENT_SUCCESS",
-                webhookData: body,
+                state: state, // Store the final state from PhonePe
+                webhookData: payload, // Store the decoded payload
                 updatedAt: new Date().toISOString(),
                 paidAt: new Date().toISOString(),
                 transactionId: transactionId
             });
 
-            const orderData = orderDoc.data()!;
+            // Update user's subscription plan
             const userRef = adminDb.collection("users").doc(orderData.userId);
             await userRef.update({ subscriptionPlan: orderData.plan });
 
@@ -80,10 +98,11 @@ export async function POST(req: Request) {
         } else {
              await orderRef.update({
                 status: "PAYMENT_FAILED",
-                webhookData: body,
+                state: state, // Store the final state from PhonePe
+                webhookData: payload,
                 updatedAt: new Date().toISOString(),
             });
-            console.log(`✅ Webhook processed successfully for ${orderId}: PAYMENT_FAILED`);
+            console.log(`✅ Webhook processed successfully for ${orderId}: PAYMENT_FAILED with state ${state}`);
         }
 
         return NextResponse.json({ success: true });
