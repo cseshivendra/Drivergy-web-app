@@ -44,6 +44,7 @@ export async function POST(req: Request) {
 
     try {
       await adminDb.collection("orders").doc(orderId).set({
+        orderId: orderId,
         userId,
         plan,
         amount,

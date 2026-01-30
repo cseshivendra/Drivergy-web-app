@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import crypto from 'crypto';
+import { query, where } from "firebase/firestore";
 
 export async function POST(req: Request) {
     // 1. Authenticate the webhook request using SHA256 hash
@@ -40,21 +41,26 @@ export async function POST(req: Request) {
         console.log("🔔 PhonePe webhook received:", JSON.stringify(body, null, 2));
 
         const { payload } = body;
-        if (!payload || !payload.orderId) {
-            console.error("❌ Webhook missing 'payload' or 'orderId'.");
+        if (!payload || !payload.merchantTransactionId) {
+            console.error("❌ Webhook missing 'payload' or 'merchantTransactionId'.");
             return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
         }
 
-        const { orderId, state, transactionId } = payload;
+        const { merchantTransactionId: orderId, state, transactionId } = payload;
 
         // Update Database based on webhook status directly
-        const orderRef = adminDb.collection("orders").doc(orderId);
-        const orderSnap = await orderRef.get();
+        const ordersRef = adminDb.collection("orders");
+        const q = query(ordersRef, where("orderId", "==", orderId));
+        const querySnapshot = await q.get();
 
-        if (!orderSnap.exists) {
+
+        if (querySnapshot.empty) {
             console.error(`❌ Order ${orderId} not found in DB.`);
             return NextResponse.json({ error: "Order Not Found" }, { status: 404 });
         }
+        
+        const orderDoc = querySnapshot.docs[0];
+        const orderRef = orderDoc.ref;
         
         if (state === "COMPLETED") {
             // If we reach here, the payment is considered successful based on webhook.
@@ -66,7 +72,7 @@ export async function POST(req: Request) {
                 transactionId: transactionId
             });
 
-            const orderData = orderSnap.data()!;
+            const orderData = orderDoc.data()!;
             const userRef = adminDb.collection("users").doc(orderData.userId);
             await userRef.update({ subscriptionPlan: orderData.plan });
 
