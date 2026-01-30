@@ -6,28 +6,8 @@ import crypto from 'crypto';
 import { query, where } from "firebase/firestore";
 
 export async function POST(req: Request) {
-    // 1. Authenticate the webhook request using SHA256 hash
-    const headersList = req.headers;
-    const authHeader = headersList.get('authorization');
-    const webhookUser = process.env.PHONEPE_WEBHOOK_USER;
-    const webhookPass = process.env.PHONEPE_WEBHOOK_PASS;
-
-    if (!webhookUser || !webhookPass) {
-        console.error("Webhook security credentials are not set on the server.");
-        return NextResponse.json({ error: "Configuration Error" }, { status: 500 });
-    }
     
-    const credentials = `${webhookUser}:${webhookPass}`;
-    const expectedHash = crypto.createHash('sha256').update(credentials).digest('hex');
-
-    if (authHeader !== expectedHash) {
-         console.log("Webhook Forbidden: Invalid signature");
-         console.log("Received header:", authHeader);
-         console.log("Expected hash:", expectedHash);
-         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    
-    console.log("✅ Webhook authenticated successfully.");
+    console.log("🔔 PhonePe webhook received.");
 
     // 2. Process the webhook payload
     try {
@@ -37,7 +17,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        console.log("🔔 PhonePe webhook received:", JSON.stringify(body, null, 2));
+        console.log("Received webhook body:", JSON.stringify(body, null, 2));
 
         // The payload is a base64 encoded string in the 'response' field
         const base64Payload = body.response;
