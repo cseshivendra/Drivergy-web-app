@@ -1,37 +1,56 @@
-
 import { NextResponse } from "next/server";
-import { getStatusV2 } from "@/lib/payments/phonepe";
+import { adminDb } from "@/lib/firebase/admin";
 
-export async function GET(
-    req: Request
-) {
+export async function GET(req) {
+
   const { searchParams } = new URL(req.url);
   const orderId = searchParams.get("orderId");
-  
+
   if (!orderId) {
-    return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing orderId" },
+      { status: 400 }
+    );
   }
 
   try {
-    console.log("🔍 Checking status for order:", orderId);
 
-    const statusData = await getStatusV2(orderId);
-    
-    // No need to update DB here, the webhook should be the source of truth.
-    // This route is for the client-side redirect only.
-    
-    console.log(`✅ Status check for ${orderId} successful:`, statusData.code);
-    
-    // Return the code and data to the client status page
-    return NextResponse.json({ 
-        status: statusData.code,
-        data: statusData.data 
+    console.log("🔍 Checking local status for order:", orderId);
+
+    // Fetch from Firestore
+    const orderRef = adminDb
+      .collection("orders")
+      .doc(orderId);
+
+    const orderSnap = await orderRef.get();
+
+    if (!orderSnap.exists) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
+
+    const orderData = orderSnap.data();
+
+    // Return DB status to frontend
+    return NextResponse.json({
+      success: true,
+      status: orderData.status,       // PAYMENT_SUCCESS / PENDING / FAILED
+      state: orderData.state || null,
+      transactionId: orderData.transactionId || null,
+      updatedAt: orderData.updatedAt || null,
     });
 
-  } catch (error: any) {
-    console.error(`❌ Status check error for ${orderId}:`, error.message);
+  } catch (error) {
+
+    console.error("❌ Status API error:", error);
+
     return NextResponse.json(
-      { error: "Status Check Failed", details: error.message },
+      {
+        error: "Status Check Failed",
+        message: error.message,
+      },
       { status: 500 }
     );
   }
