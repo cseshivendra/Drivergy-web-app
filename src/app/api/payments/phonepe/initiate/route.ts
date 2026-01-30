@@ -40,10 +40,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const merchantTransactionId = "DRV_" + uuidv4().replace(/-/g, '').slice(0, 30);
+    const orderId = "ORD_" + uuidv4().replace(/-/g, '').slice(0, 30);
 
     try {
-      await adminDb.collection("orders").doc(merchantTransactionId).set({
+      await adminDb.collection("orders").doc(orderId).set({
         userId,
         plan,
         amount,
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      console.log("✅ Order created in database:", merchantTransactionId);
+      console.log("✅ Order created in database:", orderId);
     } catch (dbError: any) {
       console.error("❌ Database error:", dbError.message);
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
       token = await getPhonePeTokenV2();
     } catch (tokenError: any) {
       console.error("❌ Token generation failed in API route:", tokenError.message);
-      await adminDb.collection("orders").doc(merchantTransactionId).update({
+      await adminDb.collection("orders").doc(orderId).update({
         status: "TOKEN_FAILED",
         error: tokenError.message,
         updatedAt: new Date().toISOString(),
@@ -78,14 +78,14 @@ export async function POST(req: Request) {
     }
 
     const payload = {
-        merchantTransactionId: merchantTransactionId,
+        merchantTransactionId: orderId,
         amount: Math.round(amount * 100),
         expireAfter: 1200,
         paymentFlow: {
             type: "PG_CHECKOUT",
             message: "Payment for Drivergy",
             merchantUrls: {
-                redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${merchantTransactionId}`
+                redirectUrl: `${process.env.APP_BASE_URL}/payments/phonepe/status/${orderId}`
             }
         },
         disablePaymentRetry: true,
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
     if (!paymentRedirectUrl) {
       const errorMessage = responseData.message || "Payment initiation failed and no redirect URL was provided.";
       console.error("❌ Missing payment URL in PhonePe response:", responseData);
-      await adminDb.collection("orders").doc(merchantTransactionId).update({
+      await adminDb.collection("orders").doc(orderId).update({
         status: "INITIATION_FAILED",
         error: errorMessage,
         phonepeResponse: responseData,
@@ -131,19 +131,19 @@ export async function POST(req: Request) {
     }
 
     // If we have a redirectUrl, it's a success, regardless of the 'success' flag
-    await adminDb.collection("orders").doc(merchantTransactionId).update({
+    await adminDb.collection("orders").doc(orderId).update({
       status: "PAYMENT_PENDING",
       paymentUrl: paymentRedirectUrl,
       phonepeResponse: responseData,
       updatedAt: new Date().toISOString(),
     });
 
-    console.log("✅ Payment initiated successfully:", merchantTransactionId);
+    console.log("✅ Payment initiated successfully:", orderId);
 
     return NextResponse.json({
       success: true,
       url: paymentRedirectUrl,
-      orderId: merchantTransactionId,
+      orderId: orderId,
     });
 
   } catch (error: any) {
