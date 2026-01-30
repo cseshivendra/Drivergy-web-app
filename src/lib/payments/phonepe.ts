@@ -76,7 +76,7 @@ export async function getStatusV2(orderId: string) {
         throw new Error('Server configuration error: Missing PhonePe Client ID.');
     }
     
-    const url = `https://api.phonepe.com/apis/pg/v2/status/${PHONEPE_CLIENT_ID}/${orderId}`;
+    const url = `https://api.phonepe.com/apis/pg/checkout/v2/status/${PHONEPE_CLIENT_ID}/${orderId}`;
 
     try {
         const response = await axios.get(url, {
