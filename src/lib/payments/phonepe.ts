@@ -70,41 +70,30 @@ export async function getPhonePeTokenV2(): Promise<string> {
    PAYMENT STATUS
 ====================================================== */
 export async function getStatusV2(merchantTransactionId: string) {
-    const { PHONEPE_CLIENT_ID, PHONEPE_SALT_KEY, PHONEPE_SALT_INDEX } = process.env;
+    // This is the correct V2 status check logic that uses a token, not a salt key.
+    const token = await getPhonePeTokenV2();
 
-    if (!PHONEPE_CLIENT_ID || !PHONEPE_SALT_KEY || !PHONEPE_SALT_INDEX) {
-        console.error('Missing PhonePe Salt Key/Index or Merchant ID for status check.');
-        throw new Error('Server configuration error for payment status check. Ensure PHONEPE_SALT_KEY and PHONEPE_SALT_INDEX are set.');
-    }
-
-    const merchantId = PHONEPE_CLIENT_ID;
-    // The API path for V1 status check
-    const requestPath = `/pg/v1/status/${merchantId}/${merchantTransactionId}`;
-    
-    // Create the X-VERIFY header as per PhonePe documentation
-    const stringToHash = requestPath + PHONEPE_SALT_KEY;
-    const sha256 = crypto.createHash('sha256').update(stringToHash).digest('hex');
-    const xVerify = sha256 + '###' + PHONEPE_SALT_INDEX;
-
-    // Use the production API URL.
-    const url = `https://api.phonepe.com/pg/v1/status/${merchantId}/${merchantTransactionId}`;
+    // The V2 API endpoint for order status
+    const url = `https://api.phonepe.com/apis/pg/checkout/v2/status/${merchantTransactionId}`;
 
     try {
         const response = await axios.get(url, {
             headers: {
                 'Content-Type': 'application/json',
-                'X-VERIFY': xVerify,
-                'X-MERCHANT-ID': merchantId,
+                Authorization: `O-Bearer ${token}`,
+                // No X-VERIFY or X-MERCHANT-ID for V2 token-based APIs
             }
         });
         return response.data;
     } catch (error: any) {
-        console.error('Error fetching PhonePe payment status:', error.message);
+        console.error('Error fetching PhonePe V2 payment status:', error.message);
         if (error.response) {
             console.error('Response Status:', error.response.status);
             console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
         }
-        throw error; // Re-throw to be handled by the calling function
+        // Throw a more informative error
+        const details = error.response?.data?.message || error.message || 'An unknown error occurred.';
+        throw new Error(`Failed to fetch payment status: ${details}`);
     }
 }
 
@@ -140,4 +129,5 @@ export async function initiateRefundV2(
 
   return response.data;
 }
+
 
