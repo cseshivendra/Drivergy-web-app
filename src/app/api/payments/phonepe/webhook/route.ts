@@ -3,12 +3,11 @@
 
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { headers } from "next/headers";
 import crypto from 'crypto';
 
 export async function POST(req: Request) {
     // 1. Authenticate the webhook request using SHA256 hash
-    const headersList = headers();
+    const headersList = req.headers;
     const authHeader = headersList.get('authorization');
     const webhookUser = process.env.PHONEPE_WEBHOOK_USER;
     const webhookPass = process.env.PHONEPE_WEBHOOK_PASS;
