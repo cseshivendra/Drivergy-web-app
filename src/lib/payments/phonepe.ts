@@ -70,10 +70,9 @@ export async function getPhonePeTokenV2(): Promise<string> {
    PAYMENT STATUS
 ====================================================== */
 export async function getStatusV2(merchantTransactionId: string) {
-    // This is the correct V2 status check logic that uses a token, not a salt key.
     const token = await getPhonePeTokenV2();
 
-    // The V2 API endpoint for order status
+    // CORRECTED: This is the proper V2 endpoint for checking the status of a Standard Checkout transaction.
     const url = `https://api.phonepe.com/apis/pg/checkout/v2/status/${merchantTransactionId}`;
 
     try {
@@ -81,7 +80,6 @@ export async function getStatusV2(merchantTransactionId: string) {
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `O-Bearer ${token}`,
-                // No X-VERIFY or X-MERCHANT-ID for V2 token-based APIs
             }
         });
         return response.data;
@@ -91,7 +89,6 @@ export async function getStatusV2(merchantTransactionId: string) {
             console.error('Response Status:', error.response.status);
             console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
         }
-        // Throw a more informative error
         const details = error.response?.data?.message || error.message || 'An unknown error occurred.';
         throw new Error(`Failed to fetch payment status: ${details}`);
     }
@@ -129,5 +126,6 @@ export async function initiateRefundV2(
 
   return response.data;
 }
+
 
 
