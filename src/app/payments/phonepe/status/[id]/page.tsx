@@ -9,38 +9,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 function StatusChecker() {
     const router = useRouter();
     const params = useParams();
-    const merchantTransactionId = params.id as string;
+    const orderId = params.id as string;
 
     const [status, setStatus] = useState('PENDING');
     const [attempts, setAttempts] = useState(0);
 
     useEffect(() => {
-        if (!merchantTransactionId) return;
+        if (!orderId) return;
 
         const checkStatus = async () => {
             try {
-                const response = await fetch(`/api/payments/phonepe/status?merchantTransactionId=${merchantTransactionId}`);
+                const response = await fetch(`/api/payments/phonepe/status?orderId=${orderId}`);
                 if (!response.ok) {
                     // Stop polling on server error
                     setStatus('ERROR');
-                    router.push(`/payment/failed?orderId=${merchantTransactionId}&reason=error`);
+                    router.push(`/payment/failed?orderId=${orderId}&reason=error`);
                     return;
                 }
                 const result = await response.json();
 
                 if (result.status === 'PAYMENT_SUCCESS') {
                     setStatus('SUCCESS');
-                    router.push(`/payment/success?orderId=${merchantTransactionId}`);
+                    router.push(`/payment/success?orderId=${orderId}`);
                 } else if (['PAYMENT_ERROR', 'PAYMENT_CANCELLED', 'TIMED_OUT', 'PAYMENT_DECLINED', 'TRANSACTION_NOT_FOUND'].includes(result.status)) {
                     setStatus('FAILED');
-                    router.push(`/payment/failed?orderId=${merchantTransactionId}`);
+                    router.push(`/payment/failed?orderId=${orderId}`);
                 } else {
                     setAttempts(prev => prev + 1);
                 }
             } catch (error) {
                 console.error("Status check failed:", error);
                 setStatus('ERROR');
-                 router.push(`/payment/failed?orderId=${merchantTransactionId}&reason=error`);
+                 router.push(`/payment/failed?orderId=${orderId}&reason=error`);
             }
         };
 
@@ -49,7 +49,7 @@ function StatusChecker() {
             if (attempts >= 10) {
                 clearInterval(intervalId);
                 setStatus('TIMED_OUT');
-                 router.push(`/payment/failed?orderId=${merchantTransactionId}&reason=timeout`);
+                 router.push(`/payment/failed?orderId=${orderId}&reason=timeout`);
                 return;
             }
             if (status === 'PENDING') {
@@ -60,7 +60,7 @@ function StatusChecker() {
         // Cleanup interval on component unmount
         return () => clearInterval(intervalId);
 
-    }, [merchantTransactionId, router, attempts, status]);
+    }, [orderId, router, attempts, status]);
 
     return (
         <Card className="w-full max-w-md shadow-2xl">
@@ -74,7 +74,7 @@ function StatusChecker() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="text-center text-sm text-muted-foreground">
-                <p>Order ID: {merchantTransactionId}</p>
+                <p>Order ID: {orderId}</p>
                 <p className="mt-2">This may take a few moments.</p>
             </CardContent>
         </Card>

@@ -6,21 +6,21 @@ export async function GET(
     req: Request
 ) {
   const { searchParams } = new URL(req.url);
-  const merchantTransactionId = searchParams.get("merchantTransactionId");
+  const orderId = searchParams.get("orderId");
   
-  if (!merchantTransactionId) {
-    return NextResponse.json({ error: "Missing merchantTransactionId" }, { status: 400 });
+  if (!orderId) {
+    return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
   }
 
   try {
-    console.log("🔍 Checking status for order:", merchantTransactionId);
+    console.log("🔍 Checking status for order:", orderId);
 
-    const statusData = await getStatusV2(merchantTransactionId);
+    const statusData = await getStatusV2(orderId);
     
     // No need to update DB here, the webhook should be the source of truth.
     // This route is for the client-side redirect only.
     
-    console.log(`✅ Status check for ${merchantTransactionId} successful:`, statusData.code);
+    console.log(`✅ Status check for ${orderId} successful:`, statusData.code);
     
     // Return the code and data to the client status page
     return NextResponse.json({ 
@@ -29,7 +29,7 @@ export async function GET(
     });
 
   } catch (error: any) {
-    console.error(`❌ Status check error for ${merchantTransactionId}:`, error.message);
+    console.error(`❌ Status check error for ${orderId}:`, error.message);
     return NextResponse.json(
       { error: "Status Check Failed", details: error.message },
       { status: 500 }

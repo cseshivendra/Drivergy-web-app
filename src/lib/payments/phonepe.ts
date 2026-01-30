@@ -69,11 +69,15 @@ export async function getPhonePeTokenV2(): Promise<string> {
 /* ======================================================
    PAYMENT STATUS
 ====================================================== */
-export async function getStatusV2(merchantTransactionId: string) {
+export async function getStatusV2(orderId: string) {
     const token = await getPhonePeTokenV2();
+    const { PHONEPE_CLIENT_ID } = process.env;
 
-    // CORRECTED: This is the proper V2 endpoint for checking the status of a Standard Checkout transaction.
-    const url = `https://api.phonepe.com/apis/pg/checkout/v2/status/${merchantTransactionId}`;
+    if (!PHONEPE_CLIENT_ID) {
+        throw new Error('Server configuration error: Missing PhonePe Client ID.');
+    }
+    
+    const url = `https://api.phonepe.com/apis/pg/checkout/v2/status/${PHONEPE_CLIENT_ID}/${orderId}`;
 
     try {
         const response = await axios.get(url, {
@@ -126,6 +130,3 @@ export async function initiateRefundV2(
 
   return response.data;
 }
-
-
-
