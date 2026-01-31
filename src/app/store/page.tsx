@@ -45,7 +45,7 @@ export default async function StorePage() {
                 </div>
               )}
               <CardHeader className="pb-3">
-                <CardTitle as="h2" className="font-headline text-xl font-semibold text-primary">{product.title}</CardTitle>
+                <CardTitle className="font-headline text-xl font-semibold text-primary">{product.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 flex-grow">
                 <CardDescription className="text-sm text-muted-foreground">{product.description}</CardDescription>

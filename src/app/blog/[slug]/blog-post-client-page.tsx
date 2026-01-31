@@ -98,7 +98,7 @@ export default function BlogPostClientPage({ initialPost }: { initialPost: BlogP
                 </div>
                 <CardHeader className="relative -mt-16 z-10 p-6 md:p-8">
                     <Badge variant="secondary" className="w-fit mb-3 text-sm">{post.category}</Badge>
-                    <CardTitle as="h1" className="font-headline text-3xl md:text-4xl font-bold text-primary dark:text-white drop-shadow-lg">{post.title}</CardTitle>
+                    <CardTitle className="font-headline text-3xl md:text-4xl font-bold text-primary dark:text-white drop-shadow-lg">{post.title}</CardTitle>
                     <div className="flex items-center gap-6 text-sm text-primary dark:text-white/90 mt-4 drop-shadow-lg">
                         <div className="flex items-center">
                             <User className="h-4 w-4 mr-1.5" />

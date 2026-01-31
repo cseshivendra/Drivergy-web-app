@@ -99,7 +99,7 @@ export default function BlogPage() {
                         </div>
                         <CardHeader>
                             <Badge variant="secondary" className="w-fit mb-2">{post.category}</Badge>
-                            <CardTitle as="h2" className="font-headline text-xl font-semibold text-primary group-hover:underline">{post.title}</CardTitle>
+                            <CardTitle className="font-headline text-xl font-semibold text-primary group-hover:underline">{post.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <p className="text-muted-foreground text-sm">{post.excerpt}</p>
