@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect, type FormEvent } from 'react';
@@ -45,7 +46,7 @@ export default function ChatWidget() {
     try {
       const input: ChatInput = {
         query: userMessage,
-        userId: user?.uniqueId
+        userId: user?.id
       };
       const result = await chat(input);
       if (result?.response) {

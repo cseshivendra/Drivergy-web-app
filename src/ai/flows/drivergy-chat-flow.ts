@@ -10,7 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { getLoginUser } from '@/lib/server-actions';
+import { fetchUserById } from '@/lib/server-data';
 import type { UserProfile } from '@/types';
 
 const ChatInputSchema = z.object({
@@ -131,10 +131,7 @@ const drivergyChatFlow = ai.defineFlow(
     // The prompt is designed to handle cases where there is no user.
     if (input.userId) {
       // Use the server action to securely fetch user data.
-      const result = await getLoginUser(input.userId);
-      if (result.success && result.user) {
-        userProfile = result.user;
-      }
+      userProfile = await fetchUserById(input.userId);
     }
     
     // Prepare a clean user context for the prompt, providing default values.
