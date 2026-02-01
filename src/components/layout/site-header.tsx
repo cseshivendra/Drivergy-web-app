@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -75,6 +74,8 @@ const navLinks: NavLink[] = [
     children: [
       { href: '/#testimonials', label: 'Testimonials' },
       { href: '/about', label: 'About Us' },
+      { href: '/blog', label: 'Blog' },
+      { href: '/faq', label: 'FAQ' },
     ],
   },
   { href: '/career', label: 'Careers' },
