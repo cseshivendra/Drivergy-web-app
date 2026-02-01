@@ -62,6 +62,10 @@ export default function SiteFooter() {
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2">
             <p>&copy; {new Date().getFullYear()} Drivergy. All rights reserved.</p>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
+            <Link href="/blog" className="underline hover:text-primary">Blog</Link>
+            <span className="hidden md:inline text-muted-foreground/50">|</span>
+            <Link href="/faq" className="underline hover:text-primary">FAQ</Link>
+            <span className="hidden md:inline text-muted-foreground/50">|</span>
             <Link href="/privacy-policy" className="underline hover:text-primary">Privacy Policy</Link>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
             <Link href="/terms-and-conditions" className="underline hover:text-primary">Terms & Conditions</Link>

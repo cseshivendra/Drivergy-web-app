@@ -73,9 +73,7 @@ const navLinks: NavLink[] = [
   {
     label: 'Insights',
     children: [
-      { href: '/faq', label: 'FAQ' },
       { href: '/#testimonials', label: 'Testimonials' },
-      { href: '/blog', label: 'Blogs' },
       { href: '/about', label: 'About Us' },
     ],
   },
