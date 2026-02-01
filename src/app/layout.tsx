@@ -1,4 +1,3 @@
-
 'use client';
 
 import './globals.css';
@@ -11,6 +10,7 @@ import SiteFooter from '@/components/layout/site-footer';
 import ChatWidget from '@/components/chatbot/chat-widget';
 import { usePathname } from 'next/navigation';
 import FirebaseErrorListener from '@/components/FirebaseErrorListener';
+import Script from 'next/script';
 
 // RootLayout is a client component because it uses AuthProvider and ThemeProvider
 // which rely on client-side state and hooks.
@@ -25,6 +25,17 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
         <head>
+            {/* Google Tag Manager */}
+            <Script id="google-tag-manager" strategy="afterInteractive">
+              {`
+                (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+                'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                })(window,document,'script','dataLayer','GTM-T3DXB2PJ');
+              `}
+            </Script>
+            {/* End Google Tag Manager */}
             <link rel="preconnect" href="https://fonts.googleapis.com" />
             <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -35,6 +46,10 @@ export default function RootLayout({
             
         </head>
         <body className="font-body antialiased">
+            {/* Google Tag Manager (noscript) */}
+            <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T3DXB2PJ"
+            height="0" width="0" style={{display:'none',visibility:'hidden'}}></iframe></noscript>
+            {/* End Google Tag Manager (noscript) */}
             <AuthProvider>
                 <ThemeProvider>
                     <FirebaseErrorListener />
