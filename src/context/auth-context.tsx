@@ -5,10 +5,25 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { useRouter } from 'next/navigation';
 import type { UserProfile } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signInWithCredential, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/client';
 import { doc, getDoc, setDoc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getLoginUser } from '@/lib/server-actions';
+
+// Extend window object to include AndroidBridge
+declare global {
+    interface Window {
+        AndroidBridge?: {
+            signInWithGoogle: () => void;
+            signOut: () => void;
+        };
+        ConsoleLogger?: {
+            log: (message: string) => void;
+        };
+        onNativeSignInSuccess?: (idToken: string) => void;
+        onNativeSignInFailed?: (error: string) => void;
+    }
+}
 
 interface AuthContextType {
     user: UserProfile | null;
@@ -33,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 // User is signed in. Check both 'users' and 'trainers' collections.
                 const userDocRef = doc(db, 'users', firebaseUser.uid);
                 const trainerDocRef = doc(db, 'trainers', firebaseUser.uid);
-                
+
                 const userDoc = await getDoc(userDocRef);
                 let profileDoc;
 
@@ -64,47 +79,172 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return () => unsubscribe();
     }, []);
 
+    // Handle redirect result for mobile browsers
+    useEffect(() => {
+        const handleRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    const firebaseUser = result.user;
+                    const userDocRef = doc(db, "users", firebaseUser.uid);
+                    const trainerDocRef = doc(db, "trainers", firebaseUser.uid);
+
+                    const userDoc = await getDoc(userDocRef);
+                    const trainerDoc = await getDoc(trainerDocRef);
+
+                    if (!userDoc.exists() && !trainerDoc.exists()) {
+                        const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
+                            uniqueId: `CU-${Date.now().toString().slice(-6)}`,
+                            name: firebaseUser.displayName || 'Google User',
+                            username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now().toString().slice(-4)}`,
+                            contact: firebaseUser.email!,
+                            phone: firebaseUser.phoneNumber || '',
+                            photoURL: firebaseUser.photoURL || '',
+                            subscriptionPlan: 'None',
+                            approvalStatus: 'Pending',
+                            gender: 'Prefer not to say',
+                            registrationTimestamp: serverTimestamp(),
+                        };
+                        await setDoc(userDocRef, newUserProfile);
+                        toast({ title: 'Welcome!', description: 'Your account has been created.' });
+                    } else {
+                        toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
+                    }
+                }
+            } catch (error: any) {
+                console.error("Redirect result error:", error);
+            }
+        };
+
+        handleRedirectResult();
+    }, [toast]);
+
+    // Setup native Android bridge callbacks
+    useEffect(() => {
+        window.onNativeSignInSuccess = async (idToken: string) => {
+            try {
+                window.ConsoleLogger?.log('Native sign-in success callback received');
+                const credential = GoogleAuthProvider.credential(idToken);
+                const result = await signInWithCredential(auth, credential);
+                const firebaseUser = result.user;
+
+                const userDocRef = doc(db, "users", firebaseUser.uid);
+                const trainerDocRef = doc(db, "trainers", firebaseUser.uid);
+
+                const userDoc = await getDoc(userDocRef);
+                const trainerDoc = await getDoc(trainerDocRef);
+
+                if (!userDoc.exists() && !trainerDoc.exists()) {
+                    const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
+                        uniqueId: `CU-${Date.now().toString().slice(-6)}`,
+                        name: firebaseUser.displayName || 'Google User',
+                        username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now().toString().slice(-4)}`,
+                        contact: firebaseUser.email!,
+                        phone: firebaseUser.phoneNumber || '',
+                        photoURL: firebaseUser.photoURL || '',
+                        subscriptionPlan: 'None',
+                        approvalStatus: 'Pending',
+                        gender: 'Prefer not to say',
+                        registrationTimestamp: serverTimestamp(),
+                    };
+                    await setDoc(userDocRef, newUserProfile);
+
+                    const clientProfile: UserProfile = {
+                      ...newUserProfile,
+                      id: firebaseUser.uid,
+                      registrationTimestamp: new Date().toISOString(),
+                    };
+
+                    setUser(clientProfile);
+                    toast({ title: 'Welcome!', description: 'Your account has been created.' });
+                } else {
+                    const profileDoc = userDoc.exists() ? userDoc : trainerDoc;
+                    const userProfile = { id: profileDoc.id, ...profileDoc.data() } as UserProfile;
+                    setUser(userProfile);
+                    toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
+                }
+            } catch (error: any) {
+                window.ConsoleLogger?.log('Error in native sign-in: ' + error.message);
+                toast({ title: 'Sign-In Failed', description: error.message, variant: 'destructive' });
+            }
+        };
+
+        window.onNativeSignInFailed = (error: string) => {
+            window.ConsoleLogger?.log('Native sign-in failed: ' + error);
+            toast({ title: 'Sign-In Failed', description: error, variant: 'destructive' });
+        };
+
+        return () => {
+            delete window.onNativeSignInSuccess;
+            delete window.onNativeSignInFailed;
+        };
+    }, [toast]);
+
     const signInWithGoogle = async () => {
+        // Check if running in Android WebView with native bridge
+        if (typeof window !== 'undefined' && window.AndroidBridge) {
+            window.ConsoleLogger?.log('Using native Android sign-in');
+            try {
+                window.AndroidBridge.signInWithGoogle();
+                // The actual sign-in will be handled by onNativeSignInSuccess callback
+            } catch (error: any) {
+                window.ConsoleLogger?.log('Native sign-in error: ' + error.message);
+                toast({ title: 'Sign-In Failed', description: error.message, variant: 'destructive' });
+            }
+            return;
+        }
+
         setLoading(true);
         const provider = new GoogleAuthProvider();
+
+        // Check if we're on a mobile device (use redirect instead of popup)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
         try {
-            const result = await signInWithPopup(auth, provider);
-            const firebaseUser = result.user;
-            
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            const trainerDocRef = doc(db, "trainers", firebaseUser.uid);
-            
-            const userDoc = await getDoc(userDocRef);
-            const trainerDoc = await getDoc(trainerDocRef);
-
-            if (!userDoc.exists() && !trainerDoc.exists()) {
-                const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
-                    uniqueId: `CU-${Date.now().toString().slice(-6)}`,
-                    name: firebaseUser.displayName || 'Google User',
-                    username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now().toString().slice(-4)}`,
-                    contact: firebaseUser.email!,
-                    phone: firebaseUser.phoneNumber || '',
-                    photoURL: firebaseUser.photoURL || '',
-                    subscriptionPlan: 'None',
-                    approvalStatus: 'Pending',
-                    gender: 'Prefer not to say',
-                    registrationTimestamp: serverTimestamp(),
-                };
-                await setDoc(userDocRef, newUserProfile);
-                
-                const clientProfile: UserProfile = {
-                  ...newUserProfile,
-                  id: firebaseUser.uid,
-                  registrationTimestamp: new Date().toISOString(),
-                };
-
-                setUser(clientProfile);
-                toast({ title: 'Welcome!', description: 'Your account has been created.' });
+            if (isMobile) {
+                // Use redirect for mobile browsers
+                await signInWithRedirect(auth, provider);
+                // The redirect will handle the rest
             } else {
-                const profileDoc = userDoc.exists() ? userDoc : trainerDoc;
-                const userProfile = { id: profileDoc.id, ...profileDoc.data() } as UserProfile;
-                setUser(userProfile);
-                toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
+                // Use popup for desktop
+                const result = await signInWithPopup(auth, provider);
+                const firebaseUser = result.user;
+
+                const userDocRef = doc(db, "users", firebaseUser.uid);
+                const trainerDocRef = doc(db, "trainers", firebaseUser.uid);
+
+                const userDoc = await getDoc(userDocRef);
+                const trainerDoc = await getDoc(trainerDocRef);
+
+                if (!userDoc.exists() && !trainerDoc.exists()) {
+                    const newUserProfile: Omit<UserProfile, 'id' | 'registrationTimestamp'> & { registrationTimestamp: any } = {
+                        uniqueId: `CU-${Date.now().toString().slice(-6)}`,
+                        name: firebaseUser.displayName || 'Google User',
+                        username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now().toString().slice(-4)}`,
+                        contact: firebaseUser.email!,
+                        phone: firebaseUser.phoneNumber || '',
+                        photoURL: firebaseUser.photoURL || '',
+                        subscriptionPlan: 'None',
+                        approvalStatus: 'Pending',
+                        gender: 'Prefer not to say',
+                        registrationTimestamp: serverTimestamp(),
+                    };
+                    await setDoc(userDocRef, newUserProfile);
+
+                    const clientProfile: UserProfile = {
+                      ...newUserProfile,
+                      id: firebaseUser.uid,
+                      registrationTimestamp: new Date().toISOString(),
+                    };
+
+                    setUser(clientProfile);
+                    toast({ title: 'Welcome!', description: 'Your account has been created.' });
+                } else {
+                    const profileDoc = userDoc.exists() ? userDoc : trainerDoc;
+                    const userProfile = { id: profileDoc.id, ...profileDoc.data() } as UserProfile;
+                    setUser(userProfile);
+                    toast({ title: 'Welcome Back!', description: 'Successfully signed in.' });
+                }
             }
         } catch (error: any) {
             toast({ title: 'Google Sign-In Failed', description: error.message, variant: 'destructive' });
