@@ -1,30 +1,27 @@
 
-'use client';
-
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Car, ExternalLink, FileText, IndianRupee, Receipt, Search, Type, Ticket, CreditCard } from 'lucide-react';
 import type { Metadata } from 'next';
 
+export const metadata: Metadata = {
+    title: 'Fast, Reliable & Hassle-Free RTO Services | Drivergy',
+    description: "Get fast and reliable RTO services including vehicle registration, driving license, RC transfer, permits, and more. Expert help with hassle-free processing.",
+    keywords: ['RTO services', 'vehicle registration', 'driving license', 'RC transfer', 'RTO permits', 'online RTO services'],
+};
+
 export default function RtoServicesPage() {
-    // This metadata is now client-side, but good for context
-    // For full SEO, this should be a server component with exported metadata
-    
     return (
         <div className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8">
-            <head>
-                <title>Online RTO Services India | Driving License, Challan | Drivergy</title>
-                <meta name="description" content="Access official Indian RTO services like applying for a driving license, checking challan status, paying fines, and more, directly via Drivergy. We link you to the official Parivahan Sewa portal." />
-            </head>
             <Card className="shadow-lg overflow-hidden mb-12 bg-muted/30">
                 <div className="flex flex-col items-center justify-center text-center p-6">
                     <div className="p-3 bg-background rounded-full mb-3 shadow-md">
                         <Car className="h-10 w-10 text-primary" />
                     </div>
-                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Online RTO Services</h1>
+                    <h1 className="font-headline text-4xl md:text-5xl font-bold text-primary">Your Trusted Partner for All RTO Services</h1>
                     <p className="mt-2 text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Access official RTO services directly from the Parivahan Sewa portal.
+                        Fast, Reliable & Hassle-Free RTO Services.
                     </p>
                 </div>
             </Card>
