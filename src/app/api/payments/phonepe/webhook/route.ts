@@ -3,117 +3,171 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 
-export async function POST(req: Request) {
+export async function POST(req) {
+
   console.log("🔔 PhonePe webhook received");
 
-  // Read body
+  /* ===============================
+     READ BODY
+  =============================== */
+
   let body;
+
   try {
     body = await req.json();
   } catch (e) {
-    console.error("❌ Failed to parse webhook body as JSON:", e);
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    console.error("❌ Invalid JSON body", e);
+    return NextResponse.json(
+      { error: "Invalid JSON" },
+      { status: 400 }
+    );
   }
-  
+
   console.log("📦 Webhook Body:", JSON.stringify(body, null, 2));
 
-  // Extract and decode payload (V2 Format)
-  const { response: base64Response } = body;
 
-  if (!base64Response) {
-      console.error("❌ Webhook missing 'response' field.");
-      return NextResponse.json({ error: "Invalid webhook payload, missing 'response' field." }, { status: 400 });
+  /* ===============================
+     VALIDATE V2 PAYLOAD
+  =============================== */
+
+  const { payload } = body;
+
+  if (!payload || !payload.merchantOrderId) {
+    console.error("❌ Invalid webhook payload");
+    return NextResponse.json(
+      { error: "Invalid payload" },
+      { status: 400 }
+    );
   }
 
-  let payload;
-  try {
-    const decodedPayload = Buffer.from(base64Response, 'base64').toString('utf8');
-    payload = JSON.parse(decodedPayload);
-  } catch (e) {
-      console.error("❌ Failed to decode or parse webhook payload.", e);
-      return NextResponse.json({ error: "Invalid webhook payload format." }, { status: 400 });
-  }
-  
-  console.log("📄 Decoded Payload:", JSON.stringify(payload, null, 2));
 
-  const { merchantTransactionId, state } = payload;
+  /* ===============================
+     EXTRACT DATA
+  =============================== */
 
-  if (!merchantTransactionId) {
-    console.error("❌ Decoded webhook payload missing 'merchantTransactionId'.");
-    return NextResponse.json({ error: "Invalid webhook payload" }, { status: 400 });
-  }
+  const orderId = payload.merchantOrderId; // ORD_xxx (YOUR ID)
+  const phonepeOrderId = payload.orderId;  // OMO_xxx
+  const state = payload.state;
 
-  const orderId = merchantTransactionId;
   const txn = payload.paymentDetails?.[0];
+
   const transactionId = txn?.transactionId || null;
   const utr = txn?.rail?.utr || null;
 
-  // Find order and update
+
+  /* ===============================
+     FIND ORDER
+  =============================== */
+
   try {
+
     if (!adminDb) {
-        console.error("❌ Database not configured in webhook.");
-        return NextResponse.json({ error: "Internal Server Error", details: "Database not configured." }, { status: 500 });
+      return NextResponse.json(
+        { error: "DB not configured" },
+        { status: 500 }
+      );
     }
-    
-    const snap = await adminDb
+
+    const orderRef = adminDb
       .collection("orders")
-      .doc(orderId)
-      .get();
+      .doc(orderId);
 
-    if (!snap.exists) {
-      console.error("❌ Order not found in webhook:", orderId);
-      return NextResponse.json({ error: "Order Not Found" }, { status: 404 });
+    const orderSnap = await orderRef.get();
+
+
+    if (!orderSnap.exists) {
+
+      console.error("❌ Order not found:", orderId);
+
+      return NextResponse.json(
+        { error: "Order Not Found" },
+        { status: 404 }
+      );
     }
 
-    const orderData = snap.data();
-    const orderRef = snap.ref;
+    const orderData = orderSnap.data();
 
-    // Handle COMPLETED state
+
+    /* ===============================
+       SUCCESS
+    =============================== */
+
     if (state === "COMPLETED") {
+
       await orderRef.update({
+
         status: "PAYMENT_SUCCESS",
         state: "SUCCESS",
+
+        phonepeOrderId,
+
         transactionId,
         utr,
+
         webhookData: body,
+
         paymentVerified: true,
+
         paidAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
-      // Update user subscription
+
+      // Update user
       if (orderData?.userId) {
+
         await adminDb
           .collection("users")
           .doc(orderData.userId)
           .update({
+
             subscriptionPlan: orderData.plan,
             paymentVerified: true,
+
             updatedAt: new Date().toISOString(),
           });
       }
 
-      console.log("✅ Payment SUCCESS updated via Webhook:", orderId);
-    } 
-    // Handle FAILED states
-    else if (["FAILED", "CANCELLED", "TIMED_OUT", "DECLINED"].includes(state)) {
+
+      console.log("✅ Payment SUCCESS:", orderId);
+    }
+
+
+    /* ===============================
+       FAILURE
+    =============================== */
+
+    else {
+
       await orderRef.update({
+
         status: "PAYMENT_FAILED",
         state,
+
+        phonepeOrderId,
+
         webhookData: body,
+
         updatedAt: new Date().toISOString(),
       });
-      console.log(`⚠️ Payment ${state} updated via Webhook:`, orderId);
+
+      console.log("⚠️ Payment FAILED:", orderId, state);
     }
+
 
     return NextResponse.json({ success: true });
 
+
   } catch (error) {
-    console.error("❌ Webhook Processing Error:", error);
-    let errorMessage = "An unexpected error occurred.";
-    if (error instanceof Error) {
-        errorMessage = error.message;
-    }
-    return NextResponse.json({ error: "Server Error", message: errorMessage }, { status: 500 });
+
+    console.error("❌ Webhook Error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Server Error",
+        message: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
