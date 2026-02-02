@@ -1,18 +1,12 @@
 'use server';
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 
-export async function POST(req) {
-
+export async function POST(req: NextRequest) {
   console.log("🔔 PhonePe webhook received");
 
-  /* ===============================
-     READ BODY
-  =============================== */
-
   let body;
-
   try {
     body = await req.json();
   } catch (e) {
@@ -25,11 +19,6 @@ export async function POST(req) {
 
   console.log("📦 Webhook Body:", JSON.stringify(body, null, 2));
 
-
-  /* ===============================
-     VALIDATE V2 PAYLOAD
-  =============================== */
-
   const { payload } = body;
 
   if (!payload || !payload.merchantOrderId) {
@@ -40,27 +29,14 @@ export async function POST(req) {
     );
   }
 
-
-  /* ===============================
-     EXTRACT DATA
-  =============================== */
-
-  const orderId = payload.merchantOrderId; // ORD_xxx (YOUR ID)
-  const phonepeOrderId = payload.orderId;  // OMO_xxx
+  const orderId = payload.merchantOrderId;
+  const phonepeOrderId = payload.orderId;
   const state = payload.state;
-
   const txn = payload.paymentDetails?.[0];
-
   const transactionId = txn?.transactionId || null;
   const utr = txn?.rail?.utr || null;
 
-
-  /* ===============================
-     FIND ORDER
-  =============================== */
-
   try {
-
     if (!adminDb) {
       return NextResponse.json(
         { error: "DB not configured" },
@@ -68,17 +44,11 @@ export async function POST(req) {
       );
     }
 
-    const orderRef = adminDb
-      .collection("orders")
-      .doc(orderId);
-
+    const orderRef = adminDb.collection("orders").doc(orderId);
     const orderSnap = await orderRef.get();
 
-
     if (!orderSnap.exists) {
-
       console.error("❌ Order not found:", orderId);
-
       return NextResponse.json(
         { error: "Order Not Found" },
         { status: 404 }
@@ -87,85 +57,49 @@ export async function POST(req) {
 
     const orderData = orderSnap.data();
 
-
-    /* ===============================
-       SUCCESS
-    =============================== */
-
     if (state === "COMPLETED") {
-
       await orderRef.update({
-
         status: "PAYMENT_SUCCESS",
         state: "SUCCESS",
-
         phonepeOrderId,
-
         transactionId,
         utr,
-
         webhookData: body,
-
         paymentVerified: true,
-
         paidAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
-
-      // Update user
       if (orderData?.userId) {
-
-        await adminDb
-          .collection("users")
-          .doc(orderData.userId)
-          .update({
-
-            subscriptionPlan: orderData.plan,
-            paymentVerified: true,
-
-            updatedAt: new Date().toISOString(),
-          });
+        await adminDb.collection("users").doc(orderData.userId).update({
+          subscriptionPlan: orderData.plan,
+          paymentVerified: true,
+          updatedAt: new Date().toISOString(),
+        });
       }
 
-
       console.log("✅ Payment SUCCESS:", orderId);
-    }
-
-
-    /* ===============================
-       FAILURE
-    =============================== */
-
-    else {
-
+    } else {
       await orderRef.update({
-
         status: "PAYMENT_FAILED",
         state,
-
         phonepeOrderId,
-
         webhookData: body,
-
         updatedAt: new Date().toISOString(),
       });
 
       console.log("⚠️ Payment FAILED:", orderId, state);
     }
 
-
     return NextResponse.json({ success: true });
 
-
-  } catch (error) {
-
+  } catch (error: unknown) {
     console.error("❌ Webhook Error:", error);
-
+    const errorMessage = error instanceof Error ? error.message : "An unexpected server error occurred.";
     return NextResponse.json(
       {
         error: "Server Error",
-        message: error.message,
+        message: errorMessage,
       },
       { status: 500 }
     );
