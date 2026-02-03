@@ -1,15 +1,46 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Download, ShoppingBag, Fingerprint } from 'lucide-react';
+import { CheckCircle, Download, ShoppingBag, Fingerprint, Loader2 } from 'lucide-react';
+import { getOrderWithUserDetails } from '@/lib/server-actions';
+import { generateInvoicePDF } from '@/lib/invoice-generator';
+import { useToast } from '@/hooks/use-toast';
 
 function SuccessContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const { toast } = useToast();
+
+    const handleDownloadReceipt = async () => {
+        if (!orderId) return;
+        setIsGenerating(true);
+        try {
+            const data = await getOrderWithUserDetails(orderId);
+            if (data) {
+                generateInvoicePDF(data.order, data.user);
+                toast({
+                    title: "Invoice Downloaded",
+                    description: "Your receipt has been generated and saved."
+                });
+            } else {
+                throw new Error("Could not fetch order details.");
+            }
+        } catch (error) {
+            console.error("Receipt generation failed:", error);
+            toast({
+                title: "Download Failed",
+                description: "There was an error generating your receipt. Please contact support.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     return (
         <Card className="w-full max-w-lg text-center shadow-2xl border-t-4 border-green-500">
@@ -34,11 +65,17 @@ function SuccessContent() {
                 )}
             </CardContent>
             <CardFooter className="flex flex-col sm:flex-row gap-4">
-                <Button asChild className="w-full" variant="outline">
-                    <button>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Receipt
-                    </button>
+                <Button 
+                    className="w-full" 
+                    variant="outline" 
+                    onClick={handleDownloadReceipt}
+                    disabled={isGenerating || !orderId}
+                >
+                    {isGenerating ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</>
+                    ) : (
+                        <><Download className="mr-2 h-4 w-4" />Download Receipt</>
+                    )}
                 </Button>
                 <Button asChild className="w-full">
                     <Link href="/dashboard/complete-profile">

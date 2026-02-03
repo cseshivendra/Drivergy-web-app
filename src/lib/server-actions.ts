@@ -1,5 +1,4 @@
-
-'use server';
+'use client';
 
 import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema, SkillSchema } from '@/types';
@@ -1047,7 +1046,22 @@ export async function unassignTrainerFromCustomer(customerId: string, trainerId:
     return true;
 }
 
-
-    
-
-    
+export async function getOrderWithUserDetails(orderId: string): Promise<{ order: any; user: any } | null> {
+    if (!adminDb) return null;
+    try {
+        const orderSnap = await adminDb.collection('orders').doc(orderId).get();
+        if (!orderSnap.exists) return null;
+        const orderData = orderSnap.data();
+        
+        const userSnap = await adminDb.collection('users').doc(orderData?.userId).get();
+        if (!userSnap.exists) return null;
+        
+        return {
+            order: { id: orderSnap.id, ...orderData },
+            user: { id: userSnap.id, ...userSnap.data() }
+        };
+    } catch (error) {
+        console.error("Error fetching order with user details:", error);
+        return null;
+    }
+}
