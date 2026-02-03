@@ -52,23 +52,33 @@ export const generateInvoicePDF = (order: any, user: any) => {
     headStyles: { fillColor: [239, 68, 68] },
   });
 
-  // Summary
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
-  doc.setFontSize(12);
-  doc.text(`Subtotal:`, 140, finalY);
-  doc.text(`INR ${order.amount.toLocaleString('en-IN')}.00`, 170, finalY, { align: 'right' });
+  // Summary Section - Fixed Overlapping
+  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const labelX = 135;
+  const valueX = 196;
+
+  doc.setFontSize(11);
+  doc.setTextColor(100, 100, 100);
   
-  doc.text(`Tax (0%):`, 140, finalY + 7);
-  doc.text(`INR 0.00`, 170, finalY + 7, { align: 'right' });
+  doc.text(`Subtotal:`, labelX, finalY);
+  doc.text(`INR ${order.amount.toLocaleString('en-IN')}.00`, valueX, finalY, { align: 'right' });
+  
+  doc.text(`Tax (0%):`, labelX, finalY + 8);
+  doc.text(`INR 0.00`, valueX, finalY + 8, { align: 'right' });
+
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(labelX, finalY + 12, valueX, finalY + 12);
 
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text(`Total Amount:`, 140, finalY + 15);
-  doc.text(`INR ${order.amount.toLocaleString('en-IN')}.00`, 170, finalY + 15, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Total Amount:`, labelX, finalY + 20);
+  doc.text(`INR ${order.amount.toLocaleString('en-IN')}.00`, valueX, finalY + 20, { align: 'right' });
 
   // Footer
   const pageHeight = doc.internal.pageSize.height;
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(150, 150, 150);
   doc.text('Thank you for choosing Drivergy. Hit the road to safer driving!', 14, pageHeight - 20);
