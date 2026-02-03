@@ -1,4 +1,4 @@
-'use client';
+'use server';
 
 import { z } from 'zod';
 import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema, SkillSchema } from '@/types';
@@ -12,7 +12,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from './email';
 import dotenv from 'dotenv';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
 
 dotenv.config();
 
@@ -370,16 +369,13 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     try {
         const userDoc = await userRef.get();
         let docToUpdate;
-        let collectionPath;
 
         if (userDoc.exists) {
             docToUpdate = userRef;
-            collectionPath = 'users';
         } else {
             const trainerDoc = await trainerRef.get();
             if (trainerDoc.exists) {
                 docToUpdate = trainerRef;
-                collectionPath = 'trainers';
             } else {
                 return null; // User not found in either collection
             }
@@ -402,9 +398,6 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
                 operation: 'update',
                 requestResourceData: updatePayload,
             });
-            // This is a server action, so we can't emit to a client-side emitter.
-            // We'll throw the error so the client-side fetch can catch it.
-            // In a real app, you'd have a centralized server-side logging/error handling mechanism.
             console.error(permissionError.message);
         }
         console.error("Error updating user profile:", error);
