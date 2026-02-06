@@ -13,6 +13,15 @@ import {z} from 'genkit';
 import { fetchUserById } from '@/lib/server-data';
 import type { UserProfile } from '@/types';
 
+const SUPPORTED_API_KEY_ENV_VARS = [
+  'GOOGLE_API_KEY',
+  'GOOGLE_GENERATIVE_AI_API_KEY',
+  'GOOGLE_GENAI_API_KEY',
+  'GEMINI_API_KEY',
+] as const;
+
+const DRIVERGY_CHAT_MODEL = process.env.DRIVERGY_CHAT_MODEL || 'googleai/gemini-1.5-flash';
+
 const ChatInputSchema = z.object({
   query: z.string().describe("The user's question for the chatbot."),
   userId: z.string().optional().describe("The ID of the logged-in user, if available."),
@@ -46,6 +55,7 @@ const UserContextSchema = z.object({
 
 const prompt = ai.definePrompt({
   name: 'drivergyChatPrompt',
+  model: DRIVERGY_CHAT_MODEL,
   input: {
     schema: z.object({
       query: z.string(),
@@ -126,6 +136,17 @@ const drivergyChatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async (input) => {
+    const hasGoogleApiKey = SUPPORTED_API_KEY_ENV_VARS.some((envVarName) => Boolean(process.env[envVarName]));
+    if (!hasGoogleApiKey) {
+      console.warn(
+        `Drivergy Assistant is disabled because no Google AI API key is configured. Set one of: ${SUPPORTED_API_KEY_ENV_VARS.join(', ')}.`
+      );
+      return {
+        response:
+          "The Drivergy Assistant isn't available right now because the AI service hasn't been configured. Please set a valid Gemini/Google AI API key and try again.",
+      };
+    }
+
     let userProfile: UserProfile | null = null;
     // We only fetch the user profile if a userId is actually passed.
     // The prompt is designed to handle cases where there is no user.
@@ -159,8 +180,47 @@ const drivergyChatFlow = ai.defineFlow(
       }
       return output;
     } catch (e) {
-      console.error("Chatbot API error:", e);
-      // It's better to return a user-friendly message. The console.error will log details for debugging.
+      const rawErrorMessage = e instanceof Error ? e.message : String(e);
+      const normalizedErrorMessage = rawErrorMessage.toLowerCase();
+
+      console.error('Drivergy Assistant API error:', {
+        message: rawErrorMessage,
+        model: DRIVERGY_CHAT_MODEL,
+      });
+
+      if (
+        normalizedErrorMessage.includes('api key') ||
+        normalizedErrorMessage.includes('unauthorized') ||
+        normalizedErrorMessage.includes('permission denied') ||
+        normalizedErrorMessage.includes('auth')
+      ) {
+        return {
+          response:
+            "Drivergy Assistant couldn't authenticate with the AI service. Please verify your Gemini/Google API key configuration.",
+        };
+      }
+
+      if (
+        normalizedErrorMessage.includes('quota') ||
+        normalizedErrorMessage.includes('rate limit') ||
+        normalizedErrorMessage.includes('resource_exhausted')
+      ) {
+        return {
+          response:
+            "Drivergy Assistant is temporarily unavailable because the AI usage limit has been reached. Please try again shortly.",
+        };
+      }
+
+      if (
+        normalizedErrorMessage.includes('model') &&
+        (normalizedErrorMessage.includes('not found') || normalizedErrorMessage.includes('unsupported'))
+      ) {
+        return {
+          response:
+            `Drivergy Assistant is misconfigured with an unavailable AI model (${DRIVERGY_CHAT_MODEL}). Please update DRIVERGY_CHAT_MODEL or use the default model.`,
+        };
+      }
+
       return { response: "I'm having some trouble right now. Please try again later." };
     }
   }
