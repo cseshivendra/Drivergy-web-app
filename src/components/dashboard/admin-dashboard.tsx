@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -10,10 +9,9 @@ import UserTable from '@/components/dashboard/user-table';
 import RequestTable from '@/components/dashboard/request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
-import { listenToAdminDashboardData } from '@/lib/mock-data';
-import { updateRescheduleRequestStatus } from '@/lib/server-actions';
-import type { UserProfile, LessonRequest, SummaryData, Feedback, LessonProgressData, Course, QuizSet, FaqItem, BlogPost, SiteBanner, PromotionalPoster, Referral, AdminDashboardData, RescheduleRequest, RescheduleRequestStatusType } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat } from 'lucide-react';
+import { fetchAdminDashboardData } from '@/lib/server-actions';
+import type { SummaryData, AdminDashboardData, RescheduleRequestStatusType } from '@/types';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +25,6 @@ import { useAuth } from '@/context/auth-context';
 import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
 
-
 export default function AdminDashboard() {
     const { user } = useAuth();
     const searchParams = useSearchParams();
@@ -36,103 +33,69 @@ export default function AdminDashboard() {
 
     const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
     const [searchTerm, setSearchTerm] = useState('');
 
-    const handleActioned = useCallback(() => {
-        // This function re-triggers the listener in mock-data, simulating a refetch
-        if(user?.isAdmin) { // Check if user is admin before listening
-            setLoading(true);
-            const unsubscribe = listenToAdminDashboardData((data) => {
+    const loadData = useCallback(async (silent = false) => {
+        if (!user?.isAdmin) return;
+        if (!silent) setLoading(true);
+        else setIsRefreshing(true);
+
+        try {
+            const data = await fetchAdminDashboardData();
+            if (data) {
                 setDashboardData(data);
-                setLoading(false);
-            });
-            // We can't return the unsubscribe function from here in a way that React will use it for cleanup.
-            // This is a simplified refetch for the purpose of this component.
-            // In a real-world scenario, you might use a more advanced state management library.
+            } else {
+                toast({ title: "Load Failed", description: "Could not retrieve dashboard data.", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error("Dashboard data error:", error);
+            toast({ title: "Error", description: "An unexpected error occurred while loading data.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+            setIsRefreshing(false);
         }
-    }, [user]);
+    }, [user, toast]);
 
     useEffect(() => {
-        // Only fetch admin data if the logged-in user is an admin.
-        if (user?.isAdmin) {
-            setLoading(true);
-            const unsubscribe = listenToAdminDashboardData((data) => {
-                setDashboardData(data);
-                setLoading(false);
-            });
-            
-            // Cleanup function to unsubscribe from the listener when the component unmounts
-            return () => {
-                if (unsubscribe) unsubscribe();
-            };
-        } else {
-            // If the user is not an admin, don't attempt to load admin data.
-            setLoading(false);
-        }
-    }, [user]);
-
+        loadData();
+    }, [loadData]);
 
     const filteredUsers = useMemo(() => {
         if (!dashboardData?.allUsers) return [];
         return dashboardData.allUsers.filter(user => {
             const normalizedSearchTerm = searchTerm.toLowerCase().trim();
-            
             const searchTermMatch = !normalizedSearchTerm || (
                 user.uniqueId.toLowerCase().includes(normalizedSearchTerm) ||
                 user.name.toLowerCase().includes(normalizedSearchTerm) ||
                 user.contact.toLowerCase().includes(normalizedSearchTerm) ||
                 (user.phone && user.phone.toLowerCase().includes(normalizedSearchTerm))
             );
-
-            // If a search term is present, only match against that.
             if (searchTerm) return searchTermMatch;
-            
-            // Apply dropdown filters only if there is no active search term
             const locationMatch = !filters.location || user.location === filters.location;
             const subscriptionMatch = !filters.subscriptionPlan || user.subscriptionPlan === filters.subscriptionPlan;
-
             return locationMatch && subscriptionMatch;
         });
     }, [dashboardData?.allUsers, filters, searchTerm]);
 
-    // Separate lists for different user states
-    const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None'), [filteredUsers]);
     const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
     const existingCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'Approved'), [filteredUsers]);
     const cancellationRequests = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'On Hold'), [filteredUsers]);
     const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
     const existingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && u.approvalStatus && ['Approved', 'Rejected'].includes(u.approvalStatus)), [filteredUsers]);
 
-
     const handleFilterChange = (newFilters: { location?: string; subscriptionPlan?: string }) => {
         setFilters(newFilters);
-        setSearchTerm(''); // Clear search term when filters are applied
+        setSearchTerm('');
     };
     
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value);
-        setFilters({}); // Clear dropdown filters when searching
+        setFilters({});
     };
-
-    const handleRescheduleAction = async (requestId: string, status: RescheduleRequestStatusType) => {
-        const success = await updateRescheduleRequestStatus(requestId, status);
-        if (success) {
-            toast({
-                title: "Request Updated",
-                description: `The reschedule request has been ${status.toLowerCase()}.`
-            });
-            handleActioned();
-        } else {
-            toast({
-                title: "Update Failed",
-                description: "Could not update the request status.",
-                variant: "destructive",
-            });
-        }
-    };
-
 
     const renderDashboardView = () => (
         <>
@@ -150,28 +113,28 @@ export default function AdminDashboard() {
                         title={<><ShieldCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Customer Verifications</>}
                         users={pendingVerificationCustomers}
                         isLoading={loading}
-                        onUserActioned={handleActioned}
+                        onUserActioned={() => loadData(true)}
                         actionType="new-customer"
                     />
                      <UserTable
                         title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Existing Students</>}
                         users={existingCustomers}
                         isLoading={loading}
-                        onUserActioned={handleActioned}
+                        onUserActioned={() => loadData(true)}
                         actionType="existing-customer"
                     />
                     <UserTable
                         title={<><UserCheck className="inline-block mr-3 h-6 w-6 align-middle" />New Instructor Verifications</>}
                         users={pendingInstructors}
                         isLoading={loading}
-                        onUserActioned={handleActioned}
+                        onUserActioned={() => loadData(true)}
                         actionType="new-trainer"
                     />
                     <UserTable
                         title={<><History className="inline-block mr-3 h-6 w-6 align-middle" />Existing Instructors</>}
                         users={existingInstructors}
                         isLoading={loading}
-                        onUserActioned={handleActioned}
+                        onUserActioned={() => loadData(true)}
                         actionType="existing-trainer"
                     />
                 </TabsContent>
@@ -180,7 +143,7 @@ export default function AdminDashboard() {
                         title={<><Users className="inline-block mr-3 h-6 w-6 align-middle" />Interested Customers</>}
                         users={interestedCustomers}
                         isLoading={loading}
-                        onUserActioned={handleActioned}
+                        onUserActioned={() => loadData(true)}
                         actionType="interested-customer"
                     />
                      <RequestTable
@@ -192,13 +155,13 @@ export default function AdminDashboard() {
                         title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Lesson Reschedule Requests</>}
                         requests={dashboardData?.rescheduleRequests || []}
                         isLoading={loading}
-                        onActioned={handleActioned}
+                        onActioned={() => loadData(true)}
                     />
                      <UserTable
                         title={<><Repeat className="inline-block mr-3 h-6 w-6 align-middle" />Subscription Cancellation Requests</>}
                         users={cancellationRequests}
                         isLoading={loading}
-                        onUserActioned={handleActioned}
+                        onUserActioned={() => loadData(true)}
                         actionType="cancellation-request"
                     />
                 </TabsContent>
@@ -225,7 +188,7 @@ export default function AdminDashboard() {
             title={<><Gift className="inline-block mr-3 h-6 w-6 align-middle" />Referral Program Management</>}
             referrals={dashboardData?.referrals || []}
             isLoading={loading}
-            onActioned={handleActioned}
+            onActioned={() => loadData(true)}
         />
     );
 
@@ -235,32 +198,32 @@ export default function AdminDashboard() {
                 title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Management</>}
                 courses={dashboardData?.courses || []}
                 isLoading={loading}
-                onAction={handleActioned}
+                onAction={() => loadData(true)}
             />
             <BlogManagement
                 title={<><BookText className="inline-block mr-3 h-6 w-6 align-middle" />Blog Post Management</>}
                 posts={dashboardData?.blogPosts || []}
                 isLoading={loading}
-                onAction={handleActioned}
+                onAction={() => loadData(true)}
             />
             <FaqManagement
                 title={<><HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />FAQ Management</>}
                 faqs={dashboardData?.faqs || []}
                 isLoading={loading}
-                onAction={handleActioned}
+                onAction={() => loadData(true)}
             />
             <VisualContentManagement 
                 title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Visual Content</>}
                 banners={dashboardData?.siteBanners || []}
                 posters={dashboardData?.promotionalPosters || []}
                 isLoading={loading}
-                onAction={handleActioned}
+                onAction={() => loadData(true)}
             />
              <QuizManagement
                 title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
                 quizSets={dashboardData?.quizSets || []}
                 isLoading={loading}
-                onAction={handleActioned}
+                onAction={() => loadData(true)}
             />
         </div>
     );
@@ -285,23 +248,26 @@ export default function AdminDashboard() {
         <div className="min-h-screen bg-background text-foreground">
             <main className="container mx-auto max-w-7xl p-4 py-8 sm:p-6 lg:p-8 space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-                    <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
-                        {getPageTitle()}
-                    </h1>
+                    <div className="flex items-center gap-4">
+                        <h1 className="font-headline text-3xl font-semibold tracking-tight text-foreground">
+                            {getPageTitle()}
+                        </h1>
+                        <Button variant="outline" size="icon" onClick={() => loadData(true)} disabled={loading || isRefreshing}>
+                            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                        </Button>
+                    </div>
                     <div className="relative w-full sm:w-auto sm:max-w-xs">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="text"
-                            placeholder="Search by ID, Name, Email, Phone..."
+                            placeholder="Search users..."
                             value={searchTerm}
                             onChange={handleSearchChange}
                             className="h-10 pl-10 w-full"
                         />
                     </div>
                 </div>
-
                 {renderCurrentTab()}
-
             </main>
         </div>
     );

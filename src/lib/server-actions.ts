@@ -2,21 +2,85 @@
 'use server';
 
 import { z } from 'zod';
-import { RegistrationFormSchema, FullCustomerDetailsSchema, UserProfileUpdateSchema, ChangePasswordSchema, CourseModuleSchema, QuizQuestionSchema, VisualContentSchema, FaqSchema, BlogPostFormValues, BlogPostSchema, TrainerRegistrationFormSchema, CustomerRegistrationFormSchema, SkillSchema } from '@/types';
-import type { UserProfile, ApprovalStatusType, PayoutStatusType, RescheduleRequestStatusType, UserProfileUpdateValues, RescheduleRequest, ChangePasswordValues, FullCustomerDetailsValues, CourseModuleFormValues, QuizQuestionFormValues, VisualContentFormValues, FaqFormValues, RegistrationFormValues, Notification, Skill, SkillStatus } from '@/types';
-import { format, parse, parseISO, addDays } from 'date-fns';
-import { adminAuth, adminDb, adminStorage } from './firebase/admin';
+import { 
+    RegistrationFormSchema, 
+    FullCustomerDetailsSchema, 
+    UserProfileUpdateSchema, 
+    ChangePasswordSchema, 
+    CourseModuleSchema, 
+    QuizQuestionSchema, 
+    VisualContentSchema, 
+    FaqSchema, 
+    BlogPostSchema, 
+    TrainerRegistrationFormSchema, 
+    CustomerRegistrationFormSchema 
+} from '@/types';
+import type { 
+    UserProfile, 
+    ApprovalStatusType, 
+    PayoutStatusType, 
+    RescheduleRequestStatusType, 
+    UserProfileUpdateValues, 
+    RescheduleRequest, 
+    FullCustomerDetailsValues, 
+    CourseModuleFormValues, 
+    QuizQuestionFormValues, 
+    VisualContentFormValues, 
+    FaqFormValues, 
+    RegistrationFormValues, 
+    Notification, 
+    Skill,
+    AdminDashboardData,
+    SummaryData,
+    LessonRequest,
+    Feedback,
+    LessonProgressData,
+    Course,
+    QuizSet,
+    FaqItem,
+    BlogPost,
+    SiteBanner,
+    PromotionalPoster
+} from '@/types';
+import { format, parse, parseISO, addDays, isValid } from 'date-fns';
+import { adminAuth, adminDb } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
-import { seedPromotionalPosters } from './server-data'; 
 import { v4 as uuidv4 } from 'uuid';
 import { sendEmail } from './email';
 import dotenv from 'dotenv';
-import { FirestorePermissionError } from '@/firebase/errors';
-import { errorEmitter } from '@/firebase/error-emitter';
 
 dotenv.config();
 
+/**
+ * Robust date normalization helper to prevent RangeError: Invalid time value.
+ * Safely handles Firestore Timestamps, ISO strings, and standard date strings.
+ */
+function normalizeDate(dateVal: any): string {
+    if (!dateVal) return new Date().toISOString();
+    
+    let dateObj: Date;
+    
+    if (dateVal instanceof Date) {
+        dateObj = dateVal;
+    } else if (typeof dateVal === 'string') {
+        dateObj = parseISO(dateVal);
+        if (!isValid(dateObj)) {
+            // Fallback for strings like "Jul 22, 2024"
+            dateObj = new Date(dateVal);
+        }
+    } else if (dateVal && typeof dateVal.toDate === 'function') {
+        // Handle Firestore Timestamp
+        dateObj = dateVal.toDate();
+    } else if (typeof dateVal === 'object' && dateVal._seconds) {
+        // Handle POJO version of Firestore Timestamp if it lost its prototype
+        dateObj = new Date(dateVal._seconds * 1000);
+    } else {
+        dateObj = new Date(dateVal);
+    }
+
+    return isValid(dateObj) ? dateObj.toISOString() : new Date().toISOString();
+}
 
 // Helper to convert file to buffer
 async function fileToBuffer(file: File): Promise<Buffer> {
@@ -34,7 +98,7 @@ async function createNotification(notification: Omit<Notification, 'id' | 'times
         await adminDb.collection('notifications').add({
             ...notification,
             isRead: false,
-            timestamp: new Date(), // Use native Date object for Firestore Timestamp
+            timestamp: new Date(),
         });
     } catch (error) {
         console.error("Error creating notification:", error);
@@ -49,302 +113,300 @@ export async function markNotificationsAsRead(userId: string, notificationIds: s
         batch.update(docRef, { isRead: true });
     });
     await batch.commit();
-    revalidatePath('/dashboard'); // Revalidate to update server-rendered states if needed
+    revalidatePath('/dashboard');
 }
 
+// =================================================================
+// ADMIN DASHBOARD ACTIONS (Bypasses Security Rules)
+// =================================================================
+
+export async function fetchAdminDashboardData(): Promise<AdminDashboardData | null> {
+    if (!adminDb) {
+        console.error("Admin DB not initialized.");
+        return null;
+    }
+
+    try {
+        const [
+            usersSnap, 
+            trainersSnap, 
+            coursesSnap, 
+            quizSetsSnap, 
+            faqsSnap, 
+            blogSnap, 
+            bannersSnap, 
+            postersSnap, 
+            rescheduleSnap, 
+            feedbackSnap,
+            referralsSnap
+        ] = await Promise.all([
+            adminDb.collection('users').get(),
+            adminDb.collection('trainers').get(),
+            adminDb.collection('courses').get(),
+            adminDb.collection('quizSets').get(),
+            adminDb.collection('faqs').get(),
+            adminDb.collection('blog').orderBy('date', 'desc').get(),
+            adminDb.collection('siteBanners').get(),
+            adminDb.collection('promotionalPosters').get(),
+            adminDb.collection('rescheduleRequests').orderBy('requestTimestamp', 'desc').get(),
+            adminDb.collection('feedback').orderBy('submissionDate', 'desc').get(),
+            adminDb.collection('referrals').get()
+        ]);
+
+        const customers: UserProfile[] = usersSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                registrationTimestamp: normalizeDate(data.registrationTimestamp),
+            } as UserProfile;
+        });
+
+        const instructors: UserProfile[] = trainersSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                registrationTimestamp: normalizeDate(data.registrationTimestamp),
+            } as UserProfile;
+        });
+
+        const allUsers = [...customers, ...instructors];
+
+        const lessonRequests: LessonRequest[] = customers
+            .filter(c => c.subscriptionPlan && c.subscriptionPlan !== 'None' && !c.assignedTrainerId)
+            .map(c => ({
+                id: c.id,
+                customerId: c.id,
+                customerName: c.name,
+                vehicleType: (c.vehiclePreference || 'Four-Wheeler') as any,
+                status: 'Pending',
+                requestTimestamp: normalizeDate(c.registrationTimestamp),
+            }));
+
+        const feedback: Feedback[] = feedbackSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                submissionDate: normalizeDate(data.submissionDate),
+            } as Feedback;
+        });
+
+        const rescheduleRequests: RescheduleRequest[] = rescheduleSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                originalLessonDate: normalizeDate(data.originalLessonDate),
+                requestedRescheduleDate: normalizeDate(data.requestedRescheduleDate),
+                requestTimestamp: normalizeDate(data.requestTimestamp),
+            } as RescheduleRequest;
+        });
+
+        const referrals: Referral[] = referralsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                timestamp: normalizeDate(data.timestamp),
+            } as Referral;
+        });
+
+        const lessonProgress: LessonProgressData[] = customers
+            .filter(c => c.assignedTrainerId)
+            .map(c => ({
+                studentId: c.id,
+                studentName: c.name,
+                trainerName: c.assignedTrainerName || 'N/A',
+                subscriptionPlan: c.subscriptionPlan,
+                totalLessons: c.totalLessons || 0,
+                completedLessons: c.completedLessons || 0,
+                remainingLessons: (c.totalLessons || 0) - (c.completedLessons || 0),
+            }));
+
+        const summaryData: SummaryData = {
+            totalCustomers: customers.length,
+            totalInstructors: instructors.length,
+            activeSubscriptions: customers.filter(c => c.subscriptionPlan !== 'None' && c.approvalStatus === 'Approved').length,
+            pendingRequests: lessonRequests.length,
+            pendingRescheduleRequests: rescheduleRequests.filter(r => r.status === 'Pending').length,
+            totalCertifiedTrainers: instructors.filter(i => i.approvalStatus === 'Approved').length,
+            totalEarnings: customers.reduce((acc, curr) => {
+                const planPrices: Record<string, number> = { 'Basic': 3999, 'Gold': 7499, 'Premium': 9999 };
+                return acc + (planPrices[curr.subscriptionPlan] || 0);
+            }, 0),
+        };
+
+        return {
+            summaryData,
+            allUsers,
+            lessonRequests,
+            rescheduleRequests,
+            feedback,
+            referrals,
+            lessonProgress,
+            courses: coursesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Course)),
+            quizSets: quizSetsSnap.docs.map(d => ({ id: d.id, ...d.data() } as QuizSet)),
+            faqs: faqsSnap.docs.map(d => ({ id: d.id, ...d.data() } as FaqItem)),
+            blogPosts: blogSnap.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost)),
+            siteBanners: bannersSnap.docs.map(d => ({ id: d.id, ...d.data() } as SiteBanner)),
+            promotionalPosters: postersSnap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)),
+        };
+
+    } catch (error) {
+        console.error("Error fetching admin dashboard data:", error);
+        return null;
+    }
+}
 
 // =================================================================
-// LIVE SERVER ACTIONS - Interacts with Firebase Admin SDK
+// AUTH & REGISTRATION ACTIONS
 // =================================================================
+
 export async function registerUserAction(data: RegistrationFormValues): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
     if (!adminAuth || !adminDb) {
         return { success: false, error: "Server is not configured for authentication." };
     }
     
-    // Universal check for email and username before proceeding
     const { email, username, userRole } = data;
     try {
-        const emailQueryUsers = await adminDb.collection('users').where('contact', '==', email).limit(1).get();
-        const emailQueryTrainers = await adminDb.collection('trainers').where('contact', '==', email).limit(1).get();
-        if (!emailQueryUsers.empty || !emailQueryTrainers.empty) {
-            return { success: false, error: 'A user is already registered with this email address.' };
-        }
+        const [emailUsers, emailTrainers, userUsers, userTrainers] = await Promise.all([
+            adminDb.collection('users').where('contact', '==', email).limit(1).get(),
+            adminDb.collection('trainers').where('contact', '==', email).limit(1).get(),
+            adminDb.collection('users').where('username', '==', username).limit(1).get(),
+            adminDb.collection('trainers').where('username', '==', username).limit(1).get()
+        ]);
 
-        const usernameQueryUsers = await adminDb.collection('users').where('username', '==', username).limit(1).get();
-        const usernameQueryTrainers = await adminDb.collection('trainers').where('username', '==', username).limit(1).get();
-        if (!usernameQueryUsers.empty || !usernameQueryTrainers.empty) {
-            return { success: false, error: 'This username is already taken. Please choose another one.' };
-        }
+        if (!emailUsers.empty || !emailTrainers.empty) return { success: false, error: 'Email already registered.' };
+        if (!userUsers.empty || !userTrainers.empty) return { success: false, error: 'Username taken.' };
     } catch (e) {
-        console.error("Pre-registration check failed:", e);
-        return { success: false, error: 'An error occurred while checking for existing users.' };
+        return { success: false, error: 'Database check failed.' };
     }
 
-
     if (userRole === 'trainer') {
-        const validationResult = TrainerRegistrationFormSchema.safeParse(data);
-        if (!validationResult.success) {
-            const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
-            return { success: false, error: firstError };
-        }
+        const validation = TrainerRegistrationFormSchema.safeParse(data);
+        if (!validation.success) return { success: false, error: validation.error.errors[0].message };
 
-        const { password, name, phone, gender, state, district, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, yearsOfExperience, drivingSchoolName, ownerName, drivingSchoolCertificateNumber } = validationResult.data;
+        const { password, name, phone, gender, state, district, specialization, trainerVehicleType, fuelType, vehicleNumber, drivingLicenseNumber, yearsOfExperience } = validation.data;
 
         try {
-            const userRecord = await adminAuth.createUser({
-                email: email,
-                emailVerified: true,
-                password: password,
-                displayName: name,
-                disabled: false,
-            });
-            
+            const userRecord = await adminAuth.createUser({ email, password, displayName: name });
             const uniqueId = `TR-${userRecord.uid.slice(0, 6).toUpperCase()}`;
-            const myReferralCode = `${username.toLowerCase().replace(/\s/g, '')}${uniqueId.slice(-3)}`;
-            
-            const trainerProfile: Omit<UserProfile, 'id'> = {
+            const trainerProfile = {
                 uniqueId,
-                myReferralCode,
-                name,
-                username,
-                contact: email,
-                phone,
-                gender,
-                userRole: 'trainer',
-                subscriptionPlan: 'Trainer',
-                approvalStatus: 'Pending',
-                location: district,
-                state,
-                district,
-                specialization,
+                myReferralCode: `${username.toLowerCase()}${uniqueId.slice(-3)}`,
+                name, username, contact: email, phone, gender,
+                userRole: 'trainer', subscriptionPlan: 'Trainer', approvalStatus: 'Pending',
+                location: district, state, district, specialization,
                 vehicleInfo: `${trainerVehicleType} (${fuelType})`,
-                vehicleNumber,
-                drivingLicenseNumber,
+                vehicleNumber, drivingLicenseNumber, yearsOfExperience,
                 registrationTimestamp: new Date().toISOString(),
-                yearsOfExperience,
-                drivingSchoolName,
-                ownerName,
-                drivingSchoolCertificateNumber,
             };
             
             await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
-            
-            // Send welcome email
-            try {
-                await sendEmail({
-                    to: email,
-                    subject: 'Welcome to Drivergy, Trainer!',
-                    text: `Welcome Aboard, ${name}! Thank you for registering as a trainer on Drivergy. Your profile is now under review. We will notify you once it's approved. The Drivergy Team`,
-                    html: `<h1>Welcome Aboard, ${name}!</h1><p>Thank you for registering as a trainer on Drivergy. Your profile is now under review. We will notify you once it's approved.</p><p>The Drivergy Team</p>`,
-                });
-            } catch (emailError) {
-                console.error("Failed to send trainer welcome email:", emailError);
-            }
-
             revalidatePath('/dashboard');
-            return { success: true, user: { ...trainerProfile, id: userRecord.uid } };
-
+            return { success: true, user: { ...trainerProfile, id: userRecord.uid } as UserProfile };
         } catch (error: any) {
-            console.error("Error in trainer registerUserAction:", error);
-            if (error.code === 'auth/email-already-exists') {
-                return { success: false, error: 'A user is already registered with this email address.' };
-            }
-            return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
+            return { success: false, error: error.message };
         }
+    } else {
+        const validation = CustomerRegistrationFormSchema.safeParse(data);
+        if (!validation.success) return { success: false, error: validation.error.errors[0].message };
 
-    } else { // Customer Role
-        const validationResult = CustomerRegistrationFormSchema.safeParse(data);
-        if (!validationResult.success) {
-            const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
-            return { success: false, error: firstError };
-        }
-        const { password, name, phone, gender } = validationResult.data;
+        const { password, name, phone, gender } = validation.data;
 
         try {
-            const userRecord = await adminAuth.createUser({
-                email: email,
-                emailVerified: true,
-                password: password,
-                displayName: name,
-                disabled: false,
-            });
-            
+            const userRecord = await adminAuth.createUser({ email, password, displayName: name });
             const uniqueId = `CU-${userRecord.uid.slice(0, 6).toUpperCase()}`;
-            const myReferralCode = `${username.toLowerCase().replace(/\s/g, '')}${uniqueId.slice(-3)}`;
-
-            const userProfileData: Omit<UserProfile, 'id'> = {
+            const userProfileData = {
                 uniqueId,
-                myReferralCode,
-                name,
-                username,
-                contact: email,
-                phone,
-                gender,
-                userRole: 'customer',
-                subscriptionPlan: 'None',
-                approvalStatus: 'Pending',
+                myReferralCode: `${username.toLowerCase()}${uniqueId.slice(-3)}`,
+                name, username, contact: email, phone, gender,
+                userRole: 'customer', subscriptionPlan: 'None', approvalStatus: 'Pending',
                 registrationTimestamp: new Date().toISOString(),
             };
-             await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
-             await createNotification({ userId: userRecord.uid, message: `Welcome to Drivergy, ${name}! Complete your profile to get started.`, href: '/dashboard/complete-profile' });
-            
-            // Send welcome email
-            try {
-                await sendEmail({
-                    to: email,
-                    subject: 'Welcome to Drivergy!',
-                    text: `Welcome, ${name}! Thank you for registering with Drivergy. Your journey to becoming a confident driver starts now. Please proceed to select a subscription plan to get started. The Drivergy Team`,
-                    html: `<h1>Welcome, ${name}!</h1><p>Thank you for registering with Drivergy. Your journey to becoming a confident driver starts now. Please proceed to select a subscription plan to get started.</p><p>The Drivergy Team</p>`,
-                });
-            } catch (emailError) {
-                console.error("Failed to send customer welcome email:", emailError);
-            }
-
+            await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
             revalidatePath('/dashboard');
-            revalidatePath('/login');
-            return { success: true, user: { ...userProfileData, id: userRecord.uid } };
-
+            return { success: true, user: { ...userProfileData, id: userRecord.uid } as UserProfile };
         } catch (error: any) {
-            console.error("Error in customer registerUserAction:", error);
-             if (error.code === 'auth/email-already-exists') {
-                return { success: false, error: 'A user is already registered with this email address.' };
-            }
-            return { success: false, error: error.message || 'An unexpected server error occurred during registration.' };
+            return { success: false, error: error.message };
         }
     }
 }
 
-
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
-    if (!adminAuth) {
-         return { success: false, error: "Server is not configured for authentication." };
-    }
+    if (!adminAuth) return { success: false, error: "Auth not configured." };
     try {
-        // Generate the password reset link
         const link = await adminAuth.generatePasswordResetLink(email);
-
-        // Send the email with the link
         await sendEmail({
             to: email,
             subject: 'Reset Your Drivergy Password',
-            text: `You are receiving this email because a password reset was requested for your account. Please click the link to reset your password: ${link}. If you did not request this, you can ignore this email. Thanks, The Drivergy Team`,
-            html: `
-                <h1>Drivergy Password Reset</h1>
-                <p>You are receiving this email because a password reset was requested for your account.</p>
-                <p>Please click the link below to reset your password:</p>
-                <p><a href="${link}" style="color: #ffffff; background-color: #ef4444; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a></p>
-                <p>If you did not request a password reset, you can safely ignore this email.</p>
-                <br>
-                <p>Thanks,</p>
-                <p>The Drivergy Team</p>
-            `,
+            text: `Click to reset: ${link}`,
+            html: `<p>Click <a href="${link}">here</a> to reset your password.</p>`,
         });
-
         return { success: true };
     } catch (error: any) {
-        console.error("Password reset error:", error);
-        // It's a security best practice not to reveal if an email exists or not.
-        // So, we return success even if the user is not found.
-        if (error.code === 'auth/user-not-found') {
-            return { success: true }; 
-        }
-        return { success: false, error: "An unexpected error occurred while sending the reset link." };
+        return { success: false, error: "Failed to send reset link." };
     }
 }
 
 export async function updateUserApprovalStatus({ userId, newStatus, role }: { userId: string; newStatus: ApprovalStatusType; role: 'customer' | 'trainer' | 'admin' }): Promise<{ success: boolean; error?: string }> {
     if (!adminDb) return { success: false, error: "Database not configured." };
-    
     try {
-        const collectionName = role === 'trainer' ? 'trainers' : 'users';
-        const userRef = adminDb.collection(collectionName).doc(userId);
-        await userRef.update({ approvalStatus: newStatus });
-
-        await createNotification({ userId: userId, message: `An admin has updated your account status to: ${newStatus}.`, href: '/dashboard/profile' });
+        const collection = role === 'trainer' ? 'trainers' : 'users';
+        await adminDb.collection(collection).doc(userId).update({ approvalStatus: newStatus });
+        await createNotification({ userId, message: `Account status updated to: ${newStatus}.`, href: '/dashboard/profile' });
         revalidatePath('/dashboard');
         return { success: true };
     } catch (error: any) {
-        console.error(`Error updating user ${userId} status:`, error);
-        return { success: false, error: "Failed to update user status." };
+        return { success: false, error: "Failed to update status." };
     }
 }
 
 export async function deleteUserAction({ userId, userRole }: { userId: string; userRole: 'customer' | 'trainer' | 'admin' }): Promise<{ success: boolean; error?: string }> {
-    if (!adminAuth || !adminDb) {
-        return { success: false, error: "Server is not configured correctly." };
-    }
-
+    if (!adminAuth || !adminDb) return { success: false, error: "Server not configured." };
     try {
-        const collectionName = userRole === 'trainer' ? 'trainers' : 'users';
-        await adminAuth.deleteUser(userId);
-        await adminDb.collection(collectionName).doc(userId).delete();
-
-        await createNotification({ userId: userId, message: `Your account has been deleted by an administrator.`, href: '/' });
-
+        const collection = userRole === 'trainer' ? 'trainers' : 'users';
+        await Promise.all([
+            adminAuth.deleteUser(userId),
+            adminDb.collection(collection).doc(userId).delete()
+        ]);
         revalidatePath('/dashboard');
         return { success: true };
     } catch (error: any) {
-        console.error(`Failed to delete user ${userId}:`, error);
-        return { success: false, error: "An error occurred while deleting the user." };
+        return { success: false, error: "Failed to delete user." };
     }
 }
 
-
 export async function completeCustomerProfileAction(prevState: any, formData: FormData): Promise<{ success: boolean; error?: string; }> {
-    if (!adminDb) {
-        return { success: false, error: "Server not configured." };
-    }
+    if (!adminDb) return { success: false, error: "Server not configured." };
     
     let data = Object.fromEntries(formData.entries());
     const file = data.photoIdFile as File;
-    
-    // Create a separate object for validation that doesn't include the file object itself.
-    const validationData = { ...data };
-    if (file && file.size > 0) {
-        validationData.photoIdFile = file;
-    } else {
-        delete validationData.photoIdFile; // Remove if no file is uploaded for validation purposes
-    }
-    
-    // Pre-process the date string from FormData into a Date object before validation.
-    if (validationData.subscriptionStartDate && typeof validationData.subscriptionStartDate === 'string') {
-        validationData.subscriptionStartDate = parseISO(validationData.subscriptionStartDate);
-    }
-    
-    // Convert empty strings for optional fields to undefined to prevent Zod errors
-    Object.keys(validationData).forEach(key => {
-        if (validationData[key] === '') {
-            validationData[key] = undefined;
-        }
-    });
+    const validationData = { 
+        ...data, 
+        photoIdFile: (file && file.size > 0) ? file : undefined,
+        subscriptionStartDate: data.subscriptionStartDate ? new Date(data.subscriptionStartDate as string) : undefined
+    };
 
-    const validationResult = FullCustomerDetailsSchema.safeParse(validationData);
+    const validation = FullCustomerDetailsSchema.safeParse(validationData);
+    if (!validation.success) return { success: false, error: validation.error.errors[0].message };
 
-    if (!validationResult.success) {
-        console.error("Profile completion validation failed:", validationResult.error.format());
-        const firstError = validationResult.error.errors[0]?.message || 'Invalid form data. Please check all fields.';
-        return { success: false, error: firstError };
-    }
-
-    const { userId, photoIdFile, ...profileData } = validationResult.data;
+    const { userId, photoIdFile, ...profileData } = validation.data;
     
     try {
         const photoIdUrl = await uploadFileToCloudinary(await fileToBuffer(photoIdFile), 'customer_documents');
-        
-        const userRef = adminDb.collection('users').doc(userId);
-        await userRef.update({ 
+        await adminDb.collection('users').doc(userId).update({ 
             ...profileData, 
             subscriptionStartDate: format(profileData.subscriptionStartDate, 'MMM dd, yyyy'),
             photoIdUrl,
             approvalStatus: 'In Progress' 
         });
-        
         revalidatePath('/dashboard');
         return { success: true };
-
     } catch(error: any) {
-        console.error("Error completing customer profile:", error);
-        return { success: false, error: "An unexpected error occurred." };
+        return { success: false, error: "Failed to save profile." };
     }
 }
 
@@ -354,170 +416,100 @@ export async function updateUserProfile(userId: string, data: UserProfileUpdateV
     const updatePayload: { [key: string]: any } = { ...profileData };
 
     if (photo) {
-        try {
-            const photoBuffer = await fileToBuffer(photo);
-            const photoURL = await uploadFileToCloudinary(photoBuffer, 'profile_pictures');
-            updatePayload.photoURL = photoURL;
-        } catch (uploadError) {
-            console.error("Cloudinary upload failed:", uploadError);
-            // Decide if you want to fail the whole update or just proceed without the new photo
-            return null;
-        }
+        const photoURL = await uploadFileToCloudinary(await fileToBuffer(photo), 'profile_pictures');
+        updatePayload.photoURL = photoURL;
     }
 
-    const userRef = adminDb.collection('users').doc(userId);
-    const trainerRef = adminDb.collection('trainers').doc(userId);
-
     try {
-        const userDoc = await userRef.get();
-        let docToUpdate;
-        let collectionPath;
+        const userRef = adminDb.collection('users').doc(userId);
+        const trainerRef = adminDb.collection('trainers').doc(userId);
+        const [userDoc, trainerDoc] = await Promise.all([userRef.get(), trainerRef.get()]);
 
-        if (userDoc.exists) {
-            docToUpdate = userRef;
-            collectionPath = 'users';
-        } else {
-            const trainerDoc = await trainerRef.get();
-            if (trainerDoc.exists) {
-                docToUpdate = trainerRef;
-                collectionPath = 'trainers';
-            } else {
-                return null; // User not found in either collection
-            }
-        }
-        
-        await docToUpdate.update(updatePayload);
+        const targetRef = userDoc.exists ? userRef : (trainerDoc.exists ? trainerRef : null);
+        if (!targetRef) return null;
 
-        const updatedDoc = await docToUpdate.get();
+        await targetRef.update(updatePayload);
+        const updated = await targetRef.get();
         revalidatePath('/dashboard/profile');
-        const updatedData = { id: updatedDoc.id, ...updatedDoc.data() };
-        if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
-            updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
-        }
-        return updatedData as UserProfile;
-
-    } catch (error: any) {
-        if (error.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-                path: (userRef.path || trainerRef.path),
-                operation: 'update',
-                requestResourceData: updatePayload,
-            });
-            // This is a server action, so we can't emit to a client-side emitter.
-            // We'll throw the error so the client-side fetch can catch it.
-            // In a real app, you'd have a centralized server-side logging/error handling mechanism.
-            console.error(permissionError.message);
-        }
-        console.error("Error updating user profile:", error);
+        return { id: updated.id, ...updated.data(), registrationTimestamp: normalizeDate(updated.data()?.registrationTimestamp) } as UserProfile;
+    } catch (error) {
         return null;
     }
 }
 
-
 export async function changeUserPassword(userId: string, currentPass: string, newPass: string): Promise<boolean> {
-   if (!adminAuth) {
-        console.error("Auth not configured.");
-        return false;
-    }
-    console.warn("Server-side password change is not recommended without re-authentication.");
+    console.warn("Server-side password change requires re-auth which is restricted in this environment.");
     return false;
 }
 
-export async function addBlogPost(data: BlogPostFormValues): Promise<boolean> {
+export async function addBlogPost(data: z.infer<typeof BlogPostSchema>): Promise<boolean> {
     if (!adminDb) return false;
     const { slug, imageFile, ...postData } = data;
     let imageUrl = postData.imageSrc || '';
-
-    if (imageFile) {
-        const imageBuffer = await fileToBuffer(imageFile);
-        imageUrl = await uploadFileToCloudinary(imageBuffer, 'blog_images');
-    }
-
+    if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'blog_images');
     await adminDb.collection('blog').doc(slug).set({ ...postData, imageSrc: imageUrl });
-    revalidatePath('/dashboard');
-    revalidatePath('/blog');
+    revalidatePath('/blog'); revalidatePath('/dashboard');
     return true;
 }
 
-export async function updateBlogPost(slug: string, data: BlogPostFormValues): Promise<boolean> {
+export async function updateBlogPost(slug: string, data: z.infer<typeof BlogPostSchema>): Promise<boolean> {
     if (!adminDb) return false;
     const { imageFile, ...postData } = data;
     let imageUrl = postData.imageSrc || '';
-
-    if (imageFile) {
-        const imageBuffer = await fileToBuffer(imageFile);
-        imageUrl = await uploadFileToCloudinary(imageBuffer, 'blog_images');
-    }
-
+    if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'blog_images');
     await adminDb.collection('blog').doc(slug).update({ ...postData, imageSrc: imageUrl });
-    revalidatePath('/dashboard');
-    revalidatePath('/blog');
-    revalidatePath(`/blog/${slug}`);
+    revalidatePath('/blog'); revalidatePath(`/blog/${slug}`); revalidatePath('/dashboard');
     return true;
 }
 
 export async function deleteBlogPost(slug: string): Promise<boolean> {
     if (!adminDb) return false;
     await adminDb.collection('blog').doc(slug).delete();
-    revalidatePath('/dashboard');
-    revalidatePath('/blog');
+    revalidatePath('/blog'); revalidatePath('/dashboard');
     return true;
 }
 
 export async function addCourseModule(courseId: string, formData: FormData): Promise<boolean> {
     if (!adminDb) return false;
-    
     const data = Object.fromEntries(formData.entries());
-    const validationResult = CourseModuleSchema.safeParse(data);
-    if (!validationResult.success) return false;
+    const validation = CourseModuleSchema.safeParse(data);
+    if (!validation.success) return false;
 
-    const { videoFile, ...moduleData } = validationResult.data;
+    const { videoFile, ...moduleData } = validation.data;
     let videoUrl = moduleData.recordedLectureLink || '';
-
-    if (videoFile) {
-        videoUrl = await uploadFileToCloudinary(await fileToBuffer(videoFile), 'course_videos');
-    }
+    if (videoFile) videoUrl = await uploadFileToCloudinary(await fileToBuffer(videoFile), 'course_videos');
 
     const courseRef = adminDb.collection('courses').doc(courseId);
     const courseDoc = await courseRef.get();
     if (!courseDoc.exists) return false;
 
-    const newModule = { ...moduleData, recordedLectureLink: videoUrl, id: uuidv4() };
     const modules = courseDoc.data()?.modules || [];
-    modules.push(newModule);
-
+    modules.push({ ...moduleData, recordedLectureLink: videoUrl, id: uuidv4() });
     await courseRef.update({ modules });
-    revalidatePath('/dashboard');
     revalidatePath('/dashboard/courses');
     return true;
 }
 
 export async function updateCourseModule(courseId: string, moduleId: string, formData: FormData): Promise<boolean> {
     if (!adminDb) return false;
-
     const data = Object.fromEntries(formData.entries());
-    const validationResult = CourseModuleSchema.safeParse(data);
-    if (!validationResult.success) return false;
+    const validation = CourseModuleSchema.safeParse(data);
+    if (!validation.success) return false;
 
-    const { videoFile, ...moduleData } = validationResult.data;
-    let videoUrl = moduleData.recordedLectureLink || '';
-
-    if (videoFile) {
-        videoUrl = await uploadFileToCloudinary(await fileToBuffer(videoFile), 'course_videos');
-    }
-    
+    const { videoFile, ...moduleData } = validation.data;
     const courseRef = adminDb.collection('courses').doc(courseId);
     const courseDoc = await courseRef.get();
     if (!courseDoc.exists) return false;
     
     let modules = courseDoc.data()?.modules || [];
-    const moduleIndex = modules.findIndex((m: any) => m.id === moduleId);
+    const idx = modules.findIndex((m: any) => m.id === moduleId);
+    if (idx === -1) return false;
 
-    if (moduleIndex === -1) return false;
-    modules[moduleIndex] = { ...modules[moduleIndex], ...moduleData, recordedLectureLink: videoUrl };
-    
+    let videoUrl = moduleData.recordedLectureLink || modules[idx].recordedLectureLink;
+    if (videoFile) videoUrl = await uploadFileToCloudinary(await fileToBuffer(videoFile), 'course_videos');
+
+    modules[idx] = { ...modules[idx], ...moduleData, recordedLectureLink: videoUrl };
     await courseRef.update({ modules });
-    revalidatePath('/dashboard');
     revalidatePath('/dashboard/courses');
     return true;
 }
@@ -527,36 +519,27 @@ export async function deleteCourseModule(courseId: string, moduleId: string): Pr
     const courseRef = adminDb.collection('courses').doc(courseId);
     const courseDoc = await courseRef.get();
     if (!courseDoc.exists) return false;
-
-    const modules = courseDoc.data()?.modules || [];
-    const updatedModules = modules.filter((m: any) => m.id !== moduleId);
-    
-    await courseRef.update({ modules: updatedModules });
-    revalidatePath('/dashboard');
+    const modules = (courseDoc.data()?.modules || []).filter((m: any) => m.id !== moduleId);
+    await courseRef.update({ modules });
     revalidatePath('/dashboard/courses');
     return true;
 }
 
 export async function updateQuizQuestion(quizSetId: string, questionId: string, data: QuizQuestionFormValues): Promise<boolean> {
     if (!adminDb) return false;
-    const quizSetRef = adminDb.collection('quizSets').doc(quizSetId);
-    const doc = await quizSetRef.get();
+    const ref = adminDb.collection('quizSets').doc(quizSetId);
+    const doc = await ref.get();
     if (!doc.exists) return false;
-
     const questions = doc.data()?.questions || [];
-    const qIndex = questions.findIndex((q: any) => q.id === questionId);
-
-    if (qIndex === -1) return false;
-
-    questions[qIndex] = {
+    const idx = questions.findIndex((q: any) => q.id === questionId);
+    if (idx === -1) return false;
+    questions[idx] = {
         id: questionId,
         question: { en: data.question_en, hi: data.question_hi },
-        options: { en: data.options_en.split('\\n'), hi: data.options_hi.split('\\n') },
+        options: { en: data.options_en.split('\n'), hi: data.options_hi.split('\n') },
         correctAnswer: { en: data.correctAnswer_en, hi: data.correctAnswer_hi },
     };
-
-    await quizSetRef.update({ questions });
-    revalidatePath('/dashboard');
+    await ref.update({ questions });
     revalidatePath('/dashboard/rto-quiz');
     return true;
 }
@@ -564,27 +547,24 @@ export async function updateQuizQuestion(quizSetId: string, questionId: string, 
 export async function addFaq(data: FaqFormValues): Promise<boolean> {
     if (!adminDb) return false;
     await adminDb.collection('faqs').add({ ...data, id: uuidv4() });
-    revalidatePath('/dashboard');
     revalidatePath('/faq');
     return true;
 }
 
 export async function updateFaq(faqId: string, data: FaqFormValues): Promise<boolean> {
     if (!adminDb) return false;
-    const faqQuery = await adminDb.collection('faqs').where('id', '==', faqId).limit(1).get();
-    if (faqQuery.empty) return false;
-    await faqQuery.docs[0].ref.update(data);
-    revalidatePath('/dashboard');
+    const query = await adminDb.collection('faqs').where('id', '==', faqId).limit(1).get();
+    if (query.empty) return false;
+    await query.docs[0].ref.update(data);
     revalidatePath('/faq');
     return true;
 }
 
 export async function deleteFaq(faqId: string): Promise<boolean> {
     if (!adminDb) return false;
-    const faqQuery = await adminDb.collection('faqs').where('id', '==', faqId).limit(1).get();
-    if (faqQuery.empty) return false;
-    await faqQuery.docs[0].ref.delete();
-    revalidatePath('/dashboard');
+    const query = await adminDb.collection('faqs').where('id', '==', faqId).limit(1).get();
+    if (query.empty) return false;
+    await query.docs[0].ref.delete();
     revalidatePath('/faq');
     return true;
 }
@@ -592,13 +572,9 @@ export async function deleteFaq(faqId: string): Promise<boolean> {
 export async function updateSiteBanner(bannerId: string, data: VisualContentFormValues): Promise<boolean> {
     if (!adminDb) return false;
     const { imageFile, ...bannerData } = data;
-    let imageUrl = bannerData.imageSrc || '';
-
-    if (imageFile) {
-        imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'site_banners');
-    }
+    let imageUrl = bannerData.imageSrc;
+    if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'site_banners');
     await adminDb.collection('siteBanners').doc(bannerId).update({ ...bannerData, imageSrc: imageUrl });
-    revalidatePath('/dashboard');
     revalidatePath('/');
     return true;
 }
@@ -606,121 +582,77 @@ export async function updateSiteBanner(bannerId: string, data: VisualContentForm
 export async function updatePromotionalPoster(posterId: string, data: VisualContentFormValues): Promise<boolean> {
     if (!adminDb) return false;
     const { imageFile, ...posterData } = data;
-    let imageUrl = posterData.imageSrc || '';
-
-    if (imageFile) {
-        imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'promo_posters');
-    }
+    let imageUrl = posterData.imageSrc;
+    if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'promo_posters');
     await adminDb.collection('promotionalPosters').doc(posterId).update({ ...posterData, imageSrc: imageUrl });
-    revalidatePath('/dashboard');
     revalidatePath('/');
     return true;
 }
 
 export async function updateUserAttendance(studentId: string, status: 'Present' | 'Absent'): Promise<boolean> {
-  if (!adminDb) return false;
-  const studentRef = adminDb.collection('users').doc(studentId);
-  const studentDoc = await studentRef.get();
-  if (!studentDoc.exists) return false;
-
-  const currentCompleted = studentDoc.data()?.completedLessons || 0;
-  const newCompleted = status === 'Present' ? currentCompleted + 1 : currentCompleted;
-
-  await studentRef.update({
-    attendance: status,
-    completedLessons: newCompleted,
-    upcomingLesson: null,
-  });
-
-  revalidatePath('/dashboard');
-  return true;
+    if (!adminDb) return false;
+    const ref = adminDb.collection('users').doc(studentId);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    const current = doc.data()?.completedLessons || 0;
+    await ref.update({
+        attendance: status,
+        completedLessons: status === 'Present' ? current + 1 : current,
+        upcomingLesson: null,
+    });
+    revalidatePath('/dashboard');
+    return true;
 }
-
 
 export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
     if (!adminDb) return null;
-    const userRef = adminDb.collection('users').doc(customerId);
-    
-    const lessonDate = addDays(newDate, 1);
-    
-    await userRef.update({
+    const ref = adminDb.collection('users').doc(customerId);
+    await ref.update({
         subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
-        upcomingLesson: format(lessonDate, 'MMM dd, yyyy, h:mm a')
+        upcomingLesson: format(addDays(newDate, 1), "MMM dd, yyyy, '09:00 AM'")
     });
-    const updatedDoc = await userRef.get();
-    return { id: updatedDoc.id, ...updatedDoc.data() } as UserProfile;
+    const updated = await ref.get();
+    return { id: updated.id, ...updated.data(), registrationTimestamp: normalizeDate(updated.data()?.registrationTimestamp) } as UserProfile;
 }
 
 export async function addRescheduleRequest(userId: string, customerName: string, originalDate: Date, newDate: Date): Promise<boolean> {
     if (!adminDb) return false;
-    
-    const userRef = adminDb.collection('users').doc(userId);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) return false;
-    
+    const userDoc = await adminDb.collection('users').doc(userId).get();
     const trainerId = userDoc.data()?.assignedTrainerId;
     if (!trainerId) return false;
 
-    const request: Omit<RescheduleRequest, 'id' | 'requestTimestamp'> = {
-        userId,
-        customerName,
-        trainerId,
+    await adminDb.collection('rescheduleRequests').add({
+        userId, customerName, trainerId,
         originalLessonDate: originalDate.toISOString(),
         requestedRescheduleDate: newDate.toISOString(),
-        status: 'Pending'
-    };
-
-    const newRequestRef = await adminDb.collection('rescheduleRequests').add({
-      ...request,
-      requestTimestamp: new Date(),
+        status: 'Pending',
+        requestTimestamp: new Date()
     });
-    
-    await createNotification({ userId: trainerId, message: `${customerName} requested to reschedule a lesson.`, href: '/dashboard' });
-
+    await createNotification({ userId: trainerId, message: `${customerName} wants to reschedule.`, href: '/dashboard' });
     revalidatePath('/dashboard');
     return true;
 }
-
 
 export async function updateRescheduleRequestStatus(requestId: string, newStatus: RescheduleRequestStatusType): Promise<boolean> {
     if (!adminDb) return false;
-    const requestRef = adminDb.collection('rescheduleRequests').doc(requestId);
-    const requestDoc = await requestRef.get();
-    if (!requestDoc.exists) return false;
-    
-    const requestData = requestDoc.data()!;
-    
-    await requestRef.update({ status: newStatus });
-    
+    const ref = adminDb.collection('rescheduleRequests').doc(requestId);
+    const doc = await ref.get();
+    if (!doc.exists) return false;
+    const data = doc.data()!;
+    await ref.update({ status: newStatus });
     if (newStatus === 'Approved') {
-        const userRef = adminDb.collection('users').doc(requestData.userId);
-        const requestedDate = parseISO(requestData.requestedRescheduleDate);
-        const formattedDate = format(requestedDate, "MMM dd, yyyy, h:mm a");
-        await userRef.update({ upcomingLesson: formattedDate });
-        await createNotification({ userId: requestData.userId, message: `Your reschedule request was ${newStatus}.`, href: '/dashboard' });
-    } else {
-        await createNotification({ userId: requestData.userId, message: `Your reschedule request was unfortunately ${newStatus}.`, href: '/dashboard' });
+        const requestedDate = normalizeDate(data.requestedRescheduleDate);
+        await adminDb.collection('users').doc(data.userId).update({ upcomingLesson: format(parseISO(requestedDate), "MMM dd, yyyy, h:mm a") });
     }
-    
+    await createNotification({ userId: data.userId, message: `Reschedule request ${newStatus.toLowerCase()}.`, href: '/dashboard' });
     revalidatePath('/dashboard');
     return true;
 }
 
-
 export async function addFeedback(customerId: string, customerName: string, trainerId: string, trainerName: string, rating: number, comment: string): Promise<boolean> {
     if (!adminDb) return false;
-    await adminDb.collection('feedback').add({
-        customerId,
-        customerName,
-        trainerId,
-        trainerName,
-        rating,
-        comment,
-        submissionDate: new Date(),
-    });
-    
+    await adminDb.collection('feedback').add({ customerId, customerName, trainerId, trainerName, rating, comment, submissionDate: new Date() });
     await adminDb.collection('users').doc(customerId).update({ feedbackSubmitted: true });
-
     revalidatePath('/dashboard');
     return true;
 }
@@ -734,320 +666,78 @@ export async function updateReferralPayoutStatus(referralId: string, status: Pay
 
 export async function assignTrainerToCustomer(customerId: string, trainerId: string): Promise<UserProfile | null> {
     if (!adminDb) return null;
-    
-    const customerRef = adminDb.collection('users').doc(customerId);
-    const trainerRef = adminDb.collection('trainers').doc(trainerId);
+    const [cDoc, tDoc] = await Promise.all([adminDb.collection('users').doc(customerId).get(), adminDb.collection('trainers').doc(trainerId).get()]);
+    if (!cDoc.exists || !tDoc.exists) return null;
+    const cData = cDoc.data()!; const tData = tDoc.data()!;
+    const plan = cData.subscriptionPlan;
+    const total = plan === 'Basic' ? 10 : (plan === 'Gold' ? 15 : (plan === 'Premium' ? 20 : 1));
+    const startStr = cData.subscriptionStartDate;
+    const start = startStr ? new Date(startStr) : new Date();
 
-    const [customerDoc, trainerDoc] = await Promise.all([customerRef.get(), trainerRef.get()]);
-
-    if (!customerDoc.exists || !trainerDoc.exists) return null;
-
-    const customerData = customerDoc.data();
-    const trainerData = trainerDoc.data();
-
-    if (!customerData || !trainerData) return null;
-
-    const subscriptionPlan = customerData.subscriptionPlan;
-    let totalLessons = 0;
-    if (subscriptionPlan === 'Basic') totalLessons = 10;
-    else if (subscriptionPlan === 'Gold') totalLessons = 15;
-    else if (subscriptionPlan === 'Premium') totalLessons = 20;
-    else if (subscriptionPlan === 'Custom Module') totalLessons = 1;
-
-    const startDateString = customerData.subscriptionStartDate;
-    const startDate = startDateString ? parse(startDateString, 'MMM dd, yyyy', new Date()) : new Date();
-
-    const updatePayload = {
-        approvalStatus: 'In Progress',
+    const payload = {
+        approvalStatus: 'Approved',
         assignedTrainerId: trainerId,
-        assignedTrainerName: trainerData.name,
-        assignedTrainerPhone: trainerData.phone,
-        assignedTrainerVehicleDetails: trainerData.vehicleInfo,
-        totalLessons: totalLessons,
+        assignedTrainerName: tData.name,
+        assignedTrainerPhone: tData.phone,
+        assignedTrainerVehicleDetails: tData.vehicleInfo,
+        totalLessons: total,
         completedLessons: 0,
-        upcomingLesson: format(addDays(startDate, 1), "MMM dd, yyyy, '09:00 AM'"),
+        upcomingLesson: format(addDays(start, 1), "MMM dd, yyyy, '09:00 AM'"),
     };
-    await customerRef.update(updatePayload);
-
-    // Create notifications & send email
-    await createNotification({ userId: customerId, message: `You have been assigned to trainer ${trainerData.name}. Your first lesson is scheduled!`, href: '/dashboard' });
-    await createNotification({ userId: trainerId, message: `You have a new student! Please contact ${customerData.name} to confirm their first lesson.`, href: '/dashboard' });
-
-    try {
-        // Email to Customer
-        await sendEmail({
-            to: customerData.contact,
-            subject: 'Your Drivergy Trainer has been Assigned!',
-            text: `Hello ${customerData.name},\n\nWe're excited to let you know that you've been assigned a trainer for your driving lessons.\n\nTrainer Name: ${trainerData.name}\nContact Number: ${trainerData.phone}\nVehicle: ${trainerData.vehicleInfo}\n\nYour first lesson is tentatively scheduled for: ${updatePayload.upcomingLesson}. Your trainer will contact you shortly to confirm and coordinate.\n\nHappy driving!\nThe Drivergy Team`,
-            html: `
-                <h1>Welcome to the Next Step!</h1>
-                <p>Hello ${customerData.name},</p>
-                <p>We're excited to let you know that you've been assigned a trainer for your driving lessons. Here are their details:</p>
-                <ul>
-                    <li><strong>Trainer Name:</strong> ${trainerData.name}</li>
-                    <li><strong>Contact Number:</strong> <a href="tel:${trainerData.phone}">${trainerData.phone}</a></li>
-                    <li><strong>Vehicle:</strong> ${trainerData.vehicleInfo}</li>
-                </ul>
-                <p>Your first lesson is tentatively scheduled for: <strong>${updatePayload.upcomingLesson}</strong>. Your trainer will contact you shortly to confirm and coordinate.</p>
-                <p>Happy driving!</p>
-                <p>The Drivergy Team</p>
-            `,
-        });
-
-        // Email to Trainer
-        await sendEmail({
-            to: trainerData.contact,
-            subject: 'New Student Assignment on Drivergy',
-            text: `Hello ${trainerData.name},\n\nYou have been assigned a new student on Drivergy.\n\nStudent Name: ${customerData.name}\nContact Number: ${customerData.phone}\nPickup Location: ${customerData.location}\n\nPlease contact your new student as soon as possible to confirm the details of their first lesson, which is tentatively scheduled for ${updatePayload.upcomingLesson}.\n\nThank you,\nThe Drivergy Team`,
-            html: `
-                <h1>New Student Assignment!</h1>
-                <p>Hello ${trainerData.name},</p>
-                <p>You have been assigned a new student on Drivergy. Please see their details below:</p>
-                <ul>
-                    <li><strong>Student Name:</strong> ${customerData.name}</li>
-                    <li><strong>Contact Number:</strong> <a href="tel:${customerData.phone}">${customerData.phone}</a></li>
-                    <li><strong>Pickup Location:</strong> ${customerData.location}</li>
-                </ul>
-                <p>Please contact your new student as soon as possible to confirm the details of their first lesson, which is tentatively scheduled for <strong>${updatePayload.upcomingLesson}</strong>.</p>
-                <p>You can manage your students from your dashboard.</p>
-                <p>Thank you,</p>
-                <p>The Drivergy Team</p>
-            `,
-        });
-    } catch(emailError) {
-        console.error("Failed to send trainer assignment emails:", emailError);
-        // Don't block the main action if email fails
-    }
-
+    await adminDb.collection('users').doc(customerId).update(payload);
+    await createNotification({ userId: customerId, message: `Trainer ${tData.name} assigned. First lesson ready!`, href: '/dashboard' });
+    await createNotification({ userId: trainerId, message: `New student: ${cData.name}.`, href: '/dashboard' });
     revalidatePath('/dashboard');
-    const updatedCustomerDoc = await customerRef.get();
-    const updatedData = { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() };
-    if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
-        updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
-    }
-    return updatedData as UserProfile;
+    const updated = await adminDb.collection('users').doc(customerId).get();
+    return { id: updated.id, ...updated.data(), registrationTimestamp: normalizeDate(updated.data()?.registrationTimestamp) } as UserProfile;
 }
-
 
 export async function reassignTrainerToCustomer(customerId: string, newTrainerId: string): Promise<UserProfile | null> {
     if (!adminDb) return null;
-
-    const customerRef = adminDb.collection('users').doc(customerId);
-    const newTrainerRef = adminDb.collection('trainers').doc(newTrainerId);
-
-    const [customerDoc, newTrainerDoc] = await Promise.all([customerRef.get(), newTrainerRef.get()]);
-
-    if (!customerDoc.exists || !newTrainerDoc.exists) return null;
-    
-    const customerData = customerDoc.data()!;
-    const newTrainerData = newTrainerDoc.data()!;
-    const oldTrainerId = customerData.assignedTrainerId;
-    
-    await customerRef.update({
+    const [cDoc, tDoc] = await Promise.all([adminDb.collection('users').doc(customerId).get(), adminDb.collection('trainers').doc(newTrainerId).get()]);
+    if (!cDoc.exists || !tDoc.exists) return null;
+    const oldId = cDoc.data()?.assignedTrainerId;
+    await adminDb.collection('users').doc(customerId).update({
         assignedTrainerId: newTrainerId,
-        assignedTrainerName: newTrainerData.name,
-        assignedTrainerPhone: newTrainerData.phone,
-        assignedTrainerVehicleDetails: newTrainerData.vehicleInfo,
+        assignedTrainerName: tDoc.data()?.name,
+        assignedTrainerPhone: tDoc.data()?.phone,
+        assignedTrainerVehicleDetails: tDoc.data()?.vehicleInfo,
     });
-    
-    await createNotification({ userId: customerId, message: `Your trainer has been changed to ${newTrainerData.name}.`, href: '/dashboard' });
-    if(oldTrainerId) {
-        await createNotification({ userId: oldTrainerId, message: `Your student ${customerData.name} has been reassigned to another trainer.`, href: '/dashboard' });
-    }
-    await createNotification({ userId: newTrainerId, message: `You have been assigned a new student: ${customerData.name}.`, href: '/dashboard' });
-    
-     try {
-        await sendEmail({
-            to: customerData.contact,
-            subject: 'Your Drivergy Trainer has been Changed!',
-            text: `Hello ${customerData.name}, Please note that your driving trainer has been updated. New Trainer: ${newTrainerData.name}, Contact: ${newTrainerData.phone}, Vehicle: ${newTrainerData.vehicleInfo}. Your upcoming lesson schedule remains the same. The Drivergy Team`,
-            html: `
-                <h1>Trainer Assignment Update</h1>
-                <p>Hello ${customerData.name},</p>
-                <p>Please note that your driving trainer has been updated. Here are the details of your new trainer:</p>
-                <ul>
-                    <li><strong>Trainer Name:</strong> ${newTrainerData.name}</li>
-                    <li><strong>Contact Number:</strong> ${newTrainerData.phone}</li>
-                    <li><strong>Vehicle:</strong> ${newTrainerData.vehicleInfo}</li>
-                </ul>
-                <p>Your upcoming lesson schedule remains the same. Your new trainer will contact you shortly.</p>
-                <p>Happy driving!</p>
-                <p>The Drivergy Team</p>
-            `,
-        });
-    } catch(emailError) {
-        console.error("Failed to send trainer re-assignment email:", emailError);
-    }
-
+    if (oldId) await createNotification({ userId: oldId, message: `Student reassigned.`, href: '/dashboard' });
+    await createNotification({ userId: newTrainerId, message: `New student assigned.`, href: '/dashboard' });
     revalidatePath('/dashboard');
-    const updatedCustomerDoc = await customerRef.get();
-    const updatedData = { id: updatedCustomerDoc.id, ...updatedCustomerDoc.data() };
-    if (updatedData.registrationTimestamp && typeof updatedData.registrationTimestamp.toDate === 'function') {
-        updatedData.registrationTimestamp = updatedData.registrationTimestamp.toDate().toISOString();
-    }
-    return updatedData as UserProfile;
-}
-
-export async function generateAndSaveReferralCode(userId: string): Promise<string | null> {
-    if (!adminDb) return null;
-    
-    let userDoc;
-    const userRef = adminDb.collection('users').doc(userId);
-    const trainerRef = adminDb.collection('trainers').doc(userId);
-
-    userDoc = await userRef.get();
-    let docToUpdate = userRef;
-
-    if (!userDoc.exists) {
-        userDoc = await trainerRef.get();
-        docToUpdate = trainerRef;
-    }
-    
-    if (!userDoc.exists) {
-        return null; // User not found
-    }
-    
-    const userData = userDoc.data();
-    if (!userData) return null;
-
-    if (userData.myReferralCode) {
-        return userData.myReferralCode;
-    }
-
-    const username = userData.username || 'user';
-    const uniqueId = userData.uniqueId || userId.slice(0,6);
-    const newReferralCode = `${username.toLowerCase().replace(/\s/g, '')}${uniqueId.slice(-3)}`;
-    
-    await docToUpdate.update({ myReferralCode: newReferralCode });
-    
-    revalidatePath('/dashboard/referrals/invite');
-    
-    return newReferralCode;
-}
-
-export async function getLoginUser(identifier: string): Promise<{ success: boolean, user?: UserProfile, error?: string, code?: string }> {
-    if (!adminDb) {
-        console.error("Admin DB not initialized.");
-        return { success: false, error: "Server not configured." };
-    }
-    
-    try {
-        let userQuery;
-        let trainerQuery;
-
-        if (identifier.includes('@')) {
-            userQuery = adminDb.collection('users').where('contact', '==', identifier).limit(1);
-            trainerQuery = adminDb.collection('trainers').where('contact', '==', identifier).limit(1);
-        } else {
-            userQuery = adminDb.collection('users').where('username', '==', identifier).limit(1);
-            trainerQuery = adminDb.collection('trainers').where('username', '==', identifier).limit(1);
-        }
-
-        const [userQuerySnapshot, trainerQuerySnapshot] = await Promise.all([
-            userQuery.get(),
-            trainerQuery.get()
-        ]);
-        
-        let userDoc;
-        if (!userQuerySnapshot.empty) {
-            userDoc = userQuerySnapshot.docs[0];
-        } else if (!trainerQuerySnapshot.empty) {
-            userDoc = trainerQuerySnapshot.docs[0];
-        } else {
-            return { success: false, error: "User not found.", code: 'auth/user-not-found' };
-        }
-        
-        const userData = userDoc.data();
-        
-        if (userData.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
-            userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
-        }
-
-        const userProfile = { id: userDoc.id, ...userData } as UserProfile;
-
-        // Send login notification email
-        try {
-            await sendEmail({
-                to: userProfile.contact,
-                subject: 'Successful Login to Drivergy',
-                text: `Hello ${userProfile.name}, This is a confirmation that you have successfully logged into your Drivergy account. Your current subscription plan is: ${userProfile.subscriptionPlan}. If you did not initiate this login, please change your password immediately and contact our support team. The Drivergy Team`,
-                html: `
-                    <h1>Login Confirmation</h1>
-                    <p>Hello ${userProfile.name},</p>
-                    <p>This is a confirmation that you have successfully logged into your Drivergy account.</p>
-                    <p>Your current subscription plan is: <strong>${userProfile.subscriptionPlan}</strong>.</p>
-                    <p>If you did not initiate this login, please change your password immediately and contact our support team.</p>
-                    <p>The Drivergy Team</p>
-                `
-            });
-        } catch (emailError) {
-            console.error("Failed to send login notification email:", emailError);
-            // We don't want to fail the login if the email fails, so we just log the error.
-        }
-        
-        return { success: true, user: userProfile };
-
-    } catch (error) {
-        console.error("Error in getLoginUser server action:", error);
-        return { success: false, error: "An unexpected error occurred." };
-    }
+    const updated = await adminDb.collection('users').doc(customerId).get();
+    return { id: updated.id, ...updated.data(), registrationTimestamp: normalizeDate(updated.data()?.registrationTimestamp) } as UserProfile;
 }
 
 export async function updateStudentProgress(studentId: string, skills: Skill[], lessonNotes: string): Promise<boolean> {
     if (!adminDb) return false;
-
-    try {
-        const studentRef = adminDb.collection('users').doc(studentId);
-        await studentRef.update({
-            skills: skills,
-            lessonNotes: lessonNotes,
-        });
-        revalidatePath(`/dashboard/student-progress/${studentId}`);
-        return true;
-    } catch (error) {
-        console.error("Error updating student progress:", error);
-        return false;
-    }
+    await adminDb.collection('users').doc(studentId).update({ skills, lessonNotes });
+    revalidatePath(`/dashboard/student-progress/${studentId}`);
+    return true;
 }
 
 export async function unassignTrainerFromCustomer(customerId: string, trainerId: string): Promise<boolean> {
     if (!adminDb) return false;
-
-    const customerRef = adminDb.collection('users').doc(customerId);
-    const customerDoc = await customerRef.get();
-    if (!customerDoc.exists) return false;
-    const customerData = customerDoc.data()!;
-
-    await customerRef.update({
-        approvalStatus: 'Pending', // Back to admin queue
-        assignedTrainerId: null,
-        assignedTrainerName: null,
-        assignedTrainerPhone: null,
-        assignedTrainerVehicleDetails: null,
-        upcomingLesson: null,
-        totalLessons: null,
-        completedLessons: null,
+    await adminDb.collection('users').doc(customerId).update({
+        approvalStatus: 'Pending',
+        assignedTrainerId: null, assignedTrainerName: null,
+        assignedTrainerPhone: null, assignedTrainerVehicleDetails: null,
+        upcomingLesson: null, totalLessons: null, completedLessons: null,
     });
-    
-    // Find an admin to notify
-    const adminQuery = await adminDb.collection('users').where('isAdmin', '==', true).limit(1).get();
-    if (!adminQuery.empty) {
-        const adminId = adminQuery.docs[0].id;
-        await createNotification({ 
-            userId: adminId, 
-            message: `A trainer rejected the assignment for ${customerData.name}. Please re-assign.`, 
-            href: `/dashboard` 
-        });
-    }
-    
-    // Notify trainer (confirmation of action)
-    await createNotification({ userId: trainerId, message: `You have rejected the assignment for ${customerData.name}.`, href: '/dashboard' });
-
     revalidatePath('/dashboard');
     return true;
 }
 
-
-    
-
-    
+export async function getLoginUser(identifier: string): Promise<{ success: boolean, user?: UserProfile, error?: string }> {
+    if (!adminDb) return { success: false, error: "Server error." };
+    const field = identifier.includes('@') ? 'contact' : 'username';
+    const [uQ, tQ] = await Promise.all([
+        adminDb.collection('users').where(field, '==', identifier).limit(1).get(),
+        adminDb.collection('trainers').where(field, '==', identifier).limit(1).get()
+    ]);
+    const doc = !uQ.empty ? uQ.docs[0] : (!tQ.empty ? tQ.docs[0] : null);
+    if (!doc) return { success: false, error: "User not found." };
+    const data = doc.data();
+    return { success: true, user: { id: doc.id, ...data, registrationTimestamp: normalizeDate(data.registrationTimestamp) } as UserProfile };
+}

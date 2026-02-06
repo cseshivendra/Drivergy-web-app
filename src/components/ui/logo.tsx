@@ -1,4 +1,6 @@
 
+'use client';
+
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
@@ -19,13 +21,17 @@ const DrivergyLogoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-
-const DrivergyLogo = (props: React.SVGProps<SVGSVGElement> & {className?: string}) => (
-    // This component now only returns the text part of the logo.
-    // The icon is handled separately in the sidebar to allow for independent show/hide logic.
-    <span className={cn("font-headline text-2xl font-extrabold text-primary tracking-tighter", props.className)}>
-        DRIVERGY
-    </span>
+const DrivergyLogo = ({ className, showTagline = false }: { className?: string, showTagline?: boolean }) => (
+    <div className={cn("flex flex-col items-start leading-none", className)}>
+        <span className="font-headline text-2xl font-extrabold text-primary tracking-tighter">
+            DRIVERGY
+        </span>
+        {showTagline && (
+            <span className="font-headline text-[10px] sm:text-[12px] text-muted-foreground tracking-widest font-semibold mt-0.5">
+                LEARN. DRIVE. LIVE.
+            </span>
+        )}
+    </div>
 );
 
 export { DrivergyLogo, DrivergyLogoIcon };
