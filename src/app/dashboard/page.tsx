@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/auth-context';
@@ -17,13 +18,8 @@ export default function AuthenticatedRootPage() {
 
   // Redirect to the public homepage if there's no user and loading is done
   useEffect(() => {
-    if (!loading) {
-        if (!user) {
-            router.replace('/');
-        } else if (user.contact === 'revenue@drivergy.in') {
-            // Specialized Revenue role should go straight to the Revenue module
-            router.replace('/dashboard/revenue');
-        }
+    if (!loading && !user) {
+        router.replace('/');
     }
   }, [loading, user, router]);
 
@@ -34,13 +30,9 @@ export default function AuthenticatedRootPage() {
   // This page should only be rendered for authenticated users,
   // so we show the appropriate dashboard.
   if (user) {
-    // If it's the revenue manager, the useEffect above will handle redirection.
-    // While that happens, we show a loader to prevent flashes.
-    if (user.contact === 'revenue@drivergy.in') {
-        return <Loading />;
-    }
-
-    if (user.isAdmin) {
+    // Both Super Admin and specialized Managers (Content/Revenue) use AdminDashboard
+    // which now handles role-based content internal logic.
+    if (user.isAdmin || user.contact === 'content@drivergy.in' || user.contact === 'revenue@drivergy.in') {
       return <AdminDashboard />;
     }
     if (user.uniqueId?.startsWith('CU')) {

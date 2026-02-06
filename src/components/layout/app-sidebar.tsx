@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, car as Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -34,10 +35,10 @@ export default function AppSidebar() {
     if (pathname.startsWith('/dashboard/referrals')) {
       setReferralsOpen(true);
     }
-    if (pathname.startsWith('/dashboard/revenue')) {
+    if (pathname.startsWith('/dashboard/revenue') || (user?.contact === 'revenue@drivergy.in' && pathname === '/dashboard')) {
       setRevenueOpen(true);
     }
-  }, [pathname]);
+  }, [pathname, user]);
 
   const isCustomer = user?.uniqueId?.startsWith('CU');
   const isTrainer = user?.uniqueId?.startsWith('TR');
@@ -243,7 +244,7 @@ export default function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setRevenueOpen(!revenueOpen)}
-                  isActive={pathname.startsWith('/dashboard/revenue')}
+                  isActive={pathname.startsWith('/dashboard/revenue') || (isRevenueManager && pathname === '/dashboard')}
                   tooltip={{ children: "Revenue Management", side: "right", align: "center" }}
                   className="justify-between"
                 >
@@ -256,36 +257,36 @@ export default function AppSidebar() {
                 {revenueOpen && (
                   <SidebarMenuSub>
                     <SidebarMenuSubItem>
-                      <SidebarMenuSubButton asChild isActive={pathname === '/dashboard/revenue' && !searchParams.get('tab')}>
-                        <Link href="/dashboard/revenue">
+                      <SidebarMenuSubButton asChild isActive={(pathname === '/dashboard/revenue' && !searchParams.get('tab')) || (isRevenueManager && pathname === '/dashboard' && !searchParams.get('tab'))}>
+                        <Link href="/dashboard">
                           <History className="mr-2 h-4 w-4" /> <span>Transactions</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'commission'}>
-                        <Link href="/dashboard/revenue?tab=commission">
+                        <Link href="/dashboard?tab=commission">
                           <TrendingUp className="mr-2 h-4 w-4" /> <span>Commission</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'earnings'}>
-                        <Link href="/dashboard/revenue?tab=earnings">
+                        <Link href="/dashboard?tab=earnings">
                           <WalletCards className="mr-2 h-4 w-4" /> <span>Trainer Earnings</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'payouts'}>
-                        <Link href="/dashboard/revenue?tab=payouts">
+                        <Link href="/dashboard?tab=payouts">
                           <UserCheck className="mr-2 h-4 w-4" /> <span>Payouts</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'reports'}>
-                        <Link href="/dashboard/revenue?tab=reports">
+                        <Link href="/dashboard?tab=reports">
                           <FileText className="mr-2 h-4 w-4" /> <span>Reports</span>
                         </Link>
                       </SidebarMenuSubButton>

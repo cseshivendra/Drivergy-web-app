@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -24,11 +25,12 @@ import { useAuth } from '@/context/auth-context';
 import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import RevenueView from './revenue-view';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
     const searchParams = useSearchParams();
-    const activeTab = searchParams.get('tab');
+    const activeTab = searchParams.get('tab') || 'default';
     const { toast } = useToast();
 
     const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
@@ -39,6 +41,7 @@ export default function AdminDashboard() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const isContentManager = user?.contact === 'content@drivergy.in';
+    const isRevenueManager = user?.contact === 'revenue@drivergy.in';
 
     const loadData = useCallback(async (silent = false) => {
         if (!user?.isAdmin) return;
@@ -230,17 +233,30 @@ export default function AdminDashboard() {
         </div>
     );
 
+    const renderRevenueView = () => (
+        <RevenueView activeTab={activeTab === 'default' ? 'transactions' : activeTab} />
+    );
+
     const renderCurrentTab = () => {
         if (isContentManager) return renderContentView();
+        if (isRevenueManager) return renderRevenueView();
+
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
+            case 'transactions':
+            case 'commission':
+            case 'payouts':
+            case 'reports':
+            case 'earnings':
+                return renderRevenueView();
             default: return renderDashboardView();
         }
     }
 
     const getPageTitle = () => {
         if (isContentManager) return 'Content Management';
+        if (isRevenueManager) return 'Revenue Management';
         switch(activeTab) {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
@@ -260,7 +276,7 @@ export default function AdminDashboard() {
                             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                         </Button>
                     </div>
-                    {!isContentManager && (
+                    {!isContentManager && !isRevenueManager && (
                         <div className="relative w-full sm:w-auto sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
