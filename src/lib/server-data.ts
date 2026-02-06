@@ -98,6 +98,51 @@ const createContentManager = async () => {
     }
 }
 
+/**
+ * Creates a Revenue Manager user with limited dashboard access.
+ */
+const createRevenueManager = async () => {
+    if (!adminAuth || !adminDb) return;
+
+    const managerEmail = 'revenue@drivergy.in';
+    const managerPassword = 'password';
+
+    try {
+        await adminAuth.getUserByEmail(managerEmail);
+    } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+            try {
+                const userRecord = await adminAuth.createUser({
+                    email: managerEmail,
+                    emailVerified: true,
+                    password: managerPassword,
+                    displayName: 'Revenue Manager',
+                    disabled: false,
+                });
+
+                const managerProfile: Omit<UserProfile, 'id'> = {
+                    uniqueId: `RM-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                    name: 'Revenue Manager',
+                    username: 'revenuemanager',
+                    contact: managerEmail,
+                    phone: '2222222222',
+                    gender: 'Prefer not to say',
+                    subscriptionPlan: 'Admin',
+                    registrationTimestamp: new Date().toISOString(),
+                    approvalStatus: 'Approved',
+                    isAdmin: true,
+                    userRole: 'admin',
+                };
+
+                await adminDb.collection('users').doc(userRecord.uid).set(managerProfile);
+                console.log('Successfully created Revenue Manager user.');
+            } catch (e) {
+                console.error('Error seeding revenue manager:', e);
+            }
+        }
+    }
+}
+
 export const seedPromotionalPosters = async () => {
     if (!adminDb) {
         console.error("Admin DB not initialized. Cannot seed promotional posters.");
@@ -203,6 +248,7 @@ const seedStoreProducts = async () => {
 const initializeServerData = async () => {
     await createDefaultAdmin();
     await createContentManager();
+    await createRevenueManager();
     await seedStoreProducts();
 };
 initializeServerData();

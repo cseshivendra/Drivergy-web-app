@@ -42,7 +42,10 @@ export default function AppSidebar() {
   const isCustomer = user?.uniqueId?.startsWith('CU');
   const isTrainer = user?.uniqueId?.startsWith('TR');
   const isContentManager = user?.contact === 'content@drivergy.in';
-  const isAdmin = user?.isAdmin || (!isCustomer && !isTrainer && !isContentManager);
+  const isRevenueManager = user?.contact === 'revenue@drivergy.in';
+  
+  // Super Admins are designated admins who are NOT special managers (revenue/content)
+  const isSuperAdmin = user?.isAdmin && !isContentManager && !isRevenueManager;
   
   const isDashboardActive = pathname === '/dashboard' && !searchParams.get('tab');
   const isContentActive = (pathname === '/dashboard' && searchParams.get('tab') === 'content') || (isContentManager && pathname === '/dashboard');
@@ -68,12 +71,14 @@ export default function AppSidebar() {
             >
               <Link href="/dashboard">
                 <LayoutDashboard />
-                <span>{isContentManager ? 'Content Admin' : 'Dashboard'}</span>
+                <span>
+                    {isContentManager ? 'Content Admin' : isRevenueManager ? 'Revenue Overview' : 'Dashboard'}
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {(isCustomer || isTrainer) && !isContentManager && (
+          {(isCustomer || isTrainer) && !isContentManager && !isRevenueManager && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -88,7 +93,7 @@ export default function AppSidebar() {
             </SidebarMenuItem>
           )}
 
-          {isTrainer && (
+          {isTrainer && !isRevenueManager && !isContentManager && (
              <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -103,7 +108,7 @@ export default function AppSidebar() {
               </SidebarMenuItem>
           )}
           
-          {isCustomer && (
+          {isCustomer && !isRevenueManager && !isContentManager && (
             <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -118,7 +123,7 @@ export default function AppSidebar() {
               </SidebarMenuItem>
           )}
 
-          {isCustomer && (
+          {isCustomer && !isRevenueManager && !isContentManager && (
              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setReferralsOpen(!referralsOpen)}
@@ -174,7 +179,8 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {isAdmin && !isContentManager && (
+          {/* Super Admin specific links */}
+          {isSuperAdmin && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -217,6 +223,23 @@ export default function AppSidebar() {
                 )}
               </SidebarMenuItem>
 
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isReferralsActive}
+                  tooltip={{ children: "Referral Management", side: "right", align: "center" }}
+                >
+                  <Link href="/dashboard?tab=referrals">
+                    <Gift />
+                    <span>Referral Payouts</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </>
+          )}
+
+          {/* Revenue Management visible to Super Admin and Revenue Manager */}
+          {(isSuperAdmin || isRevenueManager) && (
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setRevenueOpen(!revenueOpen)}
@@ -270,42 +293,17 @@ export default function AppSidebar() {
                   </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isContentActive}
-                  tooltip={{ children: "Content Management", side: "right", align: "center" }}
-                >
-                  <Link href="/dashboard?tab=content">
-                    <Library />
-                    <span>Content</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isReferralsActive}
-                  tooltip={{ children: "Referrals", side: "right", align: "center" }}
-                >
-                  <Link href="/dashboard?tab=referrals">
-                    <Gift />
-                    <span>Referrals</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </>
           )}
 
-          {isContentManager && (
-             <SidebarMenuItem>
+          {/* Content Management visible to Super Admin and Content Manager */}
+          {(isSuperAdmin || isContentManager) && (
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   isActive={isContentActive}
                   tooltip={{ children: "Content Management", side: "right", align: "center" }}
                 >
-                  <Link href="/dashboard">
+                  <Link href={isContentManager ? "/dashboard" : "/dashboard?tab=content"}>
                     <Library />
                     <span>Content Management</span>
                   </Link>
@@ -313,8 +311,8 @@ export default function AppSidebar() {
               </SidebarMenuItem>
           )}
 
-          {/* Section for both Admins and Customers, but not Trainers and not Content Managers */}
-          {!isTrainer && !isContentManager && (
+          {/* Section for both Super Admins and Customers, but not trainers or specialized managers */}
+          {!isTrainer && !isContentManager && !isRevenueManager && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
