@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -238,9 +237,11 @@ export default function AdminDashboard() {
     );
 
     const renderCurrentTab = () => {
+        // Strict role-based rendering for specialized managers
         if (isContentManager) return renderContentView();
         if (isRevenueManager) return renderRevenueView();
 
+        // Standard admin tab logic
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
@@ -260,6 +261,12 @@ export default function AdminDashboard() {
         switch(activeTab) {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
+            case 'transactions':
+            case 'commission':
+            case 'payouts':
+            case 'reports':
+            case 'earnings':
+                return 'Revenue Management';
             default: return 'Admin Dashboard';
         }
     }

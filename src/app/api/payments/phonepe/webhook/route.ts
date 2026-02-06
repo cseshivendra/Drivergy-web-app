@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         utr,
         webhookData: body,
         paymentVerified: true,
-        paidAt: new Date().toISOStr ing(),
+        paidAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
