@@ -126,6 +126,21 @@ const drivergyChatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async (input) => {
+    const hasGoogleApiKey = Boolean(
+      process.env.GOOGLE_API_KEY ||
+        process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+        process.env.GOOGLE_GENAI_API_KEY
+    );
+    if (!hasGoogleApiKey) {
+      console.warn(
+        'Drivergy Assistant is disabled because no Google AI API key is configured. Set GOOGLE_API_KEY (or GOOGLE_GENERATIVE_AI_API_KEY).'
+      );
+      return {
+        response:
+          "The Drivergy Assistant isn't available right now because the AI service hasn't been configured. Please set the Google AI API key and try again.",
+      };
+    }
+
     let userProfile: UserProfile | null = null;
     // We only fetch the user profile if a userId is actually passed.
     // The prompt is designed to handle cases where there is no user.
