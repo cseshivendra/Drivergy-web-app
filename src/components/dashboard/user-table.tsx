@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { format, parseISO } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 
 type ActionType = 'new-customer' | 'new-trainer' | 'existing-trainer' | 'interested-customer' | 'existing-customer' | 'cancellation-request';
 
@@ -33,6 +33,18 @@ interface UserTableProps {
 }
 
 const ITEMS_PER_PAGE = 5;
+
+const formatRegistrationTimestamp = (registrationTimestamp?: string) => {
+  if (!registrationTimestamp) return 'N/A';
+
+  const parsedIsoDate = parseISO(registrationTimestamp);
+  if (isValid(parsedIsoDate)) return format(parsedIsoDate, 'PP');
+
+  const fallbackDate = new Date(registrationTimestamp);
+  if (isValid(fallbackDate)) return format(fallbackDate, 'PP');
+
+  return 'N/A';
+};
 
 export default function UserTable({ title, users, isLoading, onUserActioned, actionType }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -353,7 +365,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
                                 <TableCell>{user.vehicleInfo || 'N/A'}</TableCell> 
                             </>
                         )}
-                        <TableCell>{user.registrationTimestamp ? format(parseISO(user.registrationTimestamp), 'PP') : 'N/A'}</TableCell>
+                        <TableCell>{formatRegistrationTimestamp(user.registrationTimestamp)}</TableCell>
                         {actionType !== 'interested-customer' && (
                             <TableCell>
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.approvalStatus as ApprovalStatusType)}`}>
