@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +13,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -74,7 +73,7 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {(isCustomer || isTrainer) && (
+          {(isCustomer || isTrainer) && !isContentManager && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -142,7 +141,7 @@ export default function AppSidebar() {
                       >
                         <Link href="/dashboard/referrals/invite">
                           <Send className="mr-2 h-4 w-4" />
-                          Invite Friends
+                          <span>Invite Friends</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -153,7 +152,7 @@ export default function AppSidebar() {
                       >
                         <Link href="/dashboard/referrals/track">
                           <BarChart3 className="mr-2 h-4 w-4" />
-                          Track Referrals
+                          <span>Track Referrals</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -175,7 +174,7 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {isAdmin && (
+          {isAdmin && !isContentManager && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -199,7 +198,7 @@ export default function AppSidebar() {
                       >
                         <Link href="/dashboard/create/customer">
                           <User className="mr-2 h-4 w-4" />
-                          New Customer
+                          <span>New Customer</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -210,7 +209,7 @@ export default function AppSidebar() {
                       >
                         <Link href="/dashboard/create/trainer">
                           <UserCog className="mr-2 h-4 w-4" />
-                          New Trainer
+                          <span>New Trainer</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
@@ -236,35 +235,35 @@ export default function AppSidebar() {
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={pathname === '/dashboard/revenue' && !searchParams.get('tab')}>
                         <Link href="/dashboard/revenue">
-                          <History className="mr-2 h-4 w-4" /> Transactions
+                          <History className="mr-2 h-4 w-4" /> <span>Transactions</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'commission'}>
                         <Link href="/dashboard/revenue?tab=commission">
-                          <TrendingUp className="mr-2 h-4 w-4" /> Commission
+                          <TrendingUp className="mr-2 h-4 w-4" /> <span>Commission</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'earnings'}>
                         <Link href="/dashboard/revenue?tab=earnings">
-                          <WalletCards className="mr-2 h-4 w-4" /> Trainer Earnings
+                          <WalletCards className="mr-2 h-4 w-4" /> <span>Trainer Earnings</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'payouts'}>
                         <Link href="/dashboard/revenue?tab=payouts">
-                          <UserCheck className="mr-2 h-4 w-4" /> Payouts
+                          <UserCheck className="mr-2 h-4 w-4" /> <span>Payouts</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'reports'}>
                         <Link href="/dashboard/revenue?tab=reports">
-                          <FileText className="mr-2 h-4 w-4" /> Reports
+                          <FileText className="mr-2 h-4 w-4" /> <span>Reports</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>

@@ -103,7 +103,7 @@ export default function AdminDashboard() {
         <>
             <SummaryMetrics data={dashboardData?.summaryData as SummaryData} isLoading={loading} />
             <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
-            <Tabs defaultValue="verifications" className="w-full">
+            <Tabs defaultValue="verifications" className="w-full mt-8">
                 <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
                     <TabsTrigger value="verifications">Verifications</TabsTrigger>
                     <TabsTrigger value="requests">Requests</TabsTrigger>

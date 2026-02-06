@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -26,6 +25,7 @@ import {
 } from 'recharts';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function RevenueManagementPage() {
     const searchParams = useSearchParams();
@@ -88,6 +88,7 @@ export default function RevenueManagementPage() {
         setIsExporting(true);
         const doc = new jsPDF();
         
+        // Header
         doc.setFontSize(20);
         doc.setTextColor(239, 68, 68);
         doc.text('DRIVERGY REVENUE REPORT', 105, 20, { align: 'center' });
@@ -105,8 +106,8 @@ export default function RevenueManagementPage() {
                 tx.trainerName || 'N/A',
                 tx.planName,
                 `INR ${tx.amount}`,
-                `INR ${tx.commission}`,
-                `INR ${tx.trainerShare}`
+                `INR ${tx.commission.toFixed(2)}`,
+                `INR ${tx.trainerShare.toFixed(2)}`
             ]),
             theme: 'striped',
             headStyles: { fillColor: [239, 68, 68] }
@@ -311,7 +312,7 @@ export default function RevenueManagementPage() {
                             <AlertCircle className="h-4 w-4 text-blue-600" />
                             <AlertTitle className="text-blue-800">Growth Insight</AlertTitle>
                             <AlertDescription className="text-blue-700">
-                                This month's revenue is up by 12% compared to last month.
+                                This month's revenue is up by {data?.summary.monthlyRevenue ? '12%' : '0%'} compared to last month.
                             </AlertDescription>
                         </Alert>
                     </div>
