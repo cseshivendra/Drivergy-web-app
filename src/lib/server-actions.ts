@@ -741,3 +741,26 @@ export async function getLoginUser(identifier: string): Promise<{ success: boole
     const data = doc.data();
     return { success: true, user: { id: doc.id, ...data, registrationTimestamp: normalizeDate(data.registrationTimestamp) } as UserProfile };
 }
+
+export async function getOrderDetails(orderId: string) {
+    if (!adminDb) return null;
+    try {
+        const orderDoc = await adminDb.collection('orders').doc(orderId).get();
+        if (!orderDoc.exists) return null;
+        
+        const orderData = orderDoc.data();
+        const userDoc = await adminDb.collection('users').doc(orderData?.userId).get();
+        const userData = userDoc.exists ? userDoc.data() : null;
+
+        return {
+            id: orderDoc.id,
+            ...orderData,
+            customerName: userData?.name || 'Customer',
+            customerEmail: userData?.contact || 'N/A',
+            customerPhone: userData?.phone || orderData?.mobile || 'N/A'
+        };
+    } catch (e) {
+        console.error("Error fetching order details:", e);
+        return null;
+    }
+}

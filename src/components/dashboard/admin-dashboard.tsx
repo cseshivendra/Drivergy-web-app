@@ -10,7 +10,7 @@ import RequestTable from '@/components/dashboard/request-table';
 import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData } from '@/lib/server-actions';
-import type { SummaryData, AdminDashboardData, RescheduleRequestStatusType } from '@/types';
+import type { SummaryData, AdminDashboardData } from '@/types';
 import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import VisualContentManagement from './visual-content-management';
 import { useAuth } from '@/context/auth-context';
 import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
