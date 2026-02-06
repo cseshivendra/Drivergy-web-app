@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -38,18 +37,19 @@ export default function AppSidebar() {
 
   const isCustomer = user?.uniqueId?.startsWith('CU');
   const isTrainer = user?.uniqueId?.startsWith('TR');
+  const isContentManager = user?.contact === 'content@drivergy.in';
   
   const isDashboardActive = pathname === '/dashboard' && !searchParams.get('tab');
-  const isContentActive = pathname === '/dashboard' && searchParams.get('tab') === 'content';
+  const isContentActive = (pathname === '/dashboard' && searchParams.get('tab') === 'content') || (isContentManager && pathname === '/dashboard');
   const isReferralsActive = pathname === '/dashboard' && searchParams.get('tab') === 'referrals';
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
       <SidebarHeader className="p-0"> 
-        <Link href="/dashboard" className="flex items-center gap-2 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg">
+        <Link href="/dashboard" className="flex items-center gap-2.5 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg overflow-hidden">
           <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
           <div className="group-data-[state=expanded]:block hidden">
-            <DrivergyLogo className="w-auto h-7 text-primary" />
+            <DrivergyLogo className="w-auto" showTagline={true} />
           </div>
         </Link>
       </SidebarHeader>
@@ -63,7 +63,7 @@ export default function AppSidebar() {
             >
               <Link href="/dashboard">
                 <LayoutDashboard />
-                <span>Dashboard</span>
+                <span>{isContentManager ? 'Content Admin' : 'Dashboard'}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -169,7 +169,7 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {!isCustomer && !isTrainer && (
+          {!isCustomer && !isTrainer && !isContentManager && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -238,8 +238,23 @@ export default function AppSidebar() {
             </>
           )}
 
-          {/* Section for both Admins and Customers, but not Trainers */}
-          {!isTrainer && (
+          {isContentManager && (
+             <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isContentActive}
+                  tooltip={{ children: "Content Management", side: "right", align: "center" }}
+                >
+                  <Link href="/dashboard">
+                    <Library />
+                    <span>Content Management</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+          )}
+
+          {/* Section for both Admins and Customers, but not Trainers and not Content Managers */}
+          {!isTrainer && !isContentManager && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -279,7 +294,7 @@ export default function AppSidebar() {
                 <MessageSquareText /> 
                 <span>Support</span>
               </Link>
-            </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>

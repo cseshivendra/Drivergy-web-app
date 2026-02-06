@@ -1,5 +1,3 @@
-
-
 'use server';
 
 import type { BlogPost, UserProfile, Course, QuizSet, Product, Feedback } from '@/types';
@@ -10,7 +8,6 @@ import { format } from 'date-fns';
 
 /**
  * Creates a default admin user in Firebase Auth and Firestore if it doesn't exist.
- * This is useful for seeding the database for development and testing.
  */
 const createDefaultAdmin = async () => {
     if (!adminAuth || !adminDb) {
@@ -22,12 +19,9 @@ const createDefaultAdmin = async () => {
     const adminPassword = 'password';
 
     try {
-        // Check if the admin user already exists in Firebase Auth
         await adminAuth.getUserByEmail(adminEmail);
-        // console.log("Default admin user already exists.");
     } catch (error: any) {
         if (error.code === 'auth/user-not-found') {
-            // User does not exist, so create them
             try {
                 const userRecord = await adminAuth.createUser({
                     email: adminEmail,
@@ -36,8 +30,6 @@ const createDefaultAdmin = async () => {
                     displayName: 'Admin User',
                     disabled: false,
                 });
-
-                console.log('Successfully created new admin user:', userRecord.uid);
 
                 const adminProfile: Omit<UserProfile, 'id'> = {
                     uniqueId: `AD-${userRecord.uid.slice(0, 6).toUpperCase()}`,
@@ -54,17 +46,57 @@ const createDefaultAdmin = async () => {
                 };
 
                 await adminDb.collection('users').doc(userRecord.uid).set(adminProfile);
-                console.log('Successfully created admin profile in Firestore.');
-
             } catch (creationError) {
                 console.error('Error creating default admin user:', creationError);
             }
-        } else {
-            // Some other error occurred
-            console.error('Error checking for admin user:', error);
         }
     }
 };
+
+/**
+ * Creates a Content Manager user with limited dashboard access.
+ */
+const createContentManager = async () => {
+    if (!adminAuth || !adminDb) return;
+
+    const managerEmail = 'content@drivergy.in';
+    const managerPassword = 'password';
+
+    try {
+        await adminAuth.getUserByEmail(managerEmail);
+    } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+            try {
+                const userRecord = await adminAuth.createUser({
+                    email: managerEmail,
+                    emailVerified: true,
+                    password: managerPassword,
+                    displayName: 'Content Manager',
+                    disabled: false,
+                });
+
+                const managerProfile: Omit<UserProfile, 'id'> = {
+                    uniqueId: `CM-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                    name: 'Content Manager',
+                    username: 'contentmanager',
+                    contact: managerEmail,
+                    phone: '1111111111',
+                    gender: 'Prefer not to say',
+                    subscriptionPlan: 'Admin',
+                    registrationTimestamp: new Date().toISOString(),
+                    approvalStatus: 'Approved',
+                    isAdmin: true,
+                    userRole: 'admin',
+                };
+
+                await adminDb.collection('users').doc(userRecord.uid).set(managerProfile);
+                console.log('Successfully created Content Manager user.');
+            } catch (e) {
+                console.error('Error seeding content manager:', e);
+            }
+        }
+    }
+}
 
 export const seedPromotionalPosters = async () => {
     if (!adminDb) {
@@ -170,6 +202,7 @@ const seedStoreProducts = async () => {
 // Call the seeding functions when the server starts up.
 const initializeServerData = async () => {
     await createDefaultAdmin();
+    await createContentManager();
     await seedStoreProducts();
 };
 initializeServerData();
@@ -177,8 +210,6 @@ initializeServerData();
 
 /**
  * Fetches all blog posts for server-side operations like sitemap generation.
- * This now fetches from the live Firestore database.
- * @returns A promise that resolves to an array of blog posts.
  */
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
     if (!adminDb) {
@@ -200,7 +231,6 @@ export async function fetchBlogPosts(): Promise<BlogPost[]> {
 
 /**
  * Fetches all courses from Firestore.
- * @returns A promise that resolves to an array of courses.
  */
 export async function fetchCourses(): Promise<Course[]> {
     if (!adminDb) {
@@ -222,7 +252,6 @@ export async function fetchCourses(): Promise<Course[]> {
 
 /**
  * Fetches all quiz sets from Firestore.
- * @returns A promise that resolves to an array of quiz sets.
  */
 export async function fetchQuizSets(): Promise<QuizSet[]> {
     if (!adminDb) {
@@ -243,8 +272,7 @@ export async function fetchQuizSets(): Promise<QuizSet[]> {
 }
 
 /**
- * Fetches all products from the storeProducts collection in Firestore.
- * @returns A promise that resolves to an array of products.
+ * Fetches all products from the storeProducts collection.
  */
 export async function fetchStoreProducts(): Promise<Product[]> {
     if (!adminDb) {
@@ -267,8 +295,6 @@ export async function fetchStoreProducts(): Promise<Product[]> {
 
 /**
  * Fetches a single user profile from Firestore by their document ID.
- * @param userId The UID of the user to fetch.
- * @returns A promise that resolves to the user profile or null if not found.
  */
 export async function fetchUserById(userId: string): Promise<UserProfile | null> {
     if (!adminDb) {
@@ -287,7 +313,6 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 
         if (userDoc.exists) {
             const userData = userDoc.data();
-            // Ensure timestamp is a string
             if (userData?.registrationTimestamp && typeof userData.registrationTimestamp.toDate === 'function') {
                 userData.registrationTimestamp = userData.registrationTimestamp.toDate().toISOString();
             }
@@ -304,8 +329,6 @@ export async function fetchUserById(userId: string): Promise<UserProfile | null>
 
 /**
  * Fetches a single blog post by its slug (document ID).
- * @param slug The slug of the blog post to fetch.
- * @returns A promise that resolves to the blog post or null if not found.
  */
 export async function fetchBlogPostBySlug(slug: string): Promise<BlogPost | null> {
     if (!adminDb) {
@@ -332,14 +355,12 @@ export async function fetchTrainerDashboardData(trainerId: string): Promise<{ tr
     }
 
     try {
-        // Fetch trainer profile, students, and feedback in parallel
         const [trainerProfileSnap, studentsSnap, feedbackSnap] = await Promise.all([
             adminDb.collection('trainers').doc(trainerId).get(),
             adminDb.collection('users').where('assignedTrainerId', '==', trainerId).get(),
             adminDb.collection('feedback').where('trainerId', '==', trainerId).get()
         ]);
 
-        // Process trainer profile
         let trainerProfile: UserProfile | null = null;
         if (trainerProfileSnap.exists) {
             const data = trainerProfileSnap.data();
@@ -349,18 +370,16 @@ export async function fetchTrainerDashboardData(trainerId: string): Promise<{ tr
             trainerProfile = { id: trainerProfileSnap.id, ...data } as UserProfile;
         }
 
-        // Process students
         const students = studentsSnap.docs.map(d => {
             const data = d.data();
             return {
                 id: d.id,
                 ...data,
-                upcomingLesson: data.upcomingLesson, // Ensure this field is passed through
+                upcomingLesson: data.upcomingLesson,
                 registrationTimestamp: data.registrationTimestamp?.toDate ? data.registrationTimestamp.toDate().toISOString() : data.registrationTimestamp,
             } as UserProfile;
         });
 
-        // Process feedback
         const feedback = feedbackSnap.docs.map(d => {
             const data = d.data();
             return {
@@ -377,5 +396,3 @@ export async function fetchTrainerDashboardData(trainerId: string): Promise<{ tr
         return { trainerProfile: null, students: [], feedback: [] };
     }
 }
-
-    

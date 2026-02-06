@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -38,6 +37,8 @@ export default function AdminDashboard() {
 
     const [filters, setFilters] = useState<{ location?: string; subscriptionPlan?: string }>({});
     const [searchTerm, setSearchTerm] = useState('');
+
+    const isContentManager = user?.contact === 'content@drivergy.in';
 
     const loadData = useCallback(async (silent = false) => {
         if (!user?.isAdmin) return;
@@ -230,6 +231,7 @@ export default function AdminDashboard() {
     );
 
     const renderCurrentTab = () => {
+        if (isContentManager) return renderContentView();
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
@@ -238,6 +240,7 @@ export default function AdminDashboard() {
     }
 
     const getPageTitle = () => {
+        if (isContentManager) return 'Content Management';
         switch(activeTab) {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
@@ -257,16 +260,18 @@ export default function AdminDashboard() {
                             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                         </Button>
                     </div>
-                    <div className="relative w-full sm:w-auto sm:max-w-xs">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="text"
-                            placeholder="Search users..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            className="h-10 pl-10 w-full"
-                        />
-                    </div>
+                    {!isContentManager && (
+                        <div className="relative w-full sm:w-auto sm:max-w-xs">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search users..."
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                className="h-10 pl-10 w-full"
+                            />
+                        </div>
+                    )}
                 </div>
                 {renderCurrentTab()}
             </main>
