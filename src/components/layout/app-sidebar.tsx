@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Info, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -25,6 +26,7 @@ export default function AppSidebar() {
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [referralsOpen, setReferralsOpen] = useState(false);
+  const [revenueOpen, setRevenueOpen] = useState(false);
 
   useEffect(() => {
     if (pathname.startsWith('/dashboard/create')) {
@@ -33,11 +35,15 @@ export default function AppSidebar() {
     if (pathname.startsWith('/dashboard/referrals')) {
       setReferralsOpen(true);
     }
+    if (pathname.startsWith('/dashboard/revenue')) {
+      setRevenueOpen(true);
+    }
   }, [pathname]);
 
   const isCustomer = user?.uniqueId?.startsWith('CU');
   const isTrainer = user?.uniqueId?.startsWith('TR');
   const isContentManager = user?.contact === 'content@drivergy.in';
+  const isAdmin = user?.isAdmin || (!isCustomer && !isTrainer && !isContentManager);
   
   const isDashboardActive = pathname === '/dashboard' && !searchParams.get('tab');
   const isContentActive = (pathname === '/dashboard' && searchParams.get('tab') === 'content') || (isContentManager && pathname === '/dashboard');
@@ -169,7 +175,7 @@ export default function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {!isCustomer && !isTrainer && !isContentManager && (
+          {isAdmin && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -211,6 +217,61 @@ export default function AppSidebar() {
                   </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => setRevenueOpen(!revenueOpen)}
+                  isActive={pathname.startsWith('/dashboard/revenue')}
+                  tooltip={{ children: "Revenue Management", side: "right", align: "center" }}
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <IndianRupee />
+                    <span>Revenue Management</span>
+                  </div>
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", revenueOpen && "rotate-180")} />
+                </SidebarMenuButton>
+                {revenueOpen && (
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={pathname === '/dashboard/revenue' && !searchParams.get('tab')}>
+                        <Link href="/dashboard/revenue">
+                          <History className="mr-2 h-4 w-4" /> Transactions
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'commission'}>
+                        <Link href="/dashboard/revenue?tab=commission">
+                          <TrendingUp className="mr-2 h-4 w-4" /> Commission
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'earnings'}>
+                        <Link href="/dashboard/revenue?tab=earnings">
+                          <WalletCards className="mr-2 h-4 w-4" /> Trainer Earnings
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'payouts'}>
+                        <Link href="/dashboard/revenue?tab=payouts">
+                          <UserCheck className="mr-2 h-4 w-4" /> Payouts
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'reports'}>
+                        <Link href="/dashboard/revenue?tab=reports">
+                          <FileText className="mr-2 h-4 w-4" /> Reports
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                )}
+              </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild

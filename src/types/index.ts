@@ -551,3 +551,52 @@ export interface PriceData {
     amazonPrice: number | null;
     flipkartPrice: number | null;
 }
+
+// =================================================================
+// REVENUE MANAGEMENT TYPES
+// =================================================================
+
+export interface RevenueTransaction {
+    id: string;
+    orderId: string;
+    studentId: string;
+    studentName: string;
+    trainerId?: string;
+    trainerName?: string;
+    planName: string;
+    amount: number;
+    commission: number; // 20%
+    trainerShare: number; // 80%
+    paymentMethod: string;
+    status: string;
+    timestamp: string;
+}
+
+export interface TrainerPayout {
+    id: string;
+    trainerId: string;
+    trainerName: string;
+    totalEarnings: number;
+    pendingAmount: number;
+    paidAmount: number;
+    lastPayoutDate?: string;
+    bankDetails?: string;
+    upiId?: string;
+    status: 'Pending' | 'Paid';
+}
+
+export interface RevenueSummaryData {
+    totalRevenue: number;
+    totalCommission: number;
+    totalTrainerEarnings: number;
+    pendingPayouts: number;
+    monthlyRevenue: number;
+}
+
+export interface RevenueDashboardData {
+    summary: RevenueSummaryData;
+    transactions: RevenueTransaction[];
+    payouts: TrainerPayout[];
+    monthlyGrowth: { month: string; revenue: number; commission: number }[];
+    trainerEarnings: { trainerName: string; earnings: number; commission: number }[];
+}

@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -39,9 +40,12 @@ import type {
     FaqItem,
     BlogPost,
     SiteBanner,
-    PromotionalPoster
+    PromotionalPoster,
+    RevenueDashboardData,
+    RevenueTransaction,
+    TrainerPayout
 } from '@/types';
-import { format, parse, parseISO, addDays, isValid } from 'date-fns';
+import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
@@ -256,6 +260,148 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
     } catch (error) {
         console.error("Error fetching admin dashboard data:", error);
         return null;
+    }
+}
+
+// =================================================================
+// REVENUE MANAGEMENT ACTIONS
+// =================================================================
+
+export async function fetchRevenueDashboardData(): Promise<RevenueDashboardData | null> {
+    if (!adminDb) return null;
+
+    try {
+        const [ordersSnap, usersSnap, trainersSnap, payoutsSnap] = await Promise.all([
+            adminDb.collection('orders').where('status', '==', 'PAYMENT_SUCCESS').get(),
+            adminDb.collection('users').get(),
+            adminDb.collection('trainers').get(),
+            adminDb.collection('payouts').get()
+        ]);
+
+        const usersMap = new Map(usersSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
+        const trainersMap = new Map(trainersSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
+        const existingPayouts = new Map(payoutsSnap.docs.map(d => [d.data().trainerId, { id: d.id, ...d.data() }]));
+
+        const transactions: RevenueTransaction[] = ordersSnap.docs.map(doc => {
+            const order = doc.data();
+            const student = usersMap.get(order.userId) as any;
+            const trainerId = student?.assignedTrainerId;
+            const trainer = trainerId ? trainersMap.get(trainerId) as any : null;
+            
+            const amount = order.amount || 0;
+            const commission = amount * 0.20;
+            const trainerShare = amount * 0.80;
+
+            return {
+                id: doc.id,
+                orderId: order.orderId,
+                studentId: order.userId,
+                studentName: student?.name || 'Unknown Student',
+                trainerId: trainerId || null,
+                trainerName: trainer?.name || 'Not Assigned',
+                planName: order.plan || 'N/A',
+                amount,
+                commission,
+                trainerShare,
+                paymentMethod: 'PhonePe',
+                status: 'Success',
+                timestamp: normalizeDate(order.paidAt || order.createdAt),
+            };
+        });
+
+        // Calculate Trainer Payouts
+        const trainerStats = new Map<string, { total: number; name: string }>();
+        transactions.forEach(tx => {
+            if (tx.trainerId) {
+                const current = trainerStats.get(tx.trainerId) || { total: 0, name: tx.trainerName! };
+                current.total += tx.trainerShare;
+                trainerStats.set(tx.trainerId, current);
+            }
+        });
+
+        const payouts: TrainerPayout[] = Array.from(trainerStats.entries()).map(([trainerId, stats]) => {
+            const existing = existingPayouts.get(trainerId) as any;
+            const paid = existing?.paidAmount || 0;
+            return {
+                id: existing?.id || `payout-${trainerId}`,
+                trainerId,
+                trainerName: stats.name,
+                totalEarnings: stats.total,
+                paidAmount: paid,
+                pendingAmount: stats.total - paid,
+                lastPayoutDate: existing?.lastPayoutDate ? normalizeDate(existing.lastPayoutDate) : undefined,
+                upiId: (trainersMap.get(trainerId) as any)?.upiId || 'N/A',
+                status: (stats.total - paid) > 0 ? 'Pending' : 'Paid'
+            };
+        });
+
+        // Summary Data
+        const now = new Date();
+        const thisMonthRange = { start: startOfMonth(now), end: endOfMonth(now) };
+        const monthlyTransactions = transactions.filter(tx => isWithinInterval(parseISO(tx.timestamp), thisMonthRange));
+
+        const summary = {
+            totalRevenue: transactions.reduce((acc, tx) => acc + tx.amount, 0),
+            totalCommission: transactions.reduce((acc, tx) => acc + tx.commission, 0),
+            totalTrainerEarnings: transactions.reduce((acc, tx) => acc + tx.trainerShare, 0),
+            pendingPayouts: payouts.reduce((acc, p) => acc + p.pendingAmount, 0),
+            monthlyRevenue: monthlyTransactions.reduce((acc, tx) => acc + tx.amount, 0),
+        };
+
+        // Charts Logic
+        const monthlyGrowthMap = new Map<string, { revenue: number; commission: number }>();
+        transactions.forEach(tx => {
+            const month = format(parseISO(tx.timestamp), 'MMM yyyy');
+            const current = monthlyGrowthMap.get(month) || { revenue: 0, commission: 0 };
+            current.revenue += tx.amount;
+            current.commission += tx.commission;
+            monthlyGrowthMap.set(month, current);
+        });
+
+        const monthlyGrowth = Array.from(monthlyGrowthMap.entries())
+            .map(([month, data]) => ({ month, ...data }))
+            .sort((a, b) => parse(a.month, 'MMM yyyy', new Date()).getTime() - parse(b.month, 'MMM yyyy', new Date()).getTime());
+
+        const trainerEarningsChart = payouts.map(p => ({
+            trainerName: p.trainerName,
+            earnings: p.totalEarnings,
+            commission: p.totalEarnings * 0.25 // Calculated back: if 80% is earnings, then 20% total is 25% of the earnings part
+        })).slice(0, 5);
+
+        return { summary, transactions, payouts, monthlyGrowth, trainerEarnings: trainerEarningsChart };
+
+    } catch (error) {
+        console.error("Revenue fetch error:", error);
+        return null;
+    }
+}
+
+export async function updatePayoutStatus(trainerId: string, amount: number): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        const payoutsRef = adminDb.collection('payouts');
+        const query = await payoutsRef.where('trainerId', '==', trainerId).limit(1).get();
+        
+        if (query.empty) {
+            await payoutsRef.add({
+                trainerId,
+                paidAmount: amount,
+                lastPayoutDate: new Date().toISOString(),
+            });
+        } else {
+            const doc = query.docs[0];
+            const currentPaid = doc.data().paidAmount || 0;
+            await doc.ref.update({
+                paidAmount: currentPaid + amount,
+                lastPayoutDate: new Date().toISOString(),
+            });
+        }
+        
+        revalidatePath('/dashboard/revenue');
+        return true;
+    } catch (error) {
+        console.error("Payout update error:", error);
+        return false;
     }
 }
 
