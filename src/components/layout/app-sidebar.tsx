@@ -294,7 +294,7 @@ export default function AppSidebar() {
                 <MessageSquareText /> 
                 <span>Support</span>
               </Link>
-            </SidebarMenuItem>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>

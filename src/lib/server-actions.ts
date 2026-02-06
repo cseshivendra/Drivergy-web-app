@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -66,7 +65,7 @@ function normalizeDate(dateVal: any): string {
     } else if (typeof dateVal === 'string') {
         dateObj = parseISO(dateVal);
         if (!isValid(dateObj)) {
-            // Fallback for strings like "Jul 22, 2024"
+            // Fallback for strings like "Jul 22, 2024" or standard constructor
             dateObj = new Date(dateVal);
         }
     } else if (dateVal && typeof dateVal.toDate === 'function') {
