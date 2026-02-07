@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck, Eye
+    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck, Eye, WalletCards, ArrowRight
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
@@ -219,11 +219,20 @@ const TrainerDashboard = () => {
                     </h1>
                     <p className="text-muted-foreground mt-1">Manage your students and track your progress.</p>
                 </div>
+                <Button asChild className="mt-4 md:mt-0 bg-primary hover:bg-primary/90">
+                    <Link href="/dashboard/wallet">
+                        <WalletCards className="mr-2 h-4 w-4" />
+                        Go to Wallet
+                    </Link>
+                </Button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <SummaryCard title="Total Students" value={existingStudents.length} icon={Users} description="All active students assigned to you" />
-                <SummaryCard title="Total Earnings" value={`₹${totalEarnings.toLocaleString('en-IN')}`} icon={IndianRupee} description="Your gross earnings" />
+                <div className="relative group cursor-pointer" onClick={() => router.push('/dashboard/wallet')}>
+                    <SummaryCard title="Total Earnings" value={`₹${totalEarnings.toLocaleString('en-IN')}`} icon={IndianRupee} description="Your gross earnings (Click to view Wallet)" className="group-hover:border-primary/50 transition-colors" />
+                    <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
                 <SummaryCard title="Upcoming Lessons" value={upcomingLessonsCount} icon={CalendarDays} description="Confirmed upcoming sessions" />
                 <SummaryCard title="Your Rating" value={avgRating} icon={Star} description="Average student rating" />
             </div>
@@ -323,5 +332,3 @@ const TrainerDashboard = () => {
 };
 
 export default TrainerDashboard;
-
-    

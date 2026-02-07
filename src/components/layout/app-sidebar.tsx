@@ -14,7 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, car as Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck, Banknote } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck, Banknote } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
