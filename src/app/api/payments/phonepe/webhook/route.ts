@@ -1,3 +1,4 @@
+
 'use server';
 
 import { NextRequest, NextResponse } from "next/server";
@@ -55,9 +56,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const orderData = orderSnap.data();
+    const orderData = orderSnap.data()!;
 
     if (state === "COMPLETED") {
+      const timestamp = new Date().toISOString();
       await orderRef.update({
         status: "PAYMENT_SUCCESS",
         state: "SUCCESS",
@@ -66,16 +68,60 @@ export async function POST(req: NextRequest) {
         utr,
         webhookData: body,
         paymentVerified: true,
-        paidAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        paidAt: timestamp,
+        updatedAt: timestamp,
       });
 
-      if (orderData?.userId) {
-        await adminDb.collection("users").doc(orderData.userId).update({
+      if (orderData.userId) {
+        const userRef = adminDb.collection("users").doc(orderData.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.data();
+
+        await userRef.update({
           subscriptionPlan: orderData.plan,
           paymentVerified: true,
-          updatedAt: new Date().toISOString(),
+          updatedAt: timestamp,
         });
+
+        // Credit Trainer Wallet
+        if (userData?.assignedTrainerId) {
+            const trainerId = userData.assignedTrainerId;
+            const amount = orderData.amount;
+            const trainerShare = amount * 0.80;
+            const description = `Earning from student: ${userData.name} (${orderData.plan})`;
+
+            const walletRef = adminDb.collection('trainer_wallets').doc(trainerId);
+            const walletDoc = await walletRef.get();
+
+            if (walletDoc.exists) {
+                const currentBalance = walletDoc.data()?.balance || 0;
+                const currentTotal = walletDoc.data()?.totalEarnings || 0;
+                await walletRef.update({
+                    balance: currentBalance + trainerShare,
+                    totalEarnings: currentTotal + trainerShare,
+                });
+            } else {
+                await walletRef.set({
+                    trainerId,
+                    trainerName: userData.assignedTrainerName || "Trainer",
+                    balance: trainerShare,
+                    totalEarnings: trainerShare,
+                    totalWithdrawn: 0,
+                });
+            }
+
+            // Create Wallet Transaction record
+            await adminDb.collection('wallet_transactions').add({
+                trainerId,
+                type: 'Credit',
+                amount: trainerShare,
+                description,
+                studentName: userData.name,
+                planName: orderData.plan,
+                status: 'Successful',
+                timestamp,
+            });
+        }
       }
 
       console.log("✅ Payment SUCCESS:", orderId);

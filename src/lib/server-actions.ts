@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -12,7 +13,8 @@ import {
     FaqSchema, 
     BlogPostSchema, 
     TrainerRegistrationFormSchema, 
-    CustomerRegistrationFormSchema 
+    CustomerRegistrationFormSchema,
+    WithdrawalRequestSchema
 } from '@/types';
 import type { 
     UserProfile, 
@@ -42,7 +44,11 @@ import type {
     PromotionalPoster,
     RevenueDashboardData,
     RevenueTransaction,
-    TrainerPayout
+    TrainerPayout,
+    TrainerWallet,
+    WalletTransaction,
+    WithdrawalRequest,
+    WithdrawalRequestValues
 } from '@/types';
 import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
@@ -405,6 +411,169 @@ export async function updatePayoutStatus(trainerId: string, amount: number): Pro
 }
 
 // =================================================================
+// TRAINER WALLET & WITHDRAWAL ACTIONS
+// =================================================================
+
+export async function fetchTrainerWallet(trainerId: string): Promise<{ wallet: TrainerWallet | null, transactions: WalletTransaction[] }> {
+    if (!adminDb) return { wallet: null, transactions: [] };
+
+    try {
+        const walletDoc = await adminDb.collection('trainer_wallets').doc(trainerId).get();
+        const transactionsSnap = await adminDb.collection('wallet_transactions')
+            .where('trainerId', '==', trainerId)
+            .orderBy('timestamp', 'desc')
+            .get();
+
+        const wallet = walletDoc.exists ? { id: walletDoc.id, ...walletDoc.data() } as TrainerWallet : null;
+        const transactions = transactionsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                timestamp: normalizeDate(data.timestamp),
+            } as WalletTransaction;
+        });
+
+        return { wallet, transactions };
+    } catch (error) {
+        console.error("Fetch wallet error:", error);
+        return { wallet: null, transactions: [] };
+    }
+}
+
+export async function requestWithdrawal(trainerId: string, data: WithdrawalRequestValues): Promise<{ success: boolean, error?: string }> {
+    if (!adminDb) return { success: false, error: "Database not configured." };
+
+    try {
+        // 1. Check for pending requests
+        const pendingCheck = await adminDb.collection('withdrawals')
+            .where('trainerId', '==', trainerId)
+            .where('status', '==', 'Pending')
+            .limit(1)
+            .get();
+
+        if (!pendingCheck.empty) {
+            return { success: false, error: "You already have a pending withdrawal request." };
+        }
+
+        // 2. Check balance
+        const walletDoc = await adminDb.collection('trainer_wallets').doc(trainerId).get();
+        const currentBalance = walletDoc.exists ? (walletDoc.data()?.balance || 0) : 0;
+
+        if (data.amount > currentBalance) {
+            return { success: false, error: "Insufficient wallet balance." };
+        }
+
+        // 3. Create request
+        const trainerDoc = await adminDb.collection('trainers').doc(trainerId).get();
+        const trainerName = trainerDoc.data()?.name || "Trainer";
+
+        const withdrawalId = uuidv4();
+        await adminDb.collection('withdrawals').doc(withdrawalId).set({
+            trainerId,
+            trainerName,
+            amount: data.amount,
+            upiId: data.upiId,
+            bankDetails: data.bankDetails || null,
+            reason: data.reason || null,
+            status: 'Pending',
+            requestDate: new Date().toISOString(),
+        });
+
+        // 4. Create debit transaction (Pending)
+        await adminDb.collection('wallet_transactions').add({
+            trainerId,
+            type: 'Debit',
+            amount: data.amount,
+            description: `Withdrawal request for ₹${data.amount}`,
+            withdrawalId,
+            status: 'Pending',
+            timestamp: new Date().toISOString(),
+        });
+
+        revalidatePath('/dashboard/wallet');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function fetchAllWithdrawals(): Promise<WithdrawalRequest[]> {
+    if (!adminDb) return [];
+    try {
+        const snap = await adminDb.collection('withdrawals').orderBy('requestDate', 'desc').get();
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as WithdrawalRequest));
+    } catch (error) {
+        console.error(error);
+        return [];
+    }
+}
+
+export async function updateWithdrawalStatus(withdrawalId: string, newStatus: WithdrawalRequest['status']): Promise<boolean> {
+    if (!adminDb) return false;
+
+    try {
+        const withdrawalRef = adminDb.collection('withdrawals').doc(withdrawalId);
+        const withdrawalDoc = await withdrawalRef.get();
+        if (!withdrawalDoc.exists) return false;
+
+        const { trainerId, amount, trainerName } = withdrawalDoc.data() as WithdrawalRequest;
+
+        await withdrawalRef.update({
+            status: newStatus,
+            processedDate: new Date().toISOString(),
+        });
+
+        // Update the transaction record
+        const transQuery = await adminDb.collection('wallet_transactions')
+            .where('withdrawalId', '==', withdrawalId)
+            .limit(1)
+            .get();
+
+        if (!transQuery.empty) {
+            await transQuery.docs[0].ref.update({
+                status: newStatus === 'Approved' || newStatus === 'Completed' ? 'Successful' : 'Rejected'
+            });
+        }
+
+        // If approved/completed, deduct from actual wallet balance
+        if (newStatus === 'Approved' || newStatus === 'Completed') {
+            const walletRef = adminDb.collection('trainer_wallets').doc(trainerId);
+            const walletDoc = await walletRef.get();
+            if (walletDoc.exists) {
+                const currentBalance = walletDoc.data()?.balance || 0;
+                const currentWithdrawn = walletDoc.data()?.totalWithdrawn || 0;
+                await walletRef.update({
+                    balance: currentBalance - amount,
+                    totalWithdrawn: currentWithdrawn + amount,
+                    lastWithdrawalDate: new Date().toISOString(),
+                    lastWithdrawalAmount: amount,
+                });
+            }
+            
+            await createNotification({
+                userId: trainerId,
+                message: `Your withdrawal of ₹${amount} has been ${newStatus.toLowerCase()}.`,
+                href: '/dashboard/wallet'
+            });
+        } else if (newStatus === 'Rejected') {
+            await createNotification({
+                userId: trainerId,
+                message: `Your withdrawal of ₹${amount} was rejected.`,
+                href: '/dashboard/wallet'
+            });
+        }
+
+        revalidatePath('/dashboard/wallet');
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+}
+
+// =================================================================
 // AUTH & REGISTRATION ACTIONS
 // =================================================================
 
@@ -449,6 +618,16 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
             };
             
             await adminDb.collection('trainers').doc(userRecord.uid).set(trainerProfile);
+            
+            // Initialize Wallet
+            await adminDb.collection('trainer_wallets').doc(userRecord.uid).set({
+                trainerId: userRecord.uid,
+                trainerName: name,
+                balance: 0,
+                totalEarnings: 0,
+                totalWithdrawn: 0,
+            });
+
             revalidatePath('/dashboard');
             return { success: true, user: { ...trainerProfile, id: userRecord.uid } as UserProfile };
         } catch (error: any) {

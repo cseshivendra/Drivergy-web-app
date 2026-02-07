@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -10,7 +11,7 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData } from '@/lib/server-actions';
 import type { SummaryData, AdminDashboardData } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -25,6 +26,7 @@ import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import RevenueView from './revenue-view';
+import WithdrawalManagement from './withdrawal-management';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -236,6 +238,10 @@ export default function AdminDashboard() {
         <RevenueView activeTab={activeTab === 'default' ? 'transactions' : activeTab} />
     );
 
+    const renderWithdrawalsView = () => (
+        <WithdrawalManagement />
+    );
+
     const renderCurrentTab = () => {
         // Strict role-based rendering for specialized managers
         if (isContentManager) return renderContentView();
@@ -245,6 +251,7 @@ export default function AdminDashboard() {
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
+            case 'withdrawals': return renderWithdrawalsView();
             case 'transactions':
             case 'commission':
             case 'payouts':
@@ -261,6 +268,7 @@ export default function AdminDashboard() {
         switch(activeTab) {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
+            case 'withdrawals': return 'Withdrawal Requests';
             case 'transactions':
             case 'commission':
             case 'payouts':

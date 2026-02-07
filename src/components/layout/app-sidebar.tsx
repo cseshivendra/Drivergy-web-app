@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, car as Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, car as Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck, Banknote } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
@@ -50,6 +51,7 @@ export default function AppSidebar() {
   const isDashboardActive = pathname === '/dashboard' && !searchParams.get('tab');
   const isContentActive = (pathname === '/dashboard' && searchParams.get('tab') === 'content') || (isContentManager && pathname === '/dashboard');
   const isReferralsActive = pathname === '/dashboard' && searchParams.get('tab') === 'referrals';
+  const isWithdrawalsActive = pathname === '/dashboard' && searchParams.get('tab') === 'withdrawals';
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
@@ -94,7 +96,8 @@ export default function AppSidebar() {
           )}
 
           {isTrainer && !isRevenueManager && !isContentManager && (
-             <SidebarMenuItem>
+             <>
+              <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === '/dashboard'}
@@ -106,6 +109,19 @@ export default function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === '/dashboard/wallet'}
+                  tooltip={{ children: "Wallet", side: "right", align: "center" }}
+                >
+                  <Link href="/dashboard/wallet">
+                    <WalletCards />
+                    <span>Wallet</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+             </>
           )}
           
           {isCustomer && !isRevenueManager && !isContentManager && (
@@ -232,6 +248,19 @@ export default function AppSidebar() {
                   <Link href="/dashboard?tab=referrals">
                     <Gift />
                     <span>Referral Payouts</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isWithdrawalsActive}
+                  tooltip={{ children: "Withdrawals", side: "right", align: "center" }}
+                >
+                  <Link href="/dashboard?tab=withdrawals">
+                    <Banknote />
+                    <span>Withdrawals</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

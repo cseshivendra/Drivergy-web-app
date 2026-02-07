@@ -21,6 +21,7 @@ export const LessonRequestStatusOptions = ['Pending', 'Active', 'Completed'] as 
 export const PayoutStatusOptions = ['Pending', 'Paid', 'Withdraw to UPI'] as const;
 export const RescheduleRequestStatusOptions = ['Pending', 'Approved', 'Rejected'] as const;
 export const SkillStatusOptions = ['Not Started', 'Needs Practice', 'Proficient'] as const;
+export const WithdrawalStatusOptions = ['Pending', 'Approved', 'Rejected', 'Completed'] as const;
 
 export const IndianStates = ["Uttar Pradesh"] as const;
 
@@ -100,6 +101,7 @@ export const UserProfileSchema = z.object({
   drivingSchoolName: z.string().optional(),
   ownerName: z.string().optional(),
   drivingSchoolCertificateNumber: z.string().optional(),
+  upiId: z.string().optional(),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ApprovalStatusType = (typeof ApprovalStatusOptions)[number];
@@ -213,6 +215,7 @@ export const UserProfileUpdateSchema = z.object({
   state: z.string().optional(),
   district: z.string().optional(),
   pincode: z.string().optional(),
+  upiId: z.string().optional(),
 });
 export type UserProfileUpdateValues = z.infer<typeof UserProfileUpdateSchema>;
 
@@ -600,3 +603,52 @@ export interface RevenueDashboardData {
     monthlyGrowth: { month: string; revenue: number; commission: number }[];
     trainerEarnings: { trainerName: string; earnings: number; commission: number }[];
 }
+
+// =================================================================
+// TRAINER WALLET TYPES
+// =================================================================
+
+export interface TrainerWallet {
+    id: string; // Matches trainerId
+    trainerId: string;
+    trainerName: string;
+    balance: number; // Current withdrawable
+    totalEarnings: number; // Lifetime gross
+    totalWithdrawn: number; // Lifetime paid
+    lastWithdrawalDate?: string;
+    lastWithdrawalAmount?: number;
+}
+
+export interface WalletTransaction {
+    id: string;
+    trainerId: string;
+    type: 'Credit' | 'Debit';
+    amount: number;
+    description: string;
+    studentName?: string; // For credits
+    planName?: string; // For credits
+    withdrawalId?: string; // For debits
+    status: 'Successful' | 'Pending' | 'Rejected';
+    timestamp: string;
+}
+
+export interface WithdrawalRequest {
+    id: string;
+    trainerId: string;
+    trainerName: string;
+    amount: number;
+    upiId: string;
+    bankDetails?: string;
+    reason?: string;
+    status: 'Pending' | 'Approved' | 'Rejected' | 'Completed';
+    requestDate: string;
+    processedDate?: string;
+}
+
+export const WithdrawalRequestSchema = z.object({
+    amount: z.coerce.number().min(500, "Minimum withdrawal amount is ₹500."),
+    upiId: z.string().min(3, "Valid UPI ID is required."),
+    bankDetails: z.string().optional(),
+    reason: z.string().optional(),
+});
+export type WithdrawalRequestValues = z.infer<typeof WithdrawalRequestSchema>;
