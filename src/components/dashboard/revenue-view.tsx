@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -25,6 +24,7 @@ import {
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import WithdrawalManagement from './withdrawal-management';
 
 interface RevenueViewProps {
     activeTab: string;
@@ -352,13 +352,14 @@ export default function RevenueView({ activeTab }: RevenueViewProps) {
                 </div>
             </header>
 
-            {renderSummary()}
+            {activeTab !== 'withdrawals' && renderSummary()}
 
             <div className="space-y-8">
                 {activeTab === 'transactions' && renderTransactions()}
                 {activeTab === 'commission' && renderCommission()}
                 {activeTab === 'payouts' && renderPayouts()}
                 {activeTab === 'reports' && renderReports()}
+                {activeTab === 'withdrawals' && <WithdrawalManagement />}
                 {activeTab === 'earnings' && (
                     <Card className="shadow-lg border-primary">
                         <CardHeader>

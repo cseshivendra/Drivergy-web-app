@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -251,19 +250,6 @@ export default function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isWithdrawalsActive}
-                  tooltip={{ children: "Withdrawals", side: "right", align: "center" }}
-                >
-                  <Link href="/dashboard?tab=withdrawals">
-                    <Banknote />
-                    <span>Withdrawals</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </>
           )}
 
@@ -302,6 +288,13 @@ export default function AppSidebar() {
                       <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'earnings'}>
                         <Link href="/dashboard?tab=earnings">
                           <WalletCards className="mr-2 h-4 w-4" /> <span>Trainer Earnings</span>
+                        </Link>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild isActive={searchParams.get('tab') === 'withdrawals'}>
+                        <Link href="/dashboard?tab=withdrawals">
+                          <Banknote className="mr-2 h-4 w-4" /> <span>Withdrawals</span>
                         </Link>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
