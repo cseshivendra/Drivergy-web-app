@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { ReactNode } from 'react';
@@ -120,7 +119,6 @@ export default function FaqManagement({ title, faqs, isLoading, onAction }: { ti
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
                 <CardTitle className="font-headline text-2xl font-semibold flex items-center">
-                    <HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />
                     {title}
                 </CardTitle>
                 <CardDescription>Add, edit, or remove frequently asked questions.</CardDescription>
