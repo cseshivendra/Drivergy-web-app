@@ -22,6 +22,7 @@ export const PayoutStatusOptions = ['Pending', 'Paid', 'Withdraw to UPI'] as con
 export const RescheduleRequestStatusOptions = ['Pending', 'Approved', 'Rejected'] as const;
 export const SkillStatusOptions = ['Not Started', 'Needs Practice', 'Proficient'] as const;
 export const WithdrawalStatusOptions = ['Pending', 'Approved', 'Rejected', 'Completed'] as const;
+export const SessionStatusOptions = ['Scheduled', 'Active', 'Completed', 'Cancelled', 'Abnormal End'] as const;
 
 export const IndianStates = ["Uttar Pradesh"] as const;
 
@@ -32,6 +33,29 @@ export const DistrictsByState = {
 // =================================================================
 // ZOD SCHEMAS & TYPES
 // =================================================================
+
+// Session Management
+export const SessionStatusSchema = z.enum(SessionStatusOptions);
+export type SessionStatus = z.infer<typeof SessionStatusSchema>;
+
+export const DrivingSessionSchema = z.object({
+  id: z.string(),
+  studentId: z.string(),
+  studentName: z.string(),
+  trainerId: z.string(),
+  trainerName: z.string(),
+  status: SessionStatusSchema,
+  scheduledDate: z.string(),
+  startOtp: z.string().length(4),
+  endOtp: z.string().length(4),
+  startOtpExpiry: z.string(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  duration: z.number().optional(), // In minutes
+  notes: z.string().optional(),
+  createdAt: z.string(),
+});
+export type DrivingSession = z.infer<typeof DrivingSessionSchema>;
 
 // Student Progress Tracking
 export const SkillStatusSchema = z.enum(SkillStatusOptions);

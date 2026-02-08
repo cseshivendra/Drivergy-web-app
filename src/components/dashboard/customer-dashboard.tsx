@@ -4,17 +4,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToUser } from '@/lib/mock-data';
-import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate } from '@/lib/server-actions';
-import type { UserProfile, FeedbackFormValues } from '@/types';
+import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate, fetchOngoingSession } from '@/lib/server-actions';
+import type { UserProfile, FeedbackFormValues, DrivingSession } from '@/types';
 import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift, Hourglass } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift, Hourglass, KeyRound, PlayCircle, CheckCircle2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { differenceInHours, format, isFuture, parse, addDays, isPast, parseISO } from 'date-fns';
+import { differenceInHours, format, isFuture, parse, addDays, isPast, parseISO, differenceInMinutes } from 'date-fns';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -183,6 +183,9 @@ export default function CustomerDashboard() {
   const [isStartDateEditable, setIsStartDateEditable] = useState(false);
   const [rescheduleRequested, setRescheduleRequested] = useState(false);
 
+  const [activeSession, setActiveSession] = useState<DrivingSession | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(false);
+
 
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
@@ -211,6 +214,16 @@ export default function CustomerDashboard() {
       if (unsubscribe) unsubscribe();
     };
   }, [refetchProfile]);
+
+  useEffect(() => {
+    if (user?.id) {
+        setIsSessionLoading(true);
+        fetchOngoingSession(user.id).then(session => {
+            setActiveSession(session);
+            setIsSessionLoading(false);
+        });
+    }
+  }, [user?.id]);
 
 
   useEffect(() => {
@@ -419,6 +432,49 @@ export default function CustomerDashboard() {
         </h1>
         <p className="text-muted-foreground">Here's an overview of your learning journey with Drivergy.</p>
       </header>
+
+      {/* TRIP OTP SECTION */}
+      {activeSession && (
+          <Card className="border-2 border-primary shadow-xl bg-primary/5 animate-fade-in-up">
+              <CardHeader className="text-center">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                      <PlayCircle className="h-8 w-8 text-primary" />
+                      <CardTitle className="font-headline text-2xl">Trip in Progress</CardTitle>
+                  </div>
+                  <CardDescription>Share these 4-digit codes with your trainer to verify your session.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-8">
+                  {/* Start OTP */}
+                  <div className="flex flex-col items-center justify-center p-6 bg-background rounded-xl shadow-inner border border-primary/20">
+                      <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Start Session OTP</p>
+                      <div className="flex items-center gap-3">
+                          <KeyRound className="h-6 w-6 text-primary" />
+                          <span className="text-5xl font-extrabold text-primary tracking-widest tabular-nums">{activeSession.startOtp}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-4 italic">Share this to BEGIN your trip.</p>
+                  </div>
+
+                  {/* End OTP */}
+                  <div className="flex flex-col items-center justify-center p-6 bg-background rounded-xl shadow-inner border border-primary/20">
+                      <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">End Session OTP</p>
+                      {activeSession.status === 'Active' ? (
+                          <>
+                            <div className="flex items-center gap-3">
+                                <CheckCircle2 className="h-6 w-6 text-green-500" />
+                                <span className="text-5xl font-extrabold text-green-600 tracking-widest tabular-nums">{activeSession.endOtp}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-4 italic">Share this to FINISH your trip.</p>
+                          </>
+                      ) : (
+                          <div className="text-center space-y-2 opacity-50">
+                              <Hourglass className="h-8 w-8 mx-auto text-muted-foreground" />
+                              <p className="text-sm">Visible after trip starts</p>
+                          </div>
+                      )}
+                  </div>
+              </CardContent>
+          </Card>
+      )}
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {/* Upcoming Lessons Card */}

@@ -48,9 +48,11 @@ import type {
     TrainerWallet,
     WalletTransaction,
     WithdrawalRequest,
-    WithdrawalRequestValues
+    WithdrawalRequestValues,
+    DrivingSession,
+    SessionStatus
 } from '@/types';
-import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval, differenceInMinutes } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
 import { revalidatePath } from 'next/cache';
 import { uploadFileToCloudinary } from './cloudinary';
@@ -122,6 +124,133 @@ export async function markNotificationsAsRead(userId: string, notificationIds: s
     });
     await batch.commit();
     revalidatePath('/dashboard');
+}
+
+// =================================================================
+// SESSION MANAGEMENT ACTIONS (4-Digit OTP)
+// =================================================================
+
+function generateOtp(): string {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+export async function fetchOngoingSession(userId: string): Promise<DrivingSession | null> {
+    if (!adminDb) return null;
+    try {
+        const snap = await adminDb.collection('sessions')
+            .where('status', 'in', ['Scheduled', 'Active'])
+            .where('studentId', '==', userId)
+            .limit(1)
+            .get();
+        
+        if (snap.empty) {
+            const trainerSnap = await adminDb.collection('sessions')
+                .where('status', 'in', ['Scheduled', 'Active'])
+                .where('trainerId', '==', userId)
+                .limit(1)
+                .get();
+            if (trainerSnap.empty) return null;
+            return { id: trainerSnap.docs[0].id, ...trainerSnap.docs[0].data() } as DrivingSession;
+        }
+        return { id: snap.docs[0].id, ...snap.docs[0].data() } as DrivingSession;
+    } catch (error) {
+        return null;
+    }
+}
+
+export async function verifyStartSession(sessionId: string, enteredOtp: string): Promise<{ success: boolean, error?: string }> {
+    if (!adminDb) return { success: false, error: "Database error." };
+    try {
+        const ref = adminDb.collection('sessions').doc(sessionId);
+        const doc = await ref.get();
+        if (!doc.exists) return { success: false, error: "Session not found." };
+        
+        const data = doc.data() as DrivingSession;
+        if (data.status !== 'Scheduled') return { success: false, error: "Session is not scheduled." };
+        if (data.startOtp !== enteredOtp) return { success: false, error: "Incorrect OTP." };
+        
+        const now = new Date();
+        if (new Date(data.startOtpExpiry) < now) return { success: false, error: "OTP expired." };
+
+        await ref.update({
+            status: 'Active',
+            startTime: now.toISOString(),
+        });
+
+        await createNotification({
+            userId: data.studentId,
+            message: `Your driving session has started with ${data.trainerName}. Drive safely!`,
+            href: '/dashboard'
+        });
+
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Verification failed." };
+    }
+}
+
+export async function verifyEndSession(sessionId: string, enteredOtp: string, notes?: string): Promise<{ success: boolean, error?: string }> {
+    if (!adminDb) return { success: false, error: "Database error." };
+    try {
+        const ref = adminDb.collection('sessions').doc(sessionId);
+        const doc = await ref.get();
+        if (!doc.exists) return { success: false, error: "Session not found." };
+        
+        const data = doc.data() as DrivingSession;
+        if (data.status !== 'Active') return { success: false, error: "Session is not active." };
+        if (data.endOtp !== enteredOtp) return { success: false, error: "Incorrect OTP." };
+        
+        const now = new Date();
+        const start = new Date(data.startTime!);
+        const duration = differenceInMinutes(now, start);
+
+        // Optional: Enforcement of minimum duration (e.g., 30 mins)
+        if (duration < 30) {
+            // We still allow it but log it or show a warning. 
+            // For now, let's just complete it.
+        }
+
+        await ref.update({
+            status: 'Completed',
+            endTime: now.toISOString(),
+            duration,
+            notes: notes || '',
+        });
+
+        // Credit Trainer Attendance & Wallet
+        const studentRef = adminDb.collection('users').doc(data.studentId);
+        const studentDoc = await studentRef.get();
+        if (studentDoc.exists) {
+            const currentCompleted = studentDoc.data()?.completedLessons || 0;
+            await studentRef.update({
+                completedLessons: currentCompleted + 1,
+                attendance: 'Present',
+                upcomingLesson: null // Clear upcoming as it's now completed
+            });
+        }
+
+        await createNotification({
+            userId: data.studentId,
+            message: `Great job! Your session with ${data.trainerName} is complete.`,
+            href: '/dashboard'
+        });
+
+        revalidatePath('/dashboard');
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: "Completion failed." };
+    }
+}
+
+export async function fetchAllSessions(): Promise<DrivingSession[]> {
+    if (!adminDb) return [];
+    try {
+        const snap = await adminDb.collection('sessions').orderBy('createdAt', 'desc').get();
+        return snap.docs.map(d => ({ id: d.id, ...d.data() } as DrivingSession));
+    } catch (error) {
+        return [];
+    }
 }
 
 // =================================================================
@@ -930,10 +1059,36 @@ export async function updateUserAttendance(studentId: string, status: 'Present' 
 export async function updateSubscriptionStartDate(customerId: string, newDate: Date): Promise<UserProfile | null> {
     if (!adminDb) return null;
     const ref = adminDb.collection('users').doc(customerId);
+    
+    const startOtp = generateOtp();
+    const endOtp = generateOtp();
+    const scheduledDate = addDays(newDate, 1);
+    scheduledDate.setHours(9, 0, 0, 0); // Default to 9 AM
+
     await ref.update({
         subscriptionStartDate: format(newDate, 'MMM dd, yyyy'),
-        upcomingLesson: format(addDays(newDate, 1), "MMM dd, yyyy, '09:00 AM'")
+        upcomingLesson: format(scheduledDate, "MMM dd, yyyy, '09:00 AM'")
     });
+
+    const userDoc = await ref.get();
+    const userData = userDoc.data();
+
+    // Create the session in the sessions collection
+    if (userData?.assignedTrainerId) {
+        await adminDb.collection('sessions').add({
+            studentId: customerId,
+            studentName: userData.name,
+            trainerId: userData.assignedTrainerId,
+            trainerName: userData.assignedTrainerName,
+            status: 'Scheduled',
+            scheduledDate: scheduledDate.toISOString(),
+            startOtp,
+            endOtp,
+            startOtpExpiry: scheduledDate.toISOString(), // Simplified for demo
+            createdAt: new Date().toISOString(),
+        });
+    }
+
     const updated = await ref.get();
     return { id: updated.id, ...updated.data(), registrationTimestamp: normalizeDate(updated.data()?.registrationTimestamp) } as UserProfile;
 }
@@ -966,6 +1121,20 @@ export async function updateRescheduleRequestStatus(requestId: string, newStatus
     if (newStatus === 'Approved') {
         const requestedDate = normalizeDate(data.requestedRescheduleDate);
         await adminDb.collection('users').doc(data.userId).update({ upcomingLesson: format(parseISO(requestedDate), "MMM dd, yyyy, h:mm a") });
+        
+        // Update associated session if it exists
+        const sessionsSnap = await adminDb.collection('sessions')
+            .where('studentId', '==', data.userId)
+            .where('status', '==', 'Scheduled')
+            .limit(1)
+            .get();
+        
+        if (!sessionsSnap.empty) {
+            await sessionsSnap.docs[0].ref.update({
+                scheduledDate: requestedDate,
+                startOtpExpiry: requestedDate
+            });
+        }
     }
     await createNotification({ userId: data.userId, message: `Reschedule request ${newStatus.toLowerCase()}.`, href: '/dashboard' });
     revalidatePath('/dashboard');
@@ -996,6 +1165,11 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     const total = plan === 'Basic' ? 10 : (plan === 'Gold' ? 15 : (plan === 'Premium' ? 20 : 1));
     const startStr = cData.subscriptionStartDate;
     const start = startStr ? new Date(startStr) : new Date();
+    const scheduledDate = addDays(start, 1);
+    scheduledDate.setHours(9, 0, 0, 0);
+
+    const startOtp = generateOtp();
+    const endOtp = generateOtp();
 
     const payload = {
         approvalStatus: 'Approved',
@@ -1005,9 +1179,24 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
         assignedTrainerVehicleDetails: tData.vehicleInfo,
         totalLessons: total,
         completedLessons: 0,
-        upcomingLesson: format(addDays(start, 1), "MMM dd, yyyy, '09:00 AM'"),
+        upcomingLesson: format(scheduledDate, "MMM dd, yyyy, '09:00 AM'"),
     };
     await adminDb.collection('users').doc(customerId).update(payload);
+
+    // Create first session
+    await adminDb.collection('sessions').add({
+        studentId: customerId,
+        studentName: cData.name,
+        trainerId: trainerId,
+        trainerName: tData.name,
+        status: 'Scheduled',
+        scheduledDate: scheduledDate.toISOString(),
+        startOtp,
+        endOtp,
+        startOtpExpiry: scheduledDate.toISOString(),
+        createdAt: new Date().toISOString(),
+    });
+
     await createNotification({ userId: customerId, message: `Trainer ${tData.name} assigned. First lesson ready!`, href: '/dashboard' });
     await createNotification({ userId: trainerId, message: `New student: ${cData.name}.`, href: '/dashboard' });
     revalidatePath('/dashboard');
@@ -1026,6 +1215,21 @@ export async function reassignTrainerToCustomer(customerId: string, newTrainerId
         assignedTrainerPhone: tDoc.data()?.phone,
         assignedTrainerVehicleDetails: tDoc.data()?.vehicleInfo,
     });
+
+    // Update scheduled session if it exists
+    const sessionsSnap = await adminDb.collection('sessions')
+        .where('studentId', '==', customerId)
+        .where('status', '==', 'Scheduled')
+        .limit(1)
+        .get();
+    
+    if (!sessionsSnap.empty) {
+        await sessionsSnap.docs[0].ref.update({
+            trainerId: newTrainerId,
+            trainerName: tDoc.data()?.name
+        });
+    }
+
     if (oldId) await createNotification({ userId: oldId, message: `Student reassigned.`, href: '/dashboard' });
     await createNotification({ userId: newTrainerId, message: `New student assigned.`, href: '/dashboard' });
     revalidatePath('/dashboard');
@@ -1048,6 +1252,18 @@ export async function unassignTrainerFromCustomer(customerId: string, trainerId:
         assignedTrainerPhone: null, assignedTrainerVehicleDetails: null,
         upcomingLesson: null, totalLessons: null, completedLessons: null,
     });
+
+    // Cancel scheduled session
+    const sessionsSnap = await adminDb.collection('sessions')
+        .where('studentId', '==', customerId)
+        .where('status', '==', 'Scheduled')
+        .limit(1)
+        .get();
+    
+    if (!sessionsSnap.empty) {
+        await sessionsSnap.docs[0].ref.update({ status: 'Cancelled' });
+    }
+
     revalidatePath('/dashboard');
     return true;
 }

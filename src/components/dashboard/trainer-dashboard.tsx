@@ -7,17 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
-    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck, Eye, WalletCards, ArrowRight
+    CalendarDays, Users, Star, CheckCircle, XCircle, AlertCircle, Hourglass, Check, X, Phone, MapPin, Car, IndianRupee, BarChart, User as UserIcon, MessageSquare, ShieldCheck, Eye, WalletCards, ArrowRight, PlayCircle, KeyRound, StopCircle, Loader2
 } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { fetchTrainerDashboardData } from '@/lib/server-data';
-import { updateUserAttendance, updateUserApprovalStatus, unassignTrainerFromCustomer } from '@/lib/server-actions';
+import { updateUserAttendance, updateUserApprovalStatus, unassignTrainerFromCustomer, fetchOngoingSession, verifyStartSession, verifyEndSession } from '@/lib/server-actions';
 import { useToast } from '@/hooks/use-toast';
-import type { UserProfile, Feedback } from '@/types';
+import type { UserProfile, Feedback, DrivingSession } from '@/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SummaryCard from './summary-card';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
 
 const TrainerDashboard = () => {
     const { user, loading: authLoading } = useAuth();
@@ -29,6 +31,11 @@ const TrainerDashboard = () => {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const [activeSession, setActiveSession] = useState<DrivingSession | null>(null);
+    const [startOtp, setStartOtp] = useState("");
+    const [endOtp, setEndOtp] = useState("");
+    const [sessionNotes, setSessionNotes] = useState("");
+
     const refetchData = useCallback(async () => {
         if (!user?.id) return;
         setLoading(true);
@@ -37,6 +44,9 @@ const TrainerDashboard = () => {
             setTrainerProfile(data.trainerProfile);
             setStudents(data.students);
             setFeedback(data.feedback);
+            
+            const session = await fetchOngoingSession(user.id);
+            setActiveSession(session);
         } catch (e) {
             setError("Failed to refetch data.");
         } finally {
@@ -62,6 +72,9 @@ const TrainerDashboard = () => {
                     setTrainerProfile(data.trainerProfile);
                     setStudents(data.students);
                     setFeedback(data.feedback);
+                    
+                    const session = await fetchOngoingSession(user.id);
+                    setActiveSession(session);
                 } else {
                     setError("Trainer profile not found. Please complete your registration.");
                 }
@@ -76,6 +89,35 @@ const TrainerDashboard = () => {
         fetchInitialData();
     }, [user, authLoading]);
     
+    const handleStartSession = async () => {
+        if (!activeSession || !startOtp) return;
+        setIsSubmitting(true);
+        const result = await verifyStartSession(activeSession.id, startOtp);
+        if (result.success) {
+            toast({ title: "Session Started!", description: "Drive safely." });
+            await refetchData();
+            setStartOtp("");
+        } else {
+            toast({ title: "Verification Failed", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
+    const handleEndSession = async () => {
+        if (!activeSession || !endOtp) return;
+        setIsSubmitting(true);
+        const result = await verifyEndSession(activeSession.id, endOtp, sessionNotes);
+        if (result.success) {
+            toast({ title: "Session Completed!", description: "Trip logged successfully." });
+            await refetchData();
+            setEndOtp("");
+            setSessionNotes("");
+        } else {
+            toast({ title: "Verification Failed", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
     const handleAttendance = async (studentId: string, status: 'Present' | 'Absent') => {
         setIsSubmitting(true);
         const success = await updateUserAttendance(studentId, status);
@@ -227,11 +269,91 @@ const TrainerDashboard = () => {
                 </Button>
             </div>
 
+            {/* LIVE SESSION OTP CONTROL */}
+            {activeSession && (
+                <Card className="border-2 border-primary bg-primary/5 shadow-xl animate-fade-in-up">
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                                <PlayCircle className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                                <CardTitle>Current Lesson Session</CardTitle>
+                                <CardDescription>Verify OTP codes from {activeSession.studentName} to manage the trip.</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Start Verification */}
+                        <div className={cn("p-6 rounded-xl border-2 transition-all", activeSession.status === 'Scheduled' ? "border-primary bg-background shadow-md" : "border-muted bg-muted/20 opacity-60")}>
+                            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                <KeyRound className="h-5 w-5 text-primary" />
+                                1. Start Verified
+                            </h3>
+                            {activeSession.status === 'Scheduled' ? (
+                                <div className="space-y-4">
+                                    <Input 
+                                        placeholder="Enter 4-digit Start OTP" 
+                                        maxLength={4} 
+                                        className="text-center text-3xl font-bold tracking-widest h-14"
+                                        value={startOtp}
+                                        onChange={(e) => setStartOtp(e.target.value)}
+                                    />
+                                    <Button className="w-full h-12" onClick={handleStartSession} disabled={isSubmitting || startOtp.length !== 4}>
+                                        {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Verify & Start Trip"}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-4 text-green-600">
+                                    <CheckCircle className="h-12 w-12" />
+                                    <p className="mt-2 font-bold">Trip Started at {activeSession.startTime ? format(parseISO(activeSession.startTime), 'h:mm a') : '...'}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* End Verification */}
+                        <div className={cn("p-6 rounded-xl border-2 transition-all", activeSession.status === 'Active' ? "border-green-500 bg-background shadow-md" : "border-muted bg-muted/20 opacity-60")}>
+                            <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                                <StopCircle className="h-5 w-5 text-green-600" />
+                                2. End Verified
+                            </h3>
+                            {activeSession.status === 'Active' ? (
+                                <div className="space-y-4">
+                                    <Input 
+                                        placeholder="Enter 4-digit End OTP" 
+                                        maxLength={4} 
+                                        className="text-center text-3xl font-bold tracking-widest h-14"
+                                        value={endOtp}
+                                        onChange={(e) => setEndOtp(e.target.value)}
+                                    />
+                                    <Textarea 
+                                        placeholder="Add performance notes (optional)..." 
+                                        className="resize-none"
+                                        value={sessionNotes}
+                                        onChange={(e) => setSessionNotes(e.target.value)}
+                                    />
+                                    <Button className="w-full h-12 bg-green-600 hover:bg-green-700" onClick={handleEndSession} disabled={isSubmitting || endOtp.length !== 4}>
+                                        {isSubmitting ? <Loader2 className="animate-spin h-5 w-5" /> : "Verify & Complete Trip"}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
+                                    {activeSession.status === 'Scheduled' ? (
+                                        <p className="text-center italic">Session must be started first.</p>
+                                    ) : (
+                                        <CheckCircle className="h-12 w-12 text-blue-500" />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <SummaryCard title="Total Students" value={existingStudents.length} icon={Users} description="All active students assigned to you" />
-                <div className="relative group cursor-pointer" onClick={() => router.push('/dashboard/wallet')}>
-                    <SummaryCard title="Total Earnings" value={`₹${totalEarnings.toLocaleString('en-IN')}`} icon={IndianRupee} description="Your gross earnings (Click to view Wallet)" className="group-hover:border-primary/50 transition-colors" />
-                    <ArrowRight className="absolute bottom-4 right-4 h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative group cursor-pointer">
+                    <SummaryCard title="Total Earnings" value={`₹${totalEarnings.toLocaleString('en-IN')}`} icon={IndianRupee} description="Your gross earnings" className="group-hover:border-primary/50 transition-colors" />
                 </div>
                 <SummaryCard title="Upcoming Lessons" value={upcomingLessonsCount} icon={CalendarDays} description="Confirmed upcoming sessions" />
                 <SummaryCard title="Your Rating" value={avgRating} icon={Star} description="Average student rating" />
