@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -15,6 +14,7 @@ import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, L
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import LessonProgressTable from './lesson-progress-table';
 import CourseManagement from './course-management';
 import QuizManagement from './quiz-management';
