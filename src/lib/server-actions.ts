@@ -790,16 +790,48 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
     if (!adminAuth) return { success: false, error: "Auth not configured." };
     try {
-        const link = await adminAuth.generatePasswordResetLink(email);
+        const fullFirebaseLink = await adminAuth.generatePasswordResetLink(email);
+        
+        // Extract oobCode from the firebase link
+        const url = new URL(fullFirebaseLink);
+        const oobCode = url.searchParams.get('oobCode');
+        
+        if (!oobCode) {
+            throw new Error("Failed to generate reset code.");
+        }
+
+        // Construct our project's custom reset link
+        const baseUrl = process.env.APP_BASE_URL || 'https://drivergy.in';
+        const customLink = `${baseUrl}/reset-password?token=${oobCode}`;
+
         await sendEmail({
             to: email,
             subject: 'Reset Your Drivergy Password',
-            text: `Click to reset: ${link}`,
-            html: `<p>Click <a href="${link}">here</a> to reset your password.</p>`,
+            text: `We received a request to reset your password. Click the link below to set a new one:\n\n${customLink}\n\nIf you did not make this request, you can safely ignore this email.`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #ef4444; margin: 0;">DRIVERGY</h1>
+                        <p style="color: #666; margin: 5px 0; font-size: 14px; letter-spacing: 2px;">LEARN. DRIVE. LIVE.</p>
+                    </div>
+                    <h2 style="color: #333;">Reset Your Password</h2>
+                    <p style="color: #555; line-height: 1.5;">Hello,</p>
+                    <p style="color: #555; line-height: 1.5;">We received a request to reset the password for your Drivergy account. Click the button below to choose a new password:</p>
+                    <div style="text-align: center; margin: 35px 0;">
+                        <a href="${customLink}" style="background-color: #ef4444; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+                    </div>
+                    <p style="color: #555; line-height: 1.5;">If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all;"><a href="${customLink}" style="color: #ef4444;">${customLink}</a></p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+                    <p style="font-size: 12px; color: #888; text-align: center;">If you did not request a password reset, please ignore this email. This link will expire shortly for security reasons.</p>
+                    <p style="font-size: 12px; color: #888; text-align: center;">&copy; ${new Date().getFullYear()} Drivergy. All rights reserved.</p>
+                </div>
+            `,
         });
         return { success: true };
     } catch (error: any) {
-        return { success: false, error: "Failed to send reset link." };
+        console.error("Reset link error:", error);
+        return { success: false, error: error.message || "Failed to send reset link." };
     }
 }
 
