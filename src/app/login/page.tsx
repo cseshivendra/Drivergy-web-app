@@ -83,9 +83,9 @@ export default function LoginPage() {
       <div className="relative z-20 flex min-h-screen flex-col items-center justify-center p-4">
         <Card className={`w-full max-w-md bg-card/90 backdrop-blur-md shadow-2xl rounded-xl border-border/50 transition-all duration-700 ease-out ${isMounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <CardHeader className="text-center p-6 space-y-2">
-            <div className="mx-auto mb-3 flex items-center justify-center gap-2">
-               <DrivergyLogoIcon className="h-12 w-auto text-primary" />
-               <DrivergyLogo className="h-12 w-auto text-primary text-4xl" />
+            <div className="mx-auto mb-3 flex items-center justify-center gap-2 w-auto">
+               <DrivergyLogoIcon className="h-10 text-primary" />
+               <DrivergyLogo className="h-10 text-primary mt-2" />
             </div>
             <div className="flex flex-col">
               <p className="font-headline text-lg text-muted-foreground tracking-wide">Learn. Drive. Live.</p>
@@ -96,7 +96,7 @@ export default function LoginPage() {
           <CardContent className="space-y-4 pt-2">
             <form onSubmit={handleCredentialSignIn} className="space-y-3">
               <div>
-                <Label htmlFor="identifier" className="flex items-center mb-1"><User className="mr-2 h-4 w-4" />Email or Username</Label>
+                <Label htmlFor="identifier" className="flex items-center mb-1 pb-1"><User className="mr-2 h-4 w-4" />Email or Username</Label>
                 <Input id="identifier" type="text" placeholder="Enter your email or username" value={identifier} onChange={(e) => setIdentifier(e.target.value)} disabled={loading} autoComplete="email username" />
               </div>
               <div>
