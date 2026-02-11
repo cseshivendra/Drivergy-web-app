@@ -363,7 +363,7 @@ export default function AppSidebar() {
               </SidebarMenuItem>
             </>
           )}
-
+        {!isSuperAdmin && (
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
@@ -376,6 +376,7 @@ export default function AppSidebar() {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+        )}
         </SidebarMenu>
       </SidebarContent>
     </Sidebar>
