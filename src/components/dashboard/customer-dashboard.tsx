@@ -29,6 +29,29 @@ import { Badge } from '../ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import StudentProgressDisplay from './student-progress-display';
 
+const isCustomerDetailsComplete = (profile: UserProfile): boolean => {
+  const hasPlan = !!profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
+  if (!hasPlan) return false;
+
+  const hasAddress = !!profile.flatHouseNumber &&
+    !!profile.street &&
+    !!profile.district &&
+    !!profile.state &&
+    !!profile.pincode &&
+    profile.pincode.length === 6;
+
+  const hasPreferences = !!profile.vehiclePreference && !!profile.trainerPreference;
+  const hasStartDate = !!profile.subscriptionStartDate;
+
+  const hasLicense = profile.dlStatus === 'Already Have DL'
+    ? !!profile.dlNumber && !!profile.dlTypeHeld
+    : !!profile.dlStatus;
+
+  const hasPhotoId = !!profile.photoIdType && !!profile.photoIdNumber && !!profile.photoIdUrl;
+
+  return hasAddress && hasPreferences && hasStartDate && hasLicense && hasPhotoId;
+};
+
 
 // Helper component for Star Rating input
 const StarRating = ({ rating, setRating, disabled = false }: { rating: number; setRating: (r: number) => void; disabled?: boolean }) => {
@@ -396,7 +419,34 @@ export default function CustomerDashboard() {
       );
   }
 
-  // Step 2: If a plan is selected, check if the approval is still pending.
+  // Step 2: Require full profile completion before unlocking dashboard
+  if (!isCustomerDetailsComplete(profile)) {
+      return (
+          <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
+              <Card className="shadow-xl text-center p-8">
+                  <CardHeader>
+                      <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
+                          <UserCheck className="h-12 w-12 text-primary" />
+                      </div>
+                      <CardTitle className="font-headline text-2xl font-bold">Complete Your Profile</CardTitle>
+                      <CardDescription className="text-lg mt-4">
+                          You purchased a plan, but your profile is incomplete.
+                      </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-muted-foreground max-w-md mx-auto">
+                          Please fill the required details so our team can verify and assign a trainer.
+                      </p>
+                      <Button asChild className="mt-6" size="lg">
+                          <Link href={`/dashboard/complete-profile?plan=${encodeURIComponent(profile.subscriptionPlan || '')}`}>Complete Profile</Link>
+                      </Button>
+                  </CardContent>
+              </Card>
+          </div>
+      );
+  }
+
+  // Step 3: If a plan is selected and profile is complete, check if approval is still pending.
   if (profile.approvalStatus === 'Pending' || profile.approvalStatus === 'In Progress') {
       return (
           <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
@@ -778,3 +828,4 @@ export default function CustomerDashboard() {
     </div>
   );
 }
+
