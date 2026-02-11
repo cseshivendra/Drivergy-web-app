@@ -1,6 +1,5 @@
 
 'use client';
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ import {
   DistrictsByState,
 } from '@/types';
 import { User, UserCog, Car, Bike, ShieldCheck, ScanLine, UserSquare2, Fuel, Users, Contact, FileUp, MapPin, KeyRound, AtSign, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { registerUserAction } from '@/lib/server-actions';
@@ -114,10 +113,25 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
       }
   };
 
+const errorRef = useRef<HTMLDivElement | null>(null);
+
+useEffect(() => {
+    if (error && errorRef.current) {
+        const y = errorRef.current.getBoundingClientRect().top + window.scrollY;
+
+        window.scrollTo({
+            top: y - 180,   
+            behavior: "smooth",
+        });
+    }
+}, [error]);
+
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         {error && (
+            <div ref={errorRef}>
             <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Registration Error</AlertTitle>
@@ -128,6 +142,7 @@ export default function RegistrationForm({ userRole, onSuccess }: RegistrationFo
                     )}
                 </AlertDescription>
             </Alert>
+            </div>
         )}
         
         <input type="hidden" {...form.register('userRole')} value={userRole} />
