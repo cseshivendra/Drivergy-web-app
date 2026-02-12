@@ -18,9 +18,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ComplaintFormSchema, type ComplaintFormValues } from '@/types';
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquareText } from 'lucide-react'; 
+import { MessageSquareText, Loader2 } from 'lucide-react'; 
 import Image from 'next/image';
-import type { Metadata } from 'next';
+import { addComplaint } from '@/lib/server-actions';
+import { useAuth } from '@/context/auth-context';
 
 // This is a client component, so we can't export metadata directly.
 // However, adding a <head> tag helps with SEO for client-rendered pages.
@@ -33,25 +34,42 @@ const PageHead = () => (
 
 export default function ContactPage() {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const form = useForm<ComplaintFormValues>({
     resolver: zodResolver(ComplaintFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
+      name: user?.name || '',
+      email: user?.contact || '',
+      phone: user?.phone || '',
       subject: '',
       message: '',
     },
   });
 
-  function onSubmit(data: ComplaintFormValues) {
-    // In a real app, you'd send this data to a backend or AI flow
-    console.log(data);
-    toast({
-      title: "Complaint Submitted!",
-      description: "Thank you for your feedback. We will get back to you soon.",
-    });
-    form.reset(); // Reset form after submission
+  const { isSubmitting } = form.formState;
+
+  async function onSubmit(data: ComplaintFormValues) {
+    const success = await addComplaint(data, user?.id);
+    if (success) {
+      toast({
+        title: "Complaint Submitted!",
+        description: "Thank you for your feedback. We have logged your complaint and will get back to you soon.",
+      });
+      form.reset({
+          name: user?.name || '',
+          email: user?.contact || '',
+          phone: user?.phone || '',
+          subject: '',
+          message: '',
+      });
+    } else {
+      toast({
+        title: "Submission Failed",
+        description: "Could not log your complaint. Please try again later.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
@@ -99,19 +117,34 @@ export default function ContactPage() {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="subject"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subject</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Regarding my recent lesson..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="Your contact number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subject</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Regarding my recent lesson..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="message"
@@ -130,8 +163,8 @@ export default function ContactPage() {
                 )}
               />
               <div className="flex justify-end">
-                <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Submitting...' : 'Submit Complaint'}
+                <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
+                  {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/>Submitting...</> : 'Submit Complaint'}
                 </Button>
               </div>
             </form>

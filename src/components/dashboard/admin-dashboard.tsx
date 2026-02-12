@@ -11,7 +11,7 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData, fetchAllSessions } from '@/lib/server-actions';
 import type { SummaryData, AdminDashboardData, DrivingSession } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2, X, Check } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2, X, Check, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -31,6 +31,7 @@ import OperationsView from './operations-view';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import ComplaintTable from './complaint-table';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -246,10 +247,11 @@ export default function AdminDashboard() {
             />
             <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
             <Tabs defaultValue="verifications" className="w-full mt-8">
-                <TabsList className={cn("grid w-full mb-6", isOperationsManager ? "grid-cols-2 sm:grid-cols-6" : "grid-cols-2 sm:grid-cols-5")}>
+                <TabsList className={cn("grid w-full mb-6", isOperationsManager ? "grid-cols-2 sm:grid-cols-7" : "grid-cols-2 sm:grid-cols-6")}>
                     <TabsTrigger value="verifications">Verifications</TabsTrigger>
                     <TabsTrigger value="requests">Requests</TabsTrigger>
                     <TabsTrigger value="sessions">Live Trips</TabsTrigger>
+                    <TabsTrigger value="complaints">Complaints</TabsTrigger>
                     <TabsTrigger value="progress">Progress</TabsTrigger>
                     <TabsTrigger value="feedback">Feedback</TabsTrigger>
                     {isOperationsManager && <TabsTrigger value="overrides">Overrides</TabsTrigger>}
@@ -313,6 +315,14 @@ export default function AdminDashboard() {
                 </TabsContent>
                 <TabsContent value="sessions">
                     {renderSessionsView()}
+                </TabsContent>
+                <TabsContent value="complaints">
+                    <ComplaintTable 
+                        title={<><AlertTriangle className="inline-block mr-3 h-6 w-6 align-middle" />User Complaints</>}
+                        complaints={dashboardData?.complaints || []}
+                        isLoading={loading}
+                        onActioned={() => loadData(true)}
+                    />
                 </TabsContent>
                 <TabsContent value="progress" className="space-y-8">
                     <LessonProgressTable
@@ -422,12 +432,11 @@ export default function AdminDashboard() {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
             case 'operations': return 'Operations Management';
-            case 'transactions':
-            case 'commission':
-            case 'payouts':
-            case 'reports':
-            case 'earnings':
-                return 'Revenue Management';
+            case 'transactions': return 'Revenue Management';
+            case 'commission': return 'Revenue Management';
+            case 'payouts': return 'Revenue Management';
+            case 'reports': return 'Revenue Management';
+            case 'earnings': return 'Revenue Management';
             default: return 'Admin Dashboard';
         }
     }

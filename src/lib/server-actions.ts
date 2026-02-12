@@ -14,7 +14,8 @@ import {
     BlogPostSchema, 
     TrainerRegistrationFormSchema, 
     CustomerRegistrationFormSchema,
-    WithdrawalRequestSchema
+    WithdrawalRequestSchema,
+    ComplaintFormSchema
 } from '@/types';
 import type { 
     UserProfile, 
@@ -50,7 +51,9 @@ import type {
     WithdrawalRequest,
     WithdrawalRequestValues,
     DrivingSession,
-    SessionStatus
+    SessionStatus,
+    Complaint,
+    ComplaintStatus
 } from '@/types';
 import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval, differenceInMinutes } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
@@ -298,7 +301,8 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             postersSnap, 
             rescheduleSnap, 
             feedbackSnap,
-            referralsSnap
+            referralsSnap,
+            complaintsSnap
         ] = await Promise.all([
             adminDb.collection('users').get(),
             adminDb.collection('trainers').get(),
@@ -310,7 +314,8 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             adminDb.collection('promotionalPosters').get(),
             adminDb.collection('rescheduleRequests').orderBy('requestTimestamp', 'desc').get(),
             adminDb.collection('feedback').orderBy('submissionDate', 'desc').get(),
-            adminDb.collection('referrals').get()
+            adminDb.collection('referrals').get(),
+            adminDb.collection('complaints').orderBy('timestamp', 'desc').get()
         ]);
 
         const customers: UserProfile[] = usersSnap.docs.map(d => {
@@ -373,6 +378,15 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             } as Referral;
         });
 
+        const complaints: Complaint[] = complaintsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                timestamp: normalizeDate(data.timestamp),
+            } as Complaint;
+        });
+
         const lessonProgress: LessonProgressData[] = customers
             .filter(c => c.assignedTrainerId)
             .map(c => ({
@@ -396,6 +410,7 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
                 const planPrices: Record<string, number> = { 'Basic': 3999, 'Gold': 7499, 'Premium': 9999 };
                 return acc + (planPrices[curr.subscriptionPlan] || 0);
             }, 0),
+            pendingComplaints: complaints.filter(c => c.status === 'Pending').length,
         };
 
         return {
@@ -412,6 +427,7 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             blogPosts: blogSnap.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost)),
             siteBanners: bannersSnap.docs.map(d => ({ id: d.id, ...d.data() } as SiteBanner)),
             promotionalPosters: postersSnap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)),
+            complaints,
         };
 
     } catch (error) {
@@ -721,6 +737,56 @@ export async function updateWithdrawalStatus(withdrawalId: string, newStatus: Wi
         return true;
     } catch (error) {
         console.error(error);
+        return false;
+    }
+}
+
+// =================================================================
+// COMPLAINT ACTIONS
+// =================================================================
+
+export async function addComplaint(data: ComplaintFormValues, userId?: string): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        await adminDb.collection('complaints').add({
+            ...data,
+            userId: userId || null,
+            userName: data.name,
+            userEmail: data.email,
+            userPhone: data.phone || null,
+            status: 'Pending',
+            timestamp: new Date().toISOString(),
+        });
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error adding complaint:", error);
+        return false;
+    }
+}
+
+export async function updateComplaintStatus(complaintId: string, newStatus: ComplaintStatus): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        const ref = adminDb.collection('complaints').doc(complaintId);
+        const doc = await ref.get();
+        if (!doc.exists) return false;
+        
+        await ref.update({ status: newStatus });
+        
+        const data = doc.data() as Complaint;
+        if (data.userId) {
+            await createNotification({
+                userId: data.userId,
+                message: `Your complaint regarding "${data.subject}" has been marked as ${newStatus.toLowerCase()}.`,
+                href: '/dashboard/contact'
+            });
+        }
+        
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error updating complaint status:", error);
         return false;
     }
 }
@@ -1363,4 +1429,3 @@ export async function getOrderDetails(orderId: string) {
         return null;
     }
 }
-
