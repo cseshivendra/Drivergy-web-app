@@ -1,3 +1,4 @@
+
 'use server';
 
 import type { BlogPost, UserProfile, Course, QuizSet, Product, Feedback, FaqItem } from '@/types';
@@ -138,6 +139,51 @@ const createRevenueManager = async () => {
                 console.log('Successfully created Revenue Manager user.');
             } catch (e) {
                 console.error('Error seeding revenue manager:', e);
+            }
+        }
+    }
+}
+
+/**
+ * Creates an Operations Manager user with specialized dashboard access.
+ */
+const createOperationsManager = async () => {
+    if (!adminAuth || !adminDb) return;
+
+    const managerEmail = 'operations@drivergy.in';
+    const managerPassword = 'password';
+
+    try {
+        await adminAuth.getUserByEmail(managerEmail);
+    } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+            try {
+                const userRecord = await adminAuth.createUser({
+                    email: managerEmail,
+                    emailVerified: true,
+                    password: managerPassword,
+                    displayName: 'Operations Manager',
+                    disabled: false,
+                });
+
+                const managerProfile: Omit<UserProfile, 'id'> = {
+                    uniqueId: `OM-${userRecord.uid.slice(0, 6).toUpperCase()}`,
+                    name: 'Operations Manager',
+                    username: 'operationsmanager',
+                    contact: managerEmail,
+                    phone: '3333333333',
+                    gender: 'Prefer not to say',
+                    subscriptionPlan: 'Admin',
+                    registrationTimestamp: new Date().toISOString(),
+                    approvalStatus: 'Approved',
+                    isAdmin: true,
+                    userRole: 'admin',
+                };
+
+                await adminDb.collection('users').doc(userRecord.uid).set(managerProfile);
+                console.log('Successfully created Operations Manager user.');
+            } catch (e) {
+                console.error('Error seeding operations manager:', e);
             }
         }
     }
@@ -306,6 +352,7 @@ const initializeServerData = async () => {
     await createDefaultAdmin();
     await createContentManager();
     await createRevenueManager();
+    await createOperationsManager();
     await seedStoreProducts();
     await seedFaqs();
 };

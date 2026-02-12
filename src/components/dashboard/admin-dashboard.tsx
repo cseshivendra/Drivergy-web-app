@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -10,7 +11,7 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData, fetchAllSessions } from '@/lib/server-actions';
 import type { SummaryData, AdminDashboardData, DrivingSession } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import RevenueView from './revenue-view';
 import WithdrawalManagement from './withdrawal-management';
+import OperationsView from './operations-view';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
@@ -47,6 +49,7 @@ export default function AdminDashboard() {
 
     const isContentManager = user?.contact === 'content@drivergy.in';
     const isRevenueManager = user?.contact === 'revenue@drivergy.in';
+    const isOperationsManager = user?.contact === 'operations@drivergy.in';
 
     const loadData = useCallback(async (silent = false) => {
         if (!user?.isAdmin) return;
@@ -320,20 +323,27 @@ export default function AdminDashboard() {
         <RevenueView activeTab={activeTab === 'default' ? 'transactions' : activeTab} />
     );
 
-    const renderWithdrawalsView = () => (
-        <WithdrawalManagement />
+    const renderOperationsView = () => (
+        <OperationsView 
+            data={dashboardData} 
+            sessions={sessions} 
+            isLoading={loading} 
+            onActioned={() => loadData(true)} 
+        />
     );
 
     const renderCurrentTab = () => {
         // Strict role-based rendering for specialized managers
         if (isContentManager) return renderContentView();
         if (isRevenueManager) return renderRevenueView();
+        if (isOperationsManager) return renderOperationsView();
 
         // Standard admin tab logic
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
-            case 'withdrawals': return renderWithdrawalsView();
+            case 'withdrawals': return renderRevenueView();
+            case 'operations': return renderOperationsView();
             case 'transactions':
             case 'commission':
             case 'payouts':
@@ -347,10 +357,11 @@ export default function AdminDashboard() {
     const getPageTitle = () => {
         if (isContentManager) return 'Content Management';
         if (isRevenueManager) return 'Revenue Management';
+        if (isOperationsManager) return 'Operations Management';
         switch(activeTab) {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
-            case 'withdrawals': return 'Withdrawal Requests';
+            case 'operations': return 'Operations Management';
             case 'transactions':
             case 'commission':
             case 'payouts':
@@ -373,7 +384,7 @@ export default function AdminDashboard() {
                             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                         </Button>
                     </div>
-                    {!isContentManager && !isRevenueManager && (
+                    {!isContentManager && !isRevenueManager && !isOperationsManager && (
                         <div className="relative w-full sm:w-auto sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -391,4 +402,3 @@ export default function AdminDashboard() {
         </div>
     );
 }
-
