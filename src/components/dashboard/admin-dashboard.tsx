@@ -11,7 +11,7 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData, fetchAllSessions } from '@/lib/server-actions';
 import type { SummaryData, AdminDashboardData, DrivingSession } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2 } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2, X, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +27,6 @@ import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import RevenueView from './revenue-view';
-import WithdrawalManagement from './withdrawal-management';
 import OperationsView from './operations-view';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -184,17 +183,76 @@ export default function AdminDashboard() {
         </Card>
     );
 
+    const renderManualOverrides = () => (
+        <Card className="shadow-lg border-primary">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5 text-primary" />
+                    Session Manual Overrides
+                </CardTitle>
+                <CardDescription>Force-complete or cancel sessions in case of technical issues.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Trainer</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Start Time</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sessions.filter(s => s.status === 'Active' || s.status === 'Scheduled').map(session => (
+                            <TableRow key={session.id}>
+                                <TableCell className="font-medium">{session.studentName}</TableCell>
+                                <TableCell>{session.trainerName}</TableCell>
+                                <TableCell>
+                                    <Badge className={cn(
+                                        session.status === 'Active' ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                    )}>
+                                        {session.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                    {session.startTime ? format(parseISO(session.startTime), 'PPp') : 'Not Started'}
+                                </TableCell>
+                                <TableCell className="text-right space-x-2">
+                                    <Button variant="outline" size="sm" className="h-8">Manual Complete</Button>
+                                    <Button variant="destructive" size="sm" className="h-8">Abort Session</Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {sessions.filter(s => s.status === 'Active' || s.status === 'Scheduled').length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                    No active sessions found for override.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+
     const renderDashboardView = () => (
         <>
-            <SummaryMetrics data={dashboardData?.summaryData as SummaryData} isLoading={loading} />
+            <SummaryMetrics 
+                data={dashboardData?.summaryData as SummaryData} 
+                isLoading={loading} 
+                hideFinancials={isOperationsManager}
+            />
             <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
             <Tabs defaultValue="verifications" className="w-full mt-8">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6">
+                <TabsList className={cn("grid w-full mb-6", isOperationsManager ? "grid-cols-2 sm:grid-cols-6" : "grid-cols-2 sm:grid-cols-5")}>
                     <TabsTrigger value="verifications">Verifications</TabsTrigger>
                     <TabsTrigger value="requests">Requests</TabsTrigger>
                     <TabsTrigger value="sessions">Live Trips</TabsTrigger>
                     <TabsTrigger value="progress">Progress</TabsTrigger>
                     <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                    {isOperationsManager && <TabsTrigger value="overrides">Overrides</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="verifications" className="space-y-8">
                     <UserTable
@@ -270,6 +328,11 @@ export default function AdminDashboard() {
                         isLoading={loading}
                     />
                 </TabsContent>
+                {isOperationsManager && (
+                    <TabsContent value="overrides">
+                        {renderManualOverrides()}
+                    </TabsContent>
+                )}
             </Tabs>
         </>
     );
@@ -323,27 +386,24 @@ export default function AdminDashboard() {
         <RevenueView activeTab={activeTab === 'default' ? 'transactions' : activeTab} />
     );
 
-    const renderOperationsView = () => (
-        <OperationsView 
-            data={dashboardData} 
-            sessions={sessions} 
-            isLoading={loading} 
-            onActioned={() => loadData(true)} 
-        />
-    );
-
     const renderCurrentTab = () => {
-        // Strict role-based rendering for specialized managers
+        // Content Manager bypass
         if (isContentManager) return renderContentView();
+        
+        // Revenue Manager bypass
         if (isRevenueManager) return renderRevenueView();
-        if (isOperationsManager) return renderOperationsView();
+
+        // Operations Manager logic - They use the same standard view but sanitized
+        if (isOperationsManager && activeTab === 'default') {
+            return renderDashboardView();
+        }
 
         // Standard admin tab logic
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
             case 'withdrawals': return renderRevenueView();
-            case 'operations': return renderOperationsView();
+            case 'operations': return renderDashboardView(); // Operations tab now renders main sanitized dashboard
             case 'transactions':
             case 'commission':
             case 'payouts':
@@ -384,7 +444,7 @@ export default function AdminDashboard() {
                             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                         </Button>
                     </div>
-                    {!isContentManager && !isRevenueManager && !isOperationsManager && (
+                    {!isContentManager && !isRevenueManager && (
                         <div className="relative w-full sm:w-auto sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input

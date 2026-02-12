@@ -10,9 +10,10 @@ import type React from 'react';
 interface SummaryMetricsProps {
   data: SummaryData | null;
   isLoading: boolean;
+  hideFinancials?: boolean;
 }
 
-export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps) {
+export default function SummaryMetrics({ data, isLoading, hideFinancials = false }: SummaryMetricsProps) {
   if (isLoading) {
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -33,14 +34,15 @@ export default function SummaryMetrics({ data, isLoading }: SummaryMetricsProps)
       <SummaryCard title="Active Subscriptions" value={data?.activeSubscriptions ?? 0} icon={CreditCard} description="Currently active plans" />
       <SummaryCard title="New Lesson Requests" value={data?.pendingRequests ?? 0} icon={ListChecks} description="Awaiting instructor assignment" />
       <SummaryCard title="Pending Reschedules" value={data?.pendingRescheduleRequests ?? 0} icon={Repeat} description="Awaiting admin approval" />
-      <SummaryCard 
-        title="Total Earning" 
-        value={`₹${(data?.totalEarnings ?? 0).toLocaleString('en-IN')}`} 
-        icon={IndianRupee}
-        description="Gross revenue generated" 
-      />
+      
+      {!hideFinancials && (
+        <SummaryCard 
+          title="Total Earning" 
+          value={`₹${(data?.totalEarnings ?? 0).toLocaleString('en-IN')}`} 
+          icon={IndianRupee}
+          description="Gross revenue generated" 
+        />
+      )}
     </div>
   );
 }
-
-    

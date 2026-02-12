@@ -30,11 +30,17 @@ export default function AuthenticatedRootPage() {
   // This page should only be rendered for authenticated users,
   // so we show the appropriate dashboard.
   if (user) {
-    // Both Super Admin and specialized Managers (Content/Revenue) use AdminDashboard
-    // which now handles role-based content internal logic.
-    if (user.isAdmin || user.contact === 'content@drivergy.in' || user.contact === 'revenue@drivergy.in') {
+    // Specialized roles like Content, Revenue, and Operations managers use the AdminDashboard component
+    // which handles role-based content logic.
+    const isManager = 
+        user.contact === 'content@drivergy.in' || 
+        user.contact === 'revenue@drivergy.in' || 
+        user.contact === 'operations@drivergy.in';
+
+    if (user.isAdmin || isManager) {
       return <AdminDashboard />;
     }
+    
     if (user.uniqueId?.startsWith('CU')) {
       return <CustomerDashboard />;
     }
