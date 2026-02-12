@@ -55,7 +55,7 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
       <SidebarHeader className="p-0"> 
-        <Link href="/dashboard" className="flex items-center gap-2.5 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg overflow-hidden">
+        <Link href="/" className="flex items-center gap-2.5 h-16 group-data-[state=collapsed]:justify-center group-data-[state=expanded]:pl-4 border-b border-sidebar-border/70 focus:outline-none focus:ring-2 focus:ring-ring rounded-t-lg overflow-hidden">
           <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
           <div className="group-data-[state=expanded]:block hidden">
             <DrivergyLogo className="w-auto" showTagline={true} />
