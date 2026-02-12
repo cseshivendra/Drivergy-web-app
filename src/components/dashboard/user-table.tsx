@@ -40,6 +40,29 @@ const safeFormatDate = (dateVal: any, formatStr: string = 'PP') => {
     return isValid(date) ? format(date, formatStr) : 'N/A';
 };
 
+const isCustomerDetailsComplete = (user: UserProfile): boolean => {
+  const hasPlan = !!user.subscriptionPlan && user.subscriptionPlan !== 'None';
+  if (!hasPlan) return false;
+
+  const hasAddress = !!user.flatHouseNumber &&
+    !!user.street &&
+    !!user.district &&
+    !!user.state &&
+    !!user.pincode &&
+    user.pincode.length === 6;
+
+  const hasPreferences = !!user.vehiclePreference && !!user.trainerPreference;
+  const hasStartDate = !!user.subscriptionStartDate;
+
+  const hasLicense = user.dlStatus === 'Already Have DL'
+    ? !!user.dlNumber && !!user.dlTypeHeld
+    : !!user.dlStatus;
+
+  const hasPhotoId = !!user.photoIdType && !!user.photoIdNumber && !!user.photoIdUrl;
+
+  return hasAddress && hasPreferences && hasStartDate && hasLicense && hasPhotoId;
+};
+
 export default function UserTable({ title, users, isLoading, onUserActioned, actionType }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
@@ -78,6 +101,14 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
   const handleNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   
   const openAssignDialog = (user: UserProfile) => {
+    if (!isCustomerDetailsComplete(user)) {
+      toast({
+        title: "Profile Incomplete",
+        description: "Customer must complete required details before trainer assignment.",
+        variant: "destructive"
+      });
+      return;
+    }
     setSelectedUserForAssignment(user);
     setIsAssigning(false);
     setIsAssignDialogOpen(true);
@@ -99,7 +130,7 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
             onUserActioned();
             setIsAssignDialogOpen(false);
         } else {
-            throw new Error("Assignment failed.");
+            toast({ title: "Assignment Failed", description: "Customer profile is incomplete. Ask them to complete their details first.", variant: "destructive" });
         }
     } catch (error) {
         toast({ title: "Failed", description: "Could not complete assignment.", variant: "destructive" });
@@ -158,14 +189,26 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
 
   const renderActions = (user: UserProfile) => {
     switch (actionType) {
-      case 'new-customer':
+      case 'new-customer': {
+        const canAssign = isCustomerDetailsComplete(user);
         return (
           <div className="flex items-center justify-center space-x-1.5">
             <Button variant="outline" size="sm" onClick={() => handleViewDetails(user)} className="px-2 py-1"><Eye className="h-3.5 w-3.5" /></Button>
-            <Button variant="default" size="sm" onClick={() => openAssignDialog(user)} className="bg-green-600 hover:bg-green-700 text-white px-2 py-1"><UserCheck className="h-3.5 w-3.5" /><span className="ml-1.5 hidden sm:inline">Approve</span></Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => openAssignDialog(user)}
+              disabled={!canAssign}
+              className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 disabled:opacity-50"
+              title={!canAssign ? "Customer must complete full profile before assignment." : "Assign trainer"}
+            >
+              <UserCheck className="h-3.5 w-3.5" />
+              <span className="ml-1.5 hidden sm:inline">Approve</span>
+            </Button>
             <Button variant="destructive" size="sm" onClick={() => handleUpdateStatus(user, 'Rejected')} className="px-2 py-1"><X className="h-3.5 w-3.5" /></Button>
           </div>
         );
+      }
       case 'existing-customer':
         return (
           <div className="flex items-center justify-center space-x-1.5">
@@ -352,3 +395,4 @@ export default function UserTable({ title, users, isLoading, onUserActioned, act
     </>
   );
 }
+

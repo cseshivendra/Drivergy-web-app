@@ -93,7 +93,15 @@ export default function AdminDashboard() {
     }, [dashboardData?.allUsers, filters, searchTerm]);
 
     const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None'), [filteredUsers]);
-    const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const pendingVerificationCustomers = useMemo(
+        () => filteredUsers.filter(
+            u =>
+                u.uniqueId?.startsWith('CU') &&
+                u.subscriptionPlan !== 'None' &&
+                (u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')
+        ),
+        [filteredUsers]
+    );
     const existingCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'Approved'), [filteredUsers]);
     const cancellationRequests = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'On Hold'), [filteredUsers]);
     const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
@@ -383,3 +391,4 @@ export default function AdminDashboard() {
         </div>
     );
 }
+

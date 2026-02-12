@@ -26,7 +26,7 @@ export default function AboutPage() {
               <Info className="mr-2 h-6 w-6" />
               Our Mission
             </h2>
-            <p className="text-lg text-foreground leading-relaxed">
+            <p className="text-foreground leading-relaxed">
               At Drivergy, our mission is to revolutionize driving education in India by providing a seamless,
               efficient, and transparent platform for both students and instructors. We aim to empower
               learners with the skills and confidence needed for safe driving, while supporting instructors

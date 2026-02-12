@@ -40,6 +40,11 @@ function SuccessContent() {
         }
     }, [user, authLoading, orderData, router]);
 
+    const completionUrl = `/dashboard/complete-profile?plan=${encodeURIComponent(orderData?.plan || '')}`;
+    const completeNowTarget = user
+        ? completionUrl
+        : `/login?redirect=${encodeURIComponent(completionUrl)}`;
+
     const handleDownloadReceipt = useCallback(async () => {
         if (!orderData) return;
         setIsGeneratingPdf(true);
@@ -182,7 +187,7 @@ function SuccessContent() {
                     {isGeneratingPdf ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Download className="mr-2 h-4 w-4" />Download Receipt</>}
                 </Button>
                 <Button asChild className="w-full">
-                    <Link href={`/dashboard/complete-profile?plan=${encodeURIComponent(orderData?.plan || '')}`}>
+                    <Link href={completeNowTarget}>
                         <ShoppingBag className="mr-2 h-4 w-4" />
                         Complete Now
                     </Link>
@@ -201,3 +206,4 @@ export default function PaymentSuccessPage() {
     </div>
   );
 }
+

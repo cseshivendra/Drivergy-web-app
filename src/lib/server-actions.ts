@@ -92,6 +92,29 @@ function normalizeDate(dateVal: any): string {
     return isValid(dateObj) ? dateObj.toISOString() : new Date().toISOString();
 }
 
+function isCustomerDetailsCompleteData(data: Record<string, any>): boolean {
+    const hasPlan = !!data.subscriptionPlan && data.subscriptionPlan !== 'None';
+    if (!hasPlan) return false;
+
+    const hasAddress = !!data.flatHouseNumber &&
+        !!data.street &&
+        !!data.district &&
+        !!data.state &&
+        !!data.pincode &&
+        String(data.pincode).length === 6;
+
+    const hasPreferences = !!data.vehiclePreference && !!data.trainerPreference;
+    const hasStartDate = !!data.subscriptionStartDate;
+
+    const hasLicense = data.dlStatus === 'Already Have DL'
+        ? !!data.dlNumber && !!data.dlTypeHeld
+        : !!data.dlStatus;
+
+    const hasPhotoId = !!data.photoIdType && !!data.photoIdNumber && !!data.photoIdUrl;
+
+    return hasAddress && hasPreferences && hasStartDate && hasLicense && hasPhotoId;
+}
+
 // Helper to convert file to buffer
 async function fileToBuffer(file: File): Promise<Buffer> {
     const arrayBuffer = await file.arrayBuffer();
@@ -1193,6 +1216,11 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     const [cDoc, tDoc] = await Promise.all([adminDb.collection('users').doc(customerId).get(), adminDb.collection('trainers').doc(trainerId).get()]);
     if (!cDoc.exists || !tDoc.exists) return null;
     const cData = cDoc.data()!; const tData = tDoc.data()!;
+
+    if (!isCustomerDetailsCompleteData(cData)) {
+        return null;
+    }
+
     const plan = cData.subscriptionPlan;
     const total = plan === 'Basic' ? 10 : (plan === 'Gold' ? 15 : (plan === 'Premium' ? 20 : 1));
     const startStr = cData.subscriptionStartDate;
@@ -1335,3 +1363,4 @@ export async function getOrderDetails(orderId: string) {
         return null;
     }
 }
+

@@ -98,7 +98,9 @@ export default function FullCustomerDetailsForm() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-        router.push('/login');
+        const planParam = planFromUrl ? `?plan=${encodeURIComponent(planFromUrl)}` : '';
+        const redirectTarget = `/dashboard/complete-profile${planParam}`;
+        router.push(`/login?redirect=${encodeURIComponent(redirectTarget)}`);
         return;
     }
     setValue('userId', user.id);
@@ -493,3 +495,4 @@ export default function FullCustomerDetailsForm() {
     </div>
   );
 }
+
