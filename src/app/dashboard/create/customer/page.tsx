@@ -13,7 +13,7 @@ export default function CreateCustomerPage() {
                 src="https://placehold.co/800x300/3b82f6/ffffff.png"
                 alt="New customer registration banner"
                 fill
-                className="object-cover"
+                className="object-cover z-0 opacity-50 dark:opacity-20 transition-opacity duration-500 ease-in-out"
                 data-ai-hint="happy student driver"
             />
             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">

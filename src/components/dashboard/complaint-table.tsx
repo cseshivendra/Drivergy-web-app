@@ -108,10 +108,10 @@ export default function ComplaintTable({ title, complaints, isLoading, onActione
                     <TableCell className="text-right">
                       {comp.status === 'Pending' ? (
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" className="h-8 border-green-500 text-green-600 hover:bg-green-50" onClick={() => handleStatusChange(comp.id, 'Resolved')}>
+                          <Button size="sm" variant="outline" className="h-8 border-green-500 text-green-600 hover:bg-green-500" onClick={() => handleStatusChange(comp.id, 'Resolved')}>
                             <CheckCircle2 className="h-4 w-4 mr-1" /> Resolved
                           </Button>
-                          <Button size="sm" variant="outline" className="h-8 border-red-500 text-red-600 hover:bg-red-50" onClick={() => handleStatusChange(comp.id, 'Rejected')}>
+                          <Button size="sm" variant="outline" className="h-8 border-red-500 text-red-600 hover:bg-red-500" onClick={() => handleStatusChange(comp.id, 'Rejected')}>
                             <XCircle className="h-4 w-4 mr-1" /> Reject
                           </Button>
                         </div>

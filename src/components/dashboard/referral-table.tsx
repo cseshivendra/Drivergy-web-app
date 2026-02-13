@@ -242,7 +242,7 @@ export default function ReferralTable({ title, referrals, isLoading, onActioned 
     );
 
     return (
-        <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col">
+        <Card className="shadow-lg border border-primary transition-shadow duration-300 flex flex-col pb-10">
             <CardHeader>
                 <CardTitle className="font-headline text-2xl font-semibold">{title}</CardTitle>
             </CardHeader>
