@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -10,7 +11,7 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData, fetchAllSessions } from '@/lib/server-actions';
 import type { SummaryData, AdminDashboardData, DrivingSession } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2, X, Check, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,10 +27,11 @@ import RescheduleRequestTable from './reschedule-request-table';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import RevenueView from './revenue-view';
-import WithdrawalManagement from './withdrawal-management';
+import OperationsView from './operations-view';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import ComplaintTable from './complaint-table';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -47,6 +49,7 @@ export default function AdminDashboard() {
 
     const isContentManager = user?.contact === 'content@drivergy.in';
     const isRevenueManager = user?.contact === 'revenue@drivergy.in';
+    const isOperationsManager = user?.contact === 'operations@drivergy.in';
 
     const loadData = useCallback(async (silent = false) => {
         if (!user?.isAdmin) return;
@@ -93,7 +96,15 @@ export default function AdminDashboard() {
     }, [dashboardData?.allUsers, filters, searchTerm]);
 
     const interestedCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan === 'None'), [filteredUsers]);
-    const pendingVerificationCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.subscriptionPlan !== 'None' && u.approvalStatus === 'Pending'), [filteredUsers]);
+    const pendingVerificationCustomers = useMemo(
+        () => filteredUsers.filter(
+            u =>
+                u.uniqueId?.startsWith('CU') &&
+                u.subscriptionPlan !== 'None' &&
+                (u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')
+        ),
+        [filteredUsers]
+    );
     const existingCustomers = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'Approved'), [filteredUsers]);
     const cancellationRequests = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('CU') && u.approvalStatus === 'On Hold'), [filteredUsers]);
     const pendingInstructors = useMemo(() => filteredUsers.filter(u => u.uniqueId?.startsWith('TR') && (!u.approvalStatus || u.approvalStatus === 'Pending' || u.approvalStatus === 'In Progress')), [filteredUsers]);
@@ -173,17 +184,77 @@ export default function AdminDashboard() {
         </Card>
     );
 
+    const renderManualOverrides = () => (
+        <Card className="shadow-lg border-primary">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5 text-primary" />
+                    Session Manual Overrides
+                </CardTitle>
+                <CardDescription>Force-complete or cancel sessions in case of technical issues.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Student</TableHead>
+                            <TableHead>Trainer</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Start Time</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sessions.filter(s => s.status === 'Active' || s.status === 'Scheduled').map(session => (
+                            <TableRow key={session.id}>
+                                <TableCell className="font-medium">{session.studentName}</TableCell>
+                                <TableCell>{session.trainerName}</TableCell>
+                                <TableCell>
+                                    <Badge className={cn(
+                                        session.status === 'Active' ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                    )}>
+                                        {session.status}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                    {session.startTime ? format(parseISO(session.startTime), 'PPp') : 'Not Started'}
+                                </TableCell>
+                                <TableCell className="text-right space-x-2">
+                                    <Button variant="outline" size="sm" className="h-8">Manual Complete</Button>
+                                    <Button variant="destructive" size="sm" className="h-8">Abort Session</Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {sessions.filter(s => s.status === 'Active' || s.status === 'Scheduled').length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                    No active sessions found for override.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+
     const renderDashboardView = () => (
         <>
-            <SummaryMetrics data={dashboardData?.summaryData as SummaryData} isLoading={loading} />
+            <SummaryMetrics 
+                data={dashboardData?.summaryData as SummaryData} 
+                isLoading={loading} 
+                hideFinancials={isOperationsManager}
+            />
             <FilterControls onFilterChange={handleFilterChange} currentFilters={filters} />
             <Tabs defaultValue="verifications" className="w-full mt-8">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6">
+                <TabsList className={cn("grid w-full mb-6", isOperationsManager ? "grid-cols-2 sm:grid-cols-7" : "grid-cols-2 sm:grid-cols-6")}>
                     <TabsTrigger value="verifications">Verifications</TabsTrigger>
                     <TabsTrigger value="requests">Requests</TabsTrigger>
                     <TabsTrigger value="sessions">Live Trips</TabsTrigger>
+                    <TabsTrigger value="complaints">Complaints</TabsTrigger>
                     <TabsTrigger value="progress">Progress</TabsTrigger>
                     <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                    {isOperationsManager && <TabsTrigger value="overrides">Overrides</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="verifications" className="space-y-8">
                     <UserTable
@@ -245,6 +316,14 @@ export default function AdminDashboard() {
                 <TabsContent value="sessions">
                     {renderSessionsView()}
                 </TabsContent>
+                <TabsContent value="complaints">
+                    <ComplaintTable 
+                        title={<><AlertTriangle className="inline-block mr-3 h-6 w-6 align-middle" />User Complaints</>}
+                        complaints={dashboardData?.complaints || []}
+                        isLoading={loading}
+                        onActioned={() => loadData(true)}
+                    />
+                </TabsContent>
                 <TabsContent value="progress" className="space-y-8">
                     <LessonProgressTable
                         title={<><BarChart2 className="inline-block mr-3 h-6 w-6 align-middle" />Student Lesson Progress</>}
@@ -259,6 +338,11 @@ export default function AdminDashboard() {
                         isLoading={loading}
                     />
                 </TabsContent>
+                {isOperationsManager && (
+                    <TabsContent value="overrides">
+                        {renderManualOverrides()}
+                    </TabsContent>
+                )}
             </Tabs>
         </>
     );
@@ -312,20 +396,24 @@ export default function AdminDashboard() {
         <RevenueView activeTab={activeTab === 'default' ? 'transactions' : activeTab} />
     );
 
-    const renderWithdrawalsView = () => (
-        <WithdrawalManagement />
-    );
-
     const renderCurrentTab = () => {
-        // Strict role-based rendering for specialized managers
+        // Content Manager bypass
         if (isContentManager) return renderContentView();
+        
+        // Revenue Manager bypass
         if (isRevenueManager) return renderRevenueView();
+
+        // Operations Manager logic - They use the same standard view but sanitized
+        if (isOperationsManager && activeTab === 'default') {
+            return renderDashboardView();
+        }
 
         // Standard admin tab logic
         switch(activeTab) {
             case 'content': return renderContentView();
             case 'referrals': return renderReferralsView();
-            case 'withdrawals': return renderWithdrawalsView();
+            case 'withdrawals': return renderRevenueView();
+            case 'operations': return renderDashboardView(); // Operations tab now renders main sanitized dashboard
             case 'transactions':
             case 'commission':
             case 'payouts':
@@ -339,16 +427,16 @@ export default function AdminDashboard() {
     const getPageTitle = () => {
         if (isContentManager) return 'Content Management';
         if (isRevenueManager) return 'Revenue Management';
+        if (isOperationsManager) return 'Operations Management';
         switch(activeTab) {
             case 'content': return 'Content Management';
             case 'referrals': return 'Referral Management';
-            case 'withdrawals': return 'Withdrawal Requests';
-            case 'transactions':
-            case 'commission':
-            case 'payouts':
-            case 'reports':
-            case 'earnings':
-                return 'Revenue Management';
+            case 'operations': return 'Operations Management';
+            case 'transactions': return 'Revenue Management';
+            case 'commission': return 'Revenue Management';
+            case 'payouts': return 'Revenue Management';
+            case 'reports': return 'Revenue Management';
+            case 'earnings': return 'Revenue Management';
             default: return 'Admin Dashboard';
         }
     }

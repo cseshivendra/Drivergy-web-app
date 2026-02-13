@@ -1,6 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Car,
@@ -40,6 +42,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-context';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 const SiteLogo = () => (
@@ -85,6 +97,7 @@ const navLinks: NavLink[] = [
 export default function SiteHeader() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const renderDesktopAuth = () => {
     if (user) {
@@ -118,7 +131,7 @@ export default function SiteHeader() {
                 </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut}>
+                <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowLogoutDialog(true); }}>
                 <Power className="mr-2 h-4 w-4" />
                 Log Out
                 </DropdownMenuItem>
@@ -162,7 +175,10 @@ export default function SiteHeader() {
                         <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" />My Dashboard</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut}><Power className="mr-2 h-4 w-4" />Log Out</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowLogoutDialog(true); }}>
+                      <Power className="mr-2 h-4 w-4" />
+                      Log Out
+                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         );
@@ -316,6 +332,26 @@ export default function SiteHeader() {
           </Sheet>
         </div>
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to exit your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Stay Logged In</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={signOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 }

@@ -23,6 +23,7 @@ export const RescheduleRequestStatusOptions = ['Pending', 'Approved', 'Rejected'
 export const SkillStatusOptions = ['Not Started', 'Needs Practice', 'Proficient'] as const;
 export const WithdrawalStatusOptions = ['Pending', 'Approved', 'Rejected', 'Completed'] as const;
 export const SessionStatusOptions = ['Scheduled', 'Active', 'Completed', 'Cancelled', 'Abnormal End'] as const;
+export const ComplaintStatusOptions = ['Pending', 'Resolved', 'Rejected'] as const;
 
 export const IndianStates = ["Uttar Pradesh"] as const;
 
@@ -365,6 +366,7 @@ export interface SummaryData {
   pendingRescheduleRequests: number;
   totalCertifiedTrainers: number;
   totalEarnings: number;
+  pendingComplaints: number;
 }
 
 export interface CourseModule {
@@ -553,6 +555,7 @@ export interface AdminDashboardData {
     blogPosts: BlogPost[];
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
+    complaints: Complaint[];
 }
 
 // Add the DrivingLog types that were missed before
@@ -676,3 +679,21 @@ export const WithdrawalRequestSchema = z.object({
     reason: z.string().optional(),
 });
 export type WithdrawalRequestValues = z.infer<typeof WithdrawalRequestSchema>;
+
+// =================================================================
+// COMPLAINT TYPES
+// =================================================================
+
+export type ComplaintStatus = (typeof ComplaintStatusOptions)[number];
+
+export interface Complaint {
+    id: string;
+    userId?: string;
+    userName: string;
+    userEmail: string;
+    userPhone?: string;
+    subject: string;
+    message: string;
+    status: ComplaintStatus;
+    timestamp: string; // ISO string
+}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -6,6 +7,7 @@ import {
   Sidebar,
   SidebarHeader,
   SidebarContent,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -13,16 +15,27 @@ import {
   SidebarMenuSubItem,
   SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
-import { LayoutDashboard, MessageSquareText, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck, Banknote } from 'lucide-react';
+import { LayoutDashboard, MessageSquareText, Car, Gift, ChevronDown, Send, BarChart3, BookOpen, UserPlus, User, UserCog, ClipboardCheck, Home, Library, NotebookText, Users, IndianRupee, History, FileText, WalletCards, TrendingUp, UserCheck, Banknote, Power, Settings2 } from 'lucide-react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import { DrivergyLogo, DrivergyLogoIcon } from '@/components/ui/logo';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [referralsOpen, setReferralsOpen] = useState(false);
   const [revenueOpen, setRevenueOpen] = useState(false);
@@ -43,14 +56,15 @@ export default function AppSidebar() {
   const isTrainer = user?.uniqueId?.startsWith('TR');
   const isContentManager = user?.contact === 'content@drivergy.in';
   const isRevenueManager = user?.contact === 'revenue@drivergy.in';
+  const isOperationsManager = user?.contact === 'operations@drivergy.in';
   
-  // Super Admins are designated admins who are NOT special managers (revenue/content)
-  const isSuperAdmin = user?.isAdmin && !isContentManager && !isRevenueManager;
+  // Super Admins are designated admins who are NOT special managers (revenue/content/ops)
+  const isSuperAdmin = user?.isAdmin && !isContentManager && !isRevenueManager && !isOperationsManager;
   
   const isDashboardActive = pathname === '/dashboard' && !searchParams.get('tab');
   const isContentActive = (pathname === '/dashboard' && searchParams.get('tab') === 'content') || (isContentManager && pathname === '/dashboard');
+  const isOperationsActive = (pathname === '/dashboard' && searchParams.get('tab') === 'operations') || (isOperationsManager && pathname === '/dashboard');
   const isReferralsActive = pathname === '/dashboard' && searchParams.get('tab') === 'referrals';
-  const isWithdrawalsActive = pathname === '/dashboard' && searchParams.get('tab') === 'withdrawals';
 
   return (
     <Sidebar collapsible="icon" side="left" variant="sidebar" className="border-r border-border/60">
@@ -73,13 +87,13 @@ export default function AppSidebar() {
               <Link href="/dashboard">
                 <LayoutDashboard />
                 <span>
-                    {isContentManager ? 'Content Admin' : isRevenueManager ? 'Revenue Overview' : 'Dashboard'}
+                    {isContentManager ? 'Content Admin' : isRevenueManager ? 'Revenue Overview' : isOperationsManager ? 'Operations' : 'Dashboard'}
                 </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {(isCustomer || isTrainer) && !isContentManager && !isRevenueManager && (
+          {(isCustomer || isTrainer) && !isContentManager && !isRevenueManager && !isOperationsManager && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -94,7 +108,7 @@ export default function AppSidebar() {
             </SidebarMenuItem>
           )}
 
-          {isTrainer && !isRevenueManager && !isContentManager && (
+          {isTrainer && !isRevenueManager && !isContentManager && !isOperationsManager && (
              <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -123,7 +137,7 @@ export default function AppSidebar() {
              </>
           )}
           
-          {isCustomer && !isRevenueManager && !isContentManager && (
+          {isCustomer && !isRevenueManager && !isContentManager && !isOperationsManager && (
             <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
@@ -138,7 +152,7 @@ export default function AppSidebar() {
               </SidebarMenuItem>
           )}
 
-          {isCustomer && !isRevenueManager && !isContentManager && (
+          {isCustomer && !isRevenueManager && !isContentManager && !isOperationsManager && (
              <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => setReferralsOpen(!referralsOpen)}
@@ -333,8 +347,24 @@ export default function AppSidebar() {
               </SidebarMenuItem>
           )}
 
+          {/* Operations Management visible to Super Admin and Operations Manager */}
+          {(isSuperAdmin || isOperationsManager) && (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isOperationsActive}
+                  tooltip={{ children: "Operations Management", side: "right", align: "center" }}
+                >
+                  <Link href={isOperationsManager ? "/dashboard" : "/dashboard?tab=operations"}>
+                    <Settings2 />
+                    <span>Operations Management</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+          )}
+
           {/* Section for both Super Admins and Customers, but not trainers or specialized managers */}
-          {!isTrainer && !isContentManager && !isRevenueManager && (
+          {!isTrainer && !isContentManager && !isRevenueManager && !isOperationsManager && (
             <>
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -379,6 +409,37 @@ export default function AppSidebar() {
         )}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <SidebarMenuButton tooltip="Log Out">
+                  <Power className="h-4 w-4" />
+                  <span>Log Out</span>
+                </SidebarMenuButton>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to exit your account?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Stay Logged In</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={signOut}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Logout
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }

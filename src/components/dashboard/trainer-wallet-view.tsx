@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
     IndianRupee, WalletCards, ArrowUpCircle, History, 
-    TrendingUp, ShieldCheck, Clock, Loader2, AlertCircle, 
+    TrendingUp, Clock, Loader2, AlertCircle, 
     CreditCard, ArrowDownRight, ArrowUpRight, Banknote
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -83,8 +83,8 @@ export default function TrainerWalletView() {
     if (loading) {
         return (
             <div className="space-y-8 animate-pulse">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
                 </div>
                 <Skeleton className="h-96 w-full rounded-xl" />
             </div>
@@ -161,7 +161,7 @@ export default function TrainerWalletView() {
                 </Dialog>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <SummaryCard 
                     title="Available Balance" 
                     value={`₹${(wallet?.balance || 0).toLocaleString('en-IN')}`} 
@@ -174,13 +174,6 @@ export default function TrainerWalletView() {
                     value={`₹${(wallet?.totalEarnings || 0).toLocaleString('en-IN')}`} 
                     icon={TrendingUp} 
                     description="Lifetime total" 
-                />
-                <SummaryCard 
-                    title="Admin Commission" 
-                    value={`₹${((wallet?.totalEarnings || 0) * 0.20).toLocaleString('en-IN')}`} 
-                    icon={ShieldCheck} 
-                    description="Fixed 20% Drivergy share"
-                    className="border-slate-400"
                 />
                 <SummaryCard 
                     title="Total Withdrawn" 

@@ -14,7 +14,8 @@ import {
     BlogPostSchema, 
     TrainerRegistrationFormSchema, 
     CustomerRegistrationFormSchema,
-    WithdrawalRequestSchema
+    WithdrawalRequestSchema,
+    ComplaintFormSchema
 } from '@/types';
 import type { 
     UserProfile, 
@@ -50,7 +51,9 @@ import type {
     WithdrawalRequest,
     WithdrawalRequestValues,
     DrivingSession,
-    SessionStatus
+    SessionStatus,
+    Complaint,
+    ComplaintStatus
 } from '@/types';
 import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval, differenceInMinutes } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
@@ -90,6 +93,29 @@ function normalizeDate(dateVal: any): string {
     }
 
     return isValid(dateObj) ? dateObj.toISOString() : new Date().toISOString();
+}
+
+function isCustomerDetailsCompleteData(data: Record<string, any>): boolean {
+    const hasPlan = !!data.subscriptionPlan && data.subscriptionPlan !== 'None';
+    if (!hasPlan) return false;
+
+    const hasAddress = !!data.flatHouseNumber &&
+        !!data.street &&
+        !!data.district &&
+        !!data.state &&
+        !!data.pincode &&
+        String(data.pincode).length === 6;
+
+    const hasPreferences = !!data.vehiclePreference && !!data.trainerPreference;
+    const hasStartDate = !!data.subscriptionStartDate;
+
+    const hasLicense = data.dlStatus === 'Already Have DL'
+        ? !!data.dlNumber && !!data.dlTypeHeld
+        : !!data.dlStatus;
+
+    const hasPhotoId = !!data.photoIdType && !!data.photoIdNumber && !!data.photoIdUrl;
+
+    return hasAddress && hasPreferences && hasStartDate && hasLicense && hasPhotoId;
 }
 
 // Helper to convert file to buffer
@@ -275,7 +301,8 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             postersSnap, 
             rescheduleSnap, 
             feedbackSnap,
-            referralsSnap
+            referralsSnap,
+            complaintsSnap
         ] = await Promise.all([
             adminDb.collection('users').get(),
             adminDb.collection('trainers').get(),
@@ -287,7 +314,8 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             adminDb.collection('promotionalPosters').get(),
             adminDb.collection('rescheduleRequests').orderBy('requestTimestamp', 'desc').get(),
             adminDb.collection('feedback').orderBy('submissionDate', 'desc').get(),
-            adminDb.collection('referrals').get()
+            adminDb.collection('referrals').get(),
+            adminDb.collection('complaints').orderBy('timestamp', 'desc').get()
         ]);
 
         const customers: UserProfile[] = usersSnap.docs.map(d => {
@@ -350,6 +378,15 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             } as Referral;
         });
 
+        const complaints: Complaint[] = complaintsSnap.docs.map(d => {
+            const data = d.data();
+            return {
+                id: d.id,
+                ...data,
+                timestamp: normalizeDate(data.timestamp),
+            } as Complaint;
+        });
+
         const lessonProgress: LessonProgressData[] = customers
             .filter(c => c.assignedTrainerId)
             .map(c => ({
@@ -373,6 +410,7 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
                 const planPrices: Record<string, number> = { 'Basic': 3999, 'Gold': 7499, 'Premium': 9999 };
                 return acc + (planPrices[curr.subscriptionPlan] || 0);
             }, 0),
+            pendingComplaints: complaints.filter(c => c.status === 'Pending').length,
         };
 
         return {
@@ -389,6 +427,7 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             blogPosts: blogSnap.docs.map(d => ({ slug: d.id, ...d.data() } as BlogPost)),
             siteBanners: bannersSnap.docs.map(d => ({ id: d.id, ...d.data() } as SiteBanner)),
             promotionalPosters: postersSnap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)),
+            complaints,
         };
 
     } catch (error) {
@@ -703,6 +742,56 @@ export async function updateWithdrawalStatus(withdrawalId: string, newStatus: Wi
 }
 
 // =================================================================
+// COMPLAINT ACTIONS
+// =================================================================
+
+export async function addComplaint(data: ComplaintFormValues, userId?: string): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        await adminDb.collection('complaints').add({
+            ...data,
+            userId: userId || null,
+            userName: data.name,
+            userEmail: data.email,
+            userPhone: data.phone || null,
+            status: 'Pending',
+            timestamp: new Date().toISOString(),
+        });
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error adding complaint:", error);
+        return false;
+    }
+}
+
+export async function updateComplaintStatus(complaintId: string, newStatus: ComplaintStatus): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        const ref = adminDb.collection('complaints').doc(complaintId);
+        const doc = await ref.get();
+        if (!doc.exists) return false;
+        
+        await ref.update({ status: newStatus });
+        
+        const data = doc.data() as Complaint;
+        if (data.userId) {
+            await createNotification({
+                userId: data.userId,
+                message: `Your complaint regarding "${data.subject}" has been marked as ${newStatus.toLowerCase()}.`,
+                href: '/dashboard/contact'
+            });
+        }
+        
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error updating complaint status:", error);
+        return false;
+    }
+}
+
+// =================================================================
 // AUTH & REGISTRATION ACTIONS
 // =================================================================
 
@@ -790,16 +879,48 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
 export async function sendPasswordResetLink(email: string): Promise<{ success: boolean; error?: string }> {
     if (!adminAuth) return { success: false, error: "Auth not configured." };
     try {
-        const link = await adminAuth.generatePasswordResetLink(email);
+        const fullFirebaseLink = await adminAuth.generatePasswordResetLink(email);
+        
+        // Extract oobCode from the firebase link
+        const url = new URL(fullFirebaseLink);
+        const oobCode = url.searchParams.get('oobCode');
+        
+        if (!oobCode) {
+            throw new Error("Failed to generate reset code.");
+        }
+
+        // Construct our project's custom reset link
+        const baseUrl = process.env.APP_BASE_URL || 'https://drivergy.in';
+        const customLink = `${baseUrl}/reset-password?token=${oobCode}`;
+
         await sendEmail({
             to: email,
             subject: 'Reset Your Drivergy Password',
-            text: `Click to reset: ${link}`,
-            html: `<p>Click <a href="${link}">here</a> to reset your password.</p>`,
+            text: `We received a request to reset your password. Click the link below to set a new one:\n\n${customLink}\n\nIf you did not make this request, you can safely ignore this email.`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 8px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h1 style="color: #ef4444; margin: 0;">DRIVERGY</h1>
+                        <p style="color: #666; margin: 5px 0; font-size: 14px; letter-spacing: 2px;">LEARN. DRIVE. LIVE.</p>
+                    </div>
+                    <h2 style="color: #333;">Reset Your Password</h2>
+                    <p style="color: #555; line-height: 1.5;">Hello,</p>
+                    <p style="color: #555; line-height: 1.5;">We received a request to reset the password for your Drivergy account. Click the button below to choose a new password:</p>
+                    <div style="text-align: center; margin: 35px 0;">
+                        <a href="${customLink}" style="background-color: #ef4444; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+                    </div>
+                    <p style="color: #555; line-height: 1.5;">If the button doesn't work, copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all;"><a href="${customLink}" style="color: #ef4444;">${customLink}</a></p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+                    <p style="font-size: 12px; color: #888; text-align: center;">If you did not request a password reset, please ignore this email. This link will expire shortly for security reasons.</p>
+                    <p style="font-size: 12px; color: #888; text-align: center;">&copy; ${new Date().getFullYear()} Drivergy. All rights reserved.</p>
+                </div>
+            `,
         });
         return { success: true };
     } catch (error: any) {
-        return { success: false, error: "Failed to send reset link." };
+        console.error("Reset link error:", error);
+        return { success: false, error: error.message || "Failed to send reset link." };
     }
 }
 
@@ -1161,6 +1282,11 @@ export async function assignTrainerToCustomer(customerId: string, trainerId: str
     const [cDoc, tDoc] = await Promise.all([adminDb.collection('users').doc(customerId).get(), adminDb.collection('trainers').doc(trainerId).get()]);
     if (!cDoc.exists || !tDoc.exists) return null;
     const cData = cDoc.data()!; const tData = tDoc.data()!;
+
+    if (!isCustomerDetailsCompleteData(cData)) {
+        return null;
+    }
+
     const plan = cData.subscriptionPlan;
     const total = plan === 'Basic' ? 10 : (plan === 'Gold' ? 15 : (plan === 'Premium' ? 20 : 1));
     const startStr = cData.subscriptionStartDate;
