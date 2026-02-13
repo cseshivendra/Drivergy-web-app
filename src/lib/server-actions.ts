@@ -1,4 +1,3 @@
-
 'use server';
 
 import { z } from 'zod';
@@ -1460,5 +1459,35 @@ export async function getOrderDetails(orderId: string) {
     } catch (e) {
         console.error("Error fetching order details:", e);
         return null;
+    }
+}
+
+export async function fetchLatestOrder(userId: string) {
+    if (!adminDb) return null;
+    try {
+        const ordersSnap = await adminDb.collection('orders')
+            .where('userId', '==', userId)
+            .orderBy('createdAt', 'desc')
+            .limit(1)
+            .get();
+        
+        if (ordersSnap.empty) return null;
+        return { id: ordersSnap.docs[0].id, ...ordersSnap.docs[0].data() };
+    } catch (error) {
+        console.error("Error fetching latest order:", error);
+        return null;
+    }
+}
+
+export async function cancelOrder(orderId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        await adminDb.collection('orders').doc(orderId).update({
+            status: 'CANCELLED',
+            updatedAt: new Date().toISOString()
+        });
+        return true;
+    } catch (error) {
+        return false;
     }
 }

@@ -1,16 +1,15 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { listenToUser } from '@/lib/mock-data';
-import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate, fetchOngoingSession } from '@/lib/server-actions';
+import { addRescheduleRequest, addFeedback, updateSubscriptionStartDate, fetchOngoingSession, fetchLatestOrder } from '@/lib/server-actions';
 import type { UserProfile, FeedbackFormValues, DrivingSession } from '@/types';
 import { FeedbackFormSchema } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift, Hourglass, KeyRound, PlayCircle, CheckCircle2 } from 'lucide-react';
+import { BookOpen, ClipboardCheck, User, BarChart2, ShieldCheck, CalendarClock, Repeat, ArrowUpCircle, XCircle, Loader2, Star, MessageSquare, Phone, Car, UserCheck, Gift, Hourglass, KeyRound, PlayCircle, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import { Badge } from '../ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import StudentProgressDisplay from './student-progress-display';
+import PaymentPendingView from './payment-pending-view';
 
 const isCustomerDetailsComplete = (profile: UserProfile): boolean => {
   const hasPlan = !!profile.subscriptionPlan && profile.subscriptionPlan !== 'None';
@@ -209,6 +209,10 @@ export default function CustomerDashboard() {
   const [activeSession, setActiveSession] = useState<DrivingSession | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
 
+  // New State for Pending Payments
+  const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [isCheckingOrder, setIsCheckingOrder] = useState(false);
+
 
   const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
   const [newRescheduleDate, setNewRescheduleDate] = useState<Date | undefined>(undefined);
@@ -247,6 +251,19 @@ export default function CustomerDashboard() {
         });
     }
   }, [user?.id]);
+
+  // Check for pending orders if plan is None
+  useEffect(() => {
+    if (profile?.subscriptionPlan === 'None' && user?.id) {
+        setIsCheckingOrder(true);
+        fetchLatestOrder(user.id).then(order => {
+            if (order && (order.status === 'PAYMENT_PENDING' || order.status === 'PAYMENT_INITIATED')) {
+                setPendingOrder(order);
+            }
+            setIsCheckingOrder(false);
+        });
+    }
+  }, [profile, user?.id]);
 
 
   useEffect(() => {
@@ -319,21 +336,6 @@ export default function CustomerDashboard() {
   const handleConfirmCancellation = async () => {
     if (!user) return;
     setIsSubmitting(true);
-    // This function does not exist in server-actions. We will remove this functionality for now
-    // const result = await requestSubscriptionCancellation(user.id);
-    // if (result.success) {
-    //     toast({
-    //         title: 'Cancellation Request Submitted',
-    //         description: 'We have received your request. Our team will contact you shortly.',
-    //     });
-    //     refetchProfile();
-    // } else {
-    //     toast({
-    //         title: 'Error',
-    //         description: result.error || 'Could not submit your cancellation request.',
-    //         variant: 'destructive',
-    //     });
-    // }
     setIsSubmitting(false);
     setIsCancelConfirmOpen(false);
   };
@@ -370,7 +372,7 @@ export default function CustomerDashboard() {
   };
 
 
-  if (authLoading || loading) {
+  if (authLoading || loading || isCheckingOrder) {
     return (
       <div className="container mx-auto p-4 py-8 space-y-8">
         <Skeleton className="h-10 w-1/2 mb-8" />
@@ -392,26 +394,31 @@ export default function CustomerDashboard() {
       )
   }
 
-  // Step 1: Check if the user has selected a plan. This is the very first step for a new user.
+  // Handle Payment Pending State
+  if (pendingOrder) {
+      return <PaymentPendingView order={pendingOrder} onRefresh={() => window.location.reload()} />;
+  }
+
+  // Step 1: Check if the user has selected a plan.
   if (profile.subscriptionPlan === 'None') {
       return (
           <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-              <Card className="shadow-xl text-center p-8">
+              <Card className="shadow-xl text-center p-8 border-t-4 border-primary">
                   <CardHeader>
                       <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30 p-4 w-fit">
-                          <Hourglass className="h-12 w-12 text-yellow-500" />
+                          <AlertCircle className="h-12 w-12 text-yellow-500" />
                       </div>
                       <CardTitle className="font-headline text-2xl font-bold">Welcome, {profile.name}!</CardTitle>
                       <CardDescription className="text-lg mt-4">
-                          Your account registration is complete. One last step!
+                          You're one step away from starting your driving journey.
                       </CardDescription>
                   </CardHeader>
                   <CardContent>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                          To activate your account and start learning, please choose a subscription plan.
+                          Please select and purchase a subscription plan to unlock your learning dashboard and get assigned to a trainer.
                       </p>
                       <Button asChild className="mt-6" size="lg">
-                          <Link href="/#subscriptions">Choose Your Plan</Link>
+                          <Link href="/#subscriptions">Explore Plans & Pricing</Link>
                       </Button>
                   </CardContent>
               </Card>
@@ -419,26 +426,26 @@ export default function CustomerDashboard() {
       );
   }
 
-  // Step 2: Require full profile completion before unlocking dashboard
+  // Step 2: Require full profile completion
   if (!isCustomerDetailsComplete(profile)) {
       return (
           <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-              <Card className="shadow-xl text-center p-8">
+              <Card className="shadow-xl text-center p-8 border-t-4 border-blue-500">
                   <CardHeader>
                       <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-primary/10 p-4 w-fit">
                           <UserCheck className="h-12 w-12 text-primary" />
                       </div>
                       <CardTitle className="font-headline text-2xl font-bold">Complete Your Profile</CardTitle>
                       <CardDescription className="text-lg mt-4">
-                          You purchased a plan, but your profile is incomplete.
+                          Your payment is confirmed! Now we need a few more details.
                       </CardDescription>
                   </CardHeader>
                   <CardContent>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                          Please fill the required details so our team can verify and assign a trainer.
+                          Please provide your documents and preferences so we can match you with the best instructor in your area.
                       </p>
                       <Button asChild className="mt-6" size="lg">
-                          <Link href={`/dashboard/complete-profile?plan=${encodeURIComponent(profile.subscriptionPlan || '')}`}>Complete Profile</Link>
+                          <Link href={`/dashboard/complete-profile?plan=${encodeURIComponent(profile.subscriptionPlan || '')}`}>Complete My Profile</Link>
                       </Button>
                   </CardContent>
               </Card>
@@ -446,18 +453,18 @@ export default function CustomerDashboard() {
       );
   }
 
-  // Step 3: If a plan is selected and profile is complete, check if approval is still pending.
+  // Step 3: Approval Pending
   if (profile.approvalStatus === 'Pending' || profile.approvalStatus === 'In Progress') {
       return (
           <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-200px)]">
-              <Card className="shadow-xl text-center p-8">
+              <Card className="shadow-xl text-center p-8 border-t-4 border-yellow-500">
                   <CardHeader>
                       <div className="mx-auto mb-4 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 p-4 w-fit">
                           <Hourglass className="h-12 w-12 text-blue-500" />
                       </div>
                       <CardTitle className="font-headline text-2xl font-bold">Verification In Progress</CardTitle>
                        <CardDescription className="text-lg mt-4">
-                          Your account status is currently: 
+                          Current Status: 
                           <Badge className={cn("text-base ml-2", getStatusBadgeClass(profile.approvalStatus))}>
                               {profile.approvalStatus}
                           </Badge>
@@ -465,7 +472,7 @@ export default function CustomerDashboard() {
                   </CardHeader>
                   <CardContent>
                       <p className="text-muted-foreground max-w-md mx-auto">
-                          Thank you for subscribing! Our team is verifying your details. You'll be notified as soon as your account is approved and a trainer is assigned. This usually takes a few hours.
+                          Great! Your details are being reviewed by our operations team. We'll assign your trainer and notify you shortly.
                       </p>
                   </CardContent>
               </Card>
@@ -828,4 +835,3 @@ export default function CustomerDashboard() {
     </div>
   );
 }
-
