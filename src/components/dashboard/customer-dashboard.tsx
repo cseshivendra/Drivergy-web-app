@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -223,10 +224,18 @@ export default function CustomerDashboard() {
   const refetchProfile = useCallback(() => {
     if (user?.id) {
       setLoading(true);
-      const unsubscribe = listenToUser(user.id, (userProfile) => {
-        setProfile(userProfile);
-        setLoading(false);
-      }, 'users');
+      const unsubscribe = listenToUser(
+        user.id, 
+        (userProfile) => {
+          setProfile(userProfile);
+          setLoading(false);
+        }, 
+        'users',
+        (error) => {
+          console.error("Profile listener failed:", error);
+          setLoading(false);
+        }
+      );
       return unsubscribe;
     } else if (!authLoading) {
       setLoading(false);
@@ -248,6 +257,9 @@ export default function CustomerDashboard() {
         fetchOngoingSession(user.id).then(session => {
             setActiveSession(session);
             setIsSessionLoading(false);
+        }).catch(err => {
+            console.error("Error fetching session:", err);
+            setIsSessionLoading(false);
         });
     }
   }, [user?.id]);
@@ -261,9 +273,14 @@ export default function CustomerDashboard() {
                 setPendingOrder(order);
             }
             setIsCheckingOrder(false);
+        }).catch(err => {
+            console.error("Error checking order:", err);
+            setIsCheckingOrder(false);
         });
+    } else {
+        setPendingOrder(null);
     }
-  }, [profile, user?.id]);
+  }, [profile?.subscriptionPlan, user?.id]);
 
 
   useEffect(() => {
@@ -388,8 +405,11 @@ export default function CustomerDashboard() {
 
   if (!profile) {
       return (
-          <div className="container mx-auto p-4 py-8 space-y-8">
-              <p>Could not load your profile. Please try logging in again.</p>
+          <div className="container mx-auto p-4 py-8 space-y-8 text-center">
+              <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+              <h2 className="text-xl font-bold">Profile Unavailable</h2>
+              <p className="text-muted-foreground mb-6">We couldn't load your profile data at this time.</p>
+              <Button onClick={() => window.location.reload()}>Retry Loading</Button>
           </div>
       )
   }

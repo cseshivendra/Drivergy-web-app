@@ -15,13 +15,30 @@ service cloud.firestore {
     }
     
     // Notifications: Allow a user to read their own notifications.
-    // This requires a rule that allows a 'list' operation on the collection
-    // for queries filtered by the user's ID.
     match /notifications/{notificationId} {
-      allow write: if isSignedIn() && isOwner(resource.data.userId);
-      allow list: if isSignedIn() && request.query.where.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
 
+    // Orders: Allow users to read their own orders
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
+    }
+
+    // Wallets: Allow users to read their own wallet balance
+    match /customer_wallets/{userId} {
+      allow read: if isSignedIn() && isOwner(userId);
+    }
+    
+    match /customer_wallet_transactions/{txId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Complaints: Allow users to read their own submitted complaints
+    match /complaints/{complaintId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn();
+    }
 
     // Allow users to read and write their own profile data
     match /users/{userId} {
@@ -52,6 +69,9 @@ service cloud.firestore {
     match /promotionalPosters/{posterId} {
         allow read: if true;
     }
+    match /storeProducts/{productId} {
+        allow read: if true;
+    }
 
     // Default deny all reads and writes to all other documents
     match /{document=**} {
@@ -59,4 +79,3 @@ service cloud.firestore {
     }
   }
 }
-

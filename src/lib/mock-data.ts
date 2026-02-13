@@ -1,5 +1,4 @@
 
-
 import { collection, onSnapshot, doc, query, where, getDocs, getDoc, orderBy } from 'firebase/firestore';
 import { db } from './firebase/client';
 import type { PromotionalPoster, UserProfile, Course, QuizSet, FaqItem, BlogPost, SiteBanner, SummaryData, LessonRequest, Feedback, Referral, LessonProgressData, AdminDashboardData, RescheduleRequest, Notification } from '@/types';
@@ -18,11 +17,18 @@ export const listenToPromotionalPosters = (callback: (posters: PromotionalPoster
       posters.push({ id: doc.id, ...doc.data() } as PromotionalPoster);
     });
     callback(posters);
+  }, (error) => {
+    console.error("Error listening to promotional posters:", error);
   });
   return unsubscribe;
 };
 
-export const listenToUser = (userId: string, callback: (user: UserProfile | null) => void, collectionName: 'users' | 'trainers' = 'users') => {
+export const listenToUser = (
+  userId: string, 
+  callback: (user: UserProfile | null) => void, 
+  collectionName: 'users' | 'trainers' = 'users',
+  errorCallback?: (error: any) => void
+) => {
   if (!db) {
     console.error("Firestore not initialized");
     return () => {};
@@ -38,6 +44,9 @@ export const listenToUser = (userId: string, callback: (user: UserProfile | null
     } else {
       callback(null);
     }
+  }, (error) => {
+    console.error(`Error listening to user ${userId} in ${collectionName}:`, error);
+    if (errorCallback) errorCallback(error);
   });
   return unsubscribe;
 };
@@ -165,6 +174,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                     if (curr.subscriptionPlan === 'Premium') return acc + 9999;
                     return acc;
                 }, 0),
+                pendingComplaints: 0,
             };
 
             const data: AdminDashboardData = {
@@ -181,6 +191,7 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
                 blogPosts: blogSnap.docs.map(d => ({ slug: d.id, ...d.data() }) as BlogPost),
                 siteBanners: bannersSnap.docs.map(d => ({ id: d.id, ...d.data() }) as SiteBanner),
                 promotionalPosters: postersSnap.docs.map(d => ({ id: d.id, ...d.data() }) as PromotionalPoster),
+                complaints: [],
             };
             
             callback(data);
@@ -194,7 +205,9 @@ export const listenToAdminDashboardData = (callback: (data: AdminDashboardData |
 
     const collections = [usersRef, trainersRef, coursesRef, quizSetsRef, faqsRef, blogRef, bannersRef, postersRef, rescheduleRef, feedbackRef];
     collections.forEach(ref => {
-        const unsubscribe = onSnapshot(ref, fetchData, (error) => console.error("Snapshot error:", error));
+        const unsubscribe = onSnapshot(ref, fetchData, (error) => {
+            console.error("Snapshot error in Admin Dashboard:", error);
+        });
         unsubs.push(unsubscribe);
     });
 
@@ -214,8 +227,13 @@ export async function fetchApprovedInstructors(filters: { location?: string, gen
         q = query(q, where('gender', '==', filters.gender));
     }
 
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+    try {
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile));
+    } catch (error) {
+        console.error("Error fetching approved instructors:", error);
+        return [];
+    }
 }
 
 // Re-exporting server functions for client-side usage if needed through this file.
@@ -238,6 +256,8 @@ export const listenToBlogPosts = (callback: (posts: BlogPost[]) => void) => {
             posts.push({ slug: doc.id, ...doc.data() } as BlogPost);
         });
         callback(posts);
+    }, (error) => {
+        console.error("Error listening to blog posts:", error);
     });
     return unsubscribe;
 };
@@ -245,13 +265,18 @@ export const listenToBlogPosts = (callback: (posts: BlogPost[]) => void) => {
 
 export const fetchReferralsByUserId = async (userId: string): Promise<Referral[]> => {
     if (!db) return [];
-    const referralsQuery = query(collection(db, 'referrals'), where('referrerId', '==', userId));
-    const snapshot = await getDocs(referralsQuery);
-    return snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        timestamp: doc.data().timestamp?.toDate ? doc.data().timestamp.toDate().toISOString() : new Date().toISOString()
-    } as Referral));
+    try {
+        const referralsQuery = query(collection(db, 'referrals'), where('referrerId', '==', userId));
+        const snapshot = await getDocs(referralsQuery);
+        return snapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id,
+            timestamp: doc.data().timestamp?.toDate ? doc.data().timestamp.toDate().toISOString() : new Date().toISOString()
+        } as Referral));
+    } catch (error) {
+        console.error("Error fetching referrals:", error);
+        return [];
+    }
 };
 
 
