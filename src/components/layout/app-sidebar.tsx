@@ -286,7 +286,7 @@ export default function AppSidebar() {
                   <SidebarMenuSub>
                     <SidebarMenuSubItem>
                       <SidebarMenuSubButton asChild isActive={(pathname === '/dashboard/revenue' && !searchParams.get('tab')) || (isRevenueManager && pathname === '/dashboard' && !searchParams.get('tab'))}>
-                        <Link href="/dashboard">
+                        <Link href="/dashboard?tab=transactions">
                           <History className="mr-2 h-4 w-4" /> <span>Transactions</span>
                         </Link>
                       </SidebarMenuSubButton>
