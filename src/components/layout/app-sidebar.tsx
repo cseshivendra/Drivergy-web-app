@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -414,7 +413,7 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <SidebarMenuButton tooltip="Log Out">
+                <SidebarMenuButton tooltip="Log Out" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-950/30">
                   <Power className="h-4 w-4" />
                   <span>Log Out</span>
                 </SidebarMenuButton>

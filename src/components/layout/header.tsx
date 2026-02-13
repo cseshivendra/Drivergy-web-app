@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Car, UserCircle, LogIn, PanelLeft, Sun, Moon, Power } from 'lucide-react';
@@ -61,7 +60,7 @@ export default function Header() {
               <NotificationsDropdown />
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Log out">
+                  <Button variant="ghost" size="icon" aria-label="Log out" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-500 dark:hover:text-red-400 dark:hover:bg-red-950/30">
                     <Power className="h-5 w-5" />
                   </Button>
                 </AlertDialogTrigger>
