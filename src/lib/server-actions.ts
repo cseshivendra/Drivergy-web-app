@@ -15,7 +15,8 @@ import {
     TrainerRegistrationFormSchema, 
     CustomerRegistrationFormSchema,
     WithdrawalRequestSchema,
-    ComplaintFormSchema
+    ComplaintFormSchema,
+    WalletRedemptionConfig
 } from '@/types';
 import type { 
     UserProfile, 
@@ -53,7 +54,8 @@ import type {
     DrivingSession,
     SessionStatus,
     Complaint,
-    ComplaintStatus
+    ComplaintStatus,
+    CustomerWallet
 } from '@/types';
 import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval, differenceInMinutes } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
@@ -742,6 +744,21 @@ export async function updateWithdrawalStatus(withdrawalId: string, newStatus: Wi
 }
 
 // =================================================================
+// CUSTOMER WALLET ACTIONS
+// =================================================================
+
+export async function fetchCustomerWallet(userId: string): Promise<CustomerWallet | null> {
+    if (!adminDb) return null;
+    try {
+        const doc = await adminDb.collection('customer_wallets').doc(userId).get();
+        if (!doc.exists) return null;
+        return { id: doc.id, ...doc.data() } as CustomerWallet;
+    } catch (error) {
+        return null;
+    }
+}
+
+// =================================================================
 // COMPLAINT ACTIONS
 // =================================================================
 
@@ -866,8 +883,24 @@ export async function registerUserAction(data: RegistrationFormValues): Promise<
                 name, username, contact: email, phone, gender,
                 userRole: 'customer', subscriptionPlan: 'None', approvalStatus: 'Pending',
                 registrationTimestamp: new Date().toISOString(),
+                purchaseCount: 0,
             };
             await adminDb.collection('users').doc(userRecord.uid).set(userProfileData);
+
+            // Tier-Based Wallet Signup Bonus: ₹500
+            await adminDb.collection('customer_wallets').doc(userRecord.uid).set({
+                userId: userRecord.uid,
+                balance: 500,
+            });
+
+            await adminDb.collection('customer_wallet_transactions').add({
+                userId: userRecord.uid,
+                type: 'Credit',
+                amount: 500,
+                source: 'Signup Bonus',
+                timestamp: new Date().toISOString(),
+            });
+
             revalidatePath('/dashboard');
             return { success: true, user: { ...userProfileData, id: userRecord.uid } as UserProfile };
         } catch (error: any) {

@@ -31,6 +31,14 @@ export const DistrictsByState = {
   "Uttar Pradesh": ["Prayagraj", "Kanpur", "Lucknow", "Varanasi"],
 } as const;
 
+// Wallet Config
+export const WalletRedemptionConfig = {
+    1: 0.50, // 50%
+    2: 0.25, // 25%
+    3: 0.10, // 10%
+    default: 0,
+} as const;
+
 // =================================================================
 // ZOD SCHEMAS & TYPES
 // =================================================================
@@ -87,6 +95,7 @@ export const UserProfileSchema = z.object({
   photoURL: z.string().url().optional(),
   gender: z.string(),
   userRole: z.enum(['customer', 'trainer', 'admin']).optional(),
+  purchaseCount: z.number().optional(), // Track for tiered wallet
   
   // Customer specific
   flatHouseNumber: z.string().optional(),
@@ -679,6 +688,26 @@ export const WithdrawalRequestSchema = z.object({
     reason: z.string().optional(),
 });
 export type WithdrawalRequestValues = z.infer<typeof WithdrawalRequestSchema>;
+
+// =================================================================
+// CUSTOMER WALLET TYPES
+// =================================================================
+
+export interface CustomerWallet {
+    id: string;
+    userId: string;
+    balance: number;
+}
+
+export interface CustomerWalletTransaction {
+    id: string;
+    userId: string;
+    type: 'Credit' | 'Debit';
+    amount: number;
+    source: 'Signup Bonus' | 'Referral' | 'Purchase Discount' | 'Refund';
+    orderId?: string;
+    timestamp: string;
+}
 
 // =================================================================
 // COMPLAINT TYPES

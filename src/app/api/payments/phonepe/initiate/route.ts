@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { adminDb } from "@/lib/firebase/admin";
 import axios from 'axios';
 import { getPhonePeTokenV2 } from "@/lib/payments/phonepe";
+import { WalletRedemptionConfig } from "@/types";
 
 export async function POST(req: Request) {
   try {
@@ -17,9 +18,9 @@ export async function POST(req: Request) {
       );
     }
     
-    const { amount, userId, plan, mobile } = await req.json();
+    const { amount, userId, plan, mobile, redeemWallet } = await req.json();
 
-    console.log("📝 Payment initiation request:", { amount, userId, plan, mobile });
+    console.log("📝 Payment initiation request:", { amount, userId, plan, mobile, redeemWallet });
 
     if (!amount || !userId || !plan || !mobile) {
       return NextResponse.json(
@@ -27,17 +28,32 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    if (typeof amount !== 'number' || amount <= 0) {
-      return NextResponse.json(
-        { error: "Invalid amount", details: "Amount must be a positive number" },
-        { status: 400 }
-      );
-    }
-    if (!/^\d{10}$/.test(mobile)) {
-      return NextResponse.json(
-        { error: "Invalid mobile number", details: "Mobile number must be 10 digits" },
-        { status: 400 }
-      );
+
+    // SERVER SIDE WALLET VALIDATION
+    let walletUsed = 0;
+    let finalPayableAmount = amount;
+
+    if (redeemWallet) {
+        const [userDoc, walletDoc] = await Promise.all([
+            adminDb.collection('users').doc(userId).get(),
+            adminDb.collection('customer_wallets').doc(userId).get()
+        ]);
+
+        if (userDoc.exists && walletDoc.exists) {
+            const userData = userDoc.data();
+            const walletData = walletDoc.data();
+            const purchaseCount = (userData?.purchaseCount || 0) + 1;
+            const walletBalance = walletData?.balance || 0;
+
+            const percentage = WalletRedemptionConfig[purchaseCount as keyof typeof WalletRedemptionConfig] || WalletRedemptionConfig.default;
+            
+            if (percentage > 0) {
+                walletUsed = Math.floor(walletBalance * percentage);
+                // Ensure walletUsed doesn't exceed balance
+                walletUsed = Math.min(walletUsed, walletBalance);
+                finalPayableAmount = Math.max(0, amount - walletUsed);
+            }
+        }
     }
 
     const orderId = "ORD_" + uuidv4().replace(/-/g, '').slice(0, 30);
@@ -47,7 +63,9 @@ export async function POST(req: Request) {
         orderId: orderId,
         userId,
         plan,
-        amount,
+        amount: finalPayableAmount,
+        originalAmount: amount,
+        walletUsed,
         mobile,
         status: "PAYMENT_INITIATED",
         createdAt: new Date().toISOString(),
@@ -80,7 +98,7 @@ export async function POST(req: Request) {
 
     const payload = {
         merchantTransactionId: orderId,
-        amount: Math.round(amount * 100),
+        amount: Math.round(finalPayableAmount * 100),
         expireAfter: 1200,
         paymentFlow: {
             type: "PG_CHECKOUT",
@@ -107,9 +125,6 @@ export async function POST(req: Request) {
     });
 
     const responseData = response.data;
-
-    console.log("📡 PhonePe API response status:", response.status);
-    console.log("📡 PhonePe API response data:", responseData);
 
     const paymentRedirectUrl = responseData?.redirectUrl;
     
@@ -149,11 +164,6 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("❌ PHONEPE INIT EXCEPTION:", error.message);
-    if (error.response) {
-      console.error('Response Status:', error.response.status);
-      console.error('Response Data:', JSON.stringify(error.response.data, null, 2));
-    }
-    
     return NextResponse.json(
       { 
         error: "Payment Initiation Failed", 

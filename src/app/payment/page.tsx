@@ -1,19 +1,22 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Loader2, ShieldCheck, User, Phone, Mail, IndianRupee, UserPlus, Lock, Ticket } from 'lucide-react';
+import { Loader2, ShieldCheck, User, Phone, Mail, IndianRupee, UserPlus, Lock, Ticket, WalletCards, CheckCircle2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Loading from '@/app/loading';
 import { DrivergyLogo } from '@/components/ui/logo';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { fetchCustomerWallet } from '@/lib/server-actions';
+import type { CustomerWallet } from '@/types';
+import { WalletRedemptionConfig } from '@/types';
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
@@ -30,50 +33,59 @@ export default function PaymentPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     
     const plan = searchParams.get('plan') || 'Selected Plan';
-    const price = searchParams.get('price') || '0';
+    const price = parseInt(searchParams.get('price') || '0', 10);
 
     const [referralCode, setReferralCode] = useState('');
-    const [finalPrice, setFinalPrice] = useState(price);
     const [discountApplied, setDiscountApplied] = useState(false);
     
-    useEffect(() => {
-        if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
-            toast({
-                title: "Already Subscribed",
-                description: "You already have an active subscription. Redirecting to your dashboard.",
-            });
-            router.push('/dashboard');
-        }
-    }, [user, authLoading, router, toast]);
+    const [wallet, setWallet] = useState<CustomerWallet | null>(null);
+    const [redeemWallet, setRedeemWallet] = useState(false);
+    const [loadingWallet, setLoadingWallet] = useState(false);
 
     useEffect(() => {
-      setFinalPrice(price);
-    }, [price]);
+        if (!authLoading && user && user.subscriptionPlan && user.subscriptionPlan !== 'None') {
+            router.push('/dashboard');
+        }
+    }, [user, authLoading, router]);
+
+    useEffect(() => {
+        if (user?.id) {
+            setLoadingWallet(true);
+            fetchCustomerWallet(user.id).then(data => {
+                setWallet(data);
+                setLoadingWallet(false);
+            });
+        }
+    }, [user?.id]);
+
+    const redemptionRate = useMemo(() => {
+        const count = (user?.purchaseCount || 0) + 1;
+        return WalletRedemptionConfig[count as keyof typeof WalletRedemptionConfig] || WalletRedemptionConfig.default;
+    }, [user?.purchaseCount]);
+
+    const walletDiscount = useMemo(() => {
+        if (!wallet || !redeemWallet) return 0;
+        return Math.floor(wallet.balance * redemptionRate);
+    }, [wallet, redeemWallet, redemptionRate]);
+
+    const finalPrice = useMemo(() => {
+        let current = price;
+        if (discountApplied) current = current * 0.9;
+        return Math.max(0, current - walletDiscount);
+    }, [price, discountApplied, walletDiscount]);
     
     const handleApplyCode = () => {
         if (referralCode.trim().toUpperCase() === 'DRIVERGY10') {
-          const originalPrice = parseInt(price, 10);
-          if (isNaN(originalPrice) || originalPrice <= 0) return;
-    
-          const discountAmount = originalPrice * 0.10;
-          setFinalPrice((originalPrice - discountAmount).toString());
           setDiscountApplied(true);
-          toast({
-            title: "Discount Applied!",
-            description: "A 10% discount has been applied to your order."
-          });
+          toast({ title: "Discount Applied!", description: "A 10% coupon has been applied." });
         } else {
-          toast({
-            title: "Invalid Code",
-            description: "The referral or discount code you entered is not valid.",
-            variant: "destructive"
-          });
+          toast({ title: "Invalid Code", variant: "destructive" });
         }
     };
 
     const handlePayment = async () => {
         if (!user || !user.phone) {
-            toast({ title: 'Authentication Error', description: 'You must be logged in and have a phone number on your profile to make a payment.', variant: 'destructive' });
+            toast({ title: 'Authentication Error', description: 'Phone number is required on your profile.', variant: 'destructive' });
             return;
         }
 
@@ -83,43 +95,34 @@ export default function PaymentPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    amount: parseInt(finalPrice, 10),
+                    amount: price, // Send original, backend handles coupon/wallet verification
                     userId: user.id,
                     plan: plan,
                     mobile: user.phone,
+                    redeemWallet: redeemWallet
                 }),
             });
 
             const data = await response.json();
-
             if (data.url) {
                 router.push(data.url);
             } else {
-                // Use the 'details' field for a more specific error message.
                 throw new Error(data.details || data.error || 'Failed to initiate payment.');
             }
         } catch (error) {
-            console.error("Payment initiation failed:", error);
             toast({
                 title: 'Payment Error',
-                description: error instanceof Error ? error.message : 'Could not start the payment process.',
+                description: error instanceof Error ? error.message : 'Could not start the process.',
                 variant: 'destructive',
             });
             setIsProcessing(false);
         }
     };
     
-    const handleGoogleSignIn = async () => {
-        await signInWithGoogle();
-        // After signInWithGoogle, the useAuth effect will trigger a re-render.
-        // The component will then show the payment summary for the now-logged-in user.
-    };
-
     if (authLoading || (user && user.subscriptionPlan && user.subscriptionPlan !== 'None')) {
         return <Loading />;
     }
     
-    // AUTHENTICATION GATE
     if (!user) {
         const redirectPath = `/payment?plan=${plan}&price=${price}`;
         const loginUrl = `/login?redirect=${encodeURIComponent(redirectPath)}`;
@@ -133,12 +136,10 @@ export default function PaymentPage() {
                             <Lock className="h-8 w-8 text-primary" />
                         </div>
                         <CardTitle className="font-headline text-2xl font-bold">Authentication Required</CardTitle>
-                        <CardDescription>
-                            Please sign in or create an account to purchase the <span className="font-semibold text-primary">{plan}</span> plan.
-                        </CardDescription>
+                        <CardDescription>Please sign in to purchase the <span className="font-semibold text-primary">{plan}</span> plan.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <Button onClick={handleGoogleSignIn} className="w-full h-12 text-base">
+                        <Button onClick={() => signInWithGoogle()} className="w-full h-12 text-base">
                             <GoogleIcon /> Continue with Google
                         </Button>
                         <div className="relative my-2">
@@ -146,9 +147,7 @@ export default function PaymentPage() {
                           <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground">Or</span></div>
                         </div>
                          <Button asChild variant="secondary" className="w-full h-12 text-base">
-                            <Link href={registerUrl}>
-                                <UserPlus className="mr-2 h-5 w-5" /> Register as a New Customer
-                            </Link>
+                            <Link href={registerUrl}><UserPlus className="mr-2 h-5 w-5" /> Register as a New Customer</Link>
                         </Button>
                     </CardContent>
                     <CardFooter className="flex justify-center text-sm">
@@ -164,22 +163,14 @@ export default function PaymentPage() {
             <Card className="w-full max-w-md shadow-2xl border-t-4 border-red-600">
                 <CardHeader className="text-center space-y-4">
                     <DrivergyLogo className="mx-auto h-10 w-auto" />
-                    <CardTitle className="font-headline text-2xl font-bold text-gray-800 dark:text-white">
-                        Payment Summary
-                    </CardTitle>
-                    <CardDescription>
-                        Complete your secure payment with PhonePe.
-                    </CardDescription>
+                    <CardTitle className="font-headline text-2xl font-bold text-gray-800 dark:text-white">Payment Summary</CardTitle>
+                    <CardDescription>Complete your secure payment with PhonePe.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-3 text-sm">
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-500 dark:text-gray-400 flex items-center"><User className="mr-2 h-4 w-4" />Customer Name:</span>
+                            <span className="text-gray-500 dark:text-gray-400 flex items-center"><User className="mr-2 h-4 w-4" />Customer:</span>
                             <span className="font-semibold text-gray-900 dark:text-white">{user.name}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-500 dark:text-gray-400 flex items-center"><Mail className="mr-2 h-4 w-4" />Email:</span>
-                            <span className="font-semibold text-gray-900 dark:text-white">{user.contact}</span>
                         </div>
                          <div className="flex justify-between items-center">
                             <span className="text-gray-500 dark:text-gray-400 flex items-center"><Phone className="mr-2 h-4 w-4" />Phone:</span>
@@ -187,47 +178,62 @@ export default function PaymentPage() {
                         </div>
                     </div>
 
+                    {/* WALLET SECTION */}
+                    {wallet && wallet.balance > 0 && redemptionRate > 0 && (
+                        <div className="p-4 bg-primary/5 rounded-lg border border-primary/20 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <WalletCards className="h-5 w-5 text-primary" />
+                                    <div>
+                                        <p className="text-sm font-bold">Use Wallet Balance</p>
+                                        <p className="text-xs text-muted-foreground">Balance: ₹{wallet.balance.toLocaleString('en-IN')}</p>
+                                    </div>
+                                </div>
+                                <Switch checked={redeemWallet} onCheckedChange={setRedeemWallet} />
+                            </div>
+                            {redeemWallet && (
+                                <div className="flex items-center gap-2 text-xs text-green-600 font-semibold bg-green-50 p-2 rounded border border-green-100">
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    <span>You can redeem ₹{walletDiscount} ({(redemptionRate * 100).toFixed(0)}% of balance)</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <div className="space-y-2 border-t pt-4">
-                        <Label htmlFor="referral-code" className="flex items-center text-sm"><Ticket className="mr-2 h-4 w-4" />Referral/Discount Code</Label>
+                        <Label htmlFor="referral-code" className="flex items-center text-sm"><Ticket className="mr-2 h-4 w-4" />Coupon Code</Label>
                         <div className="flex space-x-2">
                             <Input
-                            id="referral-code"
-                            placeholder="Enter code"
-                            value={referralCode}
-                            onChange={(e) => setReferralCode(e.target.value)}
-                            disabled={discountApplied || isProcessing}
+                                id="referral-code"
+                                placeholder="Enter code"
+                                value={referralCode}
+                                onChange={(e) => setReferralCode(e.target.value)}
+                                disabled={discountApplied || isProcessing}
                             />
                             <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleApplyCode}
-                            disabled={discountApplied || !referralCode.trim() || isProcessing}
+                                type="button"
+                                variant="outline"
+                                onClick={handleApplyCode}
+                                disabled={discountApplied || !referralCode.trim() || isProcessing}
                             >
-                            {discountApplied ? "Applied" : "Apply"}
+                                {discountApplied ? "Applied" : "Apply"}
                             </Button>
                         </div>
                     </div>
 
-
                     <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-dashed border-red-200 dark:border-red-800">
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Amount to Pay</p>
-                         {discountApplied && (
-                            <p className="text-sm text-muted-foreground line-through">
-                                Original Price: ₹{parseInt(price, 10).toLocaleString('en-IN')}
-                            </p>
-                        )}
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Payable</p>
                         <p className="text-5xl font-bold text-red-600 dark:text-red-500 tracking-tight">
                             <IndianRupee className="inline-block h-8 w-8 -mt-2" />
-                            {parseInt(finalPrice, 10).toLocaleString('en-IN')}
+                            {finalPrice.toLocaleString('en-IN')}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">For {plan} Plan</p>
-                        {discountApplied && (
+                        {(discountApplied || walletDiscount > 0) && (
                             <p className="text-sm font-semibold text-green-600 mt-2">
-                                You saved ₹{(parseInt(price, 10) - parseInt(finalPrice, 10)).toLocaleString('en-IN')}!
+                                Total Savings: ₹{(price - finalPrice).toLocaleString('en-IN')}!
                             </p>
                         )}
                     </div>
-
                 </CardContent>
                 <CardFooter className="flex flex-col gap-4">
                     <Button 
@@ -235,13 +241,9 @@ export default function PaymentPage() {
                         className="w-full h-14 text-lg bg-[#6739B7] hover:bg-[#562E9C] text-white flex items-center justify-center gap-2" 
                         disabled={isProcessing}
                     >
-                        {isProcessing ? (
-                            <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Processing...</>
-                        ) : (
-                            `Pay ₹${parseInt(finalPrice, 10).toLocaleString('en-IN')} with PhonePe`
-                        )}
+                        {isProcessing ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" />Processing...</> : `Pay ₹${finalPrice.toLocaleString('en-IN')} with PhonePe`}
                     </Button>
-                    <div className="flex items-center text-xs text-gray-400">
+                    <div className="flex items-center text-xs text-gray-400 justify-center">
                         <ShieldCheck className="h-4 w-4 mr-1 text-green-500"/>
                         <span>100% Secure & Encrypted Payment</span>
                     </div>
