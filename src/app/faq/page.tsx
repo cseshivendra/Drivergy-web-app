@@ -1,6 +1,4 @@
-
-'use client';
-
+import type { Metadata } from 'next';
 import {
     Accordion,
     AccordionContent,
@@ -10,6 +8,16 @@ import {
 import { HelpCircle } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { FaqItem } from '@/types';
+
+export const metadata: Metadata = {
+  title: 'Driving School FAQ | Drivergy',
+  description: "Find answers to common questions about Drivergy's driving courses, RTO services, instructor selection, and payment options. Get all the information you need to start your driving lessons.",
+  openGraph: {
+    title: 'Frequently Asked Questions | Drivergy',
+    description: 'All your driving school queries answered in one place.',
+    url: 'https://drivergy.in/faq',
+  },
+};
 
 const faqData: FaqItem[] = [
     {
@@ -58,10 +66,6 @@ const faqData: FaqItem[] = [
 export default function FaqPage() {
     return (
         <div className="container mx-auto max-w-4xl p-4 py-8 sm:p-6 lg:p-8">
-            <head>
-                <title>Driving School FAQ | Drivergy</title>
-                <meta name="description" content="Find answers to common questions about Drivergy's driving courses, RTO services, instructor selection, and payment options. Get all the information you need to start your driving lessons." />
-            </head>
             <Card className="shadow-lg overflow-hidden mb-12">
                 <CardHeader className="text-center p-6 space-y-2 bg-muted/30">
                     <div className="p-3 bg-background rounded-full mb-3 w-fit mx-auto">
