@@ -9,7 +9,7 @@ import { SOCIAL_LINKS, FOOTER_NAV_LINKS } from '@/lib/footer-data';
  */
 export default function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-background py-8 px-4 sm:px-6 lg:px-8">
+    <footer className="border-t border-border/40 bg-background py-10 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto flex flex-col items-center justify-between gap-6 text-center text-sm text-muted-foreground">
         
         {/* Brand Section */}
@@ -48,8 +48,8 @@ export default function Footer() {
         <div className="flex items-center justify-center gap-x-4 md:gap-x-6 py-8 border-y border-border/40 w-full max-w-7xl mx-auto bg-muted/5 rounded-xl px-4 overflow-x-auto no-scrollbar flex-nowrap lg:flex-wrap">
             {/* Secure Payments */}
             <div className="flex items-center gap-3 shrink-0">
-                <div className="p-2 rounded-full bg-red-500/10">
-                    <ShieldCheck className="h-5 w-5 text-red-500" />
+                <div className="p-2.5 rounded-full bg-red-500/10">
+                    <ShieldCheck className="h-7 w-7 text-red-500" />
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
@@ -57,12 +57,12 @@ export default function Footer() {
                 </div>
             </div>
             
-            <div className="h-8 w-px bg-border shrink-0"></div>
+            <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Payment Partner */}
             <div className="flex items-center gap-3 shrink-0">
-                <div className="p-2 rounded-full bg-[#6739B7]/10">
-                    <CreditCard className="h-5 w-5 text-[#6739B7]" />
+                <div className="p-2.5 rounded-full bg-[#6739B7]/10">
+                    <CreditCard className="h-7 w-7 text-[#6739B7]" />
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
@@ -73,12 +73,12 @@ export default function Footer() {
                 </div>
             </div>
 
-            <div className="h-8 w-px bg-border shrink-0"></div>
+            <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Store Partner */}
             <div className="flex items-center gap-3 shrink-0">
-                <div className="p-2 rounded-full bg-orange-500/10">
-                    <Store className="h-5 w-5 text-orange-500" />
+                <div className="p-2.5 rounded-full bg-orange-500/10">
+                    <Store className="h-7 w-7 text-orange-500" />
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Store Partner</p>
@@ -90,12 +90,12 @@ export default function Footer() {
                 </div>
             </div>
 
-            <div className="h-8 w-px bg-border shrink-0"></div>
+            <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Safe & Secure */}
             <div className="flex items-center gap-3 shrink-0">
-                <div className="p-2 rounded-full bg-green-500/10">
-                    <Shield className="h-5 w-5 text-green-500" />
+                <div className="p-2.5 rounded-full bg-green-500/10">
+                    <Shield className="h-7 w-7 text-green-500" />
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
@@ -103,12 +103,12 @@ export default function Footer() {
                 </div>
             </div>
 
-            <div className="h-8 w-px bg-border shrink-0"></div>
+            <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Certified Trainers */}
             <div className="flex items-center gap-3 shrink-0">
-                <div className="p-2 rounded-full bg-amber-500/10">
-                    <Award className="h-5 w-5 text-amber-500" />
+                <div className="p-2.5 rounded-full bg-amber-500/10">
+                    <Award className="h-7 w-7 text-amber-500" />
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
