@@ -44,70 +44,75 @@ export default function Footer() {
             })}
         </div>
 
-        {/* Trust Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-10 py-10 border-y border-border/40 w-full max-w-6xl mx-auto bg-muted/5 rounded-xl px-4">
-            <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
-                    <ShieldCheck className="h-6 w-6" style={{ color: '#ef4444' }} />
+        {/* Trust Badges - SINGLE LINE */}
+        <div className="flex items-center justify-center gap-x-4 md:gap-x-6 py-8 border-y border-border/40 w-full max-w-7xl mx-auto bg-muted/5 rounded-xl px-4 overflow-x-auto no-scrollbar flex-nowrap lg:flex-wrap">
+            {/* Secure Payments */}
+            <div className="flex items-center gap-3 shrink-0">
+                <div className="p-2 rounded-full bg-red-500/10">
+                    <ShieldCheck className="h-5 w-5 text-red-500" />
                 </div>
                 <div className="text-left leading-tight">
-                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
-                    <p className="text-xs text-muted-foreground">100% encrypted &amp; safe</p>
+                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
+                    <p className="text-[9px] md:text-[10px] text-muted-foreground">100% encrypted &amp; safe</p>
                 </div>
             </div>
             
-            <div className="hidden lg:block h-10 w-px bg-border"></div>
+            <div className="h-8 w-px bg-border shrink-0"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(103, 57, 183, 0.1)' }}>
-                    <CreditCard className="h-6 w-6" style={{ color: '#6739B7' }} />
+            {/* Payment Partner */}
+            <div className="flex items-center gap-3 shrink-0">
+                <div className="p-2 rounded-full bg-[#6739B7]/10">
+                    <CreditCard className="h-5 w-5 text-[#6739B7]" />
                 </div>
                 <div className="text-left leading-tight">
-                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
-                    <div className="flex items-center gap-1.5 leading-none">
-                        <span className="text-xs text-muted-foreground font-medium">Powered by</span>
-                        <span className="text-sm font-black text-[#6739B7] tracking-tight">PhonePe</span>
+                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
+                    <div className="flex items-center gap-1 leading-none mt-0.5">
+                        <span className="text-[9px] md:text-[10px] text-muted-foreground font-medium">Powered by</span>
+                        <span className="text-[10px] md:text-xs font-black text-[#6739B7] tracking-tight">PhonePe</span>
                     </div>
                 </div>
             </div>
 
-            <div className="hidden lg:block h-10 w-px bg-border"></div>
+            <div className="h-8 w-px bg-border shrink-0"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(249, 115, 22, 0.1)' }}>
-                    <Store className="h-6 w-6" style={{ color: '#f97316' }} />
+            {/* Store Partner */}
+            <div className="flex items-center gap-3 shrink-0">
+                <div className="p-2 rounded-full bg-orange-500/10">
+                    <Store className="h-5 w-5 text-orange-500" />
                 </div>
                 <div className="text-left leading-tight">
-                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Store Partner</p>
-                    <div className="flex items-center gap-1.5 leading-none">
-                        <span className="text-xs font-bold text-foreground">amazon</span>
-                        <span className="text-xs text-muted-foreground">|</span>
-                        <span className="text-sm font-bold text-[#2874f0]">Flipkart</span>
+                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Store Partner</p>
+                    <div className="flex items-center gap-1 leading-none mt-0.5">
+                        <span className="text-[10px] md:text-xs font-bold text-foreground tracking-tighter">amazon</span>
+                        <span className="text-[9px] text-muted-foreground">|</span>
+                        <span className="text-[10px] md:text-xs font-bold text-[#2874f0]">Flipkart</span>
                     </div>
                 </div>
             </div>
 
-            <div className="hidden lg:block h-10 w-px bg-border"></div>
+            <div className="h-8 w-px bg-border shrink-0"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
-                    <Shield className="h-6 w-6" style={{ color: '#22c55e' }} />
+            {/* Safe & Secure */}
+            <div className="flex items-center gap-3 shrink-0">
+                <div className="p-2 rounded-full bg-green-500/10">
+                    <Shield className="h-5 w-5 text-green-500" />
                 </div>
                 <div className="text-left leading-tight">
-                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
-                    <p className="text-xs text-muted-foreground">Verified Platform</p>
+                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
+                    <p className="text-[9px] md:text-[10px] text-muted-foreground">Verified Platform</p>
                 </div>
             </div>
 
-            <div className="hidden lg:block h-10 w-px bg-border"></div>
+            <div className="h-8 w-px bg-border shrink-0"></div>
 
-            <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
-                    <Award className="h-6 w-6" style={{ color: '#f59e0b' }} />
+            {/* Certified Trainers */}
+            <div className="flex items-center gap-3 shrink-0">
+                <div className="p-2 rounded-full bg-amber-500/10">
+                    <Award className="h-5 w-5 text-amber-500" />
                 </div>
                 <div className="text-left leading-tight">
-                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
-                    <p className="text-xs text-muted-foreground">Authorized RTO School</p>
+                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
+                    <p className="text-[9px] md:text-[10px] text-muted-foreground">Authorized RTO School</p>
                 </div>
             </div>
         </div>
