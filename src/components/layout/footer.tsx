@@ -1,16 +1,15 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-background py-6 px-4 sm:px-6 lg:px-8">
-      <div className="container mx-auto flex flex-col items-center justify-between gap-4 text-center text-sm text-muted-foreground">
+    <footer className="border-t border-border/40 bg-background py-8 px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto flex flex-col items-center justify-between gap-6 text-center text-sm text-muted-foreground">
         
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-2 mb-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-2">
             <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
                 <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
                 <DrivergyLogo className="h-8 w-auto text-primary" />
@@ -42,7 +41,28 @@ export default function Footer() {
             </a>
         </div>
 
-         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-4">
+        {/* Trust & Payment Partner Section */}
+        <div className="flex flex-wrap items-center justify-center gap-6 py-6 border-y border-border/40 w-full max-w-4xl">
+            <div className="flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                <div className="text-left">
+                    <p className="text-xs font-bold text-foreground uppercase">Secure Payments</p>
+                    <p className="text-[10px] text-muted-foreground">100% Safe & Encrypted</p>
+                </div>
+            </div>
+            
+            <div className="hidden sm:block h-6 w-px bg-border"></div>
+
+            <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-[#6739B7]" />
+                <div className="text-left">
+                    <p className="text-xs font-bold text-foreground uppercase">Payment Partner</p>
+                    <p className="text-[10px] text-muted-foreground">Powered by <span className="font-bold text-[#6739B7]">PhonePe</span></p>
+                </div>
+            </div>
+        </div>
+
+         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-2">
             <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
               <span className="font-bold" style={{ letterSpacing: '-0.5px' }}>
                   <span className="text-saffron">#startup</span><span className="text-india-blue">i</span><span className="text-foreground">ndia</span>
@@ -58,14 +78,14 @@ export default function Footer() {
                 <span className="font-semibold text-foreground">Made in India</span>
             </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2 border-t border-border/20 w-full">
             <p>&copy; {new Date().getFullYear()} Drivergy. All rights reserved.</p>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/privacy-policy" className="underline hover:text-primary">Privacy Policy</Link>
+            <Link href="/privacy-policy" className="underline hover:text-primary transition-colors">Privacy Policy</Link>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/terms-and-conditions" className="underline hover:text-primary">Terms & Conditions</Link>
+            <Link href="/terms-and-conditions" className="underline hover:text-primary transition-colors">Terms & Conditions</Link>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/refund-policy" className="underline hover:text-primary">Refund Policy</Link>
+            <Link href="/refund-policy" className="underline hover:text-primary transition-colors">Refund Policy</Link>
         </div>
       </div>
     </footer>
