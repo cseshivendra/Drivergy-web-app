@@ -354,6 +354,16 @@ export const VisualContentSchema = z.object({
 });
 export type VisualContentFormValues = z.infer<typeof VisualContentSchema>;
 
+export const StoreProductSchema = z.object({
+  title: z.string().min(1, "Title is required."),
+  description: z.string().min(1, "Description is required."),
+  amazonId: z.string().min(1, "Amazon ID (ASIN) is required."),
+  flipkartId: z.string().optional().or(z.literal('')),
+  imageSrc: z.string().url("Valid image URL is required.").or(z.literal('')),
+  imageHint: z.string().optional(),
+});
+export type StoreProductFormValues = z.infer<typeof StoreProductSchema>;
+
 
 // Data structure types
 export type VehicleType = 'Two-Wheeler' | 'Four-Wheeler' | 'Both';
@@ -565,6 +575,7 @@ export interface AdminDashboardData {
     siteBanners: SiteBanner[];
     promotionalPosters: PromotionalPoster[];
     complaints: Complaint[];
+    storeProducts: Product[];
 }
 
 // Add the DrivingLog types that were missed before

@@ -11,7 +11,7 @@ import FeedbackTable from '@/components/dashboard/feedback-table';
 import ReferralTable from '@/components/dashboard/referral-table';
 import { fetchAdminDashboardData, fetchAllSessions } from '@/lib/server-actions';
 import type { SummaryData, AdminDashboardData, DrivingSession } from '@/types';
-import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2, X, Check, AlertTriangle } from 'lucide-react';
+import { UserCheck, Search, ListChecks, MessageSquare, ShieldCheck, BarChart2, Library, BookText, HelpCircle, ImagePlay, ClipboardCheck, BookOpen, Gift, Users, History, Repeat, RefreshCw, Banknote, PlayCircle, Clock, Settings2, X, Check, AlertTriangle, ShoppingBag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,6 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import ComplaintTable from './complaint-table';
+import StoreManagement from './store-management';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
@@ -358,6 +359,12 @@ export default function AdminDashboard() {
 
     const renderContentView = () => (
         <div className="space-y-8">
+            <StoreManagement
+                title={<><ShoppingBag className="inline-block mr-3 h-6 w-6 align-middle" />Store Management</>}
+                products={dashboardData?.storeProducts || []}
+                isLoading={loading}
+                onAction={() => loadData(true)}
+            />
             <CourseManagement
                 title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Management</>}
                 courses={dashboardData?.courses || []}

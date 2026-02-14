@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -15,7 +16,8 @@ import {
     CustomerRegistrationFormSchema,
     WithdrawalRequestSchema,
     ComplaintFormSchema,
-    WalletRedemptionConfig
+    WalletRedemptionConfig,
+    StoreProductSchema
 } from '@/types';
 import type { 
     UserProfile, 
@@ -54,7 +56,8 @@ import type {
     SessionStatus,
     Complaint,
     ComplaintStatus,
-    CustomerWallet
+    CustomerWallet,
+    Product
 } from '@/types';
 import { format, parse, parseISO, addDays, isValid, startOfMonth, endOfMonth, isWithinInterval, differenceInMinutes } from 'date-fns';
 import { adminAuth, adminDb } from './firebase/admin';
@@ -303,7 +306,8 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             rescheduleSnap, 
             feedbackSnap,
             referralsSnap,
-            complaintsSnap
+            complaintsSnap,
+            storeSnap
         ] = await Promise.all([
             adminDb.collection('users').get(),
             adminDb.collection('trainers').get(),
@@ -316,7 +320,8 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             adminDb.collection('rescheduleRequests').orderBy('requestTimestamp', 'desc').get(),
             adminDb.collection('feedback').orderBy('submissionDate', 'desc').get(),
             adminDb.collection('referrals').get(),
-            adminDb.collection('complaints').orderBy('timestamp', 'desc').get()
+            adminDb.collection('complaints').orderBy('timestamp', 'desc').get(),
+            adminDb.collection('storeProducts').get()
         ]);
 
         const customers: UserProfile[] = usersSnap.docs.map(d => {
@@ -429,6 +434,7 @@ export async function fetchAdminDashboardData(): Promise<AdminDashboardData | nu
             siteBanners: bannersSnap.docs.map(d => ({ id: d.id, ...d.data() } as SiteBanner)),
             promotionalPosters: postersSnap.docs.map(d => ({ id: d.id, ...d.data() } as PromotionalPoster)),
             complaints,
+            storeProducts: storeSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product)),
         };
 
     } catch (error) {
@@ -1490,4 +1496,96 @@ export async function cancelOrder(orderId: string): Promise<boolean> {
     } catch (error) {
         return false;
     }
+}
+
+// =================================================================
+// STORE MANAGEMENT ACTIONS
+// =================================================================
+
+export async function addStoreProduct(data: z.infer<typeof StoreProductSchema>): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        await adminDb.collection('storeProducts').add({
+            ...data,
+            createdAt: new Date().toISOString(),
+        });
+        revalidatePath('/store');
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error adding product:", error);
+        return false;
+    }
+}
+
+export async function updateStoreProduct(productId: string, data: z.infer<typeof StoreProductSchema>): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        await adminDb.collection('storeProducts').doc(productId).update({
+            ...data,
+            updatedAt: new Date().toISOString(),
+        });
+        revalidatePath('/store');
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error updating product:", error);
+        return false;
+    }
+}
+
+export async function deleteStoreProduct(productId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    try {
+        await adminDb.collection('storeProducts').doc(productId).delete();
+        revalidatePath('/store');
+        revalidatePath('/dashboard');
+        return true;
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        return false;
+    }
+}
+
+/**
+ * Simulates fetching Amazon product details from a URL.
+ * Extracts ASIN and returns mocked data for prototype demonstration.
+ */
+export async function fetchAmazonProductDetails(url: string): Promise<{ title: string, description: string, imageSrc: string, amazonId: string } | null> {
+    // Basic ASIN extraction regex
+    const asinRegex = /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/;
+    const match = url.match(asinRegex);
+    const asin = match ? match[1] : null;
+
+    if (!asin) return null;
+
+    // Simulate API delay
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Mock data based on common driving accessories
+    const mocks: Record<string, any> = {
+        'B07Y62883J': {
+            title: 'Magnetic Car Phone Holder',
+            description: 'Powerful N52 magnets, 360-degree rotation, fits all smartphones.',
+            imageSrc: 'https://m.media-amazon.com/images/I/71+vEx-shFL._AC_SL1500_.jpg'
+        },
+        'B01CV4ANCC': {
+            title: 'Blind Spot Mirrors (2-Pack)',
+            description: 'Convex design, waterproof, increases visibility for safer lane changes.',
+            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg'
+        },
+        'B073733564': {
+            title: 'Digital Tyre Pressure Gauge',
+            description: 'High precision backlit LCD, simple button control, ensures optimal tyre safety.',
+            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg'
+        }
+    };
+
+    const data = mocks[asin] || {
+        title: 'New Driving Accessory',
+        description: 'Quality accessory picked by Drivergy team.',
+        imageSrc: `https://placehold.co/600x400/ef4444/ffffff?text=${asin}`
+    };
+
+    return { ...data, amazonId: asin };
 }
