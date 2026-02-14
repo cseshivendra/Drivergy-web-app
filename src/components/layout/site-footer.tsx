@@ -24,7 +24,7 @@ export default function SiteFooter() {
             <span className="sr-only">Facebook</span>
           </a>
           <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-             Twitter className="h-5 w-5" />
+            <Twitter className="h-5 w-5" />
             <span className="sr-only">Twitter</span>
           </a>
           <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
