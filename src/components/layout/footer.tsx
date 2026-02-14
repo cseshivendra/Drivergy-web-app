@@ -1,14 +1,18 @@
-'use client';
-
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
+import { SOCIAL_LINKS, FOOTER_NAV_LINKS } from '@/lib/footer-data';
 
+/**
+ * Pure Render Footer component (Standardized with site-footer).
+ * Ensures bit-for-bit parity between SSR and CSR.
+ */
 export default function Footer() {
   return (
     <footer className="border-t border-border/40 bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto flex flex-col items-center justify-between gap-6 text-center text-sm text-muted-foreground">
         
+        {/* Brand Section */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-2">
             <Link href="/" className="flex items-center gap-2.5 group focus:outline-none focus:ring-2 focus:ring-ring rounded-md">
                 <DrivergyLogoIcon className="h-8 w-8 text-primary shrink-0" />
@@ -18,29 +22,29 @@ export default function Footer() {
             <p className="font-headline text-lg text-muted-foreground tracking-wide">Learn. Drive. Live.</p>
         </div>
 
-        <div className="flex items-center gap-4">
-            <a href="https://www.facebook.com/drivergyofficial" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Facebook className="h-5 w-5" />
-                <span className="sr-only">Facebook</span>
-            </a>
-            <a href="https://x.com/DIndia720" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-            </a>
-            <a href="https://www.instagram.com/drivergyofficial" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
-            </a>
-            <a href="https://www.linkedin.com/company/drivergy" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
-            </a>
-            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Youtube className="h-5 w-5" />
-                <span className="sr-only">Youtube</span>
-            </a>
+        {/* Social Links */}
+        <div className="flex items-center gap-6">
+            {SOCIAL_LINKS.map((link) => {
+              const Icon = link.name === 'Facebook' ? Facebook : 
+                           link.name === 'Twitter' ? Twitter : 
+                           link.name === 'Instagram' ? Instagram : 
+                           link.name === 'LinkedIn' ? Linkedin : Youtube;
+              return (
+                <a 
+                  key={link.id} 
+                  href={link.href} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="sr-only">{link.name}</span>
+                </a>
+              );
+            })}
         </div>
 
+        {/* Trust Badges */}
         <div className="flex flex-wrap items-center justify-center gap-8 py-8 border-y border-border/40 w-full max-w-5xl bg-muted/5 rounded-xl">
             <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
@@ -81,10 +85,11 @@ export default function Footer() {
             </div>
         </div>
 
+        {/* Identity Badges */}
          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-2">
             <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
               <span className="font-bold" style={{ letterSpacing: '-0.5px' }}>
-                  <span className="text-saffron">#startup</span><span className="text-india-blue">i</span><span className="text-foreground">ndia</span>
+                  <span className="text-[#FF9933]">#startup</span><span className="text-[#000080]">i</span><span className="text-foreground">ndia</span>
               </span>
             </div>
             <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
@@ -97,14 +102,18 @@ export default function Footer() {
                 <span className="font-semibold text-foreground uppercase tracking-tight text-xs">Made in India</span>
             </div>
         </div>
+
+        {/* Copyright & Links */}
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2 border-t border-border/20 w-full">
-            <p>&copy; {new Date().getFullYear()} Drivergy. All rights reserved.</p>
-            <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/privacy-policy" className="underline hover:text-primary transition-colors">Privacy Policy</Link>
-            <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/terms-and-conditions" className="underline hover:text-primary transition-colors">Terms &amp; Conditions</Link>
-            <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/refund-policy" className="underline hover:text-primary transition-colors">Refund Policy</Link>
+            <p>&copy; 2025 Drivergy. All rights reserved.</p>
+            {FOOTER_NAV_LINKS.map((link) => (
+              <span key={link.id} className="flex items-center gap-2">
+                <span className="hidden md:inline text-muted-foreground/50">|</span>
+                <Link href={link.href} className="underline hover:text-primary transition-colors">
+                  {link.name}
+                </Link>
+              </span>
+            ))}
         </div>
       </div>
     </footer>
