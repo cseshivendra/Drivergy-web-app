@@ -1582,16 +1582,27 @@ export async function deleteStoreProduct(productId: string): Promise<boolean> {
 }
 
 /**
- * Simulates fetching Amazon product details from a URL.
- * Extracts ASIN and returns mocked data for prototype demonstration.
+ * Enhanced Amazon ASIN extraction and simulated product detail fetching.
+ * Supports standard /dp/ paths, /gp/product paths, and loose mobile mission links.
  */
 export async function fetchAmazonProductDetails(url: string): Promise<{ title: string, description: string, imageSrc: string, amazonId: string } | null> {
-    // Basic ASIN extraction regex
-    const asinRegex = /\/(?:dp|gp\/product)\/([A-Z0-9]{10})/;
-    const match = url.match(asinRegex);
-    const asin = match ? match[1] : null;
+    // 1. Standard paths: /dp/ASIN or /gp/product/ASIN
+    const standardRegex = /\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:[\/?]|$)/i;
+    let match = url.match(standardRegex);
+    let asin = match ? match[1] : null;
+
+    // 2. Alternative: Look for loose 10-char identifiers if not found in path
+    if (!asin) {
+        // ASINs almost always start with 'B' and are 10 chars.
+        // We look for them in query params or elsewhere in the string.
+        const looseRegex = /\b(B[A-Z0-9]{9})\b/i;
+        match = url.match(looseRegex);
+        asin = match ? match[1] : null;
+    }
 
     if (!asin) return null;
+
+    const finalAsin = asin.toUpperCase();
 
     // Simulate API delay
     await new Promise(r => setTimeout(r, 1000));
@@ -1615,13 +1626,13 @@ export async function fetchAmazonProductDetails(url: string): Promise<{ title: s
         }
     };
 
-    const data = mocks[asin] || {
+    const data = mocks[finalAsin] || {
         title: 'New Driving Accessory',
-        description: 'Quality accessory picked by Drivergy team.',
-        imageSrc: `https://placehold.co/600x400/ef4444/ffffff?text=${asin}`
+        description: 'Premium quality accessory recommended by the Drivergy team for an enhanced driving experience.',
+        imageSrc: `https://picsum.photos/seed/${finalAsin}/600/400`
     };
 
-    return { ...data, amazonId: asin };
+    return { ...data, amazonId: finalAsin };
 }
 
 /**
@@ -1639,8 +1650,8 @@ export async function fetchUrlMetadata(url: string): Promise<{ title: string, de
         // Mock data for demonstration
         return {
             title: `Featured Content from ${domain}`,
-            description: `Auto-filled details retrieved from the provided link at ${domain}. Review and edit as needed.`,
-            imageSrc: `https://placehold.co/800x600/3b82f6/ffffff?text=${domain}`
+            description: `Auto-filled details retrieved from the provided link at ${domain}. This content highlights key services and promotional updates from the Drivergy platform.`,
+            imageSrc: `https://picsum.photos/seed/${domain.length}/800/600`
         };
     } catch (e) {
         return null;
