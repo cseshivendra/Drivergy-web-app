@@ -41,9 +41,7 @@ export default function SiteFooter() {
           </a>
         </div>
 
-        {/* Trust & Payment Partner Section */}
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-10 py-10 border-y border-border/40 max-w-6xl mx-auto bg-muted/5 rounded-xl px-4">
-            {/* Secure Payments */}
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-primary/10 rounded-full">
                     <ShieldCheck className="h-6 w-6 text-primary" />
@@ -56,7 +54,6 @@ export default function SiteFooter() {
             
             <div className="hidden lg:block h-10 w-px bg-border"></div>
 
-            {/* Payment Partner */}
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-[#6739B7]/10 rounded-full">
                     <CreditCard className="h-6 w-6 text-[#6739B7]" />
@@ -72,7 +69,6 @@ export default function SiteFooter() {
 
             <div className="hidden lg:block h-10 w-px bg-border"></div>
 
-            {/* Safe & Secure */}
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-green-500/10 rounded-full">
                     <Shield className="h-6 w-6 text-green-600" />
@@ -85,20 +81,18 @@ export default function SiteFooter() {
 
             <div className="hidden lg:block h-10 w-px bg-border"></div>
 
-            {/* Certified Trainers */}
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-amber-500/10 rounded-full">
                     <Award className="h-6 w-6 text-amber-600" />
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-sm font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
-                    <p className="text-xs text-muted-foreground">RTO Authorized</p>
+                    <p className="text-xs text-muted-foreground">Authorized RTO Training School</p>
                 </div>
             </div>
 
             <div className="hidden lg:block h-10 w-px bg-border"></div>
 
-            {/* Startup India & Made in India */}
             <div className="flex items-center gap-6">
                 <div className="inline-flex items-center gap-2 rounded-lg border bg-card p-2.5 px-4 text-xs shadow-sm">
                     <span className="font-bold" style={{ letterSpacing: '-0.5px' }}>

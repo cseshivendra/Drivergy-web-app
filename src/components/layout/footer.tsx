@@ -41,7 +41,6 @@ export default function Footer() {
             </a>
         </div>
 
-        {/* Trust & Payment Partner Section */}
         <div className="flex flex-wrap items-center justify-center gap-8 py-8 border-y border-border/40 w-full max-w-5xl bg-muted/5 rounded-xl">
             <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
@@ -77,7 +76,7 @@ export default function Footer() {
                 <Award className="h-5 w-5 text-amber-600" />
                 <div className="text-left leading-tight">
                     <p className="text-xs font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
-                    <p className="text-[10px] text-muted-foreground">RTO Authorized</p>
+                    <p className="text-[10px] text-muted-foreground">Authorized RTO Training School</p>
                 </div>
             </div>
         </div>
