@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award, Store } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
 import { SOCIAL_LINKS, FOOTER_NAV_LINKS } from '@/lib/footer-data';
 
@@ -86,9 +86,25 @@ export default function SiteFooter() {
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-sm font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 leading-none">
                         <span className="text-xs text-muted-foreground font-medium">Powered by</span>
                         <span className="text-sm font-black text-[#6739B7] tracking-tight">PhonePe</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="hidden lg:block h-10 w-px bg-border"></div>
+
+            <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(249, 115, 22, 0.1)' }}>
+                    <Store className="h-6 w-6" style={{ color: '#f97316' }} />
+                </div>
+                <div className="text-left leading-tight">
+                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Store Partner</p>
+                    <div className="flex items-center gap-1.5 leading-none">
+                        <span className="text-xs font-bold text-foreground">amazon</span>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <span className="text-sm font-bold text-[#2874f0]">Flipkart</span>
                     </div>
                 </div>
             </div>
@@ -113,7 +129,7 @@ export default function SiteFooter() {
                 </div>
                 <div className="text-left leading-tight">
                     <p className="text-sm font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
-                    <p className="text-xs text-muted-foreground">Authorized RTO Training School</p>
+                    <p className="text-xs text-muted-foreground">Authorized RTO School</p>
                 </div>
             </div>
         </div>

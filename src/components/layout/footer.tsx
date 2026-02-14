@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award, Store } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
 import { SOCIAL_LINKS, FOOTER_NAV_LINKS } from '@/lib/footer-data';
 
@@ -45,61 +45,70 @@ export default function Footer() {
         </div>
 
         {/* Trust Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-8 py-8 border-y border-border/40 w-full max-w-5xl bg-muted/5 rounded-xl">
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-10 py-10 border-y border-border/40 w-full max-w-6xl mx-auto bg-muted/5 rounded-xl px-4">
             <div className="flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-primary" />
+                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)' }}>
+                    <ShieldCheck className="h-6 w-6" style={{ color: '#ef4444' }} />
+                </div>
                 <div className="text-left leading-tight">
-                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
-                    <p className="text-[10px] text-muted-foreground">100% Safe &amp; Encrypted</p>
+                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
+                    <p className="text-xs text-muted-foreground">100% encrypted &amp; safe</p>
                 </div>
             </div>
             
-            <div className="hidden md:block h-6 w-px bg-border"></div>
+            <div className="hidden lg:block h-10 w-px bg-border"></div>
 
             <div className="flex items-center gap-3">
-                <CreditCard className="h-5 w-5 text-[#6739B7]" />
+                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(103, 57, 183, 0.1)' }}>
+                    <CreditCard className="h-6 w-6" style={{ color: '#6739B7' }} />
+                </div>
                 <div className="text-left leading-tight">
-                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
-                    <p className="text-[10px] text-muted-foreground">Powered by <span className="font-bold text-[#6739B7]">PhonePe</span></p>
+                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
+                    <div className="flex items-center gap-1.5 leading-none">
+                        <span className="text-xs text-muted-foreground font-medium">Powered by</span>
+                        <span className="text-sm font-black text-[#6739B7] tracking-tight">PhonePe</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="hidden md:block h-6 w-px bg-border"></div>
+            <div className="hidden lg:block h-10 w-px bg-border"></div>
 
             <div className="flex items-center gap-3">
-                <Shield className="h-5 w-5 text-green-600" />
+                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(249, 115, 22, 0.1)' }}>
+                    <Store className="h-6 w-6" style={{ color: '#f97316' }} />
+                </div>
                 <div className="text-left leading-tight">
-                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
-                    <p className="text-[10px] text-muted-foreground">Verified Platform</p>
+                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Store Partner</p>
+                    <div className="flex items-center gap-1.5 leading-none">
+                        <span className="text-xs font-bold text-foreground">amazon</span>
+                        <span className="text-xs text-muted-foreground">|</span>
+                        <span className="text-sm font-bold text-[#2874f0]">Flipkart</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="hidden md:block h-6 w-px bg-border"></div>
+            <div className="hidden lg:block h-10 w-px bg-border"></div>
 
             <div className="flex items-center gap-3">
-                <Award className="h-5 w-5 text-amber-600" />
+                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)' }}>
+                    <Shield className="h-6 w-6" style={{ color: '#22c55e' }} />
+                </div>
                 <div className="text-left leading-tight">
-                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
-                    <p className="text-[10px] text-muted-foreground">Authorized RTO Training School</p>
+                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
+                    <p className="text-xs text-muted-foreground">Verified Platform</p>
                 </div>
             </div>
-        </div>
 
-        {/* Identity Badges */}
-         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-4 pt-2">
-            <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
-              <span className="font-bold" style={{ letterSpacing: '-0.5px' }}>
-                  <span className="text-[#FF9933]">#startup</span><span className="text-[#000080]">i</span><span className="text-foreground">ndia</span>
-              </span>
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-md border bg-card p-2 px-3 text-sm shadow-sm">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5">
-                    <rect x="3" y="5" width="18" height="4" fill="#FF9933"/>
-                    <rect x="3" y="9" width="18" height="4" fill="white"/>
-                    <rect x="3" y="13" width="18" height="4" fill="#138808"/>
-                    <circle cx="12" cy="11" r="1.5" stroke="#000080" strokeWidth="0.5" fill="none"/>
-                </svg>
-                <span className="font-semibold text-foreground uppercase tracking-tight text-xs">Made in India</span>
+            <div className="hidden lg:block h-10 w-px bg-border"></div>
+
+            <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-full" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+                    <Award className="h-6 w-6" style={{ color: '#f59e0b' }} />
+                </div>
+                <div className="text-left leading-tight">
+                    <p className="text-sm font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
+                    <p className="text-xs text-muted-foreground">Authorized RTO School</p>
+                </div>
             </div>
         </div>
 
