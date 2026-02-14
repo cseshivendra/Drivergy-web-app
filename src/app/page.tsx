@@ -109,7 +109,7 @@ const coursesData = [
 const testimonialsData = [
     {
       name: "Priya Sharma",
-      role: "Customer, Bangalore",
+      role: "Customer, Prayagraj, Uttar Pradesh",
       avatar: "https://placehold.co/100x100/f472b6/ffffff.png",
       avatarHint: "happy female driver",
       testimonial: "Drivergy made learning to drive so easy! My instructor was patient and professional. The scheduling system is fantastic. I passed my test on the first try. Highly recommended!",
@@ -117,7 +117,7 @@ const testimonialsData = [
     },
     {
       name: "Rohan Verma",
-      role: "Trainer, Mumbai",
+      role: "Trainer, Prayagraj, Uttar Pradesh",
       avatar: "https://placehold.co/100x100/818cf8/ffffff.png",
       avatarHint: "professional driving instructor",
       testimonial: "As an instructor, Drivergy's platform has streamlined my business. I can manage my bookings, track student progress, and receive payments all in one place. It lets me focus on what I do best - teaching.",
@@ -125,7 +125,7 @@ const testimonialsData = [
     },
     {
       name: "Anjali Mehta",
-      role: "Customer, Delhi",
+      role: "Customer, Prayagraj, Uttar Pradesh",
       avatar: "https://placehold.co/100x100/a78bfa/ffffff.png",
       avatarHint: "confident woman driver",
       testimonial: "I was nervous about driving in a big city, but the defensive driving course gave me the confidence I needed. The app is user-friendly and the support team is very responsive.",
