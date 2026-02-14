@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
 
 export default function Footer() {
@@ -42,22 +42,42 @@ export default function Footer() {
         </div>
 
         {/* Trust & Payment Partner Section */}
-        <div className="flex flex-wrap items-center justify-center gap-6 py-6 border-y border-border/40 w-full max-w-4xl">
+        <div className="flex flex-wrap items-center justify-center gap-8 py-8 border-y border-border/40 w-full max-w-5xl bg-muted/5 rounded-xl">
             <div className="flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                <div className="text-left">
-                    <p className="text-xs font-bold text-foreground uppercase">Secure Payments</p>
-                    <p className="text-[10px] text-muted-foreground">100% Safe & Encrypted</p>
+                <div className="text-left leading-tight">
+                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
+                    <p className="text-[10px] text-muted-foreground">100% Safe &amp; Encrypted</p>
                 </div>
             </div>
             
-            <div className="hidden sm:block h-6 w-px bg-border"></div>
+            <div className="hidden md:block h-6 w-px bg-border"></div>
 
             <div className="flex items-center gap-3">
                 <CreditCard className="h-5 w-5 text-[#6739B7]" />
-                <div className="text-left">
-                    <p className="text-xs font-bold text-foreground uppercase">Payment Partner</p>
+                <div className="text-left leading-tight">
+                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
                     <p className="text-[10px] text-muted-foreground">Powered by <span className="font-bold text-[#6739B7]">PhonePe</span></p>
+                </div>
+            </div>
+
+            <div className="hidden md:block h-6 w-px bg-border"></div>
+
+            <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-green-600" />
+                <div className="text-left leading-tight">
+                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
+                    <p className="text-[10px] text-muted-foreground">Verified Platform</p>
+                </div>
+            </div>
+
+            <div className="hidden md:block h-6 w-px bg-border"></div>
+
+            <div className="flex items-center gap-3">
+                <Award className="h-5 w-5 text-amber-600" />
+                <div className="text-left leading-tight">
+                    <p className="text-xs font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
+                    <p className="text-[10px] text-muted-foreground">RTO Authorized</p>
                 </div>
             </div>
         </div>
@@ -75,7 +95,7 @@ export default function Footer() {
                     <rect x="3" y="13" width="18" height="4" fill="#138808"/>
                     <circle cx="12" cy="11" r="1.5" stroke="#000080" strokeWidth="0.5" fill="none"/>
                 </svg>
-                <span className="font-semibold text-foreground">Made in India</span>
+                <span className="font-semibold text-foreground uppercase tracking-tight text-xs">Made in India</span>
             </div>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2 border-t border-border/20 w-full">
@@ -83,7 +103,7 @@ export default function Footer() {
             <span className="hidden md:inline text-muted-foreground/50">|</span>
             <Link href="/privacy-policy" className="underline hover:text-primary transition-colors">Privacy Policy</Link>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
-            <Link href="/terms-and-conditions" className="underline hover:text-primary transition-colors">Terms & Conditions</Link>
+            <Link href="/terms-and-conditions" className="underline hover:text-primary transition-colors">Terms &amp; Conditions</Link>
             <span className="hidden md:inline text-muted-foreground/50">|</span>
             <Link href="/refund-policy" className="underline hover:text-primary transition-colors">Refund Policy</Link>
         </div>
