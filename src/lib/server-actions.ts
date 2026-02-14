@@ -1190,12 +1190,46 @@ export async function updateSiteBanner(bannerId: string, data: VisualContentForm
     return true;
 }
 
+export async function addSiteBanner(data: VisualContentFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const { imageFile, ...bannerData } = data;
+    let imageUrl = bannerData.imageSrc;
+    if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'site_banners');
+    await adminDb.collection('siteBanners').add({ ...bannerData, imageSrc: imageUrl });
+    revalidatePath('/');
+    return true;
+}
+
+export async function deleteSiteBanner(bannerId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('siteBanners').doc(bannerId).delete();
+    revalidatePath('/');
+    return true;
+}
+
 export async function updatePromotionalPoster(posterId: string, data: VisualContentFormValues): Promise<boolean> {
     if (!adminDb) return false;
     const { imageFile, ...posterData } = data;
     let imageUrl = posterData.imageSrc;
     if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'promo_posters');
     await adminDb.collection('promotionalPosters').doc(posterId).update({ ...posterData, imageSrc: imageUrl });
+    revalidatePath('/');
+    return true;
+}
+
+export async function addPromotionalPoster(data: VisualContentFormValues): Promise<boolean> {
+    if (!adminDb) return false;
+    const { imageFile, ...posterData } = data;
+    let imageUrl = posterData.imageSrc;
+    if (imageFile) imageUrl = await uploadFileToCloudinary(await fileToBuffer(imageFile), 'promo_posters');
+    await adminDb.collection('promotionalPosters').add({ ...posterData, imageSrc: imageUrl });
+    revalidatePath('/');
+    return true;
+}
+
+export async function deletePromotionalPoster(posterId: string): Promise<boolean> {
+    if (!adminDb) return false;
+    await adminDb.collection('promotionalPosters').doc(posterId).delete();
     revalidatePath('/');
     return true;
 }
@@ -1588,4 +1622,27 @@ export async function fetchAmazonProductDetails(url: string): Promise<{ title: s
     };
 
     return { ...data, amazonId: asin };
+}
+
+/**
+ * General URL Metadata Scraper (Simulated)
+ */
+export async function fetchUrlMetadata(url: string): Promise<{ title: string, description: string, imageSrc: string } | null> {
+    if (!url) return null;
+    
+    // Simulate scraping delay
+    await new Promise(r => setTimeout(r, 1200));
+
+    try {
+        const domain = new URL(url).hostname;
+        
+        // Mock data for demonstration
+        return {
+            title: `Featured Content from ${domain}`,
+            description: `Auto-filled details retrieved from the provided link at ${domain}. Review and edit as needed.`,
+            imageSrc: `https://placehold.co/800x600/3b82f6/ffffff?text=${domain}`
+        };
+    } catch (e) {
+        return null;
+    }
 }

@@ -360,38 +360,38 @@ export default function AdminDashboard() {
     const renderContentView = () => (
         <div className="space-y-8">
             <StoreManagement
-                title={<><ShoppingBag className="inline-block mr-3 h-6 w-6 align-middle" />Store Management</>}
+                title="Store Management"
                 products={dashboardData?.storeProducts || []}
                 isLoading={loading}
                 onAction={() => loadData(true)}
             />
             <CourseManagement
-                title={<><BookOpen className="inline-block mr-3 h-6 w-6 align-middle" />Course Management</>}
+                title="Course Management"
                 courses={dashboardData?.courses || []}
                 isLoading={loading}
                 onAction={() => loadData(true)}
             />
             <BlogManagement
-                title={<><BookText className="inline-block mr-3 h-6 w-6 align-middle" />Blog Post Management</>}
+                title="Blog Post Management"
                 posts={dashboardData?.blogPosts || []}
                 isLoading={loading}
                 onAction={() => loadData(true)}
             />
             <FaqManagement
-                title={<><HelpCircle className="inline-block mr-3 h-6 w-6 align-middle" />FAQ Management</>}
+                title="FAQ Management"
                 faqs={dashboardData?.faqs || []}
                 isLoading={loading}
                 onAction={() => loadData(true)}
             />
             <VisualContentManagement 
-                title={<><ImagePlay className="inline-block mr-3 h-6 w-6 align-middle" />Visual Content</>}
+                title="Visual Content"
                 banners={dashboardData?.siteBanners || []}
                 posters={dashboardData?.promotionalPosters || []}
                 isLoading={loading}
                 onAction={() => loadData(true)}
             />
              <QuizManagement
-                title={<><ClipboardCheck className="inline-block mr-3 h-6 w-6 align-middle" />RTO Quiz Management</>}
+                title="RTO Quiz Management"
                 quizSets={dashboardData?.quizSets || []}
                 isLoading={loading}
                 onAction={() => loadData(true)}
