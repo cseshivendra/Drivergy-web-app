@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ShoppingBag, Trash2, Edit, PlusCircle, AlertCircle, Loader2, Link as LinkIcon, ExternalLink, Image as ImageIcon, Search } from 'lucide-react';
+import { ShoppingBag, Trash2, Edit, PlusCircle, AlertCircle, Loader2, Link as LinkIcon, ExternalLink, Image as ImageIcon, Search, IndianRupee } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,7 @@ function ProductForm({ product, onFormSubmit }: { product?: Product; onFormSubmi
       flipkartId: product?.flipkartId || '',
       imageSrc: product?.imageSrc || '',
       imageHint: product?.imageHint || 'car accessory',
+      price: product?.price || 0,
     },
   });
 
@@ -52,7 +53,8 @@ function ProductForm({ product, onFormSubmit }: { product?: Product; onFormSubmi
             form.setValue('description', details.description);
             form.setValue('amazonId', details.amazonId);
             form.setValue('imageSrc', details.imageSrc);
-            toast({ title: "Details Fetched!", description: "Amazon product information has been pre-filled." });
+            form.setValue('price', details.price);
+            toast({ title: "Details Fetched!", description: "Amazon product information and price have been pre-filled." });
         } else {
             toast({ title: "Fetch Failed", description: "Could not find ASIN in the provided URL.", variant: "destructive" });
         }
@@ -122,7 +124,10 @@ function ProductForm({ product, onFormSubmit }: { product?: Product; onFormSubmi
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <FormField control={form.control} name="title" render={({ field }) => ( <FormItem><FormLabel>Product Title</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
-                    <FormField control={form.control} name="amazonId" render={({ field }) => ( <FormItem><FormLabel>Amazon ASIN</FormLabel><FormControl><Input placeholder="e.g., B07Y62883J" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="price" render={({ field }) => ( <FormItem><FormLabel>Display Price (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                        <FormField control={form.control} name="amazonId" render={({ field }) => ( <FormItem><FormLabel>Amazon ASIN</FormLabel><FormControl><Input placeholder="e.g., B07Y62883J" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    </div>
                     <FormField control={form.control} name="flipkartId" render={({ field }) => ( <FormItem><FormLabel>Flipkart ID (Optional)</FormLabel><FormControl><Input placeholder="e.g., MOBG937GZJ4H3G3Y" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 </div>
                 <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-background">
@@ -208,6 +213,7 @@ export default function StoreManagement({ title, products, isLoading, onAction }
             <TableHeader>
               <TableRow>
                 <TableHead>Product</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead>Amazon ID</TableHead>
                 <TableHead>Links</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -219,12 +225,13 @@ export default function StoreManagement({ title, products, isLoading, onAction }
                   <TableRow key={prod.id}>
                     <TableCell>
                         <div className="flex items-center gap-3">
-                            <div className="relative h-10 w-10 border rounded bg-muted">
+                            <div className="relative h-10 w-10 border rounded bg-muted shrink-0">
                                 <NextImage src={prod.imageSrc} alt={prod.title} fill className="object-contain" />
                             </div>
-                            <span className="font-medium">{prod.title}</span>
+                            <span className="font-medium truncate max-w-[200px]">{prod.title}</span>
                         </div>
                     </TableCell>
+                    <TableCell className="font-bold">₹{prod.price?.toLocaleString('en-IN') || '0'}</TableCell>
                     <TableCell className="font-mono text-xs">{prod.amazonId}</TableCell>
                     <TableCell>
                         <div className="flex gap-2">
@@ -248,7 +255,7 @@ export default function StoreManagement({ title, products, isLoading, onAction }
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     <div className="flex flex-col items-center justify-center text-muted-foreground">
                       <AlertCircle className="w-12 h-12 mb-2 opacity-50" />
                       <p className="text-lg">Store is empty.</p>

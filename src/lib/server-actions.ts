@@ -1585,7 +1585,7 @@ export async function deleteStoreProduct(productId: string): Promise<boolean> {
  * Enhanced Amazon ASIN extraction and simulated product detail fetching.
  * Supports standard /dp/ paths, /gp/product paths, and loose mobile mission links.
  */
-export async function fetchAmazonProductDetails(url: string): Promise<{ title: string, description: string, imageSrc: string, amazonId: string } | null> {
+export async function fetchAmazonProductDetails(url: string): Promise<{ title: string, description: string, imageSrc: string, amazonId: string, price: number } | null> {
     // 1. Standard paths: /dp/ASIN or /gp/product/ASIN
     const standardRegex = /\/(?:dp|gp\/product)\/([A-Z0-9]{10})(?:[\/?]|$)/i;
     let match = url.match(standardRegex);
@@ -1607,29 +1607,39 @@ export async function fetchAmazonProductDetails(url: string): Promise<{ title: s
     // Simulate API delay
     await new Promise(r => setTimeout(r, 1000));
 
-    // Mock data based on common driving accessories
+    // Comprehensive Mock Database for Driving Accessories
     const mocks: Record<string, any> = {
+        'B09MKMMF96': {
+            title: '70mai Dash Cam M300',
+            description: '1296P QHD resolution, 140° wide-angle FOV, night vision, parking surveillance, and app control. A must-have for safety.',
+            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg',
+            price: 3999
+        },
         'B07Y62883J': {
             title: 'Magnetic Car Phone Holder',
-            description: 'Powerful N52 magnets, 360-degree rotation, fits all smartphones.',
-            imageSrc: 'https://m.media-amazon.com/images/I/71+vEx-shFL._AC_SL1500_.jpg'
+            description: 'Powerful N52 magnets, 360-degree rotation, fits all smartphones. Ideal for hands-free navigation during lessons.',
+            imageSrc: 'https://m.media-amazon.com/images/I/71+vEx-shFL._AC_SL1500_.jpg',
+            price: 499
         },
         'B01CV4ANCC': {
             title: 'Blind Spot Mirrors (2-Pack)',
-            description: 'Convex design, waterproof, increases visibility for safer lane changes.',
-            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg'
+            description: 'Convex design, waterproof, increases visibility for safer lane changes. Highly recommended for new learners.',
+            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg',
+            price: 299
         },
         'B073733564': {
             title: 'Digital Tyre Pressure Gauge',
-            description: 'High precision backlit LCD, simple button control, ensures optimal tyre safety.',
-            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg'
+            description: 'High precision backlit LCD, simple button control, ensures optimal tyre safety and fuel efficiency.',
+            imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg',
+            price: 899
         }
     };
 
     const data = mocks[finalAsin] || {
-        title: 'New Driving Accessory',
-        description: 'Premium quality accessory recommended by the Drivergy team for an enhanced driving experience.',
-        imageSrc: `https://picsum.photos/seed/${finalAsin}/600/400`
+        title: 'Premium Driving Accessory',
+        description: 'Quality automotive accessory recommended by the Drivergy team to enhance your vehicle safety and driving comfort.',
+        imageSrc: `https://picsum.photos/seed/${finalAsin}/600/400`,
+        price: 999
     };
 
     return { ...data, amazonId: finalAsin };

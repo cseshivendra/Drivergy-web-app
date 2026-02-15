@@ -361,6 +361,7 @@ export const StoreProductSchema = z.object({
   flipkartId: z.string().optional().or(z.literal('')),
   imageSrc: z.string().url("Valid image URL is required.").or(z.literal('')),
   imageHint: z.string().optional(),
+  price: z.coerce.number().min(1, "Price is required."),
 });
 export type StoreProductFormValues = z.infer<typeof StoreProductSchema>;
 
@@ -595,6 +596,7 @@ export interface Product {
   imageHint: string;
   amazonId: string; // ASIN
   flipkartId: string; // FSN/LID
+  price: number;
 }
 
 export interface PriceData {

@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { fetchStoreProducts } from '@/lib/server-data';
 import type { Product } from '@/types';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, IndianRupee } from 'lucide-react';
 import type { Metadata } from 'next';
 import PriceChecker from './price-checker';
 
@@ -39,13 +39,21 @@ export default async function StorePage() {
                     src={product.imageSrc} 
                     alt={product.title} 
                     fill
-                    className="object-cover" 
+                    className="object-contain" 
                     data-ai-hint={product.imageHint}
                   />
                 </div>
               )}
               <CardHeader className="pb-3">
-                <CardTitle className="font-headline text-xl font-semibold text-primary">{product.title}</CardTitle>
+                <div className="flex justify-between items-start gap-4">
+                    <CardTitle className="font-headline text-xl font-semibold text-primary">{product.title}</CardTitle>
+                    {product.price > 0 && (
+                        <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold flex items-center shrink-0">
+                            <IndianRupee className="h-3 w-3 mr-0.5" />
+                            {product.price.toLocaleString('en-IN')}
+                        </div>
+                    )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-5 flex-grow">
                 <CardDescription className="text-sm text-muted-foreground">{product.description}</CardDescription>
