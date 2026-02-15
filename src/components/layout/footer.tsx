@@ -10,6 +10,7 @@ import { SOCIAL_LINKS, FOOTER_NAV_LINKS, TRUST_BADGES } from '@/lib/footer-data'
 export default function Footer() {
   // Deterministic styling for brand names
   const renderSublabel = (text: string) => {
+    // PhonePe
     if (text.includes('PhonePe')) {
       const parts = text.split('PhonePe');
       return (
@@ -20,23 +21,25 @@ export default function Footer() {
         </span>
       );
     }
-    // Combined highlighting for Amazon & Flipkart
-    if (text.includes('Amazon') && text.includes('Flipkart')) {
+    
+    // Exact match for "amazon | Flipkart" layout
+    if (text === 'amazon | Flipkart') {
       return (
         <span>
-          <span style={{ color: '#FF9900', fontWeight: '800' }}>Amazon</span>
-          {' & '}
+          <span style={{ color: '#FF9900', fontWeight: '800' }}>amazon</span>
+          <span className="mx-1 text-muted-foreground/40 font-normal">|</span>
           <span style={{ color: '#2874F0', fontWeight: '800' }}>Flipkart</span>
-          {' Partner'}
         </span>
       );
     }
-    if (text.includes('Amazon')) {
-      const parts = text.split('Amazon');
+
+    // Individual highlights (fallback)
+    if (text.includes('amazon')) {
+      const parts = text.split('amazon');
       return (
         <span>
           {parts[0]}
-          <span style={{ color: '#FF9900', fontWeight: '800' }}>Amazon</span>
+          <span style={{ color: '#FF9900', fontWeight: '800' }}>amazon</span>
           {parts[1]}
         </span>
       );

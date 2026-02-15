@@ -40,7 +40,7 @@ export const TRUST_BADGES = [
   {
     id: 'store-partner',
     label: 'Store Partner',
-    sublabel: 'Amazon & Flipkart Partner',
+    sublabel: 'amazon | Flipkart',
     icon: Store,
     color: '#FF9900',
     bgColor: 'rgba(255, 153, 0, 0.1)',
