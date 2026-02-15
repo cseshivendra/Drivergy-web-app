@@ -20,6 +20,17 @@ export default function Footer() {
         </span>
       );
     }
+    // Combined highlighting for Amazon & Flipkart
+    if (text.includes('Amazon') && text.includes('Flipkart')) {
+      return (
+        <span>
+          <span style={{ color: '#FF9900', fontWeight: '800' }}>Amazon</span>
+          {' & '}
+          <span style={{ color: '#2874F0', fontWeight: '800' }}>Flipkart</span>
+          {' Partner'}
+        </span>
+      );
+    }
     if (text.includes('Amazon')) {
       const parts = text.split('Amazon');
       return (

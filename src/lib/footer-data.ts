@@ -2,7 +2,7 @@
  * Static data for the footer to ensure Pure Render architecture
  * and zero hydration mismatches.
  */
-import { ShieldCheck, CreditCard, Store, Shield, Award, ShoppingBag } from 'lucide-react';
+import { ShieldCheck, CreditCard, Store, Shield, Award } from 'lucide-react';
 
 export const SOCIAL_LINKS = [
   { id: 'fb', name: 'Facebook', href: 'https://www.facebook.com/drivergyofficial' },
@@ -38,20 +38,12 @@ export const TRUST_BADGES = [
     bgColor: 'rgba(103, 57, 183, 0.1)',
   },
   {
-    id: 'amazon-partner',
+    id: 'store-partner',
     label: 'Store Partner',
-    sublabel: 'Amazon Associate',
+    sublabel: 'Amazon & Flipkart Partner',
     icon: Store,
     color: '#FF9900',
     bgColor: 'rgba(255, 153, 0, 0.1)',
-  },
-  {
-    id: 'flipkart-partner',
-    label: 'Store Partner',
-    sublabel: 'Flipkart Partner',
-    icon: ShoppingBag,
-    color: '#2874F0',
-    bgColor: 'rgba(40, 116, 240, 0.1)',
   },
   {
     id: 'safe-secure',
