@@ -2,11 +2,12 @@ import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
 import { SOCIAL_LINKS, FOOTER_NAV_LINKS, TRUST_BADGES } from '@/lib/footer-data';
+import { cn } from '@/lib/utils';
 
 /**
  * Pure Render Footer component.
- * Features a high-performance smooth auto-scrolling marquee for trust badges.
- * Masked edges provide a premium, cinematic fade effect.
+ * Features a high-performance smooth auto-scrolling marquee for trust badges on mobile.
+ * On Desktop view, badges remain static and centered for maximum clarity.
  */
 export default function SiteFooter() {
   // Deterministic styling for brand names
@@ -34,27 +35,6 @@ export default function SiteFooter() {
       );
     }
 
-    // Individual highlights (fallback)
-    if (text.includes('amazon')) {
-      const parts = text.split('amazon');
-      return (
-        <span>
-          {parts[0]}
-          <span style={{ color: '#FF9900', fontWeight: '800' }}>amazon</span>
-          {parts[1]}
-        </span>
-      );
-    }
-    if (text.includes('Flipkart')) {
-      const parts = text.split('Flipkart');
-      return (
-        <span>
-          {parts[0]}
-          <span style={{ color: '#2874F0', fontWeight: '800' }}>Flipkart</span>
-          {parts[1]}
-        </span>
-      );
-    }
     return text;
   };
 
@@ -115,14 +95,17 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        {/* TRUST MARQUEE - Smooth Cinematic Motion */}
-        <div className="relative w-full max-w-7xl mx-auto overflow-hidden mask-edge-fade py-4 border-y border-border/40">
-            <div className="animate-marquee">
-                {/* Render badges twice for seamless looping */}
+        {/* TRUST MARQUEE - Smooth Cinematic Motion on Mobile, Static on Desktop */}
+        <div className="relative w-full max-w-7xl mx-auto overflow-hidden lg:overflow-visible mask-edge-fade lg:mask-none py-4 border-y border-border/40">
+            <div className="flex animate-marquee lg:animate-none lg:justify-around lg:w-full">
+                {/* Render badges twice for looping on mobile, but only first set on desktop */}
                 {[...TRUST_BADGES, ...TRUST_BADGES].map((badge, idx) => (
                     <div 
                         key={`${badge.id}-${idx}`} 
-                        className="flex items-center gap-4 shrink-0 px-10 sm:px-16"
+                        className={cn(
+                            "flex items-center gap-4 shrink-0 px-10 sm:px-16 lg:px-4",
+                            idx >= TRUST_BADGES.length ? "flex lg:hidden" : "flex"
+                        )}
                     >
                         <div 
                             className="p-3 rounded-full" 
@@ -136,7 +119,8 @@ export default function SiteFooter() {
                                 {renderSublabel(badge.sublabel)}
                             </p>
                         </div>
-                        <div className="ml-10 sm:ml-16 h-8 w-px bg-border/60"></div>
+                        {/* Hidden on desktop to keep the layout clean */}
+                        <div className="ml-10 sm:ml-16 lg:hidden h-8 w-px bg-border/60"></div>
                     </div>
                 ))}
             </div>
