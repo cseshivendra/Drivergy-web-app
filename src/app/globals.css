@@ -115,10 +115,10 @@
     scrollbar-width: none;  /* Firefox */
   }
 
-  /* Edge Fade Mask */
+  /* Edge Fade Mask - Reduced to 10% for better text visibility */
   .mask-edge-fade {
-    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   }
 }
 

@@ -52,19 +52,19 @@ export default function Footer() {
                 {[...TRUST_BADGES, ...TRUST_BADGES].map((badge, idx) => (
                     <div 
                         key={`${badge.id}-${idx}`} 
-                        className="flex items-center gap-4 shrink-0 px-8 sm:px-12"
+                        className="flex items-center gap-4 shrink-0 px-10 sm:px-16"
                     >
                         <div 
-                            className="p-2.5 rounded-full" 
+                            className="p-3 rounded-full" 
                             style={{ backgroundColor: badge.bgColor }}
                         >
                             <badge.icon className="h-7 w-7" style={{ color: badge.color }} />
                         </div>
                         <div className="text-left leading-tight">
-                            <p className="text-xs font-bold text-foreground uppercase tracking-tight whitespace-nowrap">{badge.label}</p>
-                            <p className="text-[10px] text-muted-foreground whitespace-nowrap">{badge.sublabel}</p>
+                            <p className="text-sm font-black text-foreground uppercase tracking-tight whitespace-nowrap">{badge.label}</p>
+                            <p className="text-xs font-semibold text-muted-foreground/90 whitespace-nowrap">{badge.sublabel}</p>
                         </div>
-                        <div className="ml-8 sm:ml-12 h-8 w-px bg-border/60"></div>
+                        <div className="ml-10 sm:ml-16 h-8 w-px bg-border/60"></div>
                     </div>
                 ))}
             </div>
