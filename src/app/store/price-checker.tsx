@@ -11,17 +11,22 @@ import type { PriceData } from '@/types';
 interface PriceCheckerProps {
   amazonId: string;
   flipkartId: string;
+  basePrice: number;
 }
 
 // SIMULATED API CALL
-async function fetchPrices(amazonId: string, flipkartId: string): Promise<PriceData> {
+async function fetchPrices(amazonId: string, flipkartId: string, basePrice: number): Promise<PriceData> {
   // In a real application, this would be a server action calling a price comparison API.
-  // We simulate a delay and random prices for demonstration.
+  // We simulate a delay and prices that are realistically related to the base price.
   return new Promise(resolve => {
     setTimeout(() => {
+      // Logic: Market prices are usually 0-20% lower than MSRP/Base Price
+      const amazonFluctuation = 0.85 + (Math.random() * 0.10); // 85% to 95%
+      const flipkartFluctuation = 0.80 + (Math.random() * 0.15); // 80% to 95%
+      
       resolve({
-        amazonPrice: Math.floor(Math.random() * (600 - 300 + 1)) + 300,
-        flipkartPrice: Math.floor(Math.random() * (600 - 300 + 1)) + 300,
+        amazonPrice: Math.floor(basePrice * amazonFluctuation),
+        flipkartPrice: Math.floor(basePrice * flipkartFluctuation),
       });
     }, 1000 + Math.random() * 1000);
   });
@@ -40,7 +45,7 @@ const PriceSkeleton = () => (
     </div>
 );
 
-export default function PriceChecker({ amazonId, flipkartId }: PriceCheckerProps) {
+export default function PriceChecker({ amazonId, flipkartId, basePrice }: PriceCheckerProps) {
   const [prices, setPrices] = useState<PriceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +58,7 @@ export default function PriceChecker({ amazonId, flipkartId }: PriceCheckerProps
     async function getPrices() {
       try {
         setLoading(true);
-        const data = await fetchPrices(amazonId, flipkartId);
+        const data = await fetchPrices(amazonId, flipkartId, basePrice);
         if (isMounted) {
           setPrices(data);
         }
@@ -70,7 +75,7 @@ export default function PriceChecker({ amazonId, flipkartId }: PriceCheckerProps
     }
     getPrices();
     return () => { isMounted = false; };
-  }, [amazonId, flipkartId]);
+  }, [amazonId, flipkartId, basePrice]);
 
   const amazonUrl = `https://www.amazon.in/dp/${amazonId}/?tag=${amazonAffiliateTag}`;
   const flipkartUrl = `https://www.flipkart.com/product/p/itme?pid=${flipkartId}&affid=${flipkartAffiliateId}`;
@@ -111,7 +116,7 @@ export default function PriceChecker({ amazonId, flipkartId }: PriceCheckerProps
         <div className="flex items-center gap-2">
             {bestPrice === 'amazon' && <span className="text-xs font-bold text-green-600 animate-pulse">Best Price!</span>}
             <span className="text-lg font-bold text-primary">
-                {amazonPrice ? `₹${amazonPrice.toFixed(2)}` : 'N/A'}
+                {amazonPrice ? `₹${amazonPrice.toLocaleString('en-IN')}` : 'N/A'}
             </span>
             <Button asChild size="sm" variant="outline">
                 <a href={amazonUrl} target="_blank" rel="noopener noreferrer">Buy <ExternalLink className="ml-2 h-3 w-3" /></a>
@@ -123,7 +128,7 @@ export default function PriceChecker({ amazonId, flipkartId }: PriceCheckerProps
         <div className="flex items-center gap-2">
             {bestPrice === 'flipkart' && <span className="text-xs font-bold text-green-600 animate-pulse">Best Price!</span>}
              <span className="text-lg font-bold text-primary">
-                {flipkartPrice ? `₹${flipkartPrice.toFixed(2)}` : 'N/A'}
+                {flipkartPrice ? `₹${flipkartPrice.toLocaleString('en-IN')}` : 'N/A'}
             </span>
              <Button asChild size="sm" variant="outline">
                 <a href={flipkartUrl} target="_blank" rel="noopener noreferrer">Buy <ExternalLink className="ml-2 h-3 w-3" /></a>

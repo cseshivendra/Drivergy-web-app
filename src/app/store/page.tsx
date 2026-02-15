@@ -58,7 +58,11 @@ export default async function StorePage() {
               <CardContent className="space-y-5 flex-grow">
                 <CardDescription className="text-sm text-muted-foreground">{product.description}</CardDescription>
                 
-                <PriceChecker amazonId={product.amazonId} flipkartId={product.flipkartId} />
+                <PriceChecker 
+                    amazonId={product.amazonId} 
+                    flipkartId={product.flipkartId} 
+                    basePrice={product.price}
+                />
                 
               </CardContent>
             </Card>

@@ -1632,6 +1632,12 @@ export async function fetchAmazonProductDetails(url: string): Promise<{ title: s
             description: 'High precision backlit LCD, simple button control, ensures optimal tyre safety and fuel efficiency.',
             imageSrc: 'https://m.media-amazon.com/images/I/61vGv6cl-lL._AC_SL1000_.jpg',
             price: 899
+        },
+        'B07K8RCWSQ': {
+            title: 'Steelbird SBA-7 Huracan ISI Certified Flip-Up Helmet for Men and Women with Inner Sun Shield',
+            description: 'Material Type: High Impact Abs Material Shell; Shell Type: Eps / Abs Material; Item Weight: 1260.0; Material Type: Acrylonitrile Butadiene Styrene (Abs); Department Name: Unisex-Adult; Unit Count: 1.0; Closure Type: Micro Metric Style; Warranty Description: No; Included Components: 1 Helmet Item Shape: Round Oval, Intermediate Oval; Compatible With Vehicle Type: Two Wheeler',
+            imageSrc: 'https://m.media-amazon.com/images/I/61ovv6To9DL._SL1500_.jpg',
+            price: 999
         }
     };
 
