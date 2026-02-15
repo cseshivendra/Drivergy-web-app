@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
@@ -10,6 +9,41 @@ import { SOCIAL_LINKS, FOOTER_NAV_LINKS, TRUST_BADGES } from '@/lib/footer-data'
  * Masked edges provide a premium, cinematic fade effect.
  */
 export default function SiteFooter() {
+  // Deterministic styling for brand names
+  const renderSublabel = (text: string) => {
+    if (text.includes('PhonePe')) {
+      const parts = text.split('PhonePe');
+      return (
+        <span>
+          {parts[0]}
+          <span style={{ color: '#6739B7', fontWeight: '800' }}>PhonePe</span>
+          {parts[1]}
+        </span>
+      );
+    }
+    if (text.includes('Amazon')) {
+      const parts = text.split('Amazon');
+      return (
+        <span>
+          {parts[0]}
+          <span style={{ color: '#FF9900', fontWeight: '800' }}>Amazon</span>
+          {parts[1]}
+        </span>
+      );
+    }
+    if (text.includes('Flipkart')) {
+      const parts = text.split('Flipkart');
+      return (
+        <span>
+          {parts[0]}
+          <span style={{ color: '#2874F0', fontWeight: '800' }}>Flipkart</span>
+          {parts[1]}
+        </span>
+      );
+    }
+    return text;
+  };
+
   return (
     <footer className="border-t border-border/40 bg-background py-10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-10">
@@ -84,7 +118,9 @@ export default function SiteFooter() {
                         </div>
                         <div className="text-left leading-tight">
                             <p className="text-sm font-black text-foreground uppercase tracking-tight whitespace-nowrap">{badge.label}</p>
-                            <p className="text-xs font-semibold text-muted-foreground/90 whitespace-nowrap">{badge.sublabel}</p>
+                            <p className="text-xs font-semibold text-muted-foreground/90 whitespace-nowrap">
+                                {renderSublabel(badge.sublabel)}
+                            </p>
                         </div>
                         <div className="ml-10 sm:ml-16 h-8 w-px bg-border/60"></div>
                     </div>
