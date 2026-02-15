@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award, Store } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
@@ -6,6 +7,7 @@ import { SOCIAL_LINKS, FOOTER_NAV_LINKS } from '@/lib/footer-data';
 /**
  * Pure Render Footer component (Standardized with site-footer).
  * Ensures bit-for-bit parity between SSR and CSR.
+ * Slideable trust badges for mobile and tablet views.
  */
 export default function Footer() {
   return (
@@ -44,10 +46,10 @@ export default function Footer() {
             })}
         </div>
 
-        {/* Trust Badges - SINGLE LINE */}
-        <div className="flex items-center justify-center gap-x-4 md:gap-x-6 py-8 border-y border-border/40 w-full max-w-7xl mx-auto bg-muted/5 rounded-xl px-4 overflow-x-auto no-scrollbar flex-nowrap lg:flex-wrap">
+        {/* Trust Badges - SLIDEABLE ON MOBILE/TAB */}
+        <div className="flex items-center justify-start lg:justify-center gap-x-4 md:gap-x-6 py-8 border-y border-border/40 w-full max-w-7xl mx-auto bg-muted/5 rounded-xl px-8 overflow-x-auto no-scrollbar flex-nowrap snap-x snap-mandatory">
             {/* Secure Payments */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 snap-center">
                 <div className="p-2.5 rounded-full bg-red-500/10">
                     <ShieldCheck className="h-7 w-7 text-red-500" />
                 </div>
@@ -60,7 +62,7 @@ export default function Footer() {
             <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Payment Partner */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 snap-center">
                 <div className="p-2.5 rounded-full bg-[#6739B7]/10">
                     <CreditCard className="h-7 w-7 text-[#6739B7]" />
                 </div>
@@ -76,7 +78,7 @@ export default function Footer() {
             <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Store Partner */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 snap-center">
                 <div className="p-2.5 rounded-full bg-orange-500/10">
                     <Store className="h-7 w-7 text-orange-500" />
                 </div>
@@ -93,7 +95,7 @@ export default function Footer() {
             <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Safe & Secure */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 snap-center">
                 <div className="p-2.5 rounded-full bg-green-500/10">
                     <Shield className="h-7 w-7 text-green-500" />
                 </div>
@@ -106,7 +108,7 @@ export default function Footer() {
             <div className="h-10 w-px bg-border shrink-0"></div>
 
             {/* Certified Trainers */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-3 shrink-0 snap-center">
                 <div className="p-2.5 rounded-full bg-amber-500/10">
                     <Award className="h-7 w-7 text-amber-500" />
                 </div>
