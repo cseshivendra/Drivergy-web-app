@@ -38,6 +38,11 @@
   50% { transform: scale(1.05); opacity: 1; }
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 
 @tailwind base;
 @tailwind components;
@@ -77,6 +82,12 @@
   .animate-pulse-subtle {
       animation: pulse-subtle 3s ease-in-out infinite;
   }
+
+  .animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 22s linear infinite;
+  }
   
   /* 3D Card Flip Utilities */
   .perspective-1000 {
@@ -102,6 +113,12 @@
   .no-scrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Edge Fade Mask */
+  .mask-edge-fade {
+    mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
   }
 }
 

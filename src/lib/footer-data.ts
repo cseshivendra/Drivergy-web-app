@@ -1,7 +1,9 @@
+
 /**
  * Static data for the footer to ensure Pure Render architecture
  * and zero hydration mismatches.
  */
+import { ShieldCheck, CreditCard, Store, Shield, Award } from 'lucide-react';
 
 export const SOCIAL_LINKS = [
   { id: 'fb', name: 'Facebook', href: 'https://www.facebook.com/drivergyofficial' },
@@ -17,4 +19,47 @@ export const FOOTER_NAV_LINKS = [
   { id: 'privacy', name: 'Privacy Policy', href: '/privacy-policy' },
   { id: 'terms', name: 'Terms & Conditions', href: '/terms-and-conditions' },
   { id: 'refund', name: 'Refund Policy', href: '/refund-policy' },
+];
+
+export const TRUST_BADGES = [
+  {
+    id: 'secure-payments',
+    label: 'Secure Payments',
+    sublabel: '100% encrypted & safe',
+    icon: ShieldCheck,
+    color: '#ef4444',
+    bgColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  {
+    id: 'payment-partner',
+    label: 'Payment Partner',
+    sublabel: 'Powered by PhonePe',
+    icon: CreditCard,
+    color: '#6739B7',
+    bgColor: 'rgba(103, 57, 183, 0.1)',
+  },
+  {
+    id: 'store-partner',
+    label: 'Store Partner',
+    sublabel: 'Amazon | Flipkart',
+    icon: Store,
+    color: '#f97316',
+    bgColor: 'rgba(249, 115, 22, 0.1)',
+  },
+  {
+    id: 'safe-secure',
+    label: 'Safe & Secure',
+    sublabel: 'Verified Platform',
+    icon: Shield,
+    color: '#22c55e',
+    bgColor: 'rgba(34, 197, 94, 0.1)',
+  },
+  {
+    id: 'certified-trainers',
+    label: 'Certified Trainers',
+    sublabel: 'Authorized RTO School',
+    icon: Award,
+    color: '#f59e0b',
+    bgColor: 'rgba(245, 158, 11, 0.1)',
+  },
 ];

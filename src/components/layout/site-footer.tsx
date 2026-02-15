@@ -1,18 +1,18 @@
 
 import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck, CreditCard, Shield, Award, Store } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { DrivergyLogo, DrivergyLogoIcon } from '../ui/logo';
-import { SOCIAL_LINKS, FOOTER_NAV_LINKS } from '@/lib/footer-data';
+import { SOCIAL_LINKS, FOOTER_NAV_LINKS, TRUST_BADGES } from '@/lib/footer-data';
 
 /**
  * Pure Render Footer component.
- * No dynamic logic, no hooks, ensures 100% hydration matching.
- * Slideable trust badges for mobile and tablet views.
+ * Features a high-performance smooth auto-scrolling marquee for trust badges.
+ * Masked edges provide a premium, cinematic fade effect.
  */
 export default function SiteFooter() {
   return (
     <footer className="border-t border-border/40 bg-background py-10">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground space-y-10">
         
         {/* Logo & Tagline */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-x-4 gap-y-3">
@@ -21,10 +21,10 @@ export default function SiteFooter() {
               <DrivergyLogo className="h-8 w-auto text-primary" />
             </Link>
              <div className="hidden sm:block h-6 w-px bg-border"></div>
-            <p className="font-headline text-lg text-muted-foreground tracking-wide -mt-1 sm:mt-0 ml-11 sm:ml-0">Learn. Drive. Live.</p>
+            <p className="font-headline text-lg text-muted-foreground tracking-wide">Learn. Drive. Live.</p>
         </div>
 
-        {/* Social & Country Badges */}
+        {/* Social & Made in India */}
         <div className="flex flex-wrap justify-center items-center gap-6 md:gap-x-8 md:gap-y-6">
           <div className="flex items-center gap-6">
             {SOCIAL_LINKS.map((link) => {
@@ -67,81 +67,33 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        {/* Trust Badges - SLIDEABLE ON MOBILE/TAB */}
-        <div className="flex items-center justify-start lg:justify-center gap-x-4 md:gap-x-6 py-8 border-y border-border/40 max-w-7xl mx-auto bg-muted/5 rounded-xl px-8 overflow-x-auto no-scrollbar flex-nowrap snap-x snap-mandatory">
-            {/* Secure Payments */}
-            <div className="flex items-center gap-3 shrink-0 snap-center">
-                <div className="p-2.5 rounded-full bg-red-500/10">
-                    <ShieldCheck className="h-7 w-7 text-red-500" />
-                </div>
-                <div className="text-left leading-tight">
-                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Secure Payments</p>
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground">100% encrypted &amp; safe</p>
-                </div>
-            </div>
-            
-            <div className="h-10 w-px bg-border shrink-0"></div>
-
-            {/* Payment Partner */}
-            <div className="flex items-center gap-3 shrink-0 snap-center">
-                <div className="p-2.5 rounded-full bg-[#6739B7]/10">
-                    <CreditCard className="h-7 w-7 text-[#6739B7]" />
-                </div>
-                <div className="text-left leading-tight">
-                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Payment Partner</p>
-                    <div className="flex items-center gap-1 leading-none mt-0.5">
-                        <span className="text-[9px] md:text-[10px] text-muted-foreground font-medium">Powered by</span>
-                        <span className="text-[10px] md:text-xs font-black text-[#6739B7] tracking-tight">PhonePe</span>
+        {/* TRUST MARQUEE - Smooth Cinematic Motion */}
+        <div className="relative w-full max-w-7xl mx-auto overflow-hidden mask-edge-fade py-4 border-y border-border/40">
+            <div className="animate-marquee">
+                {/* Render badges twice for seamless looping */}
+                {[...TRUST_BADGES, ...TRUST_BADGES].map((badge, idx) => (
+                    <div 
+                        key={`${badge.id}-${idx}`} 
+                        className="flex items-center gap-4 shrink-0 px-8 sm:px-12"
+                    >
+                        <div 
+                            className="p-2.5 rounded-full" 
+                            style={{ backgroundColor: badge.bgColor }}
+                        >
+                            <badge.icon className="h-7 w-7" style={{ color: badge.color }} />
+                        </div>
+                        <div className="text-left leading-tight">
+                            <p className="text-xs font-bold text-foreground uppercase tracking-tight whitespace-nowrap">{badge.label}</p>
+                            <p className="text-[10px] text-muted-foreground whitespace-nowrap">{badge.sublabel}</p>
+                        </div>
+                        <div className="ml-8 sm:ml-12 h-8 w-px bg-border/60"></div>
                     </div>
-                </div>
-            </div>
-
-            <div className="h-10 w-px bg-border shrink-0"></div>
-
-            {/* Store Partner */}
-            <div className="flex items-center gap-3 shrink-0 snap-center">
-                <div className="p-2.5 rounded-full bg-orange-500/10">
-                    <Store className="h-7 w-7 text-orange-500" />
-                </div>
-                <div className="text-left leading-tight">
-                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Store Partner</p>
-                    <div className="flex items-center gap-1 leading-none mt-0.5">
-                        <span className="text-[10px] md:text-xs font-bold text-foreground tracking-tighter">amazon</span>
-                        <span className="text-[9px] text-muted-foreground">|</span>
-                        <span className="text-[10px] md:text-xs font-bold text-[#2874f0]">Flipkart</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="h-10 w-px bg-border shrink-0"></div>
-
-            {/* Safe & Secure */}
-            <div className="flex items-center gap-3 shrink-0 snap-center">
-                <div className="p-2.5 rounded-full bg-green-500/10">
-                    <Shield className="h-7 w-7 text-green-500" />
-                </div>
-                <div className="text-left leading-tight">
-                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Safe &amp; Secure</p>
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground">Verified Platform</p>
-                </div>
-            </div>
-
-            <div className="h-10 w-px bg-border shrink-0"></div>
-
-            {/* Certified Trainers */}
-            <div className="flex items-center gap-3 shrink-0 snap-center">
-                <div className="p-2.5 rounded-full bg-amber-500/10">
-                    <Award className="h-7 w-7 text-amber-500" />
-                </div>
-                <div className="text-left leading-tight">
-                    <p className="text-[10px] md:text-xs font-bold text-foreground uppercase tracking-tight">Certified Trainers</p>
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground">Authorized RTO School</p>
-                </div>
+                ))}
             </div>
         </div>
 
         {/* Links & Copyright */}
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-2">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm pt-4">
             <p>&copy; 2025 Drivergy. All rights reserved.</p>
             {FOOTER_NAV_LINKS.map((link) => (
               <span key={link.id} className="flex items-center gap-2">
